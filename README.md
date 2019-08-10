@@ -6,11 +6,11 @@
 
 > **Note**: This extension leverages your machine's Fossil installation, so you need to [install Fossil](https://www.fossil-scm.org) first.
 
-## NOTE: WORK IN PROGRESS. NOT READY FOR RELEASE. IT'S PRETTY UGLY IN HERE.
+## NOTE: WORK IN PROGRESS. NOT READY FOR RELEASE.
 
 -----
 
-![Fossil](images/hg.png) TODO: fix link
+![Fossil](/images/fossil.png)
 
 # Features
 
@@ -35,20 +35,21 @@
 
 # Feedback & Contributing
 
-* Please report any bugs, suggestions or documentation requests via the [Github issues](https://github.com/mrcrowl/vscode-hg/issues) (_yes_, I see the irony).
+* Please report any bugs, suggestions or documentation requests via the [Github issues](https://github.com/koog1000/vscode-fossil/issues) (_yes_, I see the irony).
 * Feel free to submit [pull requests](https://github.com/mrcrowl/vscode-hg/pulls).
 
 
 ## Initialize a new repo
 
 ![Init a repo](images/init.gif)
+__TODO__: update gif for fossil
 
   * Just click the Fossil icon from the source control title area:
-  __NOTE__: this is not implemented yet for Fossil
 
 ## Update to a branch/tag
 
 ![Change branches](images/change-branch.gif)
+__TODO__: update gif for fossil
 
   * The current branch name is shown in the bottom-left corner.
   * Click it to see a list of branches and tags that you can update to.
