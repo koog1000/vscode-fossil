@@ -1,6 +1,6 @@
 
 import { Uri, Command, EventEmitter, Event, scm, SourceControl, SourceControlInputBox, SourceControlResourceGroup, SourceControlResourceState, SourceControlResourceDecorations, Disposable, ProgressLocation, window, workspace, WorkspaceEdit, ThemeColor, commands } from 'vscode';
-import { Repository as BaseRepository, Ref, Commit, RefType, HgError, Bookmark, IRepoStatus, SyncOptions, PullOptions, PushOptions, HgErrorCodes, IMergeResult, CommitDetails, LogEntryRepositoryOptions, HgRollbackDetails } from './hg';
+import { Repository as BaseRepository, Ref, Commit, RefType, FossilError, IRepoStatus, SyncOptions, PullOptions, PushOptions, FossilErrorCodes, IMergeResult, CommitDetails, LogEntryRepositoryOptions, FossilUndoDetails } from './fossilBase';
 import { anyEvent, filterEvent, eventToPromise, dispose, IDisposable, delay, groupBy, partition } from './util';
 import { memoize, throttle, debounce } from './decorators';
 import { StatusBarCommands } from './statusbar';
@@ -10,11 +10,11 @@ import * as path from 'path';
 import * as fs from 'fs';
 import * as nls from 'vscode-nls';
 import { ResourceGroup, createEmptyStatusGroups, UntrackedGroup, WorkingDirectoryGroup, StagingGroup, ConflictGroup, MergeGroup, IStatusGroups, groupStatuses, IGroupStatusesParams } from './resourceGroups';
-import { Path } from './hg';
+import { Path } from './fossilBase';
 import { AutoInOutState, AutoInOutStatuses, AutoIncomingOutgoing } from './autoinout';
 import { DefaultRepoNotConfiguredAction, interaction, PushCreatesNewHeadAction } from './interaction';
-import { exists } from 'fs';
-import { toHgUri } from './uri';
+// import { exists } from 'fs';
+import { toFossilUri } from './uri';
 
 const timeout = (millis: number) => new Promise(c => setTimeout(c, millis));
 
@@ -28,9 +28,8 @@ function getIconUri(iconName: string, theme: string): Uri {
 }
 
 export interface LogEntriesOptions {
-    file?: Uri;
     revQuery?: string;
-    branch?: string;
+    file?: Uri;
     limit?: number;
 }
 
@@ -181,8 +180,8 @@ export const enum Operation {
     Clean = 1 << 4,
     Branch = 1 << 5,
     Update = 1 << 6,
-    Rollback = 1 << 7,
-    RollbackDryRun = 1 << 8,
+    Undo = 1 << 7,
+    UndoDryRun = 1 << 8,
     // CountIncoming = 1 << 8,
     Pull = 1 << 9,
     Push = 1 << 10,
@@ -195,11 +194,12 @@ export const enum Operation {
     Resolve = 1 << 17,
     Unresolve = 1 << 18,
     Parents = 1 << 19,
-    Forget = 1 << 20,
+    Remove = 1 << 20,
     Merge = 1 << 21,
-    AddRemove = 1 << 22,
-    SetBookmark = 1 << 23,
-    RemoveBookmark = 1 << 24,
+    // AddRemove = 1 << 22,
+    // SetBookmark = 1 << 23,
+    // RemoveBookmark = 1 << 24,
+    Close = 1 << 25
 }
 
 function isReadOnly(operation: Operation): boolean {
@@ -308,17 +308,14 @@ export class Repository implements IDisposable {
     private _currentBranch: Ref | undefined;
     get currentBranch(): Ref | undefined { return this._currentBranch; }
 
-    private _activeBookmark: Bookmark | undefined;
-    get activeBookmark(): Bookmark | undefined { return this._activeBookmark; }
-
     private _repoStatus: IRepoStatus | undefined;
     get repoStatus(): IRepoStatus | undefined { return this._repoStatus; }
 
     private _refs: Ref[] = [];
     get refs(): Ref[] { return this._refs; }
 
-    private _paths: Path[] = [];
-    get paths(): Path[] { return this._paths; }
+    private _path: Path;
+    get path(): Path { return this._path; }
 
     private _operations = new OperationsImpl();
     get operations(): Operations { return this._operations; }
@@ -355,7 +352,6 @@ export class Repository implements IDisposable {
         this._onDidChangeState.fire(state);
 
         this._currentBranch = undefined;
-        this._activeBookmark = undefined;
         this._refs = [];
         this._syncCounts = { incoming: 0, outgoing: 0 };
         this._groups.conflict.clear();
@@ -376,7 +372,7 @@ export class Repository implements IDisposable {
         private readonly repository: BaseRepository
     ) {
         this.updateRepositoryPaths();
-        
+
         const fsWatcher = workspace.createFileSystemWatcher('**');
         this.disposables.push(fsWatcher);
 
@@ -390,10 +386,10 @@ export class Repository implements IDisposable {
         onRelevantHgChange(this._onDidChangeRepository.fire, this._onDidChangeRepository, this.disposables);
         onHgrcChange(this.onHgrcChange, this, this.disposables);
 
-        this._sourceControl = scm.createSourceControl('hg', 'Hg', Uri.parse(repository.root));
+        this._sourceControl = scm.createSourceControl('fossil', 'Fossil', Uri.parse(repository.root));
         this.disposables.push(this._sourceControl);
 
-        this._sourceControl.acceptInputCommand = { command: 'hg.commitWithInput', title: localize('commit', "Commit") };
+        this._sourceControl.acceptInputCommand = { command: 'fossil.commitWithInput', title: localize('commit', "Commit") };
         this._sourceControl.quickDiffProvider = this;
 
         const [groups, disposables] = createEmptyStatusGroups(this._sourceControl);
@@ -420,7 +416,7 @@ export class Repository implements IDisposable {
 
         // As a mitigation for extensions like ESLint showing warnings and errors
         // for hg URIs, let's change the file extension of these uris to .hg.
-        return toHgUri(uri, '', true);
+        return toFossilUri(uri, '');
     }
 
     @throttle
@@ -472,9 +468,6 @@ export class Repository implements IDisposable {
     @debounce(1000)
     private onHgrcChange(uri: Uri): void {
         this._onDidChangeHgrc.fire();
-        if (typedConfig.commandMode === "server") {
-            this.repository.hg.onConfigurationChange(true);
-        }
     }
 
 
@@ -491,22 +484,27 @@ export class Repository implements IDisposable {
     }
 
     @throttle
-    async forget(...uris: Uri[]): Promise<void> {
-        const resources = this.mapResources(uris);
+    async remove(...uris: Uri[]): Promise<void> {
+        let resources: Resource[];
+        if (uris.length === 0) {
+            resources = this._groups.untracked.resources;
+        } else {
+            resources = this.mapResources(uris);
+        }
         const relativePaths: string[] = resources.map(r => this.mapResourceToRepoRelativePath(r));
-        await this.run(Operation.Forget, () => this.repository.forget(relativePaths));
+        await this.run(Operation.Remove, () => this.repository.remove(relativePaths));
     }
 
     mapResources(resourceUris: Uri[]): Resource[] {
         const resources: Resource[] = [];
         const { conflict, merge, working, untracked, staging } = this._groups;
         const groups = [working, staging, merge, untracked, conflict];
-        for (const uri of resourceUris) {
+        nextUri: for (const uri of resourceUris) {
             for (const group of groups) {
                 const resource = group.getResource(uri);
                 if (resource) {
                     resources.push(resource);
-                    break;
+                    break nextUri;
                 }
             }
         }
@@ -522,27 +520,26 @@ export class Repository implements IDisposable {
                 resources = this._groups.working.resources;
             }
 
-            const [missingAndAddedResources, otherResources] = partition(resources, r =>
-                r.status === Status.MISSING || r.status === Status.ADDED);
+            const [missingResources, otherResources] = partition(resources, r => r.status === Status.MISSING);
 
-            if (missingAndAddedResources.length) {
-                const relativePaths: string[] = missingAndAddedResources.map(r => this.mapResourceToRepoRelativePath(r));
-                await this.run(Operation.AddRemove, () => this.repository.addRemove(relativePaths));
+            if (missingResources.length) {
+                const relativePaths: string[] = missingResources.map(r => this.mapResourceToRepoRelativePath(r));
+                await this.run(Operation.Remove, () => this.repository.remove(relativePaths));
             }
 
-            this._groups.staging = this._groups.staging.intersect(resources);
-            this._groups.working = this._groups.working.except(resources);
+            // this._groups.staging = this._groups.staging.intersect(resources);
+            // this._groups.working = this._groups.working.except(resources);
             this._onDidChangeResources.fire();
         });
     }
 
-    // resource --> repo-relative path	
+    // resource --> repo-relative path
     public mapResourceToRepoRelativePath(resource: Resource): string {
         const relativePath = this.mapFileUriToRepoRelativePath(resource.resourceUri);
         return relativePath;
     }
 
-    // file uri --> repo-relative path	
+    // file uri --> repo-relative path
     private mapFileUriToRepoRelativePath(fileUri: Uri): string {
         const relativePath = path.relative(this.repository.root, fileUri.fsPath).replace(/\\/g, '/');
         return relativePath;
@@ -554,31 +551,17 @@ export class Repository implements IDisposable {
         return relativePath;
     }
 
-    // file uri --> workspace-relative path	
+    // file uri --> workspace-relative path
     public mapFileUriToWorkspaceRelativePath(fileUri: Uri): string {
         const relativePath = path.relative(this.repository.root, fileUri.fsPath).replace(/[\/\\]/g, path.sep);
         return relativePath;
     }
 
-    // repo-relative path --> workspace-relative path	
+    // repo-relative path --> workspace-relative path
     private mapRepositoryRelativePathToWorkspaceRelativePath(repoRelativeFilepath: string): string {
         const fsPath = path.join(this.repository.root, repoRelativeFilepath);
         const relativePath = path.relative(this.repository.root, fsPath).replace(/[\/\\]/g, path.sep);
         return relativePath;
-    }
-
-    @throttle
-    async resolve(uris: Uri[], opts: { mark?: boolean } = {}): Promise<void> {
-        const resources = this.mapResources(uris);
-        const relativePaths: string[] = resources.map(r => this.mapResourceToRepoRelativePath(r));
-        await this.run(Operation.Resolve, () => this.repository.resolve(relativePaths, opts));
-    }
-
-    @throttle
-    async unresolve(uris: Uri[]): Promise<void> {
-        const resources = this.mapResources(uris);
-        const relativePaths: string[] = resources.map(r => this.mapResourceToRepoRelativePath(r));
-        await this.run(Operation.Unresolve, () => this.repository.unresolve(relativePaths));
     }
 
     @throttle
@@ -587,8 +570,11 @@ export class Repository implements IDisposable {
         if (resources.length === 0) {
             resources = this._groups.staging.resources;
         }
-        this._groups.staging = this._groups.staging.except(resources);
-        this._groups.working = this._groups.working.intersect(resources);
+        const relativePaths: string[] = resources.map(r => this.mapResourceToRepoRelativePath(r));
+        await this.run(Operation.Remove, () => this.repository.revert(relativePaths));
+
+        // this._groups.staging = this._groups.staging.except(resources);
+        // this._groups.working = this._groups.working.intersect(resources);
         this._onDidChangeResources.fire();
     }
 
@@ -612,7 +598,7 @@ export class Repository implements IDisposable {
     async cleanOrUpdate(...resources: Uri[]) {
         const parents = await this.getParents();
         if (parents.length > 1) {
-            return this.update(".", { discard: true });
+            return this.update('', { discard: true });
         }
 
         return this.clean(...resources);
@@ -651,7 +637,34 @@ export class Repository implements IDisposable {
             }
 
             if (toForget.length > 0) {
-                promises.push(this.repository.forget(toForget));
+                promises.push(this.repository.remove(toForget));
+            }
+
+            await Promise.all(promises);
+        });
+    }
+
+    @throttle
+    async revert(...uris: Uri[]): Promise<void> {
+        let resources = this.mapResources(uris);
+        await this.run(Operation.Clean, async () => {
+            const toRevert: string[] = [];
+
+            for (let r of resources) {
+                switch (r.status) {
+                    case Status.UNTRACKED:
+                    case Status.IGNORED:
+                        break;
+                    default:
+                        toRevert.push(this.mapResourceToRepoRelativePath(r));
+                        break;
+                }
+            }
+
+            const promises: Promise<void>[] = [];
+
+            if (toRevert.length > 0) {
+                promises.push(this.repository.revert(toRevert));
             }
 
             await Promise.all(promises);
@@ -672,28 +685,22 @@ export class Repository implements IDisposable {
     }
 
     @throttle
-    async rollback(dryRun: boolean, dryRunDetails?: HgRollbackDetails): Promise<HgRollbackDetails> {
-        const op = dryRun ? Operation.RollbackDryRun : Operation.Rollback;
-        const rollback = await this.run(op, () => this.repository.rollback(dryRun));
-
-        if (!dryRun) {
-            if (rollback.kind === 'commit') {
-                // if there are currently files in the staging group, then 
-                // any previously-committed files should go there too.
-                if (dryRunDetails && dryRunDetails.commitDetails) {
-                    const { affectedFiles } = dryRunDetails.commitDetails;
-                    if (this.stagingGroup.resources.length && affectedFiles.length) {
-                        const previouslyCommmitedResourcesToStage = affectedFiles.map(f => {
-                            const uri = Uri.file(path.join(this.repository.root, f.path));
-                            const resource = this.findTrackedResourceByUri(uri);
-                            return resource;
-                        }).filter(r => !!r) as Resource[];
-                        this.stage(...previouslyCommmitedResourcesToStage.map(r => r.resourceUri));
-                    }
-                }
-            }
+    async close(): Promise<boolean> {
+        const msg = await this.run(Operation.Close, () => this.repository.close())
+        if(msg){
+            interaction.warnUnsavedChanges(msg);
+            return false
         }
-        return rollback;
+        return true
+    }
+
+    @throttle
+    async undo(dryRun: boolean, dryRunDetails?: FossilUndoDetails): Promise<FossilUndoDetails> {
+        const op = dryRun ? Operation.UndoDryRun : Operation.Undo;
+        console.log('Running undo with dryrun ' + dryRun)
+        const undo = await this.run(op, () => this.repository.undo(dryRun));
+
+        return undo;
     }
 
     findTrackedResourceByUri(uri: Uri): Resource | undefined {
@@ -709,63 +716,20 @@ export class Repository implements IDisposable {
         return undefined;
     }
 
-    async enumerateSyncBookmarkNames(): Promise<string[]> {
-        if (!typedConfig.useBookmarks) {
-            return []
-        }
-        if (typedConfig.pushPullScope === 'current') {
-            return this.activeBookmark ? [this.activeBookmark.name] : [];
-        }
-        return await this.getBookmarkNamesFromHeads(typedConfig.pushPullScope === 'default')
-    }
-
-    @throttle
-    async setBookmark(name: string, opts: { force: boolean }): Promise<any> {
-        await this.run(Operation.SetBookmark, () => this.repository.bookmark(name, { force: opts.force }));
-    }
-
-    @throttle
-    async removeBookmark(name: string): Promise<any> {
-        await this.run(Operation.RemoveBookmark, () => this.repository.bookmark(name, { remove: true }));
-    }
-
     get pushPullBranchName(): string | undefined {
-        if (typedConfig.useBookmarks) {
-            return undefined
-        }
         return this.expandScopeOption(typedConfig.pushPullScope, this.currentBranch);
     }
 
-    get pushPullBookmarkName(): string | undefined {
-        if (!typedConfig.useBookmarks) {
-            return undefined
-        }
-        return this.expandScopeOption(typedConfig.pushPullScope, this.activeBookmark);
-    }
-
     private async createSyncOptions(): Promise<SyncOptions> {
-        if (typedConfig.useBookmarks) {
-            const branch = (typedConfig.pushPullScope === 'default') ? 'default' : undefined;
-            const bookmarks = await this.enumerateSyncBookmarkNames();
-            return { branch, bookmarks }
-        }
-        else {
-            return { branch: this.pushPullBranchName }
-        }
+        return { branch: this.pushPullBranchName }
     }
 
     public async createPullOptions(): Promise<PullOptions> {
         const syncOptions = await this.createSyncOptions();
         const autoUpdate = typedConfig.autoUpdate;
 
-        if (typedConfig.useBookmarks) {
-            // bookmarks
-            return { ...syncOptions, autoUpdate }
-        }
-        else {
-            // branches		
-            return { branch: syncOptions.branch, autoUpdate }
-        }
+        // branches
+        return { branch: syncOptions.branch, autoUpdate }
     }
 
     public async createPushOptions(): Promise<PushOptions> {
@@ -799,14 +763,14 @@ export class Repository implements IDisposable {
             ]);
         }
         catch (err) {
-            if (err instanceof HgError && (
-                err.hgErrorCode === HgErrorCodes.AuthenticationFailed ||
-                err.hgErrorCode === HgErrorCodes.RepositoryIsUnrelated ||
-                err.hgErrorCode === HgErrorCodes.RepositoryDefaultNotFound)) {
+            if (err instanceof FossilError && (
+                err.fossilErrorCode === FossilErrorCodes.AuthenticationFailed ||
+                err.fossilErrorCode === FossilErrorCodes.RepositoryIsUnrelated ||
+                err.fossilErrorCode === FossilErrorCodes.RepositoryDefaultNotFound)) {
 
                 this.changeAutoInoutState({
                     status: AutoInOutStatuses.Error,
-                    error: ((err.stderr || "").replace(/^abort:\s*/, '') || err.hgErrorCode || err.message).trim(),
+                    error: ((err.stderr || "").replace(/^abort:\s*/, '') || err.fossilErrorCode || err.message).trim(),
                 })
             }
             throw err;
@@ -825,8 +789,6 @@ export class Repository implements IDisposable {
             if (delayMillis) {
                 await delay(delayMillis);
             }
-            const options: SyncOptions = await this.createSyncOptions();
-            this._syncCounts.incoming = await this.repository.countIncoming(options);
             this._onDidChangeInOutState.fire();
         }
         catch (e) {
@@ -846,8 +808,6 @@ export class Repository implements IDisposable {
             if (delayMillis) {
                 await delay(delayMillis);
             }
-            const options: SyncOptions = await this.createSyncOptions();
-            this._syncCounts.outgoing = await this.repository.countOutgoing(options);
             this._onDidChangeInOutState.fire();
         }
         catch (e) {
@@ -862,7 +822,7 @@ export class Repository implements IDisposable {
                 await this.repository.pull(options)
             }
             catch (e) {
-                if (e instanceof HgError && e.hgErrorCode === HgErrorCodes.DefaultRepositoryNotConfigured) {
+                if (e instanceof FossilError && e.fossilErrorCode === FossilErrorCodes.DefaultRepositoryNotConfigured) {
                     const action = await interaction.warnDefaultRepositoryNotConfigured();
                     if (action === DefaultRepoNotConfiguredAction.OpenHGRC) {
                         commands.executeCommand("hg.openhgrc");
@@ -882,21 +842,21 @@ export class Repository implements IDisposable {
                 await this.repository.push(path, options);
             }
             catch (e) {
-                if (e instanceof HgError && e.hgErrorCode === HgErrorCodes.DefaultRepositoryNotConfigured) {
+                if (e instanceof FossilError && e.fossilErrorCode === FossilErrorCodes.DefaultRepositoryNotConfigured) {
                     const action = await interaction.warnDefaultRepositoryNotConfigured();
                     if (action === DefaultRepoNotConfiguredAction.OpenHGRC) {
                         commands.executeCommand("hg.openhgrc");
                     }
                     return;
                 }
-                else if (e instanceof HgError && e.hgErrorCode === HgErrorCodes.PushCreatesNewRemoteHead) {
+                else if (e instanceof FossilError && e.fossilErrorCode === FossilErrorCodes.PushCreatesNewRemoteHead) {
                     const action = await interaction.warnPushCreatesNewHead();
                     if (action === PushCreatesNewHeadAction.Pull) {
                         commands.executeCommand("hg.pull");
                     }
                     return;
                 }
-                else if (e instanceof HgError && e.hgErrorCode === HgErrorCodes.PushCreatesNewRemoteBranches) {
+                else if (e instanceof FossilError && e.fossilErrorCode === FossilErrorCodes.PushCreatesNewRemoteBranches) {
                     const allow = interaction.warnPushCreatesNewBranchesAllow();
                     if (allow) {
                         return this.push(path, { ...options, allowPushNewBranches: true })
@@ -917,7 +877,7 @@ export class Repository implements IDisposable {
                 return await this.repository.merge(revQuery)
             }
             catch (e) {
-                if (e instanceof HgError && e.hgErrorCode === HgErrorCodes.UntrackedFilesDiffer && e.hgFilenames) {
+                if (e instanceof FossilError && e.fossilErrorCode === FossilErrorCodes.UntrackedFilesDiffer && e.hgFilenames) {
                     e.hgFilenames = e.hgFilenames.map(filename => this.mapRepositoryRelativePathToWorkspaceRelativePath(filename));
                 }
                 throw e;
@@ -939,15 +899,16 @@ export class Repository implements IDisposable {
         return await this.run(Operation.Show, async () => {
             const relativePath = path.relative(this.repository.root, filePath).replace(/\\/g, '/');
             try {
+                console.log('Repository: show: relativePath: ' + relativePath + ' ref: ' + ref)
                 return await this.repository.cat(relativePath, ref)
             }
             catch (e) {
-                if (e && e instanceof HgError && e.hgErrorCode === 'NoSuchFile') {
+                if (e && e instanceof FossilError && e.fossilErrorCode === 'NoSuchFile') {
                     return '';
                 }
 
                 if (e.exitCode !== 0) {
-                    throw new HgError({
+                    throw new FossilError({
                         message: localize('cantshow', "Could not show object"),
                         exitCode: e.exitCode
                     });
@@ -968,8 +929,9 @@ export class Repository implements IDisposable {
             this._onRunOperation.fire(operation);
 
             try {
-                await this.unlocked();
+                console.log('Running operation: ' + runOperation)
                 const result = await runOperation();
+                console.log('completed operation')
 
                 if (!isReadOnly(operation)) {
                     await this.updateModelState();
@@ -978,7 +940,7 @@ export class Repository implements IDisposable {
                 return result;
             }
             catch (err) {
-                if (err.hgErrorCode === HgErrorCodes.NotAnHgRepository) {
+                if (err.fossilErrorCode === FossilErrorCodes.NotAnHgRepository) {
                     this.state = RepositoryState.Disposed;
 
                     // const disposables: Disposable[] = [];
@@ -995,31 +957,10 @@ export class Repository implements IDisposable {
             }
         });
     }
-    
-    private async unlocked<T>(): Promise<void> {
-        let attempt = 1;
-
-        const existsLocal = (path: string) => new Promise((resolve, reject) => {
-            fs.stat(path, (err) => {
-                if (err) {
-                    if (err.code === 'ENOENT') {
-                        return resolve(false);
-                    }
-                    reject(err);
-                }
-                return resolve(true);
-            });
-        });
-
-        while (attempt <= 10 && await existsLocal(path.join(this.repository.root, '.hg', 'index.lock'))) {
-            await timeout(Math.pow(attempt, 2) * 50);
-            attempt++;
-        }
-    }
 
     private async updateRepositoryPaths() {
         try {
-            this._paths = await this.repository.getPaths();
+            this._path = await this.repository.getPaths();
         }
         catch (e) {
             // noop
@@ -1027,102 +968,60 @@ export class Repository implements IDisposable {
     }
 
     @throttle
-    public async getPaths(): Promise<Path[]> {
+    public async getPath(): Promise<Path> {
         try {
-            this._paths = await this.repository.getPaths();
-            return this._paths;
+            this._path = await this.repository.getPaths();
+            return this._path;
         }
         catch (e) {
             // noop
         }
 
-        return [];
+        return {name:"", url:""};
     }
 
     @throttle
     public async getRefs(): Promise<Ref[]> {
-        if (typedConfig.useBookmarks) {
-            const bookmarks = await this.repository.getBookmarks()
-            return bookmarks
-        } else {
-            const [branches, tags] = await Promise.all([this.repository.getBranches(), this.repository.getTags()])
-            return [...branches, ...tags]
-        }
+        const [branches, tags] = await Promise.all([this.repository.getBranches(), this.repository.getTags()])
+        return [...branches, ...tags]
     }
 
     @throttle
-    public getParents(revision?: string): Promise<Commit[]> {
+    public getParents(revision?: string): Promise<string> {
         return this.repository.getParents(revision);
     }
 
     @throttle
-    public async getBranchNamesWithMultipleHeads(branch?: string): Promise<string[]> {
-        const allHeads = await this.repository.getHeads({ branch });
-        const multiHeadBranches: string[] = [];
-        const headsPerBranch = groupBy(allHeads, h => h.branch)
-        for (const branch in headsPerBranch) {
-            const branchHeads = headsPerBranch[branch];
-            if (branchHeads.length > 1) {
-                multiHeadBranches.push(branch);
-            }
-        }
-        return multiHeadBranches;
-    }
-
-    @throttle
-    public async getHashesOfNonDistinctBookmarkHeads(defaultOnly: boolean): Promise<string[]> {
-        const defaultOrAll = defaultOnly ? "default" : undefined
-        const allHeads = await this.repository.getHeads({ branch: defaultOrAll });
-        const headsWithoutBookmarks = allHeads.filter(h => h.bookmarks.length === 0);
-        if (headsWithoutBookmarks.length > 1) { // allow one version of any branch with no bookmark
-            return headsWithoutBookmarks.map(h => h.hash);
-        }
-        return []
-    }
-
-    @throttle
-    public async getBookmarkNamesFromHeads(defaultOnly: boolean): Promise<string[]> {
-        const defaultOrAll = defaultOnly ? "default" : undefined
-        const allHeads = await this.repository.getHeads({ branch: defaultOrAll });
-        const headsWithBookmarks = allHeads.filter(h => h.bookmarks.length > 0);
-        return headsWithBookmarks.reduce((prev, curr) => [...prev, ...curr.bookmarks], <string[]>[]);
-    }
-
-    @throttle
-    public getHeads(options: { branch?: string; excludeSelf?: boolean } = {}): Promise<Commit[]> {
-        const { branch, excludeSelf } = options;
-        return this.repository.getHeads({ branch, excludeSelf });
+    public getBranches(): Promise<Ref[]> {
+        return this.repository.getBranches();
     }
 
     @throttle
     public async getCommitDetails(revision: string): Promise<CommitDetails> {
 
         const commitPromise = this.getLogEntries({ revQuery: revision, limit: 1 });
-        const fileStatusesPromise = this.repository.getStatus(revision);
-        const parentsPromise = this.getParents(revision);
+        const fileStatusesPromise = await this.repository.getStatus(revision);
+        const parentsPromise = await this.getParents(revision);
 
-        const [[commit], fileStatuses, [parent1, parent2]] = await Promise.all([commitPromise, fileStatusesPromise, parentsPromise]);
+        const [[commit], fileStatuses] = await Promise.all([commitPromise, this.repository.parseStatusLines(fileStatusesPromise)]);
 
         return {
             ...commit,
-            parent1,
-            parent2,
+            parent1: parentsPromise,
             files: fileStatuses
         }
     }
 
     @throttle
     public getLogEntries(options: LogEntriesOptions = {}): Promise<Commit[]> {
-        let filePaths: string[] | undefined = undefined;
+        let filePath: string | undefined = undefined;
         if (options.file) {
-            filePaths = [this.mapFileUriToRepoRelativePath(options.file)];
+            filePath = this.mapFileUriToRepoRelativePath(options.file);
         }
 
         const opts: LogEntryRepositoryOptions = {
-            revQuery: options.revQuery || "tip:0",
-            branch: options.branch,
-            filePaths: filePaths,
-            follow: true,
+            revQuery: options.revQuery || "",
+            filePath: filePath,
             limit: options.limit || 200
         };
         return this.repository.getLogEntries(opts)
@@ -1132,24 +1031,21 @@ export class Repository implements IDisposable {
     private async updateModelState(): Promise<void> {
         this._repoStatus = await this.repository.getSummary();
 
-        const useBookmarks = typedConfig.useBookmarks
-        const currentRefPromise: Promise<Bookmark | undefined> | Promise<Ref | undefined> = useBookmarks
-            ? this.repository.getActiveBookmark()
-            : this.repository.getCurrentBranch()
+        const currentRefPromise: Promise<Ref | undefined> = this.repository.getCurrentBranch()
 
-        const [fileStatuses, currentRef, resolveStatuses] = await Promise.all([
-            this.repository.getStatus(),
+        var fileStat = this.repository.parseStatusLines(await this.repository.getStatus())
+                        .concat(this.repository.parseExtrasLines(await this.repository.getExtras()));
+
+        const [currentRef, resolveStatuses] = await Promise.all([
             currentRefPromise,
-            this._repoStatus.isMerge ? this.repository.getResolveList() : Promise.resolve(undefined),
+            Promise.resolve(undefined),
         ]);
 
-        useBookmarks ?
-            this._activeBookmark = <Bookmark>currentRef :
-            this._currentBranch = currentRef;
+        this._currentBranch = currentRef;
 
         const groupInput: IGroupStatusesParams = {
             respositoryRoot: this.repository.root,
-            fileStatuses: fileStatuses,
+            fileStatuses: fileStat,
             repoStatus: this._repoStatus,
             resolveStatuses: resolveStatuses,
             statusGroups: this._groups

@@ -6,14 +6,11 @@
 
 import * as nls from "vscode-nls";
 import * as path from "path";
-import { window, QuickPickItem, workspace, Uri } from "vscode";
-import { ChildProcess } from "child_process";
-import { Model } from "./model";
-import { HgRollbackDetails, Path, Ref, RefType, Commit, HgError, LogEntryOptions, CommitDetails, IFileStatus, Bookmark } from "./hg";
+import { window, QuickPickItem, workspace } from "vscode";
+import { FossilUndoDetails, Path, Ref, RefType, Commit, LogEntryOptions, CommitDetails, IFileStatus } from "./fossilBase";
 import { humanise } from "./humanise";
 import * as os from "os";
-import typedConfig from "./config";
-import { Repository, Resource, Status, LogEntriesOptions } from "./repository";
+import { Repository, LogEntriesOptions } from "./repository";
 const localize = nls.loadMessageBundle();
 
 const USE_CHANGED = "Use changed version";
@@ -36,12 +33,12 @@ export const enum CommitSources { File, Branch, Repo }
 export namespace interaction {
 
     export function statusCloning(clonePromise: Promise<any>) {
-        return window.setStatusBarMessage(localize('cloning', "Cloning hg repository..."), clonePromise);
+        return window.setStatusBarMessage(localize('cloning', "Cloning fossil repository..."), clonePromise);
     }
 
-    export function informHgNotSupported(this: void) {
-        return window.showInformationMessage(localize('disabled', "Hg is either disabled or not supported in this workspace"));
-    }
+    // export function informFossilNotSupported(this: void) {
+    //     return window.showInformationMessage(localize('disabled', "Fossil is either disabled or not supported in this workspace"));
+    // }
 
     export function informNoChangesToCommit(this: void) {
         return window.showInformationMessage(localize('no changes', "There are no changes to commit."));
@@ -56,13 +53,13 @@ export namespace interaction {
         return false;
     }
 
-    export async function checkThenWarnUnclean(repository: Repository, scenario: WarnScenario): Promise<boolean> {
+    export async function checkThenErrorUnclean(repository: Repository, scenario: WarnScenario): Promise<boolean> {
         if (!repository.isClean) {
             let nextStep: string = "";
             if (scenario === WarnScenario.Merge) {
                 const discardAllChanges = localize('command.cleanAll', "Discard All Changes");
                 const abandonMerge = localize('abandon merge', "abandon merge");
-                localize('use x to y', "Use {0} to {1}", discardAllChanges, abandonMerge);
+                nextStep = localize('use x to y', "Use {0} to {1}", discardAllChanges, abandonMerge);
             }
             window.showErrorMessage(localize('not clean merge', "There are uncommited changes in your working directory. {0}", nextStep));
             return true;
@@ -70,13 +67,21 @@ export namespace interaction {
         return false;
     }
 
+    export async function checkThenWarnUnclean(repository: Repository, scenario: WarnScenario): Promise<void> {
+        if (!repository.isClean) {
+            let nextStep: string = "";
+            if (scenario === WarnScenario.Merge) {
+                const discardAllChanges = localize('command.cleanAll', "Discard All Changes");
+                const abandonMerge = localize('abandon merge', "abandon merge");
+                nextStep = localize('use x to y', "Use {0} to {1}", discardAllChanges, abandonMerge);
+            }
+            window.showWarningMessage(localize('not clean merge', "There are uncommited changes in your working directory. {0}", nextStep));
+        }
+    }
+
     export function warnNonDistinctHeads(nonDistinctHeads: string[]) {
         const nonDistinctHeadShortHashes = nonDistinctHeads.map(h => h.slice(0, SHORT_HASH_LENGTH)).join(", ");
         return window.showWarningMessage(localize('non distinct heads', "{0} heads without bookmarks [{1}]. Set bookmark or merge heads before pushing.", nonDistinctHeads.length, nonDistinctHeadShortHashes));
-    }
-
-    export function warnNoActiveBookmark() {
-        return window.showWarningMessage(localize('no active bookmark', "Nothing to push. There is no active bookmark and pushPullScope is 'current'."));
     }
 
     export function warnBranchMultipleHeads(branchWithMultipleHeads: string) {
@@ -84,10 +89,6 @@ export namespace interaction {
     }
 
     export function warnMergeOnlyOneHead(branch?: string) {
-        if (typedConfig.useBookmarks) {
-            return window.showWarningMessage(localize('only one head', "There is only 1 head. Nothing to merge.", branch));
-        }
-
         return window.showWarningMessage(localize('only one head', "There is only 1 head for branch '{0}'. Nothing to merge.", branch));
     }
 
@@ -138,14 +139,14 @@ export namespace interaction {
         return window.showWarningMessage(localize('conflicts', "Resolve conflicts before committing."));
     }
 
-    export function warnNoRollback(this: void) {
-        return window.showWarningMessage(localize('no rollback', "Nothing to rollback to."));
+    export function warnNoUndo(this: void) {
+        return window.showWarningMessage(localize('no undo', "Nothing to undo."));
     }
 
     export async function errorPromptOpenLog(err: any): Promise<boolean> {
         let message: string;
 
-        switch (err.hgErrorCode) {
+        switch (err.fossilErrorCode) {
             case 'DirtyWorkingDirectory':
                 message = localize('clean repo', "Please clean your repository working directory before updating.");
                 break;
@@ -191,32 +192,30 @@ export namespace interaction {
     }
 
     export async function inputCloneParentPath(this: void): Promise<string | undefined> {
+        var val = workspace.workspaceFolders ? workspace.workspaceFolders[0].uri.fsPath : ''
         return await window.showInputBox({
             prompt: localize('parent', "Parent Directory"),
-            value: os.homedir(),
+            value: val,
             ignoreFocusOut: true
         });
     }
 
-    export async function inputBookmarkName(): Promise<string | undefined> {
-        const bookmark = await window.showInputBox({
-            prompt: localize('bookmark name', "Bookmark Name"),
-            ignoreFocusOut: true,
+    export async function inputCloneUser(this: void): Promise<string | undefined> {
+        const auth = await window.showInputBox({
+            prompt: localize('parent', "Username "),
+            value: 'None',
+            ignoreFocusOut: true
         });
-
-        return bookmark;
+        return auth
     }
 
-    export async function warnNotUsingBookmarks(): Promise<boolean> {
-        const message = localize('offer bookmarks', "Bookmarks requires the hg.useBookmarks setting to be enabled.")
-        const useBookmarks = localize("use bookmarks", "Use Bookmarks (workspace)");
-        const choice = await window.showInformationMessage(message, useBookmarks);
-        if (choice === useBookmarks) {
-            await typedConfig.setUseBookmarks(true)
-            return true
-        }
-
-        return false
+    export async function inputCloneUserAuth(this: void): Promise<string | undefined> {
+        const auth = await window.showInputBox({
+            prompt: localize('parent', "User Authentication"),
+            value: 'None',
+            ignoreFocusOut: true
+        });
+        return auth
     }
 
     export async function warnBranchAlreadyExists(name: string): Promise<BranchExistsAction> {
@@ -242,33 +241,20 @@ export namespace interaction {
         return input;
     }
 
-    export async function pickHead(heads: Commit[], placeHolder: string): Promise<Commit | undefined> {
-        const useBookmarks = typedConfig.useBookmarks;
-        const headChoices = heads.map(head => new CommitItem(head, useBookmarks));
+    export async function pickHead(heads: Ref[], placeHolder: string): Promise<Ref | undefined> {
+        const headChoices = heads.map(head => new RefItem(head));
         const choice = await window.showQuickPick(headChoices, { placeHolder });
         return choice && choice.commit;
     }
 
     export async function pickUpdateRevision(refs: Ref[], unclean: boolean = false): Promise<UpdateRefItem | undefined> {
-        const useBookmarks = typedConfig.useBookmarks
 
-        const branches = !useBookmarks
-            ? refs.filter(ref => ref.type === RefType.Branch).map(ref => new UpdateRefItem(ref))
-            : []
+        const branches = refs.filter(ref => ref.type === RefType.Branch).map(ref => new UpdateRefItem(ref))
+        const tags = refs.filter(ref => ref.type === RefType.Tag).map(ref => new UpdateTagItem(ref))
+        const picks = [...branches, ...tags];
+        const revType = "branch/tag";
 
-        const bookmarks = useBookmarks
-            ? refs.filter(ref => ref.type === RefType.Bookmark).map(ref => new UpdateBookmarkItem(ref))
-            : []
-
-        const tags = !useBookmarks
-            ? refs.filter(ref => ref.type === RefType.Tag).map(ref => new UpdateTagItem(ref))
-            : []
-
-
-        const picks = [...branches, ...bookmarks, ...tags];
-        const revType = useBookmarks ? "bookmark" : "branch/tag";
-
-        const placeHolder = `Select a ${revType} to update to: ${unclean ? "(only showing local bookmarks while working directory unclean)" : ""}`
+        const placeHolder = `Select a ${revType} to update to: ${unclean ? "(only showing local branches while working directory unclean)" : ""}`
         const choice = await window.showQuickPick<UpdateRefItem>(picks, { placeHolder });
         return choice;
     }
@@ -296,53 +282,41 @@ export namespace interaction {
         return new LiteralRunnableQuickPickItem(`$(arrow-left)${NBSP}${NBSP}${goBack}`, `${to} ${description}`, action);
     }
 
-    export async function presentLogSourcesMenu(commands: LogMenuAPI, useBookmarks: boolean) {
+    export async function presentLogSourcesMenu(commands: LogMenuAPI) {
         const repoName = commands.getRepoName();
         const branchName = commands.getBranchName();
         const source = await interaction.pickLogSource(repoName, branchName);
         if (source) {
             const historyScope = localize('history scope', 'history scope');
-            const back = asBackItem(historyScope, () => presentLogSourcesMenu(commands, useBookmarks));
-            return presentLogMenu(source.source, source.options, useBookmarks, commands, back);
+            const back = asBackItem(historyScope, () => presentLogSourcesMenu(commands));
+            return presentLogMenu(source.source, source.options, commands, back);
         }
     }
 
-    export async function presentLogMenu(source: CommitSources, logOptions: LogEntryOptions, useBookmarks: boolean, commands: LogMenuAPI, back?: RunnableQuickPickItem) {
+    export async function presentLogMenu(source: CommitSources, logOptions: LogEntryOptions, commands: LogMenuAPI, back?: RunnableQuickPickItem) {
         const entries = await commands.getLogEntries(logOptions);
-        let result = await pickCommitAsShowCommitDetailsRunnable(source, entries, useBookmarks, commands, back);
+        let result = await pickCommitAsShowCommitDetailsRunnable(source, entries, commands, back);
         while (result) {
             result = await result.run();
         }
     }
 
-    type BookmarkQuickPick = QuickPickItem & { bookmark: Bookmark }
-    export async function pickBookmarkToRemove(bookmarks: Bookmark[]): Promise<Bookmark | undefined> {
-        const picks = bookmarks.map(b => ({ label: `$(bookmark) ${b.name}`, description: b.commit, bookmark: b } as BookmarkQuickPick));
-        const placeHolder = localize('pick bookmark', "Pick a bookmark to remove:");
-        const choice = await window.showQuickPick<BookmarkQuickPick>(picks, { placeHolder });
-        if (choice) {
-            return choice.bookmark;
-        }
-
-        return;
-    }
-
-    async function pickCommitAsShowCommitDetailsRunnable(source: CommitSources, entries: Commit[], useBookmarks: boolean, commands: LogMenuAPI, back?: RunnableQuickPickItem): Promise<RunnableQuickPickItem | undefined> {
+    async function pickCommitAsShowCommitDetailsRunnable(source: CommitSources, entries: Commit[], commands: LogMenuAPI, back?: RunnableQuickPickItem): Promise<RunnableQuickPickItem | undefined> {
         const backhere = asBackItem(
             describeLogEntrySource(source).toLowerCase(),
-            () => pickCommitAsShowCommitDetailsRunnable(source, entries, useBookmarks, commands, back)
+            () => pickCommitAsShowCommitDetailsRunnable(source, entries, commands, back)
         );
         const commitPickedActionFactory = (commit: Commit) => async () => {
             const details = await commands.getCommitDetails(commit.hash);
             return interaction.presentCommitDetails(details, backhere, commands);
         };
 
-        const choice = await pickCommit(source, entries, useBookmarks, commitPickedActionFactory, back);
+        const choice = await pickCommit(source, entries, commitPickedActionFactory, back);
         return choice;
     }
 
-    export async function pickCommit(source: CommitSources, logEntries: Commit[], useBookmarks: boolean, actionFactory: (commit) => RunnableAction, backItem?: RunnableQuickPickItem): Promise<RunnableQuickPickItem | undefined> {
-        const logEntryPickItems = logEntries.map(entry => new LogEntryItem(entry, useBookmarks, actionFactory(entry)));
+    export async function pickCommit(source: CommitSources, logEntries: Commit[], actionFactory: (commit) => RunnableAction, backItem?: RunnableQuickPickItem): Promise<RunnableQuickPickItem | undefined> {
+        const logEntryPickItems = logEntries.map(entry => new LogEntryItem(entry, actionFactory(entry)));
         const placeHolder = describeLogEntrySource(source);
         const pickItems = backItem ? [backItem, ...logEntryPickItems] : logEntryPickItems;
         const choice = await window.showQuickPick<RunnableQuickPickItem>(pickItems, {
@@ -359,7 +333,7 @@ export namespace interaction {
         const fileActionFactory = (f: IFileStatus) => () => {
             return commands.diffToParent(f, details);
         };
-        const filePickItems = details.files.map(f => new FileStatusQuickPickItem(f, details, fileActionFactory(f)));
+        const filePickItems = details.files.map(f => new FileStatusQuickPickItem(f, fileActionFactory(f)));
         const backToSelfRunnable = () => presentCommitDetails(details, back, commands);
         const items = [
             back,
@@ -379,8 +353,8 @@ export namespace interaction {
     export async function pickLogSource(repoName: string, branchName: string | undefined): Promise<LogSourcePickItem | undefined> {
         const branchLabel: string = '$(git-branch)';//localize('branch', 'branch');
         const repoLabel: string = `$(repo)`;// ${localize('repo', 'repo')}`;
-        const branch: LogSourcePickItem = { description: branchLabel, label: branchName || "???", source: CommitSources.Branch, options: { branch: "." } };
-        const default_: LogSourcePickItem = { description: branchLabel, label: "default", source: CommitSources.Branch, options: { branch: "default" } };
+        const branch: LogSourcePickItem = { description: branchLabel, label: branchName || "???", source: CommitSources.Branch, options: {} };
+        const default_: LogSourcePickItem = { description: branchLabel, label: "default", source: CommitSources.Branch, options: {} };
         const repo: LogSourcePickItem = { description: repoLabel, label: "entire repo", source: CommitSources.Repo, options: {} };
 
         const pickItems = branchName !== "default" ? [branch, default_, repo] : [branch, repo];
@@ -408,12 +382,17 @@ export namespace interaction {
         window.showWarningMessage(localize('unresolved files', "Merge leaves {0} {1} unresolved.", unresolvedCount, fileOrFiles));
     }
 
-    export async function confirmRollback({ revision, kind, commitDetails: _ }: HgRollbackDetails) {
+    export function warnUnsavedChanges(msg: string) {
+        window.showWarningMessage(localize('unsaved changes', `Fossil: ${msg}`));
+    }
+
+    export async function confirmUndo({ revision, kind }: FossilUndoDetails) {
         // prompt
-        const rollback = "Rollback";
-        const message = localize('rollback', "Rollback to revision {0}? (undo {1})", revision, kind);
-        const choice = await window.showInformationMessage(message, { modal: true }, rollback);
-        return choice === rollback;
+        console.log('confirmUndo with args' + revision + kind);
+        const undo = "Undo";
+        const message = localize('undo', "Undo to revision {0}? (undo {1})", revision, kind);
+        const choice = await window.showInformationMessage(message, { modal: true }, undo);
+        return choice === undo;
     }
 
     export async function inputCommitMessage(message: string, defaultMessage?: string) {
@@ -434,13 +413,6 @@ export namespace interaction {
         const discard = localize('discard', "Discard Changes");
         const choice = await window.showWarningMessage(message, { modal: true }, discard);
         return choice === discard;
-    }
-
-    export async function confirmForceSetBookmark(bookmark: string): Promise<boolean> {
-        const message = localize('confirm discard all', "Bookmark '{0}' already exists. Force?", bookmark);
-        const force = localize('force', "Force");
-        const choice = await window.showWarningMessage(message, { modal: true }, force);
-        return choice === force;
     }
 
     export async function confirmDiscardChanges(discardFilesnames: string[], addedFilenames: string[]): Promise<boolean> {
@@ -529,19 +501,28 @@ abstract class RunnableQuickPickItem implements QuickPickItem {
     abstract run(): RunnableReturnType;
 }
 
+class RefItem implements RunnableQuickPickItem {
+    constructor(public readonly commit: Ref) { }
+    get shortHash() { return ''; }
+    get label() {
+        if (this.commit.name)
+            return this.commit.name;
+        else
+            return '';
+    }
+    get detail() { return `${this.commit.name}(${this.shortHash}) `; }
+    get description() {
+        if (this.commit.name) return this.commit.name;
+        else return '';
+    }
+    run() { }
+}
+
 class CommitItem implements RunnableQuickPickItem {
-    constructor(public readonly commit: Commit, protected useBookmarks: boolean) { }
+    constructor(public readonly commit: Commit) { }
     get shortHash() { return (this.commit.hash || '').substr(0, SHORT_HASH_LENGTH); }
     get label() {
-        if (this.useBookmarks) {
-            if (this.commit.bookmarks.length) {
-                const bookmarks = this.commit.bookmarks.join(", ");
-                return `$(bookmark) ${bookmarks}`;
-            }
-            return ""
-        } else {
-            return this.commit.branch;
-        }
+        return this.commit.branch;
     }
     get detail() { return `${this.commit.revision}(${this.shortHash}) `; }
     get description() { return this.commit.message; }
@@ -549,22 +530,15 @@ class CommitItem implements RunnableQuickPickItem {
 }
 
 class LogEntryItem extends CommitItem {
-    constructor(commit: Commit, useBookmarks: boolean, private action: RunnableAction) {
-        super(commit, useBookmarks);
+    constructor(commit: Commit, private action: RunnableAction) {
+        super(commit);
     }
     protected get age(): string {
         return humanise.ageFromNow(this.commit.date);
     }
     get description() {
         let scope: string = "";
-        if (this.useBookmarks) {
-            if (this.commit.bookmarks.length) {
-                scope = '\u2014 $(bookmark) ' + this.commit.bookmarks.join(", ");
-            }
-        }
-        else {
-            scope = '\u2014 ' + this.commit.branch;
-        }
+        scope = '\u2014 ' + this.commit.branch;
         return `${NBSP}${BULLET}${NBSP}${NBSP}#${this.commit.revision}${scope}`;
     }
     get label() { return this.commit.message; }
@@ -599,10 +573,6 @@ class UpdateTagItem extends UpdateRefItem {
     }
 }
 
-class UpdateBookmarkItem extends UpdateRefItem {
-    protected get icon(): string { return '$(bookmark) ' }
-}
-
 class FileStatusQuickPickItem extends RunnableQuickPickItem {
     get basename(): string { return path.basename(this.status.path); }
     get label(): string { return `${NBSP}${NBSP}${NBSP}${NBSP}${this.icon}${NBSP}${NBSP}${this.basename}` }
@@ -616,7 +586,7 @@ class FileStatusQuickPickItem extends RunnableQuickPickItem {
         }
     }
 
-    constructor(private status: IFileStatus, private commitDetails: CommitDetails, private action: RunnableAction) {
+    constructor(private status: IFileStatus, private action: RunnableAction) {
         super();
     }
 

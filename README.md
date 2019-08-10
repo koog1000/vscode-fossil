@@ -1,125 +1,112 @@
 # Overview
 
-### Integrated Mercurial source control
+## Integrated Fossil source control
 
-# Prerequisites
+### Prerequisites
 
-> **Note**: This extension leverages your 
-> machine's Mercurial (hg) installation,  
-> so you need to [install Mercurial](https://www.mercurial-scm.org) first. 
+> **Note**: This extension leverages your machine's Fossil installation, so you need to [install Fossil](https://www.fossil-scm.org) first.
+
+## NOTE: WORK IN PROGRESS. NOT READY FOR RELEASE. IT'S PRETTY UGLY IN HERE.
 
 -----
 
-![Hg](images/hg.png) 
+![Fossil](images/hg.png) TODO: fix link
 
 # Features
 
- * Add files and commit from the source control side-bar (i.e. where git normally appears).
+* Add files and commit from the source control side-bar (i.e. where git normally appears).
 
- * All the basics: commit, add, forget, update, push and pull. 
+* All the basics: commit, add, revert, update, push and pull.
 
- * See changes inline within text editor. 
+* See changes inline within text editor.
 
- * Interactive log for basic file history and diff.
+* Interactive log for basic file history and diff.
 
- * Branch, merge heads, merge with branch, resolve + unresolve files.
+* Branch, merge, resolve files.
 
- * Quickly switch branches, push and pull via status bar.
+* Quickly switch branches, push and pull via status bar.
 
- * Supports named-branches or bookmark workflows.
+* Supports named-branches workflows.
 
- * Automatic incoming/outgoing counters. 
+* Automatic incoming/outgoing counters.
 
- * Undo/rollback.
- 
+* Undo
+
 
 # Feedback & Contributing
 
- * Please report any bugs, suggestions or documentation requests via the [Github issues](https://github.com/mrcrowl/vscode-hg/issues) (_yes_, I see the irony).
- * Feel free to submit [pull requests](https://github.com/mrcrowl/vscode-hg/pulls).
+* Please report any bugs, suggestions or documentation requests via the [Github issues](https://github.com/mrcrowl/vscode-hg/issues) (_yes_, I see the irony).
+* Feel free to submit [pull requests](https://github.com/mrcrowl/vscode-hg/pulls).
 
 
 ## Initialize a new repo
 
-![Init a repo](images/init.gif) 
+![Init a repo](images/init.gif)
 
-  * Just click the Mercurial icon from the source control title area:
+  * Just click the Fossil icon from the source control title area:
+  __NOTE__: this is not implemented yet for Fossil
 
-## Update to a branch/tag/bookmark
+## Update to a branch/tag
 
 ![Change branches](images/change-branch.gif)
 
   * The current branch name is shown in the bottom-left corner.
   * Click it to see a list of branches and tags that you can update to.
-  * When `hg.useBookmarks` is enabled, this changes to bookmarks.
 
 # Settings
 
-`hg.enabled { boolean }`
-  * Enables Hg as a source control manager in VS Code.
+`fossil.enabled { boolean }`
 
-`hg.useBookmarks { boolean }`
-  * Choose between [bookmarks](https://www.mercurial-scm.org/wiki/Bookmarks) vs. [named-branches](https://www.mercurial-scm.org/wiki/NamedBranches):  
-  `"false"` — named-branches mode (default)  
-  `"true"` — bookmarks mode  
+  * Enables Fossil as a source control manager in VS Code.
 
-`hg.pushPullScope { all | current | default }`
+
+`fossil.pushPullScope { all / current / default }`
+
   * Specifies what to include in Push/Pull operations.
-  * Depends on the choice of `hg.useBookmarks`.
-  * For named-branches mode: &nbsp; (i.e. `hg.useBookmarks` = false)  
-  `"all"` &mdash; all branches / unrestricted (this is the default)  
-  `"current"` &mdash; only includes changesets for the current branch  
+  * For named-branches mode: &nbsp;
+  `"all"` &mdash; all branches / unrestricted (this is the default)
+  `"current"` &mdash; only includes changesets for the current branch
   `"default"` &mdash; only includes changesets for the _default_ branch
-  * For bookmarks mode: &nbsp; (i.e. `hg.useBookmarks` = true)  
-  `"all"` &mdash; all bookmarks / unrestricted (this is the default)  
-  `"current"` &mdash; only includes changesets for the active bookmark  
-  `"default"` &mdash; only includes changesets for bookmarks on the _default_ branch
 
-`hg.pushPullBranch` _**DEPRECATED**_ `{ all | current | default }`
-  * Use `hg.pushPullScope` instead.
-  * Specifies which branch(es) should be included in Push/Pull operations. 
-  * Included only for backwards compatibility.
-  
-`hg.autoUpdate { boolean }`
-  * Enables automatic update of working directory to branch/bookmark head after pulling (equivalent to `hg pull --update`)  
-  `"true"` &mdash; enabled  
+`fossil.autoUpdate { boolean }`
+
+  * Enables automatic update of working directory to branch head after pulling (equivalent to `fossil update`)
+  `"true"` &mdash; enabled
   `"false"` &mdash; disabled, manual update/merge required
 
-`hg.autoInOut { boolean }`
+`fossil.autoInOut { boolean }`
+
   * Enables automatic counting of incoming/outgoing changes.
   * When enabled, these show in the status bar.
   * Updated every 3 minutes, or whenever a commit/push/pull is done.
-  * Note: when `hg.pushPullBranch` is set to `"current"` or `"default"` then only the respective branch will be included in the counts.
-  
-`hg.autoRefresh { boolean }`
-  * Enables automatic refreshing of Source Control tab and badge counter when files within the project change:  
-  `"true"` &mdash; enabled  
-  `"false"` &mdash; disabled, manual refresh still available.
-    
-`hg.countBadge { tracked | all | off }`
-  * Controls the badge counter for Source Control in the activity bar:  
-  `"tracked"` &mdash; only count changes to tracked files (default).  
-  `"all"` &mdash; include untracked files in count.  
-  `"off"` &mdash; no badge counter.
-  
-`hg.allowPushNewBranches { boolean }`
-  * Overrides the warning that normally occurs when a new branch is pushed:  
-  `"true"` &mdash; new branches are pushed without warning (default).  
-  `"false"` &mdash; shows a prompt when new branches are being pushed (e.g `hg push --new-branch`)
+  * Note: when `fossil.pushPullBranch` is set to `"current"` or `"default"` then only the respective branch will be included in the counts.
 
-`hg.path { string | null }`
-  * Specifies an explicit `hg` file path to use.
-  * This should only be used if `hg` cannot be found automatically.
-  * The default behaviour is to search for `hg` in commonly-known install locations and on the PATH.
-  
-`hg.commandMode`
-  * Controls the method used to communicate with `hg`.
-  * There is a slight start-up performance cost with repeatedly running `hg` commands.
-  * Running a [command server](https://www.mercurial-scm.org/wiki/CommandServer) process in the background allows frequently-used commands to run ~10× faster (e.g. `cat`, `status`, `summary`, `branch` etc.)  
-  * The server feature is still expiremental, and is therefore not the default.
-  `"cli"` &mdash; spawn a new `hg` process per command (default).
-  `"server"` &mdash; run a command server process &nbsp;_i.e. `hg serve --cmdserve`_  
+`fossil.autoRefresh { boolean }`
+
+  * Enables automatic refreshing of Source Control tab and badge counter when files within the project change:
+  `"true"` &mdash; enabled
+  `"false"` &mdash; disabled, manual refresh still available.
+
+`fossil.countBadge { tracked / all / off }`
+
+  * Controls the badge counter for Source Control in the activity bar:
+  `"tracked"` &mdash; only count changes to tracked files (default).
+  `"all"` &mdash; include untracked files in count.
+  `"off"` &mdash; no badge counter.
+
+`fossil.allowPushNewBranches { boolean }`
+
+  * Overrides the warning that normally occurs when a new branch is pushed:
+  `"true"` &mdash; new branches are pushed without warning (default).
+  `"false"` &mdash; shows a prompt when new branches are being pushed (e.g `fossil push --new-branch`)
+
+`fossil.path { string / null }`
+
+  * Specifies an explicit `fossil` file path to use.
+  * This should only be used if `fossil` cannot be found automatically.
+  * The default behaviour is to search for `fossil` in commonly-known install locations and on the PATH.
 
 # Acknowledgements
 
+[Ben Crowl](https://github.com/mrcrowl),
 [ajansveld](https://github.com/ajansveld), [hoffmael](https://github.com/hoffmael), [nioh-wiki](https://github.com/nioh-wiki), [joaomoreno](https://github.com/joaomoreno), [nsgundy](https://github.com/nsgundy)

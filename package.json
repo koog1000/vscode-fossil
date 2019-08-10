@@ -1,32 +1,30 @@
 {
-  "name": "hg",
-  "publisher": "mrcrowl",
-  "displayName": "Hg",
-  "description": "Integrated Mercurial source control",
+  "name": "fossil",
+  "publisher": "koog1000",
+  "displayName": "Fossil",
+  "description": "Integrated Fossil source control",
   "galleryBanner": {
     "color": "#999999",
     "theme": "dark"
   },
-  "homepage": "https://github.com/mrcrowl/vscode-hg/blob/master/README.md",
+  "homepage": "https://github.com/koog1000/vscode-fossil",
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "https://github.com/mrcrowl/vscode-hg.git"
+    "url": "https://github.com/koog1000/vscode-fossil.git"
   },
   "bugs": {
-    "url": "https://github.com/mrcrowl/vscode-hg/issues"
+    "url": "https://github.com/koog1000/vscode-fossil/issues"
   },
-  "version": "1.3.0",
+  "version": "0.0.0",
   "engines": {
     "vscode": "^1.17.0"
   },
   "keywords": [
-    "hg",
-    "mercurial",
+    "fossil-scm",
+    "fossil",
     "source",
-    "tortoise",
-    "scm",
-    "multi-root ready"
+    "scm"
   ],
   "icon": "icon.png",
   "enableProposedApi": false,
@@ -41,705 +39,669 @@
   "contributes": {
     "commands": [
       {
-        "command": "hg.add",
+        "command": "fossil.add",
         "title": "%command.add%",
-        "category": "Hg",
+        "category": "Fossil",
         "icon": {
           "light": "resources/icons/light/add.svg",
           "dark": "resources/icons/dark/add.svg"
         }
       },
       {
-        "command": "hg.addAll",
+        "command": "fossil.addAll",
         "title": "%command.addAll%",
-        "category": "Hg",
+        "category": "Fossil",
         "icon": {
           "light": "resources/icons/light/add.svg",
           "dark": "resources/icons/dark/add.svg"
         }
       },
       {
-        "command": "hg.branch",
+        "command": "fossil.branch",
         "title": "%command.branch%",
-        "category": "Hg"
+        "category": "Fossil"
       },
       {
-        "command": "hg.setBookmark",
-        "title": "%command.setBookmark%",
-        "category": "Hg"
-      },
-      {
-        "command": "hg.removeBookmark",
-        "title": "%command.removeBookmark%",
-        "category": "Hg"
-      },
-      {
-        "command": "hg.clean",
+        "command": "fossil.clean",
         "title": "%command.clean%",
-        "category": "Hg",
+        "category": "Fossil",
         "icon": {
           "light": "resources/icons/light/discard.svg",
           "dark": "resources/icons/dark/discard.svg"
         }
       },
       {
-        "command": "hg.cleanAll",
+        "command": "fossil.cleanAll",
         "title": "%command.cleanAll%",
-        "category": "Hg",
+        "category": "Fossil",
         "icon": {
           "light": "resources/icons/light/discard.svg",
           "dark": "resources/icons/dark/discard.svg"
         }
       },
       {
-        "command": "hg.commit",
+        "command": "fossil.commit",
         "title": "%command.commit%",
-        "category": "Hg",
+        "category": "Fossil",
         "icon": {
           "light": "resources/icons/light/check.svg",
           "dark": "resources/icons/dark/check.svg"
         }
       },
       {
-        "command": "hg.commitAll",
+        "command": "fossil.commitAll",
         "title": "%command.commitAll%",
-        "category": "Hg"
+        "category": "Fossil"
       },
       {
-        "command": "hg.commitStaged",
+        "command": "fossil.commitStaged",
         "title": "%command.commitStaged%",
-        "category": "Hg"
+        "category": "Fossil"
       },
       {
-        "command": "hg.clone",
+        "command": "fossil.clone",
         "title": "%command.clone%",
-        "category": "Hg"
+        "category": "Fossil"
       },
       {
-        "command": "hg.fileLog",
+        "command": "fossil.fileLog",
         "title": "%command.fileLog%",
-        "category": "Hg"
+        "category": "Fossil"
       },
       {
-        "command": "hg.forget",
+        "command": "fossil.forget",
         "title": "%command.forget%",
-        "category": "Hg"
+        "category": "Fossil"
       },
       {
-        "command": "hg.init",
+        "command": "fossil.init",
         "title": "%command.init%",
-        "category": "Hg",
+        "category": "Fossil",
         "icon": {
           "light": "resources/icons/light/hg.svg",
           "dark": "resources/icons/dark/hg.svg"
         }
       },
       {
-        "command": "hg.close",
+        "command": "fossil.close",
         "title": "%command.close%",
-        "category": "Hg"
+        "category": "Fossil"
       },
       {
-        "command": "hg.log",
+        "command": "fossil.log",
         "title": "%command.log%",
-        "category": "Hg"
+        "category": "Fossil"
       },
       {
-        "command": "hg.logBranch",
+        "command": "fossil.logBranch",
         "title": "%command.logBranch%",
-        "category": "Hg"
+        "category": "Fossil"
       },
       {
-        "command": "hg.logDefault",
+        "command": "fossil.logDefault",
         "title": "%command.logDefault%",
-        "category": "Hg"
+        "category": "Fossil"
       },
       {
-        "command": "hg.logRepo",
+        "command": "fossil.logRepo",
         "title": "%command.logRepo%",
-        "category": "Hg"
+        "category": "Fossil"
       },
       {
-        "command": "hg.markResolved",
+        "command": "fossil.markResolved",
         "title": "%command.markResolved%",
-        "category": "Hg",
+        "category": "Fossil",
         "icon": {
           "light": "resources/icons/light/check.svg",
           "dark": "resources/icons/dark/check.svg"
         }
       },
       {
-        "command": "hg.mergeHeads",
+        "command": "fossil.mergeHeads",
         "title": "%command.mergeHeads%",
-        "category": "Hg"
+        "category": "Fossil"
       },
       {
-        "command": "hg.mergeWithLocal",
+        "command": "fossil.mergeWithLocal",
         "title": "%command.mergeWithLocal%",
-        "category": "Hg"
+        "category": "Fossil"
       },
       {
-        "command": "hg.openChange",
+        "command": "fossil.openChange",
         "title": "%command.openChange%",
-        "category": "Hg",
+        "category": "Fossil",
         "icon": {
           "light": "resources/icons/light/open-change.svg",
           "dark": "resources/icons/dark/open-change.svg"
         }
       },
       {
-        "command": "hg.openChangeFromUri",
+        "command": "fossil.openChangeFromUri",
         "title": "%command.openChange%",
-        "category": "Hg",
+        "category": "Fossil",
         "icon": {
           "light": "resources/icons/light/open-change.svg",
           "dark": "resources/icons/dark/open-change.svg"
         }
       },
       {
-        "command": "hg.openFile",
+        "command": "fossil.openFile",
         "title": "%command.openFile%",
-        "category": "Hg",
+        "category": "Fossil",
         "icon": {
           "light": "resources/icons/light/open-file.svg",
           "dark": "resources/icons/dark/open-file.svg"
         }
       },
       {
-        "command": "hg.openFiles",
+        "command": "fossil.openFiles",
         "title": "%command.openFiles%",
-        "category": "Hg"
+        "category": "Fossil"
       },
       {
-        "command": "hg.openFileFromUri",
+        "command": "fossil.openFileFromUri",
         "title": "%command.openFile%",
-        "category": "Hg",
+        "category": "Fossil",
         "icon": {
           "light": "resources/icons/light/open-file.svg",
           "dark": "resources/icons/dark/open-file.svg"
         }
       },
       {
-        "command": "hg.openhgrc",
-        "title": "%command.openhgrc%",
-        "category": "Hg"
+        "command": "fossil.openui",
+        "title": "%command.openui%",
+        "category": "Fossil"
       },
       {
-        "command": "hg.pull",
+        "command": "fossil.pull",
         "title": "%command.pull%",
-        "category": "Hg"
+        "category": "Fossil"
       },
       {
-        "command": "hg.push",
+        "command": "fossil.push",
         "title": "%command.push%",
-        "category": "Hg"
+        "category": "Fossil"
       },
       {
-        "command": "hg.pushTo",
+        "command": "fossil.pushTo",
         "title": "%command.pushTo%",
-        "category": "Hg"
+        "category": "Fossil"
       },
       {
-        "command": "hg.refresh",
+        "command": "fossil.refresh",
         "title": "%command.refresh%",
-        "category": "Hg",
+        "category": "Fossil",
         "icon": {
           "light": "resources/icons/light/refresh.svg",
           "dark": "resources/icons/dark/refresh.svg"
         }
       },
       {
-        "command": "hg.resolveAgain",
+        "command": "fossil.resolveAgain",
         "title": "%command.resolveAgain%",
-        "category": "Hg",
+        "category": "Fossil",
         "icon": {
           "light": "resources/icons/light/refresh.svg",
           "dark": "resources/icons/dark/refresh.svg"
         }
       },
       {
-        "command": "hg.showOutput",
+        "command": "fossil.showOutput",
         "title": "%command.showOutput%",
-        "category": "Hg"
+        "category": "Fossil"
       },
       {
-        "command": "hg.stage",
+        "command": "fossil.stage",
         "title": "%command.stage%",
-        "category": "Hg",
+        "category": "Fossil",
         "icon": {
           "light": "resources/icons/light/stage.svg",
           "dark": "resources/icons/dark/stage.svg"
         }
       },
       {
-        "command": "hg.stageAll",
+        "command": "fossil.stageAll",
         "title": "%command.stageAll%",
-        "category": "Hg",
+        "category": "Fossil",
         "icon": {
           "light": "resources/icons/light/stage.svg",
           "dark": "resources/icons/dark/stage.svg"
         }
       },
       {
-        "command": "hg.undoRollback",
-        "title": "%command.undoRollback%",
-        "category": "Hg"
+        "command": "fossil.undo",
+        "title": "%command.undo%",
+        "category": "Fossil"
       },
       {
-        "command": "hg.unresolve",
+        "command": "fossil.unresolve",
         "title": "%command.unresolve%",
-        "category": "Hg"
+        "category": "Fossil"
       },
       {
-        "command": "hg.unstage",
+        "command": "fossil.unstage",
         "title": "%command.unstage%",
-        "category": "Hg",
+        "category": "Fossil",
         "icon": {
           "light": "resources/icons/light/unstage.svg",
           "dark": "resources/icons/dark/unstage.svg"
         }
       },
       {
-        "command": "hg.unstageAll",
+        "command": "fossil.unstageAll",
         "title": "%command.unstageAll%",
-        "category": "Hg",
+        "category": "Fossil",
         "icon": {
           "light": "resources/icons/light/unstage.svg",
           "dark": "resources/icons/dark/unstage.svg"
         }
       },
       {
-        "command": "hg.update",
+        "command": "fossil.update",
         "title": "%command.update%",
-        "category": "Hg"
+        "category": "Fossil"
       }
     ],
     "menus": {
       "commandPalette": [
         {
-          "command": "hg.clone",
-          "when": "config.hg.enabled"
+          "command": "fossil.clone",
+          "when": "config.fossil.enabled"
         },
         {
-          "command": "hg.init",
-          "when": "config.hg.enabled"
+          "command": "fossil.init",
+          "when": "config.fossil.enabled"
         },
         {
-          "command": "hg.openhgrc",
-          "when": "config.hg.enabled && hgOpenRepositoryCount != 0"
+          "command": "fossil.openui",
+          "when": "config.fossil.enabled && fossilOpenRepositoryCount != 0"
         },
         {
-          "command": "hg.refresh",
-          "when": "config.hg.enabled && hgOpenRepositoryCount != 0"
+          "command": "fossil.refresh",
+          "when": "config.fossil.enabled && fossilOpenRepositoryCount != 0"
         },
         {
-          "command": "hg.openChange",
+          "command": "fossil.openChange",
           "when": "false"
         },
         {
-          "command": "hg.openFile",
+          "command": "fossil.openFile",
           "when": "false"
         },
         {
-          "command": "hg.openFiles",
+          "command": "fossil.openFiles",
           "when": "false"
         },
         {
-          "command": "hg.openChangeFromUri",
-          "when": "config.hg.enabled && hgOpenRepositoryCount != 0"
+          "command": "fossil.openChangeFromUri",
+          "when": "config.fossil.enabled && fossilOpenRepositoryCount != 0"
         },
         {
-          "command": "hg.openFileFromUri",
-          "when": "config.hg.enabled && hgOpenRepositoryCount != 0"
+          "command": "fossil.openFileFromUri",
+          "when": "config.fossil.enabled && fossilOpenRepositoryCount != 0"
         },
         {
-          "command": "hg.stage",
-          "when": "config.hg.enabled && hgOpenRepositoryCount != 0"
+          "command": "fossil.stage",
+          "when": "config.fossil.enabled && fossilOpenRepositoryCount != 0"
         },
         {
-          "command": "hg.stageAll",
-          "when": "config.hg.enabled && hgOpenRepositoryCount != 0"
+          "command": "fossil.stageAll",
+          "when": "config.fossil.enabled && fossilOpenRepositoryCount != 0"
         },
         {
-          "command": "hg.unstage",
-          "when": "config.hg.enabled && hgOpenRepositoryCount != 0"
+          "command": "fossil.unstage",
+          "when": "config.fossil.enabled && fossilOpenRepositoryCount != 0"
         },
         {
-          "command": "hg.unstageAll",
-          "when": "config.hg.enabled && hgOpenRepositoryCount != 0"
+          "command": "fossil.unstageAll",
+          "when": "config.fossil.enabled && fossilOpenRepositoryCount != 0"
         },
         {
-          "command": "hg.clean",
-          "when": "config.hg.enabled && hgOpenRepositoryCount != 0"
+          "command": "fossil.clean",
+          "when": "config.fossil.enabled && fossilOpenRepositoryCount != 0"
         },
         {
-          "command": "hg.cleanAll",
-          "when": "config.hg.enabled && hgOpenRepositoryCount != 0"
+          "command": "fossil.cleanAll",
+          "when": "config.fossil.enabled && fossilOpenRepositoryCount != 0"
         },
         {
-          "command": "hg.commit",
-          "when": "config.hg.enabled && hgOpenRepositoryCount != 0"
+          "command": "fossil.commit",
+          "when": "config.fossil.enabled && fossilOpenRepositoryCount != 0"
         },
         {
-          "command": "hg.commitStaged",
-          "when": "config.hg.enabled && hgOpenRepositoryCount != 0"
+          "command": "fossil.commitStaged",
+          "when": "config.fossil.enabled && fossilOpenRepositoryCount != 0"
         },
         {
-          "command": "hg.commitAll",
-          "when": "config.hg.enabled && hgOpenRepositoryCount != 0"
+          "command": "fossil.commitAll",
+          "when": "config.fossil.enabled && fossilOpenRepositoryCount != 0"
         },
         {
-          "command": "hg.undoRollback",
-          "when": "config.hg.enabled && hgOpenRepositoryCount != 0"
+          "command": "fossil.undo",
+          "when": "config.fossil.enabled && fossilOpenRepositoryCount != 0"
         },
         {
-          "command": "hg.update",
-          "when": "config.hg.enabled && hgOpenRepositoryCount != 0"
+          "command": "fossil.update",
+          "when": "config.fossil.enabled && fossilOpenRepositoryCount != 0"
         },
         {
-          "command": "hg.branch",
-          "when": "config.hg.enabled && hgOpenRepositoryCount != 0"
+          "command": "fossil.branch",
+          "when": "config.fossil.enabled && fossilOpenRepositoryCount != 0"
         },
         {
-          "command": "hg.setBookmark",
-          "when": "config.hg.enabled && hgOpenRepositoryCount != 0"
+          "command": "fossil.pull",
+          "when": "config.fossil.enabled && fossilOpenRepositoryCount != 0"
         },
         {
-          "command": "hg.removeBookmark",
-          "when": "config.hg.enabled && hgOpenRepositoryCount != 0"
+          "command": "fossil.push",
+          "when": "config.fossil.enabled && fossilOpenRepositoryCount != 0"
         },
         {
-          "command": "hg.pull",
-          "when": "config.hg.enabled && hgOpenRepositoryCount != 0"
+          "command": "fossil.pushTo",
+          "when": "config.fossil.enabled && fossilOpenRepositoryCount != 0"
         },
         {
-          "command": "hg.push",
-          "when": "config.hg.enabled && hgOpenRepositoryCount != 0"
+          "command": "fossil.mergeHeads",
+          "when": "config.fossil.enabled && fossilOpenRepositoryCount != 0"
         },
         {
-          "command": "hg.pushTo",
-          "when": "config.hg.enabled && hgOpenRepositoryCount != 0"
+          "command": "fossil.mergeWithLocal",
+          "when": "config.fossil.enabled && fossilOpenRepositoryCount != 0"
         },
         {
-          "command": "hg.mergeHeads",
-          "when": "config.hg.enabled && hgOpenRepositoryCount != 0"
+          "command": "fossil.showOutput",
+          "when": "config.fossil.enabled && fossilOpenRepositoryCount != 0"
         },
         {
-          "command": "hg.mergeWithLocal",
-          "when": "config.hg.enabled && hgOpenRepositoryCount != 0"
+          "command": "fossil.fileLog",
+          "when": "config.fossil.enabled && fossilOpenRepositoryCount != 0"
         },
         {
-          "command": "hg.showOutput",
-          "when": "config.hg.enabled && hgOpenRepositoryCount != 0"
+          "command": "fossil.log",
+          "when": "config.fossil.enabled && fossilOpenRepositoryCount != 0"
         },
         {
-          "command": "hg.fileLog",
-          "when": "config.hg.enabled && hgOpenRepositoryCount != 0"
+          "command": "fossil.logBranch",
+          "when": "config.fossil.enabled && fossilOpenRepositoryCount != 0"
         },
         {
-          "command": "hg.log",
-          "when": "config.hg.enabled && hgOpenRepositoryCount != 0"
+          "command": "fossil.logDefault",
+          "when": "config.fossil.enabled && fossilOpenRepositoryCount != 0"
         },
         {
-          "command": "hg.logBranch",
-          "when": "config.hg.enabled && hgOpenRepositoryCount != 0"
-        },
-        {
-          "command": "hg.logDefault",
-          "when": "config.hg.enabled && hgOpenRepositoryCount != 0"
-        },
-        {
-          "command": "hg.logRepo",
-          "when": "config.hg.enabled && hgOpenRepositoryCount != 0"
+          "command": "fossil.logRepo",
+          "when": "config.fossil.enabled && fossilOpenRepositoryCount != 0"
         }
       ],
       "scm/title": [
         {
-          "command": "hg.init",
+          "command": "fossil.init",
           "group": "navigation",
-          "when": "config.hg.enabled && !scmProvider && hgOpenRepositoryCount == 0"
+          "when": "config.fossil.enabled && !scmProvider && fossilOpenRepositoryCount == 0"
         },
         {
-          "command": "hg.commit",
+          "command": "fossil.commit",
           "group": "navigation",
-          "when": "config.hg.enabled && scmProvider == hg"
+          "when": "config.fossil.enabled && scmProvider == fossil"
         },
         {
-          "command": "hg.refresh",
+          "command": "fossil.refresh",
           "group": "navigation",
-          "when": "config.hg.enabled && scmProvider == hg"
+          "when": "config.fossil.enabled && scmProvider == fossil"
         },
         {
-          "command": "hg.pull",
+          "command": "fossil.pull",
           "group": "1_sync",
-          "when": "config.hg.enabled && scmProvider == hg"
+          "when": "config.fossil.enabled && scmProvider == fossil"
         },
         {
-          "command": "hg.push",
+          "command": "fossil.push",
           "group": "1_sync",
-          "when": "config.hg.enabled && scmProvider == hg"
+          "when": "config.fossil.enabled && scmProvider == fossil"
         },
         {
-          "command": "hg.pushTo",
+          "command": "fossil.pushTo",
           "group": "1_sync",
-          "when": "config.hg.enabled && scmProvider == hg"
+          "when": "config.fossil.enabled && scmProvider == fossil"
         },
         {
-          "command": "hg.commitStaged",
+          "command": "fossil.commitStaged",
           "group": "3_commit",
-          "when": "config.hg.enabled && scmProvider == hg"
+          "when": "config.fossil.enabled && scmProvider == fossil"
         },
         {
-          "command": "hg.commitAll",
+          "command": "fossil.commitAll",
           "group": "3_commit",
-          "when": "config.hg.enabled && scmProvider == hg"
+          "when": "config.fossil.enabled && scmProvider == fossil"
         },
         {
-          "command": "hg.undoRollback",
+          "command": "fossil.undo",
           "group": "3_commit",
-          "when": "config.hg.enabled && scmProvider == hg"
+          "when": "config.fossil.enabled && scmProvider == fossil"
         },
         {
-          "command": "hg.unstageAll",
+          "command": "fossil.unstageAll",
           "group": "4_stage",
-          "when": "config.hg.enabled && scmProvider == hg"
+          "when": "config.fossil.enabled && scmProvider == fossil"
         },
         {
-          "command": "hg.cleanAll",
+          "command": "fossil.cleanAll",
           "group": "4_stage",
-          "when": "config.hg.enabled && scmProvider == hg"
+          "when": "config.fossil.enabled && scmProvider == fossil"
         },
         {
-          "command": "hg.mergeHeads",
+          "command": "fossil.mergeHeads",
           "group": "5_merge",
-          "when": "config.hg.enabled && scmProvider == hg"
+          "when": "config.fossil.enabled && scmProvider == fossil"
         },
         {
-          "command": "hg.mergeWithLocal",
+          "command": "fossil.mergeWithLocal",
           "group": "5_merge",
-          "when": "config.hg.enabled && scmProvider == hg"
+          "when": "config.fossil.enabled && scmProvider == fossil"
         },
         {
-          "command": "hg.showOutput",
+          "command": "fossil.showOutput",
           "group": "6_output",
-          "when": "config.hg.enabled && scmProvider == hg"
+          "when": "config.fossil.enabled && scmProvider == fossil"
         }
       ],
       "scm/sourceControl": [
         {
-          "command": "hg.close",
+          "command": "fossil.close",
           "group": "navigation",
-          "when": "config.hg.enabled && scmProvider == hg"
+          "when": "config.fossil.enabled && scmProvider == fossil"
         }
       ],
       "scm/resourceGroup/context": [
         {
-          "command": "hg.unstageAll",
-          "when": "config.hg.enabled && scmProvider == hg && scmResourceGroup == staging",
+          "command": "fossil.unstageAll",
+          "when": "config.fossil.enabled && scmProvider == fossil && scmResourceGroup == staging",
           "group": "1_modification"
         },
         {
-          "command": "hg.unstageAll",
-          "when": "config.hg.enabled && scmProvider == hg && scmResourceGroup == staging",
+          "command": "fossil.unstageAll",
+          "when": "config.fossil.enabled && scmProvider == fossil && scmResourceGroup == staging",
           "group": "inline"
         },
         {
-          "command": "hg.cleanAll",
-          "when": "config.hg.enabled && scmProvider == hg && scmResourceGroup == working",
+          "command": "fossil.cleanAll",
+          "when": "config.fossil.enabled && scmProvider == fossil && scmResourceGroup == working",
           "group": "1_modification"
         },
         {
-          "command": "hg.stageAll",
-          "when": "config.hg.enabled && scmProvider == hg && scmResourceGroup == working",
+          "command": "fossil.stageAll",
+          "when": "config.fossil.enabled && scmProvider == fossil && scmResourceGroup == working",
           "group": "1_modification"
         },
         {
-          "command": "hg.stageAll",
-          "when": "config.hg.enabled && scmProvider == hg && scmResourceGroup == working",
+          "command": "fossil.stageAll",
+          "when": "config.fossil.enabled && scmProvider == fossil && scmResourceGroup == working",
           "group": "inline"
         },
         {
-          "command": "hg.cleanAll",
-          "when": "config.hg.enabled && scmProvider == hg && scmResourceGroup == working",
+          "command": "fossil.cleanAll",
+          "when": "config.fossil.enabled && scmProvider == fossil && scmResourceGroup == working",
           "group": "inline"
         },
         {
-          "command": "hg.addAll",
-          "when": "config.hg.enabled && scmProvider == hg && scmResourceGroup == untracked",
+          "command": "fossil.addAll",
+          "when": "config.fossil.enabled && scmProvider == fossil && scmResourceGroup == untracked",
           "group": "1_modification"
         },
         {
-          "command": "hg.addAll",
-          "when": "config.hg.enabled && scmProvider == hg && scmResourceGroup == untracked",
+          "command": "fossil.addAll",
+          "when": "config.fossil.enabled && scmProvider == fossil && scmResourceGroup == untracked",
           "group": "inline"
         },
         {
-          "command": "hg.openFiles",
-          "when": "config.hg.enabled && scmProvider == hg",
+          "command": "fossil.openFiles",
+          "when": "config.fossil.enabled && scmProvider == fossil",
           "group": "navigation"
         },
         {
-          "command": "hg.openChange",
-          "when": "config.hg.enabled && scmProvider == hg && scmResourceGroup != untracked",
+          "command": "fossil.openChange",
+          "when": "config.fossil.enabled && scmProvider == fossil && scmResourceGroup != untracked",
           "group": "navigation"
         }
       ],
       "scm/resourceState/context": [
         {
-          "command": "hg.resolveAgain",
-          "when": "config.hg.enabled && scmProvider == hg && scmResourceGroup == conflict",
+          "command": "fossil.resolveAgain",
+          "when": "config.fossil.enabled && scmProvider == fossil && scmResourceGroup == conflict",
           "group": "inline"
         },
         {
-          "command": "hg.markResolved",
-          "when": "config.hg.enabled && scmProvider == hg && scmResourceGroup == conflict",
+          "command": "fossil.markResolved",
+          "when": "config.fossil.enabled && scmProvider == fossil && scmResourceGroup == conflict",
           "group": "inline"
         },
         {
-          "command": "hg.resolveAgain",
-          "when": "config.hg.enabled && scmProvider == hg && scmResourceGroup == conflict",
+          "command": "fossil.resolveAgain",
+          "when": "config.fossil.enabled && scmProvider == fossil && scmResourceGroup == conflict",
           "group": "0_resolution"
         },
         {
-          "command": "hg.markResolved",
-          "when": "config.hg.enabled && scmProvider == hg && scmResourceGroup == conflict",
+          "command": "fossil.markResolved",
+          "when": "config.fossil.enabled && scmProvider == fossil && scmResourceGroup == conflict",
           "group": "0_resolution"
         },
         {
-          "command": "hg.unresolve",
-          "when": "config.hg.enabled && scmProvider == hg && scmResourceGroup == merge",
+          "command": "fossil.unresolve",
+          "when": "config.fossil.enabled && scmProvider == fossil && scmResourceGroup == merge",
           "group": "1_modification"
         },
         {
-          "command": "hg.openChange",
-          "when": "config.hg.enabled && scmProvider == hg && scmResourceGroup == staging",
+          "command": "fossil.openChange",
+          "when": "config.fossil.enabled && scmProvider == fossil && scmResourceGroup == staging",
           "group": "navigation"
         },
         {
-          "command": "hg.unstage",
-          "when": "config.hg.enabled && scmProvider == hg && scmResourceGroup == staging",
+          "command": "fossil.unstage",
+          "when": "config.fossil.enabled && scmProvider == fossil && scmResourceGroup == staging",
           "group": "1_modification"
         },
         {
-          "command": "hg.unstage",
-          "when": "config.hg.enabled && scmProvider == hg && scmResourceGroup == staging",
+          "command": "fossil.unstage",
+          "when": "config.fossil.enabled && scmProvider == fossil && scmResourceGroup == staging",
           "group": "inline"
         },
         {
-          "command": "hg.openChange",
-          "when": "config.hg.enabled && scmProvider == hg && scmResourceGroup == working",
+          "command": "fossil.openChange",
+          "when": "config.fossil.enabled && scmProvider == fossil && scmResourceGroup == working",
           "group": "navigation"
         },
         {
-          "command": "hg.stage",
-          "when": "config.hg.enabled && scmProvider == hg && scmResourceGroup == working",
+          "command": "fossil.stage",
+          "when": "config.fossil.enabled && scmProvider == fossil && scmResourceGroup == working",
           "group": "1_modification"
         },
         {
-          "command": "hg.clean",
-          "when": "config.hg.enabled && scmProvider == hg && scmResourceGroup == working",
+          "command": "fossil.clean",
+          "when": "config.fossil.enabled && scmProvider == fossil && scmResourceGroup == working",
           "group": "1_modification"
         },
         {
-          "command": "hg.clean",
-          "when": "config.hg.enabled && scmProvider == hg && scmResourceGroup == working",
+          "command": "fossil.clean",
+          "when": "config.fossil.enabled && scmProvider == fossil && scmResourceGroup == working",
           "group": "inline"
         },
         {
-          "command": "hg.stage",
-          "when": "config.hg.enabled && scmProvider == hg && scmResourceGroup == working",
+          "command": "fossil.stage",
+          "when": "config.fossil.enabled && scmProvider == fossil && scmResourceGroup == working",
           "group": "inline"
         },
         {
-          "command": "hg.add",
-          "when": "config.hg.enabled && scmProvider == hg && scmResourceGroup == untracked",
+          "command": "fossil.add",
+          "when": "config.fossil.enabled && scmProvider == fossil && scmResourceGroup == untracked",
           "group": "inline"
         },
         {
-          "command": "hg.add",
-          "when": "config.hg.enabled && scmProvider == hg && scmResourceGroup == untracked",
+          "command": "fossil.add",
+          "when": "config.fossil.enabled && scmProvider == fossil && scmResourceGroup == untracked",
           "group": "1_modification"
         },
         {
-          "command": "hg.openFiles",
-          "when": "config.hg.enabled && scmProvider == hg",
+          "command": "fossil.openFiles",
+          "when": "config.fossil.enabled && scmProvider == fossil",
           "group": "navigation"
         },
         {
-          "command": "hg.forget",
-          "when": "config.hg.enabled && scmProvider == hg && scmResourceGroup == working",
+          "command": "fossil.forget",
+          "when": "config.fossil.enabled && scmProvider == fossil && scmResourceGroup == working",
           "group": "2_modification"
         }
       ],
       "editor/title": [
         {
-          "command": "hg.openFileFromUri",
+          "command": "fossil.openFileFromUri",
           "group": "navigation",
-          "when": "config.hg.enabled && hgOpenRepositoryCount != 0 && isInDiffEditor && resourceScheme != extension"
+          "when": "config.fossil.enabled && fossilOpenRepositoryCount != 0 && isInDiffEditor && resourceScheme != extension"
         },
         {
-          "command": "hg.openChangeFromUri",
+          "command": "fossil.openChangeFromUri",
           "group": "navigation",
-          "when": "config.hg.enabled && hgOpenRepositoryCount != 0 && !isInDiffEditor && resourceScheme == file"
+          "when": "config.fossil.enabled && fossilOpenRepositoryCount != 0 && !isInDiffEditor && resourceScheme == file"
         },
         {
-          "command": "hg.fileLog",
-          "when": "config.hg.enabled && hgOpenRepositoryCount != 0 && !isInDiffEditor"
+          "command": "fossil.fileLog",
+          "when": "config.fossil.enabled && fossilOpenRepositoryCount != 0 && !isInDiffEditor"
         }
       ]
     },
     "configuration": {
-      "title": "Hg (Mercurial)",
+      "title": "Fossil",
       "properties": {
-        "hg.enabled": {
+        "fossil.enabled": {
           "type": "boolean",
           "description": "%config.enabled%",
           "default": true
         },
-        "hg.useBookmarks": {
-          "type": "boolean",
-          "description": "%config.useBookmarks%",
-          "default": false
-        },
-        "hg.allowPushNewBranches": {
+        "fossil.allowPushNewBranches": {
           "type": "boolean",
           "description": "%config.allowPushNewBranches%",
           "default": true
         },
-        "hg.autoInOut": {
+        "fossil.autoInOut": {
           "type": "boolean",
           "description": "%config.autoInOut%",
           "default": true
         },
-        "hg.autoInOutInterval": {
+        "fossil.autoInOutInterval": {
           "type": "number",
           "description": "%config.autoInOutInterval%",
           "default": 180
         },
-        "hg.autoRefresh": {
+        "fossil.autoRefresh": {
           "type": "boolean",
           "description": "%config.autoRefresh%",
           "default": true
         },
-        "hg.autoUpdate": {
+        "fossil.autoUpdate": {
           "type": "boolean",
           "description": "%config.autoUpdate%",
           "default": true
         },
-        "hg.commandMode": {
-          "type": "string",
-          "description": "%config.commandMode%",
-          "enum": [
-            "cli",
-            "server"
-          ],
-          "enumDescriptions": [
-            "%config.commandMode.cli%",
-            "%config.commandMode.server%"
-          ],
-          "default": "cli"
-        },
-        "hg.countBadge": {
+        "fossil.countBadge": {
           "type": "string",
           "description": "%config.countBadge%",
           "enum": [
@@ -754,7 +716,7 @@
           ],
           "default": "all"
         },
-        "hg.path": {
+        "fossil.path": {
           "type": [
             "string",
             "null"
@@ -763,7 +725,7 @@
           "default": null,
           "isExecutable": true
         },
-        "hg.pushPullBranch": {
+        "fossil.pushPullBranch": {
           "type": "string",
           "description": "%config.pushPullBranch%",
           "enum": [
@@ -778,7 +740,7 @@
           ],
           "default": "all"
         },
-        "hg.pushPullScope": {
+        "fossil.pushPullScope": {
           "type": "string",
           "description": "%config.pushPullScope%",
           "enum": [
@@ -803,6 +765,8 @@
   },
   "dependencies": {
     "tmp": "0.0.31",
+    "tsc": "^1.20150623.0",
+    "typescript": "^3.5.3",
     "vscode-nls": "^2.0.1"
   },
   "devDependencies": {

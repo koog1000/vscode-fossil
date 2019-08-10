@@ -1,13 +1,12 @@
 import { workspace } from "vscode"
 
 export type PushPullScopeOptions = "default" | "current" | "all" | undefined;
-export type CommandModeOptions = "server" | "cli" | undefined;
 
 const DEFAULT_AUTO_IN_OUT_INTERVAL_SECONDS = 3 * 60 /* three minutes */;
 
 class Config {
     private get config() {
-        return workspace.getConfiguration('hg');
+        return workspace.getConfiguration('fossil');
     }
 
     private get<T>(name: keyof Config, defaultValue: T): T {
@@ -54,20 +53,8 @@ class Config {
         return this.autoInOutInterval * 1000;
     }
 
-    get useBookmarks(): boolean {
-        return this.get("useBookmarks", false);
-    }
-
-    setUseBookmarks(value: true) {
-        return this.update("useBookmarks", true);
-    }
-
     get allowPushNewBranches(): boolean {
         return this.get("allowPushNewBranches", false);
-    }
-
-    get commandMode(): CommandModeOptions {
-        return this.get<CommandModeOptions>("commandMode", "cli");
     }
 
     get pushPullScope(): PushPullScopeOptions {

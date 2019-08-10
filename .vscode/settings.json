@@ -6,11 +6,10 @@
         "**/.svn": true,
         "**/.hg": true,
         "**/CVS": true,
+        "_FOSSIL_": true,
+        ".fossil-settings/*.no-warn": true,
         "**/.DS_Store": true,
         "*.vsix": true,
         "images/production": true
-    },
-    "editor.codeActionsOnSave": {
-        "source.organizeImports": false
-	}
+    }
 }

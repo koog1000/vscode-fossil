@@ -5,137 +5,129 @@
  *--------------------------------------------------------------------------------------------*/
 
 
-
 import { workspace, Uri, Disposable, Event, EventEmitter, window } from 'vscode';
 import { debounce, throttle } from './decorators';
-import { Model, ModelChangeEvent, OriginalResourceChangeEvent } from './model';
-import { readFile } from 'fs';
-import * as vscode from "vscode";
+import { Model, OriginalResourceChangeEvent } from './model';
 import { filterEvent, eventToPromise } from './util';
-import { fromHgUri, toHgUri } from './uri';
+import { fromFossilUri, toFossilUri } from './uri';
 
 interface CacheRow {
-	uri: Uri;
-	timestamp: number;
+    uri: Uri;
+    timestamp: number;
 }
 
 interface Cache {
-	[uri: string]: CacheRow;
+    [uri: string]: CacheRow;
 }
 
 const THREE_MINUTES = 1000 * 60 * 3;
 const FIVE_MINUTES = 1000 * 60 * 5;
 
-export class HgContentProvider {
+export class FossilContentProvider {
 
-	private _onDidChange = new EventEmitter<Uri>();
-	get onDidChange(): Event<Uri> { return this._onDidChange.event; }
+    private _onDidChange = new EventEmitter<Uri>();
+    get onDidChange(): Event<Uri> { return this._onDidChange.event; }
 
-	private changedRepositoryRoots = new Set<string>();
-	private cache: Cache = Object.create(null);
-	private disposables: Disposable[] = [];
+    private changedRepositoryRoots = new Set<string>();
+    private cache: Cache = Object.create(null);
+    private disposables: Disposable[] = [];
 
-	constructor(private model: Model) {
-		this.disposables.push(
-			model.onDidChangeRepository(this.eventuallyFireChangeEvents, this),
-			model.onDidChangeOriginalResource(this.onDidChangeOriginalResource, this),
-			workspace.registerTextDocumentContentProvider('hg', this),
-			workspace.registerTextDocumentContentProvider('hg-original', this)
-		);
+    constructor(private model: Model) {
+        this.disposables.push(
+            model.onDidChangeRepository(this.eventuallyFireChangeEvents, this),
+            model.onDidChangeOriginalResource(this.onDidChangeOriginalResource, this),
+            workspace.registerTextDocumentContentProvider('fossil', this),
+            workspace.registerTextDocumentContentProvider('fossil-original', this)
+        );
 
-		setInterval(() => this.cleanup(), FIVE_MINUTES);
-	}
-	
-	private onDidChangeRepository({ repository }: ModelChangeEvent): void {
-		this.changedRepositoryRoots.add(repository.root);
-		this.eventuallyFireChangeEvents();
-	}
-	
-		private onDidChangeOriginalResource({ uri }: OriginalResourceChangeEvent): void {
-			if (uri.scheme !== 'file') {
-				return;
-			}
-	
-			this._onDidChange.fire(toHgUri(uri, '', true));
-		}
+        setInterval(() => this.cleanup(), FIVE_MINUTES);
+    }
 
-	@debounce(1100)
-	private eventuallyFireChangeEvents(): void {
-		this.fireChangeEvents();
-	}
+    private onDidChangeOriginalResource({ uri }: OriginalResourceChangeEvent): void {
+        if (uri.scheme !== 'file') {
+            return;
+        }
 
-	@throttle
-	private async fireChangeEvents(): Promise<void> {
-		if (!window.state.focused) {
-			const onDidFocusWindow = filterEvent(window.onDidChangeWindowState, e => e.focused);
-			await eventToPromise(onDidFocusWindow);
-		}
+        this._onDidChange.fire(toFossilUri(uri, ''));
+    }
 
-		Object.keys(this.cache).forEach(key => {
-			const uri = this.cache[key].uri;
-			const fsPath = uri.fsPath;
+    @debounce(1100)
+    private eventuallyFireChangeEvents(): void {
+        this.fireChangeEvents();
+    }
 
-			for (const root of this.changedRepositoryRoots) {
-				if (fsPath.startsWith(root)) {
-					this._onDidChange.fire(uri);
-					return;
-				}
-			}
-		});
+    @throttle
+    private async fireChangeEvents(): Promise<void> {
+        if (!window.state.focused) {
+            const onDidFocusWindow = filterEvent(window.onDidChangeWindowState, e => e.focused);
+            await eventToPromise(onDidFocusWindow);
+        }
 
-		this.changedRepositoryRoots.clear();
+        Object.keys(this.cache).forEach(key => {
+            const uri = this.cache[key].uri;
+            const fsPath = uri.fsPath;
 
-		// await this.model.whenIdle();
+            for (const root of this.changedRepositoryRoots) {
+                if (fsPath.startsWith(root)) {
+                    this._onDidChange.fire(uri);
+                    return;
+                }
+            }
+        });
 
-		// Object.keys(this.cache).forEach(key => this.onDidChangeEmitter.fire(this.cache[key].uri));
-	}
+        this.changedRepositoryRoots.clear();
 
-	async provideTextDocumentContent(uri: Uri): Promise<string> {
-		const repository = this.model.getRepository(uri);
+        // await this.model.whenIdle();
 
-		if (!repository) {
-			return '';
-		}
+        // Object.keys(this.cache).forEach(key => this.onDidChangeEmitter.fire(this.cache[key].uri));
+    }
 
-		const cacheKey = uri.toString();
-		const timestamp = new Date().getTime();
-		const cacheValue = { uri, timestamp };
+    async provideTextDocumentContent(uri: Uri): Promise<string> {
+        const repository = this.model.getRepository(uri);
 
-		this.cache[cacheKey] = cacheValue;
+        if (!repository) {
+            return '';
+        }
 
-		if (uri.scheme === 'hg-original') {
-			uri = uri.with({ scheme: 'hg', path: uri.query });
-		}
+        const cacheKey = uri.toString();
+        const timestamp = new Date().getTime();
+        const cacheValue = { uri, timestamp };
 
-		let { path, ref } = fromHgUri(uri);
+        this.cache[cacheKey] = cacheValue;
 
-		try {
-			return await repository.show(ref, path);
-		}
-		catch (err) {
-			// no-op
-		}
+        if (uri.scheme === 'fossil-original') {
+            uri = uri.with({ scheme: 'fossil', path: uri.query });
+        }
 
-		return '';
-	}
+        let { path, ref } = fromFossilUri(uri);
 
-	private cleanup(): void {
-		const now = new Date().getTime();
-		const cache = Object.create(null);
+        try {
+            return await repository.show('', path);
+        }
+        catch (err) {
+            // no-op
+        }
 
-		Object.keys(this.cache).forEach(key => {
-			const row = this.cache[key];
-			const isOpen = window.visibleTextEditors.some(e => e.document.uri.fsPath === row.uri.fsPath);
+        return '';
+    }
 
-			if (isOpen || now - row.timestamp < THREE_MINUTES) {
-				cache[row.uri.toString()] = row;
-			}
-		});
+    private cleanup(): void {
+        const now = new Date().getTime();
+        const cache = Object.create(null);
 
-		this.cache = cache;
-	}
+        Object.keys(this.cache).forEach(key => {
+            const row = this.cache[key];
+            const isOpen = window.visibleTextEditors.some(e => e.document.uri.fsPath === row.uri.fsPath);
 
-	dispose(): void {
-		this.disposables.forEach(d => d.dispose());
-	}
+            if (isOpen || now - row.timestamp < THREE_MINUTES) {
+                cache[row.uri.toString()] = row;
+            }
+        });
+
+        this.cache = cache;
+    }
+
+    dispose(): void {
+        this.disposables.forEach(d => d.dispose());
+    }
 }

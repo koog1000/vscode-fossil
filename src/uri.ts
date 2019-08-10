@@ -8,20 +8,20 @@
 
 import { Uri } from 'vscode';
 
-export function fromHgUri(uri: Uri): { path: string; ref: string; } {
-	return JSON.parse(uri.query);
+export function fromFossilUri(uri: Uri): { path: string; ref: string; } {
+    return JSON.parse(uri.query);
 }
 
 // As a mitigation for extensions like ESLint showing warnings and errors
 // for hg URIs, let's change the file extension of these uris to .hg,
 // when `replaceFileExtension` is true.
-export function toHgUri(uri: Uri, ref: string, replaceFileExtension = false): Uri {
-	return uri.with({
-		scheme: 'hg-original',
-		path: replaceFileExtension ? `${uri.path}.hg` : uri.path,
-		query: JSON.stringify({
-			path: uri.fsPath,
-			ref
-		})
-	});
+export function toFossilUri(uri: Uri, ref: string): Uri {
+    return uri.with({
+        scheme: 'fossil-original',
+        path: uri.path,
+        query: JSON.stringify({
+            path: uri.fsPath,
+            ref
+        })
+    });
 }
