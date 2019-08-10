@@ -527,8 +527,8 @@ export class Repository implements IDisposable {
                 await this.run(Operation.Remove, () => this.repository.remove(relativePaths));
             }
 
-            // this._groups.staging = this._groups.staging.intersect(resources);
-            // this._groups.working = this._groups.working.except(resources);
+            this._groups.staging = this._groups.staging.intersect(resources);
+            this._groups.working = this._groups.working.except(resources);
             this._onDidChangeResources.fire();
         });
     }
@@ -571,10 +571,10 @@ export class Repository implements IDisposable {
             resources = this._groups.staging.resources;
         }
         const relativePaths: string[] = resources.map(r => this.mapResourceToRepoRelativePath(r));
-        await this.run(Operation.Remove, () => this.repository.revert(relativePaths));
+        // await this.run(Operation.Remove, () => this.repository.revert(relativePaths));
 
-        // this._groups.staging = this._groups.staging.except(resources);
-        // this._groups.working = this._groups.working.intersect(resources);
+        this._groups.staging = this._groups.staging.except(resources);
+        this._groups.working = this._groups.working.intersect(resources);
         this._onDidChangeResources.fire();
     }
 
@@ -582,16 +582,12 @@ export class Repository implements IDisposable {
     async commit(message: string, opts: CommitOptions = Object.create(null)): Promise<void> {
         await this.run(Operation.Commit, async () => {
             let fileList: string[] = [];
-            if (opts.scope === CommitScope.CHANGES ||
-                opts.scope === CommitScope.STAGED_CHANGES) {
-                let selectedResources = opts.scope === CommitScope.STAGED_CHANGES ?
-                    this.stagingGroup.resources :
-                    this.workingDirectoryGroup.resources;
-
-                fileList = selectedResources.map(r => this.mapResourceToRepoRelativePath(r));
+            if (opts.scope === CommitScope.STAGED_CHANGES) {
+                fileList = this.stagingGroup.resources.map(r => this.mapResourceToRepoRelativePath(r));
+                await this.repository.commit(message, { fileList });
+                return;
             }
-
-            await this.repository.commit(message, { addRemove: opts.scope === CommitScope.ALL_WITH_ADD_REMOVE, fileList });
+            interaction.informNoChangesToCommit();
         });
     }
 

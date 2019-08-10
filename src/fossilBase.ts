@@ -530,7 +530,7 @@ export class Repository {
         }
     }
 
-    async commit(message: string, opts: { addRemove?: boolean, fileList: string[] } = Object.create(null)): Promise<void> {
+    async commit(message: string, opts: { fileList: string[] } = Object.create(null)): Promise<void> {
         const disposables: IDisposable[] = [];
         const args = ['commit'];
 

@@ -134,17 +134,17 @@ export function groupStatuses({
     const mergeResources: Resource[] = [];
     const untrackedResources: Resource[] = [];
 
-    const chooseResourcesAndGroup = (uriString: string, rawStatus: string, mergeStatus: MergeStatus, renamed: boolean): [Resource[], ResourceGroup, Status] => {
+    const chooseResourcesAndGroup = (uriString: Uri, rawStatus: string, mergeStatus: MergeStatus, renamed: boolean): [Resource[], ResourceGroup, Status] => {
         let status: Status;
         let isStaged: boolean;
         switch (rawStatus) {
-            case 'M': status = Status.MODIFIED;  isStaged = true; break;
-            case 'R': status = Status.DELETED;   isStaged = true; break;
-            case 'I': status = Status.IGNORED;   isStaged = false; break;
-            case '?': status = Status.UNTRACKED; isStaged = false; break;
-            case '!': status = Status.MISSING;   isStaged = false; break;
-            case 'A': status = renamed ? Status.RENAMED : Status.ADDED; isStaged = true; break;
-            case 'C': status = Status.CLEAN; isStaged = false; break;
+            case 'M': status = Status.MODIFIED;  break;
+            case 'R': status = Status.DELETED;   break;
+            case 'I': status = Status.IGNORED;   break;
+            case '?': status = Status.UNTRACKED; break;
+            case '!': status = Status.MISSING;   break;
+            case 'A': status = renamed ? Status.RENAMED : Status.ADDED; break;
+            case 'C': status = Status.CLEAN; break;
             default: throw new FossilError({ message: "Unknown rawStatus: " + rawStatus })
         }
 
@@ -158,7 +158,7 @@ export function groupStatuses({
             }
             return [mergeResources, merge, status];
         }
-
+        isStaged = staging.includesUri(uriString) ? true : false;
         const targetResources: Resource[] = isStaged ? stagingResources : workingDirectoryResources;
         const targetGroup: ResourceGroup = isStaged ? staging : working;
         return [targetResources, targetGroup, status];
@@ -173,7 +173,7 @@ export function groupStatuses({
         const renameUri = raw.rename ? Uri.file(path.join(respositoryRoot, raw.rename)) : undefined;
         const resolveFile = resolveStatuses && resolveStatuses.filter(res => res.path === raw.path)[0];
         const mergeStatus = resolveFile ? toMergeStatus(resolveFile.status) : MergeStatus.NONE;
-        const [resources, group, status] = chooseResourcesAndGroup(uriString, raw.status, mergeStatus, !!raw.rename);
+        const [resources, group, status] = chooseResourcesAndGroup(uri, raw.status, mergeStatus, !!raw.rename);
         resources.push(new Resource(group, uri, status, mergeStatus, renameUri));
     }
 
@@ -188,7 +188,7 @@ export function groupStatuses({
             }
             const mergeStatus = toMergeStatus(raw.status);
             const inferredStatus: string = fs.existsSync(uri.fsPath) ? 'C' : 'R';
-            const [resources, group, status] = chooseResourcesAndGroup(uriString, inferredStatus, mergeStatus, !!raw.rename);
+            const [resources, group, status] = chooseResourcesAndGroup(uri, inferredStatus, mergeStatus, !!raw.rename);
             resources.push(new Resource(group, uri, status, mergeStatus));
         }
     }
