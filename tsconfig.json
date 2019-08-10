@@ -1,18 +1,18 @@
 {
-	"compileOnSave": true,
-	"compilerOptions": {
-		"target": "es6",
-		"lib": [
-			"es2016"
-		],
-		"noImplicitThis": true,
-		"module": "commonjs",
-		"outDir": "out",
-		"sourceMap": true,
-		"strictNullChecks": true,
-		"experimentalDecorators": true
-	},
-	"exclude": [
-		"node_modules"
-	]
+    "compileOnSave": true,
+    "compilerOptions": {
+        "target": "es6",
+        "lib": [
+            "es2016"
+        ],
+        "noImplicitThis": true,
+        "module": "commonjs",
+        "outDir": "out",
+        "sourceMap": true,
+        "strictNullChecks": true,
+        "experimentalDecorators": true
+    },
+    "exclude": [
+        "node_modules"
+    ]
 }
