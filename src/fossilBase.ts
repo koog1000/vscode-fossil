@@ -290,8 +290,8 @@ export class Fossil {
         return this.openRepository;
     }
 
-    async init(repository: string): Promise<void> {
-        await this.exec(repository, ['init']);
+    async init(repository: string, repoName: string): Promise<void> {
+        await this.exec(repository, ['init', repoName]);
         return;
     }
 

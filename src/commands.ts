@@ -235,7 +235,8 @@ export class CommandCenter {
             canSelectFolders: true,
             canSelectMany: false,
             defaultUri,
-            openLabel: localize('init repo', "Initialize Repository")
+            
+            openLabel: localize('init repo', "Repository Folder")
         });
 
         if (!result || result.length === 0) {
@@ -243,21 +244,16 @@ export class CommandCenter {
         }
 
         const uri = result[0];
-
-        if (homeUri.toString().startsWith(uri.toString())) {
-            const yes = localize('create repo', "Initialize Repository");
-            const answer = await window.showWarningMessage(localize('are you sure', "This will create an Hg repository in '{0}'. Are you sure you want to continue?", uri.fsPath), yes);
-
-            if (answer !== yes) {
-                return;
+        const path = uri.fsPath;
+        const fileName = await interaction.inputRepoName()
+        if(fileName && fileName.length){
+            await this.fossil.init(path, fileName);
+            const openClonedRepo = await interaction.promptOpenClonedRepo();
+            if (openClonedRepo) {
+                this.fossil.openClone(fileName, path)
             }
         }
-
-        const path = uri.fsPath;
-        await this.fossil.init(path);
         await this.model.tryOpenRepository(path);
-
-        // await this.model.init();
     }
 
     @command('fossil.close', { repository: true})

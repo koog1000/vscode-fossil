@@ -191,6 +191,14 @@ export namespace interaction {
         return url;
     }
 
+    export async function inputRepoName(this: void): Promise<string | undefined> {
+        const name = await window.showInputBox({
+            prompt: localize('repourl', "Repository Name (should end with '.fossil')"),
+            ignoreFocusOut: true
+        });
+        return name;
+    }
+
     export async function inputCloneParentPath(this: void): Promise<string | undefined> {
         var val = workspace.workspaceFolders ? workspace.workspaceFolders[0].uri.fsPath : ''
         return await window.showInputBox({
