@@ -118,8 +118,8 @@
         "title": "%command.init%",
         "category": "Fossil",
         "icon": {
-          "light": "resources/icons/light/hg.svg",
-          "dark": "resources/icons/dark/hg.svg"
+          "light": "icon.png",
+          "dark": "icon.png"
         }
       },
       {
@@ -437,7 +437,7 @@
         {
           "command": "fossil.init",
           "group": "navigation",
-          "when": "config.fossil.enabled && !scmProvider && fossilOpenRepositoryCount == 0"
+          "when": "config.fossil.enabled && fossilOpenRepositoryCount == 0"
         },
         {
           "command": "fossil.commit",
