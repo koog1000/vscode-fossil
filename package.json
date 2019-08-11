@@ -35,7 +35,7 @@
   "activationEvents": [
     "*"
   ],
-  "main": "./out/src/main",
+  "main": "./out/main",
   "contributes": {
     "commands": [
       {
@@ -660,7 +660,7 @@
         {
           "command": "fossil.openChangeFromUri",
           "group": "navigation",
-          "when": "config.fossil.enabled && fossilOpenRepositoryCount != 0 && !isInDiffEditor && resourceScheme == file"
+          "when": "config.fossil.enabled && fossilOpenRepositoryCount != 0 && !isInDiffEditor && resourceScheme == file && scmProvider == fossil"
         },
         {
           "command": "fossil.fileLog",
@@ -764,6 +764,7 @@
     "postinstall": "node ./node_modules/vscode/bin/install"
   },
   "dependencies": {
+    "@types/mocha": "^5.2.7",
     "tmp": "0.0.31",
     "tsc": "^1.20150623.0",
     "typescript": "^3.5.3",
