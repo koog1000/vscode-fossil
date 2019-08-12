@@ -19,7 +19,7 @@ import { toFossilUri } from './uri';
 const timeout = (millis: number) => new Promise(c => setTimeout(c, millis));
 
 const localize = nls.loadMessageBundle();
-const iconsRootPath = path.join(path.dirname(__dirname), '..', 'resources', 'icons');
+const iconsRootPath = path.join(path.dirname(__dirname), 'resources', 'icons');
 
 type BadgeOptions = 'off' | 'all' | 'tracked';
 
@@ -107,7 +107,7 @@ export class Resource implements SourceControlResourceState {
             Added: getIconUri('status-added', 'light'),
             Deleted: getIconUri('status-deleted', 'light'),
             Renamed: getIconUri('status-renamed', 'light'),
-            Copied: getIconUri('status-copied', 'light'),
+            // Copied: getIconUri('status-copied', 'light'),
             Untracked: getIconUri('status-untracked', 'light'),
             Ignored: getIconUri('status-ignored', 'light'),
             Conflict: getIconUri('status-conflict', 'light'),
@@ -119,7 +119,7 @@ export class Resource implements SourceControlResourceState {
             Added: getIconUri('status-added', 'dark'),
             Deleted: getIconUri('status-deleted', 'dark'),
             Renamed: getIconUri('status-renamed', 'dark'),
-            Copied: getIconUri('status-copied', 'dark'),
+            // Copied: getIconUri('status-copied', 'dark'),
             Untracked: getIconUri('status-untracked', 'dark'),
             Ignored: getIconUri('status-ignored', 'dark'),
             Conflict: getIconUri('status-conflict', 'dark'),

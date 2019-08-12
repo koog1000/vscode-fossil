@@ -16,7 +16,7 @@
   "bugs": {
     "url": "https://github.com/koog1000/vscode-fossil/issues"
   },
-  "version": "0.0.1",
+  "version": "0.0.2",
   "engines": {
     "vscode": "^1.17.0"
   },
@@ -774,5 +774,10 @@
     "@types/node": "^7.0.4",
     "@types/tmp": "0.0.33",
     "vscode": "^1.1.6"
+    },
+  "__metadata": {
+    "id": "e828bfe6-95e7-4c7a-a334-ae2cc5ba8788",
+    "publisherDisplayName": "koog1000",
+    "publisherId": "8e4cabe1-5c1f-4bf5-bbf3-8bb8d5de842c"
   }
 }
