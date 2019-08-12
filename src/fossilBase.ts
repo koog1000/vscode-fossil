@@ -849,6 +849,10 @@ export class Repository {
                     var fileUri: string = line.substr(8).trim();
                     result.push({status: "!", path: fileUri});
                 }
+                else if (line.startsWith("CONFLICT")) {
+                    var fileUri: string = line.substr(9).trim();
+                    result.push({status: "C", path: fileUri});
+                }
             }
         });
         return result;

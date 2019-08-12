@@ -144,7 +144,7 @@ export function groupStatuses({
             case '?': status = Status.UNTRACKED; break;
             case '!': status = Status.MISSING;   break;
             case 'A': status = renamed ? Status.RENAMED : Status.ADDED; break;
-            case 'C': status = Status.CLEAN; break;
+            case 'C': status = Status.CONFLICT; break;
             default: throw new FossilError({ message: "Unknown rawStatus: " + rawStatus })
         }
 
@@ -152,11 +152,14 @@ export function groupStatuses({
             return [untrackedResources, untracked, status]
         }
 
-        if (repoStatus.isMerge) {
-            if (mergeStatus === MergeStatus.UNRESOLVED) {
-                return [conflictResources, conflict, status];
-            }
-            return [mergeResources, merge, status];
+        // if (repoStatus.isMerge) {
+        //     if (mergeStatus === MergeStatus.UNRESOLVED) {
+        //         return [conflictResources, conflict, status];
+        //     }
+        //     return [mergeResources, merge, status];
+        // }
+        if(status === Status.CONFLICT){
+            return [conflictResources, conflict, status];
         }
         isStaged = staging.includesUri(uriString) ? true : false;
         const targetResources: Resource[] = isStaged ? stagingResources : workingDirectoryResources;

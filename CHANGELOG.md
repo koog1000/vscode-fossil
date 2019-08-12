@@ -2,6 +2,15 @@ Changelog
 =============================================
 
 
+v0.0.3
+---------------------------------------------
+## What's New
+- Fixed issue where conflicted files would not show up in changeset
+    - conflicted files still must be manually fixed, but at least you know about them now
+- Updated README and gifs
+- Removed unused files
+
+
 v0.0.2
 ---------------------------------------------
 ## What's New

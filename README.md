@@ -39,17 +39,22 @@
 * Feel free to submit [pull requests](https://github.com/mrcrowl/vscode-hg/pulls).
 
 
+## View file changes
+![View changes](images/fossil_diff.gif)
+
+  * right click file and select `Open Changes`
+
 ## Initialize a new repo
 
 ![Init a repo](images/init.gif)
 __TODO__: update gif for fossil
 
-  * Just click the Fossil icon from the source control title area:
+  * Just click the Fossil icon from the source control title area
+    * Follow prompts
 
 ## Update to a branch/tag
 
 ![Change branches](images/change-branch.gif)
-__TODO__: update gif for fossil
 
   * The current branch name is shown in the bottom-left corner.
   * Click it to see a list of branches and tags that you can update to.

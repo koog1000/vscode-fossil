@@ -46,7 +46,8 @@ export enum Status {
     IGNORED,
     MISSING,
     RENAMED,
-    CLEAN
+    CLEAN,
+    CONFLICT
 }
 
 export enum MergeStatus {
@@ -76,6 +77,7 @@ export class Resource implements SourceControlResourceState {
             case Status.MISSING:
             case Status.MODIFIED:
             case Status.RENAMED:
+            case Status.CONFLICT:
             default:
                 return true;
         }
@@ -88,7 +90,8 @@ export class Resource implements SourceControlResourceState {
         if (this.renameResourceUri) {
             if (this._status === Status.MODIFIED ||
                 this._status === Status.RENAMED ||
-                this._status === Status.ADDED) {
+                this._status === Status.ADDED ||
+                this._status === Status.CONFLICT) {
                 return this.renameResourceUri;
             }
 
@@ -143,6 +146,7 @@ export class Resource implements SourceControlResourceState {
             case Status.UNTRACKED: return Resource.Icons[theme].Untracked;
             case Status.IGNORED: return Resource.Icons[theme].Ignored;
             case Status.CLEAN: return Resource.Icons[theme].Clean;
+            case Status.CONFLICT: return Resource.Icons[theme].Conflict;
             default: return void 0;
         }
     }
