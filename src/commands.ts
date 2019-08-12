@@ -118,6 +118,7 @@ export class CommandCenter {
     private getLeftResource(resource: Resource): Uri | undefined {
         switch (resource.status) {
             case Status.MODIFIED:
+            case Status.CONFLICT:
                 console.log('Left resource: ' + resource.original)
                 return toFossilUri(resource.original, ".");
 
@@ -154,6 +155,7 @@ export class CommandCenter {
             case Status.RENAMED:
             case Status.UNTRACKED:
             case Status.CLEAN:
+            case Status.CONFLICT:
                 console.log('Right resource: ' + resource.resourceUri)
                 return resource.resourceUri;
 
@@ -173,6 +175,7 @@ export class CommandCenter {
         switch (resource.status) {
             case Status.MODIFIED:
             case Status.ADDED:
+            case Status.CONFLICT:
                 return `${basename} (Working Directory)`;
 
             case Status.RENAMED:
@@ -235,7 +238,7 @@ export class CommandCenter {
             canSelectFolders: true,
             canSelectMany: false,
             defaultUri,
-            
+
             openLabel: localize('init repo', "Repository Folder")
         });
 
