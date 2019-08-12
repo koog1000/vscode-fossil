@@ -55,7 +55,6 @@ __TODO__: update gif for fossil
 ## Update to a branch/tag
 
 ![Change branches](images/change-branch.gif)
-__TODO__: update gif for fossil
 
   * The current branch name is shown in the bottom-left corner.
   * Click it to see a list of branches and tags that you can update to.
