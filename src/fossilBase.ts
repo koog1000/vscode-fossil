@@ -563,11 +563,12 @@ export class Repository {
     }
 
     async branch(name: string, opts?: { force: boolean }): Promise<void> {
-        const args = ['branch', 'new'];
-        if (opts && opts.force) {
-            args.push('-f');
+        const args = ['branch', 'new', name];
+        const currBranch = await this.getCurrentBranch();
+        if(currBranch && currBranch.name)
+        {
+            args.push(currBranch.name)
         }
-        args.push(name);
 
         try {
             await this.exec(args);
@@ -833,7 +834,15 @@ export class Repository {
 
         lines.forEach(line => {
             if (line.length > 0) {
-                if (line.startsWith("DELETED")) {
+                if (line.startsWith("UPDATED_BY_MERGE")) {
+                    var fileUri: string = line.substr(17).trim();
+                    result.push({status: "M", path: fileUri});
+                }
+                else if (line.startsWith("ADDED_BY_MERGE")) {
+                    var fileUri: string = line.substr(15).trim();
+                    result.push({status: "A", path: fileUri});
+                }
+                else if (line.startsWith("DELETED")) {
                     var fileUri: string = line.substr(8).trim();
                     result.push({status: "R", path: fileUri});
                 }
