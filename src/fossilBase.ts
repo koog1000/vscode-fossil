@@ -743,7 +743,7 @@ export class Repository {
 
     async merge(revQuery): Promise<IMergeResult> {
         try {
-            await this.exec(['merge', '-r', revQuery]);
+            await this.exec(['merge', revQuery]);
             return {
                 unresolvedCount: 0
             }
