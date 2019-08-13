@@ -4,7 +4,7 @@
 
 ### Prerequisites
 
-> **Note**: This extension leverages your machine's Fossil installation, so you need to [install Fossil](https://www.fossil-scm.org) first.
+> **Note**: This extension leverages your machine's Fossil installation, so you need to [install Fossil](https://www.fossil-scm.org/home/doc/trunk/www/build.wiki) first.
 
 ## NOTE: WORK IN PROGRESS. NOT READY FOR RELEASE.
 
@@ -36,7 +36,7 @@
 # Feedback & Contributing
 
 * Please report any bugs, suggestions or documentation requests via the [Github issues](https://github.com/koog1000/vscode-fossil/issues) (_yes_, I see the irony).
-* Feel free to submit [pull requests](https://github.com/mrcrowl/vscode-hg/pulls).
+* Feel free to submit [pull requests](https://github.com/koog1000/vscode-fossil/pulls).
 
 
 ## View file changes
@@ -50,7 +50,7 @@
 __TODO__: update gif for fossil
 
   * Just click the Fossil icon from the source control title area
-    * Follow prompts
+  * Follow prompts
 
 ## Update to a branch/tag
 
