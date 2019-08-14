@@ -4,7 +4,7 @@
 
 ### Prerequisites
 
-> **Note**: This extension leverages your machine's Fossil installation, so you need to [install Fossil](https://www.fossil-scm.org) first.
+> **Note**: This extension leverages your machine's Fossil installation, so you need to [install Fossil](https://www.fossil-scm.org/fossil/doc/trunk/www/quickstart.wiki) first.
 
 ## NOTE: WORK IN PROGRESS. NOT READY FOR RELEASE.
 
@@ -36,7 +36,7 @@
 # Feedback & Contributing
 
 * Please report any bugs, suggestions or documentation requests via the [Github issues](https://github.com/koog1000/vscode-fossil/issues) (_yes_, I see the irony).
-* Feel free to submit [pull requests](https://github.com/mrcrowl/vscode-hg/pulls).
+* Feel free to submit [pull requests](https://github.com/koog1000/vscode-fossil/pulls).
 
 
 ## View file changes

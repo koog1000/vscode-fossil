@@ -2,6 +2,15 @@ Changelog
 =============================================
 
 
+v0.0.5
+---------------------------------------------
+## What's New
+- Update readme with preferable page for fossil install and
+  point to proper pull requests
+- add prompt when fossil requests stdin
+    - only works for clone command at the moment
+
+
 v0.0.4
 ---------------------------------------------
 ## What's New

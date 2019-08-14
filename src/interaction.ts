@@ -191,6 +191,14 @@ export namespace interaction {
         return url;
     }
 
+    export async function inputPrompt(msg: string): Promise<string | undefined> {
+        const resp = await window.showInputBox({
+            prompt: localize('inputprompt', msg),
+            ignoreFocusOut: true
+        });
+        return resp;
+    }
+
     export async function inputRepoName(this: void): Promise<string | undefined> {
         const name = await window.showInputBox({
             prompt: localize('repourl', "Repository Name (should end with '.fossil')"),

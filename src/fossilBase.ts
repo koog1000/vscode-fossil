@@ -10,6 +10,7 @@ import * as path from 'path';
 import * as cp from 'child_process';
 import { assign, /* uniqBy,*/ groupBy, /*denodeify,*/ IDisposable, toDisposable, dispose, mkdirp, asciiOnly, writeStringToTempFile /*, log*/ } from "./util";
 import { EventEmitter, Event, /*OutputChannel,*/ workspace, Disposable } from "vscode";
+import { interaction } from './interaction';
 // import * as nls from 'vscode-nls';
 // import { FossilCommandServer } from "./hgserve";
 // import { activate } from "./main";
@@ -156,7 +157,17 @@ export async function exec(child: cp.ChildProcess): Promise<IExecutionResult> {
         }),
         new Promise<string>(c => {
             const buffers: string[] = [];
-            on(child.stdout, 'data', b => buffers.push(b));
+            async function checkForPrompt(input: any){
+                const inputStr: string = input.toString('utf-8')
+                if(inputStr){
+                    if(inputStr.endsWith("? ") || inputStr.endsWith("?")){
+                        const resp = await interaction.inputPrompt(inputStr)
+                        child.stdin.write(resp + '\n')
+                    }
+                }
+                buffers.push(input);
+            }
+            on(child.stdout, 'data', b => checkForPrompt(b));
             once(child.stdout, 'close', () => c(buffers.join('')));
         }),
         new Promise<string>(c => {
@@ -300,7 +311,8 @@ export class Fossil {
         const folderPath = path.join(parentPath, folderName + '.fossil');
 
         await mkdirp(parentPath);
-        await this.exec(parentPath, ['clone', url, folderPath]);
+        // pass stdio as null to use all file streams
+        await this.exec(parentPath, ['clone', url, folderPath], {stdio: [null, null, null]});
         return folderPath;
     }
 
@@ -320,10 +332,10 @@ export class Fossil {
         return await this._exec(args, options);
     }
 
-    stream(cwd: string, args: string[], options: any = {}): cp.ChildProcess {
-        options = assign({ cwd }, options || {});
-        return this.spawn(args, options);
-    }
+    // stream(cwd: string, args: string[], options: any = {}): cp.ChildProcess {
+    //     options = assign({ cwd }, options || {});
+    //     return this.spawn(args, options);
+    // }
 
     private async _exec(args: string[], options: any = {}): Promise<IExecutionResult> {
         const startTimeHR = process.hrtime();
@@ -434,13 +446,13 @@ export class Repository {
         return await this.fossil.exec(this.repositoryRoot, args, options);
     }
 
-    stream(args: string[], options: any = {}): cp.ChildProcess {
-        return this.fossil.stream(this.repositoryRoot, args, options);
-    }
+    // stream(args: string[], options: any = {}): cp.ChildProcess {
+    //     return this.fossil.stream(this.repositoryRoot, args, options);
+    // }
 
-    spawn(args: string[], options: any = {}): cp.ChildProcess {
-        return this.fossil.spawn(args, options);
-    }
+    // spawn(args: string[], options: any = {}): cp.ChildProcess {
+    //     return this.fossil.spawn(args, options);
+    // }
 
     async config(scope: string, key: string, value: any, options: any): Promise<string> {
         const args = ['config'];
