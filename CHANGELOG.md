@@ -2,6 +2,14 @@ Changelog
 =============================================
 
 
+v0.0.6
+---------------------------------------------
+## What's New
+- Update readme with link to cloning doc and and troubleshooting seciton
+- Update cloning inputboxes to default to empty
+- Default all commands to check for input prompt
+
+
 v0.0.5
 ---------------------------------------------
 ## What's New

@@ -617,7 +617,6 @@ export class CommandCenter {
 
     @command('fossil.undo', { repository: true })
     async undo(repository: Repository): Promise<void> {
-        console.log("running fossil undo")
         try {
             const undo = await repository.undo(true); // dry-run
             if (await interaction.confirmUndo(undo)) {
