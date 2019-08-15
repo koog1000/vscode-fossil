@@ -185,7 +185,7 @@ export namespace interaction {
 
     export async function inputRepoUrl(this: void): Promise<string | undefined> {
         const url = await window.showInputBox({
-            prompt: localize('repourl', "Repository URL"),
+            prompt: localize('repourl', "Repository URI"),
             ignoreFocusOut: true
         });
         return url;
@@ -219,7 +219,7 @@ export namespace interaction {
     export async function inputCloneUser(this: void): Promise<string | undefined> {
         const auth = await window.showInputBox({
             prompt: localize('parent', "Username "),
-            value: 'None',
+            placeHolder: 'None',
             ignoreFocusOut: true
         });
         return auth
@@ -228,7 +228,8 @@ export namespace interaction {
     export async function inputCloneUserAuth(this: void): Promise<string | undefined> {
         const auth = await window.showInputBox({
             prompt: localize('parent', "User Authentication"),
-            value: 'None',
+            placeHolder: 'None',
+            password: true,
             ignoreFocusOut: true
         });
         return auth

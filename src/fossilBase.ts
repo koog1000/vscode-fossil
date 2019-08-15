@@ -160,7 +160,8 @@ export async function exec(child: cp.ChildProcess): Promise<IExecutionResult> {
             async function checkForPrompt(input: any){
                 const inputStr: string = input.toString('utf-8')
                 if(inputStr){
-                    if(inputStr.endsWith("? ") || inputStr.endsWith("?")){
+                    if(inputStr.endsWith("? ") || inputStr.endsWith("?") ||
+                       inputStr.endsWith(": ") || inputStr.endsWith(":")){
                         const resp = await interaction.inputPrompt(inputStr)
                         child.stdin.write(resp + '\n')
                     }
@@ -311,8 +312,7 @@ export class Fossil {
         const folderPath = path.join(parentPath, folderName + '.fossil');
 
         await mkdirp(parentPath);
-        // pass stdio as null to use all file streams
-        await this.exec(parentPath, ['clone', url, folderPath], {stdio: [null, null, null]});
+        await this.exec(parentPath, ['clone', url, folderPath]);
         return folderPath;
     }
 
@@ -342,13 +342,10 @@ export class Fossil {
 
         let result: IExecutionResult;
         const child = this.spawn(args, options);
-        if (options.input) {
-            child.stdin.end(options.input, 'utf8');
-        }
         result = await exec(child);
 
         const durationHR = process.hrtime(startTimeHR);
-        this.log("Enabled: " + this.instrumentEnabled + `, fossil ${args.join(' ')}: ${Math.floor(msFromHighResTime(durationHR))}ms\n`);
+        this.log(`fossil ${args.join(' ')}: ${Math.floor(msFromHighResTime(durationHR))}ms\n`);
 
         if (result.exitCode) {
             let fossilErrorCode: string | undefined = void 0;
@@ -389,15 +386,13 @@ export class Fossil {
             options = {};
         }
 
-        if (!options.stdio && !options.input) {
-            options.stdio = ['ignore', null, null]; // Unless provided, ignore stdin and leave default streams for stdout and stderr
+        if (!options.stdio) {
+            options.stdio = 'pipe';
         }
 
         options.env = {
-            HGENCODING: "utf-8", // allow user's env to overwrite this
             ...process.env,
             ...options.env,
-            VSCODE_HG_COMMAND: args[0],
             LC_ALL: 'en_US',
             LANG: 'en_US.UTF-8'
         }
@@ -969,7 +964,6 @@ export class Repository {
             .map((line: string): Ref | null => {
                 let match = line.match(/\b(.+)$/);
                 if (match) {
-                    console.log(match)
                     return { name: match[1], commit: match[1], type: RefType.Branch };
                 }
                 return null;
