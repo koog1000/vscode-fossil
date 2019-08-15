@@ -185,7 +185,7 @@ export namespace interaction {
 
     export async function inputRepoUrl(this: void): Promise<string | undefined> {
         const url = await window.showInputBox({
-            prompt: localize('repourl', "Repository URL"),
+            prompt: localize('repourl', "Repository URI"),
             ignoreFocusOut: true
         });
         return url;
