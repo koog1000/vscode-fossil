@@ -987,8 +987,8 @@ export class Repository implements IDisposable {
     }
 
     @throttle
-    public getParents(revision?: string): Promise<string> {
-        return this.repository.getParents(revision);
+    public getParents(): Promise<string> {
+        return this.repository.getParents();
     }
 
     @throttle
@@ -1000,8 +1000,8 @@ export class Repository implements IDisposable {
     public async getCommitDetails(revision: string): Promise<CommitDetails> {
 
         const commitPromise = this.getLogEntries({ revQuery: revision, limit: 1 });
-        const fileStatusesPromise = await this.repository.getStatus(revision);
-        const parentsPromise = await this.getParents(revision);
+        const fileStatusesPromise = await this.repository.getStatus();
+        const parentsPromise = await this.getParents();
 
         const [[commit], fileStatuses] = await Promise.all([commitPromise, this.repository.parseStatusLines(fileStatusesPromise)]);
 
