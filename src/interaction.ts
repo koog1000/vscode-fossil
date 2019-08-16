@@ -6,10 +6,9 @@
 
 import * as nls from "vscode-nls";
 import * as path from "path";
-import { window, QuickPickItem, workspace } from "vscode";
+import { window, QuickPickItem, workspace, ViewColumn } from "vscode";
 import { FossilUndoDetails, Path, Ref, RefType, Commit, LogEntryOptions, CommitDetails, IFileStatus } from "./fossilBase";
 import { humanise } from "./humanise";
-import * as os from "os";
 import { Repository, LogEntriesOptions } from "./repository";
 const localize = nls.loadMessageBundle();
 
@@ -192,10 +191,27 @@ export namespace interaction {
     }
 
     export async function inputPrompt(msg: string): Promise<string | undefined> {
+        const title = 'Fossil Request'
+        const panel = window.createWebviewPanel('inputPrompt', title, ViewColumn.One);
+        panel.webview.html = `<!DOCTYPE html>
+        <html lang="en">
+        <head>
+            <meta charset="UTF-8">
+            <meta name="viewport" content="width=device-width, initial-scale=1.0">
+            <title>${title}</title>
+        </head>
+        <body>
+            <pre>
+            ${msg}
+            </pre>
+        </body>
+        </html>`
+        const lines = msg.split('\n')
         const resp = await window.showInputBox({
-            prompt: localize('inputprompt', msg),
+            prompt: localize('inputprompt', lines[lines.length-1]),
             ignoreFocusOut: true
         });
+        panel.dispose();
         return resp;
     }
 
