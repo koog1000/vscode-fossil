@@ -2,6 +2,13 @@ Changelog
 =============================================
 
 
+v0.0.7
+---------------------------------------------
+## What's New
+- Update commit to allow non-ASCII characters
+- Create webview with stdout content when fossil prompts user for input
+
+
 v0.0.6
 ---------------------------------------------
 ## What's New
