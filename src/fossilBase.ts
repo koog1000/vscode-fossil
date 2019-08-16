@@ -4,20 +4,11 @@
  *  Licensed under the MIT License. See LICENSE.txt in the project root for license information.
  *--------------------------------------------------------------------------------------------*/
 
-// import * as fs from 'fs';
 import * as path from 'path';
-// import * as os from 'os';
 import * as cp from 'child_process';
-import { assign, /* uniqBy,*/ groupBy, /*denodeify,*/ IDisposable, toDisposable, dispose, mkdirp, asciiOnly, writeStringToTempFile /*, log*/ } from "./util";
-import { EventEmitter, Event, /*OutputChannel,*/ workspace, Disposable } from "vscode";
+import { groupBy, IDisposable, toDisposable, dispose, mkdirp } from "./util";
+import { EventEmitter, Event, workspace, Disposable } from "vscode";
 import { interaction } from './interaction';
-// import * as nls from 'vscode-nls';
-// import { FossilCommandServer } from "./hgserve";
-// import { activate } from "./main";
-
-// const localize = nls.loadMessageBundle();
-// const readdir = denodeify<string[]>(fs.readdir);
-// const readfile = denodeify<string>(fs.readFile);
 
 export interface IFossil {
     path: string;
@@ -279,7 +270,6 @@ export const FossilErrorCodes = {
 export class Fossil {
 
     private fossilPath: string;
-    private instrumentEnabled: boolean;
     private disposables: Disposable[] = [];
     private openRepository: Repository | undefined;
 
@@ -288,13 +278,6 @@ export class Fossil {
 
     constructor(options: IFossilOptions) {
         this.fossilPath = options.fossilPath;
-        this.instrumentEnabled = options.enableInstrumentation;
-
-        workspace.onDidChangeConfiguration(() => this.onConfigurationChange(), this, this.disposables);
-        this.onConfigurationChange();
-    }
-
-    async onConfigurationChange(forceServerRestart?: boolean) {
     }
 
     open(repository: string): Repository {
@@ -331,11 +314,6 @@ export class Fossil {
         options = { cwd, ...options };
         return await this._exec(args, options);
     }
-
-    // stream(cwd: string, args: string[], options: any = {}): cp.ChildProcess {
-    //     options = assign({ cwd }, options || {});
-    //     return this.spawn(args, options);
-    // }
 
     private async _exec(args: string[], options: any = {}): Promise<IExecutionResult> {
         const startTimeHR = process.hrtime();
@@ -441,14 +419,6 @@ export class Repository {
         return await this.fossil.exec(this.repositoryRoot, args, options);
     }
 
-    // stream(args: string[], options: any = {}): cp.ChildProcess {
-    //     return this.fossil.stream(this.repositoryRoot, args, options);
-    // }
-
-    // spawn(args: string[], options: any = {}): cp.ChildProcess {
-    //     return this.fossil.spawn(args, options);
-    // }
-
     async config(scope: string, key: string, value: any, options: any): Promise<string> {
         const args = ['config'];
 
@@ -472,22 +442,9 @@ export class Repository {
         if (paths && paths.length) {
             args.push.apply(args, paths);
         }
-        else {
-            // args.push('.');
-        }
 
         await this.exec(args);
     }
-
-    // async addRemove(paths: string[]): Promise<void> {
-    //     const args = ['addremove', '-s', '50'];
-
-    //     for (const path of paths) {
-    //         args.push('-I', path);
-    //     }
-
-    //     await this.run(args);
-    // }
 
     async cat(relativePath: string, ref?: string): Promise<string> {
         const args = ['cat', relativePath];
@@ -545,12 +502,8 @@ export class Repository {
             args.push(...opts.fileList);
         }
 
-        if (asciiOnly(message)) {
-            args.push('-m', message || "");
-        }
-        else {
-            const commitMessageFsPath = await writeStringToTempFile(message, disposables);
-            args.push('-l', commitMessageFsPath);
+        if (message && message.length) {
+            args.push('-m', message);
         }
 
         try {
@@ -631,7 +584,6 @@ export class Repository {
             }
 
             const [_, revision, kind] = match;
-            const commitDetails: ICommitDetails | undefined = (dryRun && kind === "commit") ? await this.tryGetLastCommitDetails() : undefined;
 
             return {
                 revision: parseInt(revision),
@@ -650,7 +602,7 @@ export class Repository {
         try {
             return {
                 message: await this.getLastCommitMessage(),
-                affectedFiles: this.parseStatusLines(await this.getStatus("."))
+                affectedFiles: this.parseStatusLines(await this.getStatus())
             }
         }
         catch (e) {
@@ -749,7 +701,7 @@ export class Repository {
         return files;
     }
 
-    async merge(revQuery): Promise<IMergeResult> {
+    async merge(revQuery: string): Promise<IMergeResult> {
         try {
             await this.exec(['merge', revQuery]);
             return {
@@ -777,31 +729,20 @@ export class Repository {
 
     async getSummary(): Promise<IRepoStatus> {
         const summary = await this.getStatus();
-        const lines = summary.trim().split('\n');
-        const parentLines = lines.filter(line => line.startsWith("parent:"));
-        const parents = parentLines.length ? this.parseParentLines(parentLines) : [];
-
-        const commitLine = lines.filter(line => line.startsWith("checkout:"))[0];
-        if (commitLine) {
-            const isMerge = /\bmerge\b/.test(commitLine);
-            return { isMerge, parents };
-        }
-
-        return { isMerge: false, parents };
+        const parents = this.parseParentLines(summary);
+        const isMerge = /\bMERGED WITH\b/.test(summary);
+        return { isMerge, parents };
     }
 
-    parseParentLines(parentLines: string[]): Ref[] {
-        // e.g. "parent: 44:2f88476fceca tip"
+    parseParentLines(parentLines: string): Ref[] {
         const refs: Ref[] = [];
-        for (const line of parentLines) {
-            const match = line.match(/^parent:\s+([a-f0-9]+)/);
-            if (match) {
-                const [_, hash, date] = match;
-                refs.push({
-                    type: RefType.Commit,
-                    commit: hash
-                });
-            }
+        const match = parentLines.match(/parent:\s+([a-f0-9]+)/);
+        if (match) {
+            const [_, hash] = match;
+            refs.push({
+                type: RefType.Commit,
+                commit: hash
+            });
         }
         return refs;
     }
@@ -827,12 +768,10 @@ export class Repository {
         return "";
     }
 
-    async getStatus(revision?: string): Promise<string> {
+    async getStatus(): Promise<string> {
         const args = ['status'];
-
         const executionResult = await this.exec(args); // quiet, include renames/copies
-        const status = executionResult.stdout;
-        return status;
+        return executionResult.stdout;
     }
 
     parseStatusLines(status: string): IFileStatus[] {
@@ -874,14 +813,11 @@ export class Repository {
         return result;
     }
 
-    async getExtras(revision?: string): Promise<string> {
+    async getExtras(): Promise<string> {
         const args = ['extras'];
-
         const executionResult = await this.exec(args);
-        const status = executionResult.stdout;
-        return status;
+        return executionResult.stdout;
     }
-
 
     parseExtrasLines(status: string): IFileStatus[] {
         const result: IFileStatus[] = [];
@@ -938,7 +874,7 @@ export class Repository {
         return logEntries;
     }
 
-    async getParents(revision?: string): Promise<string> {
+    async getParents(): Promise<string> {
         const message = await this.getStatus();
         var comment = message.match(/parent:\s+(.*)\s(.*)\n/)
         if (comment) return comment[1];
