@@ -6,10 +6,10 @@
  *  Licensed under the MIT License. See LICENSE.txt in the project root for license information.
  *--------------------------------------------------------------------------------------------*/
 
-import { Uri, Command, EventEmitter, Event, SourceControlResourceState, SourceControlResourceDecorations, Disposable, window, workspace, commands, ProgressLocation, SourceControlResourceGroup, SourceControl, WorkspaceFoldersChangeEvent, TextEditor, QuickPickItem } from "vscode";
-import { Fossil, Repository as BaseRepository, Ref, Path, PushOptions, PullOptions, Commit, FossilErrorCodes, FossilError, IFileStatus, FossilUndoDetails, IRepoStatus, IMergeResult, LogEntryOptions, LogEntryRepositoryOptions, CommitDetails, Revision, SyncOptions } from "./fossilBase";
-import { anyEvent, eventToPromise, filterEvent, mapEvent, EmptyDisposable, combinedDisposable, dispose, groupBy, partition, delay } from "./util";
-import { memoize, throttle, debounce, sequentialize } from "./decorators";
+import { Uri, EventEmitter, Event, Disposable, window, workspace, SourceControlResourceGroup, SourceControl, WorkspaceFoldersChangeEvent, TextEditor, QuickPickItem } from "vscode";
+import { Fossil, FossilErrorCodes } from "./fossilBase";
+import { anyEvent, filterEvent, dispose, } from "./util";
+import { memoize, debounce, sequentialize } from "./decorators";
 import * as path from 'path';
 import * as fs from 'fs';
 import * as nls from 'vscode-nls';

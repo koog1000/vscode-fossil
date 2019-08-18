@@ -149,15 +149,15 @@ export async function exec(child: cp.ChildProcess): Promise<IExecutionResult> {
         new Promise<string>(c => {
             const buffers: string[] = [];
             async function checkForPrompt(input: any){
-                const inputStr: string = input.toString('utf-8')
+                buffers.push(input);
+                const inputStr: string = input.toString()
                 if(inputStr){
                     if(inputStr.endsWith("? ") || inputStr.endsWith("?") ||
                        inputStr.endsWith(": ") || inputStr.endsWith(":")){
-                        const resp = await interaction.inputPrompt(inputStr)
+                        const resp = await interaction.inputPrompt(buffers.toString())
                         child.stdin.write(resp + '\n')
                     }
                 }
-                buffers.push(input);
             }
             on(child.stdout, 'data', b => checkForPrompt(b));
             once(child.stdout, 'close', () => c(buffers.join('')));
