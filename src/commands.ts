@@ -4,17 +4,15 @@
  *  Licensed under the MIT License. See LICENSE.txt in the project root for license information.
  *--------------------------------------------------------------------------------------------*/
 
-import { Uri, commands, scm, Disposable, window, workspace, QuickPickItem, OutputChannel, Range, WorkspaceEdit, Position, SourceControlResourceState, SourceControl, SourceControlResourceGroup, TextDocumentShowOptions, ViewColumn } from "vscode";
-import { Ref, RefType, Fossil, Commit, FossilError, FossilErrorCodes, PushOptions, IMergeResult, LogEntryOptions, IFileStatus, CommitDetails, Revision, SyncOptions } from "./fossilBase";
+import { Uri, commands, scm, Disposable, window, workspace, OutputChannel, SourceControlResourceState, SourceControl, SourceControlResourceGroup, TextDocumentShowOptions, ViewColumn } from "vscode";
+import { Ref, Fossil, Commit, FossilError, FossilErrorCodes, IFileStatus, CommitDetails } from "./fossilBase";
 import { Model } from "./model";
 import { Resource, Status, CommitOptions, CommitScope, MergeStatus, LogEntriesOptions, Repository } from "./repository"
 import * as path from 'path';
 import * as os from 'os';
-import { WorkingDirectoryGroup, StagingGroup, MergeGroup, UntrackedGroup, ConflictGroup, ResourceGroup, ResourceGroupId, isResourceGroup } from "./resourceGroups";
-import { interaction, BranchExistsAction, WarnScenario, CommitSources, DescribedBackAction, DefaultRepoNotConfiguredAction, LogMenuAPI } from "./interaction";
+import { WorkingDirectoryGroup, StagingGroup, MergeGroup, UntrackedGroup, isResourceGroup } from "./resourceGroups";
+import { interaction, BranchExistsAction, WarnScenario, CommitSources, LogMenuAPI } from "./interaction";
 import { humanise } from "./humanise"
-// import * as vscode from "vscode";
-// import * as fs from "fs";
 import { partition } from "./util";
 import * as nls from 'vscode-nls';
 import { toFossilUri } from "./uri";
@@ -521,26 +519,24 @@ export class CommandCenter {
             interaction.warnResolveConflicts();
             return false;
         }
-
+        const numWorkingResources = repository.workingDirectoryGroup.resources.length;
+        const numStagingResources = repository.stagingGroup.resources.length;
         const isMergeCommit = repository.repoStatus && repository.repoStatus.isMerge;
+
         if (isMergeCommit) {
-            // merge-commit
             opts = { scope: CommitScope.ALL };
         }
         else {
-            // validate non-merge commit
-            const numWorkingResources = repository.workingDirectoryGroup.resources.length;
-            const numStagingResources = repository.stagingGroup.resources.length;
             if (!opts || opts.scope === undefined) {
-                if (numStagingResources > 0) {
-                    opts = {
-                        scope: CommitScope.STAGED_CHANGES
-                    };
+                if(numWorkingResources > 0 && numStagingResources == 0){
+                    const confirm = await interaction.confirmCommitWorkingGroup()
+                    if (confirm){
+                        opts = { scope: CommitScope.CHANGES };
+                    }
+                    else return false;
                 }
-                else {
-                    opts = {
-                        scope: CommitScope.CHANGES
-                    };
+                else{
+                    opts = { scope: CommitScope.STAGED_CHANGES };
                 }
             }
 
@@ -608,7 +604,7 @@ export class CommandCenter {
 
     @command('fossil.commitAll', { repository: true })
     async commitAll(repository: Repository): Promise<void> {
-        await this.commitWithAnyInput(repository, { scope: CommitScope.ALL_WITH_ADD_REMOVE });
+        await this.commitWithAnyInput(repository, { scope: CommitScope.ALL });
     }
 
     private focusScm() {
