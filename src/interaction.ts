@@ -202,9 +202,7 @@ export namespace interaction {
         </head>
         <body>
             <pre>
-
-
-            ${msg}
+            ${'\n\n\n' + msg}
             </pre>
         </body>
         </html>`
@@ -488,6 +486,15 @@ export namespace interaction {
         const deleteOption = localize('delete', "Delete");
         const choice = await window.showWarningMessage(message, { modal: true }, deleteOption);
         return choice === deleteOption;
+    }
+
+    export async function confirmCommitWorkingGroup(): Promise<boolean> {
+        let message: string;
+        message = localize('confirm commit working group', "There are no staged changes, do you want to commit working changes?\n");
+
+        const respOpt = localize('confirm', "Confirm");
+        const choice = await window.showWarningMessage(message, { modal: true }, respOpt);
+        return choice === respOpt;
     }
 
     export async function handleChoices(stdout: string, limit: number): Promise<string> {
