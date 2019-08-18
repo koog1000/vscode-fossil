@@ -1,7 +1,7 @@
 
-import { Uri, Command, EventEmitter, Event, scm, SourceControl, SourceControlInputBox, SourceControlResourceGroup, SourceControlResourceState, SourceControlResourceDecorations, Disposable, ProgressLocation, window, workspace, WorkspaceEdit, ThemeColor, commands } from 'vscode';
-import { Repository as BaseRepository, Ref, Commit, RefType, FossilError, IRepoStatus, SyncOptions, PullOptions, PushOptions, FossilErrorCodes, IMergeResult, CommitDetails, LogEntryRepositoryOptions, FossilUndoDetails } from './fossilBase';
-import { anyEvent, filterEvent, eventToPromise, dispose, IDisposable, delay, groupBy, partition } from './util';
+import { Uri, Command, EventEmitter, Event, scm, SourceControl, SourceControlResourceState, SourceControlResourceDecorations, Disposable, ProgressLocation, window, workspace, commands } from 'vscode';
+import { Repository as BaseRepository, Ref, Commit, FossilError, IRepoStatus, SyncOptions, PullOptions, PushOptions, FossilErrorCodes, IMergeResult, CommitDetails, LogEntryRepositoryOptions, FossilUndoDetails } from './fossilBase';
+import { anyEvent, filterEvent, eventToPromise, dispose, IDisposable, delay, partition } from './util';
 import { memoize, throttle, debounce } from './decorators';
 import { StatusBarCommands } from './statusbar';
 import typedConfig, { PushPullScopeOptions } from "./config";
@@ -60,7 +60,7 @@ export class Resource implements SourceControlResourceState {
     @memoize
     get command(): Command {
         return {
-            command: 'hg.openResource',
+            command: 'fossil.openResource',
             title: localize('open', "Open"),
             arguments: [this]
         };
@@ -246,7 +246,6 @@ class OperationsImpl implements Operations {
 
 export const enum CommitScope {
     ALL,
-    ALL_WITH_ADD_REMOVE,
     STAGED_CHANGES,
     CHANGES
 }
@@ -589,6 +588,15 @@ export class Repository implements IDisposable {
             if (opts.scope === CommitScope.STAGED_CHANGES) {
                 fileList = this.stagingGroup.resources.map(r => this.mapResourceToRepoRelativePath(r));
                 await this.repository.commit(message, { fileList });
+                return;
+            }
+            if (opts.scope === CommitScope.CHANGES) {
+                fileList = this.workingDirectoryGroup.resources.map(r => this.mapResourceToRepoRelativePath(r));
+                await this.repository.commit(message, { fileList });
+                return;
+            }
+            if (opts.scope === CommitScope.ALL) {
+                await this.repository.commit(message);
                 return;
             }
             interaction.informNoChangesToCommit();
