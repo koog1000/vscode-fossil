@@ -32,12 +32,6 @@ export function combinedDisposable(disposables: IDisposable[]): IDisposable {
     return toDisposable(() => dispose(disposables));
 }
 
-export const EmptyDisposable = toDisposable(() => null);
-
-export function mapEvent<I, O>(event: Event<I>, map: (i: I) => O): Event<O> {
-    return (listener, thisArgs = null, disposables?) => event(i => listener.call(thisArgs, map(i)), null, disposables);
-}
-
 export function filterEvent<T>(event: Event<T>, filter: (e: T) => boolean): Event<T> {
     return (listener, thisArgs = null, disposables?) => event(e => filter(e) && listener.call(thisArgs, e), null, disposables);
 }
@@ -73,30 +67,6 @@ export function eventToPromise<T>(event: Event<T>): Promise<T> {
     return new Promise(c => once(event)(c));
 }
 
-// TODO@Joao: replace with Object.assign
-export function assign<T>(destination: T, ...sources: any[]): T {
-    for (const source of sources) {
-        Object.keys(source).forEach(key => destination[key] = source[key]);
-    }
-
-    return destination;
-}
-
-export function uniqBy<T>(arr: T[], fn: (el: T) => string): T[] {
-    const seen = Object.create(null);
-
-    return arr.filter(el => {
-        const key = fn(el);
-
-        if (seen[key]) {
-            return false;
-        }
-
-        seen[key] = true;
-        return true;
-    });
-}
-
 export function groupBy<T>(arr: T[], fn: (el: T) => string): { [key: string]: T[] } {
     return arr.reduce((result, el) => {
         const key = fn(el);
@@ -116,10 +86,6 @@ export function partition<T>(array: T[], fn: (el: T, i: number, ary: T[]) => boo
         return result;
     }, <[T[], T[]]>[[], []]);
 };
-
-export function denodeify<R>(fn: Function): (...args) => Promise<R> {
-    return (...args) => new Promise((c, e) => fn(...args, (err, r) => err ? e(err) : c(r)));
-}
 
 export function nfcall<R>(fn: Function, ...args): Promise<R> {
     return new Promise((c, e) => fn(...args, (err, r) => err ? e(err) : c(r)));
@@ -163,48 +129,6 @@ export async function mkdirp(path: string, mode?: number): Promise<boolean> {
     }
 
     return true;
-}
-
-export function uniqueFilter<T>(keyFn: (t: T) => string): (t: T) => boolean {
-    const seen: { [key: string]: boolean; } = Object.create(null);
-
-    return element => {
-        const key = keyFn(element);
-
-        if (seen[key]) {
-            return false;
-        }
-
-        seen[key] = true;
-        return true;
-    };
-}
-
-export async function writeStringToTempFile(contents: string, disposables?: IDisposable[]): Promise<string> {
-    const tempFile = await createTempFile();
-    await new Promise<void>((c, e) => fs.writeFile(tempFile.fsPath, contents, (err) => err ? e(err) : c()));
-    if (disposables) {
-        disposables.push(tempFile);
-    }
-    return tempFile.fsPath;
-}
-
-async function createTempFile(): Promise<{ fsPath: string, dispose: () => void }> {
-    const [fsPath, dispose] = await new Promise<[string, () => void]>((c, e) => {
-        tmp.file({ discardDescriptor: true }, (err, path, _, cleanupCallback) => {
-            if (err) {
-                return e(err);
-            }
-
-            c([path, cleanupCallback]);
-        })
-    })
-
-    return { fsPath, dispose };
-}
-
-export function asciiOnly(text: string): boolean {
-    return [...text].every(c => c.charCodeAt(0) < 0x80);
 }
 
 export async function delay(millis: number): Promise<any> {

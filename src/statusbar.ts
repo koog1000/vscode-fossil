@@ -6,12 +6,9 @@
 
 import { Disposable, Command, EventEmitter, Event } from "vscode";
 import { Ref, IRepoStatus } from "./fossilBase";
-// import { Model } from './model';
 import { anyEvent, dispose } from './util';
 import { AutoInOutStatuses, AutoInOutState } from "./autoinout";
 import * as nls from 'vscode-nls';
-// import typedConfig from "./config";
-// import { activate } from "./main";
 import { Repository, Operation } from "./repository";
 
 const localize = nls.loadMessageBundle();
@@ -169,7 +166,6 @@ class SyncStatusBar {
         }
 
         const { pushPullBranchName } = this.repository;
-        const { branch } = this.state;
         const scopeName = pushPullBranchName;
         let autoInOut = this.describeAutoInOutStatus(scopeName);
         let icon = autoInOut.icon;
@@ -196,7 +192,7 @@ class SyncStatusBar {
                 text = `${syncCounts.outgoing}`;
             }
             icon = '$(cloud-upload)';
-            command = 'hg.push';
+            command = 'fossil.push';
             plural = (syncCounts.outgoing === 1) ? '' : 's';
             tooltip = scopeName ?
                 localize('push changesets scoped', "Push {0} changeset{1} ({2} only)", syncCounts.outgoing, plural, scopeName) :
