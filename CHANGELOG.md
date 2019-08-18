@@ -2,6 +2,17 @@ Changelog
 =============================================
 
 
+v0.0.9
+---------------------------------------------
+## What's New
+- Fix `Fossil: Commit All`
+- Make commit command more flexible
+  and show warning when there are no staged changes
+- Fix single-click to open diff
+- Modify stdout webview for easier readability
+- General cleanup
+
+
 v0.0.7
 ---------------------------------------------
 ## What's New
