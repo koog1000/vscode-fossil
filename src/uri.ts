@@ -12,9 +12,6 @@ export function fromFossilUri(uri: Uri): { path: string; ref: string; } {
     return JSON.parse(uri.query);
 }
 
-// As a mitigation for extensions like ESLint showing warnings and errors
-// for hg URIs, let's change the file extension of these uris to .hg,
-// when `replaceFileExtension` is true.
 export function toFossilUri(uri: Uri, ref: string): Uri {
     return uri.with({
         scheme: 'fossil-original',
