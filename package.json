@@ -109,7 +109,7 @@
         "category": "Fossil"
       },
       {
-        "command": "fossil.forget",
+        "command": "fossil.remove",
         "title": "%command.forget%",
         "category": "Fossil"
       },
@@ -437,7 +437,7 @@
         {
           "command": "fossil.init",
           "group": "navigation",
-          "when": "config.fossil.enabled && fossilOpenRepositoryCount == 0"
+          "when": "config.fossil.enabled && scmProvider == '' && fossilOpenRepositoryCount == 0"
         },
         {
           "command": "fossil.commit",
@@ -646,7 +646,7 @@
           "group": "navigation"
         },
         {
-          "command": "fossil.forget",
+          "command": "fossil.remove",
           "when": "config.fossil.enabled && scmProvider == fossil && scmResourceGroup == working",
           "group": "2_modification"
         }
