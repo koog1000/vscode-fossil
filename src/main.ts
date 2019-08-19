@@ -30,7 +30,7 @@ async function init(context: ExtensionContext, disposables: Disposable[]): Promi
     const model = new Model(hg);
     disposables.push(model);
 
-    const onRepository = () => commands.executeCommand('setContext', 'hgOpenRepositoryCount', model.repositories.length);
+    const onRepository = () => commands.executeCommand('setContext', 'fossilOpenRepositoryCount', model.repositories.length);
     model.onDidOpenRepository(onRepository, null, disposables);
     model.onDidCloseRepository(onRepository, null, disposables);
     onRepository();
