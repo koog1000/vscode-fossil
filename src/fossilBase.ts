@@ -842,10 +842,10 @@ export class Repository {
     }
 
     async getLogEntries({ revQuery, filePath, limit }: LogEntryRepositoryOptions = {}): Promise<Commit[]> {
-        const args = ['timeline', 'before']
+        const args = ['timeline']
 
         if (revQuery) {
-            args.push(revQuery);
+            args.push('before', revQuery);
         }
         if (limit) {
             args.push('-n', `${limit}`);

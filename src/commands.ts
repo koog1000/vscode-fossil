@@ -262,17 +262,6 @@ export class CommandCenter {
         this.model.close(repository);
     }
 
-    @command('fossil.openhgrc', { repository: true })
-    async openhgrc(repository: Repository): Promise<void> {
-        let hgrcPath = await repository.hgrcPathIfExists();
-        if (!hgrcPath) {
-            hgrcPath = await repository.createHgrc();
-        }
-
-        const hgrcUri = Uri.file(hgrcPath)
-        commands.executeCommand("vscode.open", hgrcUri);
-    }
-
     @command('fossil.openFiles')
     openFiles(...resources: (Resource | SourceControlResourceGroup)[]): Promise<void> {
         if (resources.length === 1) {
@@ -695,7 +684,7 @@ export class CommandCenter {
         const paths = await repository.getPath();
 
         if (paths.url == "") {
-            await interaction.warnNoPaths(false);
+            await interaction.warnNoPaths('pull');
             return;
         }
 
@@ -793,7 +782,7 @@ export class CommandCenter {
         const path = await repository.getPath();
 
         if (path.url == "") {
-            const action = await interaction.warnNoPaths(true);
+            await interaction.warnNoPaths('push');
             return;
         }
 

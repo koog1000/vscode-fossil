@@ -34,7 +34,6 @@ export class AutoIncomingOutgoing {
 
     constructor(private repository: Repository) {
         workspace.onDidChangeConfiguration(this.onConfiguration, this, this.disposables);
-        this.repository.onDidChangeHgrc(this.onConfiguration, this, this.disposables);
         this.repository.onDidRunOperation(this.onDidRunOperation, this, this.disposables);
         this.onConfiguration();
     }

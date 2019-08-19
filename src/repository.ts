@@ -12,7 +12,7 @@ import * as nls from 'vscode-nls';
 import { ResourceGroup, createEmptyStatusGroups, UntrackedGroup, WorkingDirectoryGroup, StagingGroup, ConflictGroup, MergeGroup, IStatusGroups, groupStatuses, IGroupStatusesParams } from './resourceGroups';
 import { Path } from './fossilBase';
 import { AutoInOutState, AutoInOutStatuses, AutoIncomingOutgoing } from './autoinout';
-import { DefaultRepoNotConfiguredAction, interaction, PushCreatesNewHeadAction } from './interaction';
+import { interaction, PushCreatesNewHeadAction } from './interaction';
 // import { exists } from 'fs';
 import { toFossilUri } from './uri';
 
@@ -258,9 +258,6 @@ export class Repository implements IDisposable {
     private _onDidChangeRepository = new EventEmitter<Uri>();
     readonly onDidChangeRepository: Event<Uri> = this._onDidChangeRepository.event;
 
-    private _onDidChangeHgrc = new EventEmitter<void>();
-    readonly onDidChangeHgrc: Event<void> = this._onDidChangeHgrc.event;
-
     private _onDidChangeState = new EventEmitter<RepositoryState>();
     readonly onDidChangeState: Event<RepositoryState> = this._onDidChangeState.event;
 
@@ -385,9 +382,7 @@ export class Repository implements IDisposable {
         onRelevantRepositoryChange(this.onFSChange, this, this.disposables);
 
         const onRelevantHgChange = filterEvent(onRelevantRepositoryChange, uri => /\/\.hg\//.test(uri.path));
-        const onHgrcChange = filterEvent(onRelevantHgChange, uri => /\/\.hg\/hgrc$/.test(uri.path));
         onRelevantHgChange(this._onDidChangeRepository.fire, this._onDidChangeRepository, this.disposables);
-        onHgrcChange(this.onHgrcChange, this, this.disposables);
 
         this._sourceControl = scm.createSourceControl('fossil', 'Fossil', Uri.parse(repository.root));
         this.disposables.push(this._sourceControl);
@@ -467,12 +462,6 @@ export class Repository implements IDisposable {
             return;
         }
     }
-
-    @debounce(1000)
-    private onHgrcChange(uri: Uri): void {
-        this._onDidChangeHgrc.fire();
-    }
-
 
     @throttle
     async add(...uris: Uri[]): Promise<void> {
@@ -830,13 +819,6 @@ export class Repository implements IDisposable {
                 await this.repository.pull(options)
             }
             catch (e) {
-                if (e instanceof FossilError && e.fossilErrorCode === FossilErrorCodes.DefaultRepositoryNotConfigured) {
-                    const action = await interaction.warnDefaultRepositoryNotConfigured();
-                    if (action === DefaultRepoNotConfiguredAction.OpenHGRC) {
-                        commands.executeCommand("hg.openhgrc");
-                    }
-                    return;
-                }
                 throw e;
             }
         });
@@ -850,14 +832,7 @@ export class Repository implements IDisposable {
                 await this.repository.push(path, options);
             }
             catch (e) {
-                if (e instanceof FossilError && e.fossilErrorCode === FossilErrorCodes.DefaultRepositoryNotConfigured) {
-                    const action = await interaction.warnDefaultRepositoryNotConfigured();
-                    if (action === DefaultRepoNotConfiguredAction.OpenHGRC) {
-                        commands.executeCommand("hg.openhgrc");
-                    }
-                    return;
-                }
-                else if (e instanceof FossilError && e.fossilErrorCode === FossilErrorCodes.PushCreatesNewRemoteHead) {
+                if (e instanceof FossilError && e.fossilErrorCode === FossilErrorCodes.PushCreatesNewRemoteHead) {
                     const action = await interaction.warnPushCreatesNewHead();
                     if (action === PushCreatesNewHeadAction.Pull) {
                         commands.executeCommand("hg.pull");
@@ -1085,27 +1060,6 @@ export class Repository implements IDisposable {
                     + this.conflictGroup.resources.length
                     + this.untrackedGroup.resources.length
         }
-    }
-
-    private get hgrcPath(): string { return path.join(this.repository.root, ".hg", "hgrc"); }
-
-    async hgrcPathIfExists(): Promise<string | undefined> {
-        const filePath: string = this.hgrcPath;
-        const exists = await new Promise((c, e) => fs.exists(filePath, c));
-        if (exists) {
-            return filePath;
-        }
-    }
-
-    async createHgrc(): Promise<string> {
-        const filePath: string = this.hgrcPath;
-        const fd = fs.openSync(filePath, 'w');
-        fs.writeSync(fd, `[paths]
-; Uncomment line below to add a remote path:
-; default = https://bitbucket.org/<yourname>/<repo>
-`, 0, 'utf-8');
-        fs.closeSync(fd);
-        return filePath;
     }
 
     dispose(): void {
