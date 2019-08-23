@@ -7,7 +7,7 @@
 import * as path from 'path';
 import * as cp from 'child_process';
 import { groupBy, IDisposable, toDisposable, dispose, mkdirp } from "./util";
-import { EventEmitter, Event, workspace, Disposable } from "vscode";
+import { EventEmitter, Event, workspace, window, Disposable, Uri } from "vscode";
 import { interaction } from './interaction';
 
 export interface IFossil {
@@ -560,6 +560,17 @@ export class Repository {
         for (let task of tasks) {
             await task();
         }
+    }
+
+    async ignore(paths: string[]): Promise<void> {
+        console.log(paths)
+        const document = await workspace.openTextDocument(
+                                Uri.file(this.repositoryRoot + '/.fossil-settings/ignore-glob'))
+        console.log(document)
+        if(document){
+            console.log('No document')
+        }
+        await window.showTextDocument(document);
     }
 
     async undo(dryRun?: boolean): Promise<FossilUndoDetails> {

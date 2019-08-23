@@ -57,6 +57,15 @@
         }
       },
       {
+        "command": "fossil.ignore",
+        "title": "%command.ignore%",
+        "category": "Fossil",
+        "icon": {
+          "light": "resources/icons/light/discard.svg",
+          "dark": "resources/icons/dark/discard.svg"
+        }
+      },
+      {
         "command": "fossil.branch",
         "title": "%command.branch%",
         "category": "Fossil"
@@ -566,26 +575,6 @@
       ],
       "scm/resourceState/context": [
         {
-          "command": "fossil.resolveAgain",
-          "when": "config.fossil.enabled && scmProvider == fossil && scmResourceGroup == conflict",
-          "group": "inline"
-        },
-        {
-          "command": "fossil.markResolved",
-          "when": "config.fossil.enabled && scmProvider == fossil && scmResourceGroup == conflict",
-          "group": "inline"
-        },
-        {
-          "command": "fossil.resolveAgain",
-          "when": "config.fossil.enabled && scmProvider == fossil && scmResourceGroup == conflict",
-          "group": "0_resolution"
-        },
-        {
-          "command": "fossil.markResolved",
-          "when": "config.fossil.enabled && scmProvider == fossil && scmResourceGroup == conflict",
-          "group": "0_resolution"
-        },
-        {
           "command": "fossil.unresolve",
           "when": "config.fossil.enabled && scmProvider == fossil && scmResourceGroup == merge",
           "group": "1_modification"
@@ -632,6 +621,11 @@
         },
         {
           "command": "fossil.add",
+          "when": "config.fossil.enabled && scmProvider == fossil && scmResourceGroup == untracked",
+          "group": "inline"
+        },
+        {
+          "command": "fossil.ignore",
           "when": "config.fossil.enabled && scmProvider == fossil && scmResourceGroup == untracked",
           "group": "inline"
         },

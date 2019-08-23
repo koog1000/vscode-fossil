@@ -203,7 +203,8 @@ export const enum Operation {
     // AddRemove = 1 << 22,
     // SetBookmark = 1 << 23,
     // RemoveBookmark = 1 << 24,
-    Close = 1 << 25
+    Close = 1 << 25,
+    Ignore = 1 << 26
 }
 
 function isReadOnly(operation: Operation): boolean {
@@ -485,6 +486,18 @@ export class Repository implements IDisposable {
         }
         const relativePaths: string[] = resources.map(r => this.mapResourceToRepoRelativePath(r));
         await this.run(Operation.Remove, () => this.repository.remove(relativePaths));
+    }
+
+    @throttle
+    async ignore(...uris: Uri[]): Promise<void> {
+        let resources: Resource[];
+        if (uris.length === 0) {
+            resources = this._groups.untracked.resources;
+        } else {
+            resources = this.mapResources(uris);
+        }
+        const relativePaths: string[] = resources.map(r => this.mapResourceToRepoRelativePath(r));
+        await this.run(Operation.Ignore, () => this.repository.ignore(relativePaths));
     }
 
     mapResources(resourceUris: Uri[]): Resource[] {
@@ -912,9 +925,9 @@ export class Repository implements IDisposable {
             this._onRunOperation.fire(operation);
 
             try {
-                console.log('Running operation: ' + runOperation)
+                // console.log('Running operation: ' + runOperation)
                 const result = await runOperation();
-                console.log('completed operation')
+                // console.log('completed operation')
 
                 if (!isReadOnly(operation)) {
                     await this.updateModelState();

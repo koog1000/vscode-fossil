@@ -349,6 +349,29 @@ export class CommandCenter {
         return await this._openResource(resource);
     }
 
+    @command('fossil.ignore')
+    async ignore(...resourceStates: SourceControlResourceState[]): Promise<void> {
+        if (resourceStates.length === 0) {
+            const resource = this.getSCMResource();
+
+            if (!resource) {
+                return;
+            }
+
+            resourceStates = [resource];
+        }
+
+        const scmResources = resourceStates
+            .filter(s => s instanceof Resource && s.resourceGroup instanceof UntrackedGroup) as Resource[];
+
+        if (!scmResources.length) {
+            return;
+        }
+
+        const resources = scmResources.map(r => r.resourceUri);
+        await this.runByRepository(resources, async (repository, uris) => repository.ignore(...uris));
+    }
+
     @command('fossil.addAll', { repository: true })
     async addAll(repository: Repository): Promise<void> {
         return await repository.add();
@@ -413,7 +436,13 @@ export class CommandCenter {
         }
 
         const scmResources = resourceStates
-            .filter(s => s instanceof Resource && (s.resourceGroup instanceof WorkingDirectoryGroup || s.resourceGroup instanceof MergeGroup)) as Resource[];
+            .filter(s => s instanceof Resource &&
+                        (
+                            s.resourceGroup instanceof WorkingDirectoryGroup
+                            || s.resourceGroup instanceof MergeGroup
+                            // || s.resourceGroup instanceof UntrackedGroup
+                        )
+                    ) as Resource[];
 
         if (!scmResources.length) {
             return;

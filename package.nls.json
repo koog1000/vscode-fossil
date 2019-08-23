@@ -24,6 +24,7 @@
     "command.pushTo": "Push to...",
     "command.add": "Add Files",
     "command.addAll": "Add All Untracked Files",
+    "command.ignore": "Add to ignore-glob",
     "command.forget": "Forget Files",
     "command.markResolved": "Mark Resolved",
     "command.unresolve": "Mark Unresolved",
