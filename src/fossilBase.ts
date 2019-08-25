@@ -6,6 +6,7 @@
 
 import * as path from 'path';
 import * as cp from 'child_process';
+import { existsSync, appendFileSync, writeFileSync } from 'fs';
 import { groupBy, IDisposable, toDisposable, dispose, mkdirp } from "./util";
 import { EventEmitter, Event, workspace, window, Disposable, Uri } from "vscode";
 import { interaction } from './interaction';
@@ -563,14 +564,17 @@ export class Repository {
     }
 
     async ignore(paths: string[]): Promise<void> {
-        console.log(paths)
-        const document = await workspace.openTextDocument(
-                                Uri.file(this.repositoryRoot + '/.fossil-settings/ignore-glob'))
-        console.log(document)
-        if(document){
-            console.log('No document')
+        const ignore_file = this.repositoryRoot + '/.fossil-settings/ignore-glob'
+        if(existsSync(ignore_file)){
+            appendFileSync(ignore_file, paths.join('\n') + '\n' )
         }
-        await window.showTextDocument(document);
+        else{
+            mkdirp(this.repositoryRoot + '/.fossil-settings/')
+            writeFileSync(ignore_file, paths.join('\n')+ '\n');
+            this.add([ignore_file])
+        }
+        const document = await workspace.openTextDocument(ignore_file)
+        window.showTextDocument(document);
     }
 
     async undo(dryRun?: boolean): Promise<FossilUndoDetails> {
