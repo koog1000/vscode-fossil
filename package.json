@@ -620,12 +620,12 @@
           "group": "inline"
         },
         {
-          "command": "fossil.add",
+          "command": "fossil.ignore",
           "when": "config.fossil.enabled && scmProvider == fossil && scmResourceGroup == untracked",
           "group": "inline"
         },
         {
-          "command": "fossil.ignore",
+          "command": "fossil.add",
           "when": "config.fossil.enabled && scmProvider == fossil && scmResourceGroup == untracked",
           "group": "inline"
         },
