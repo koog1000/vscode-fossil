@@ -625,7 +625,7 @@
           "group": "inline"
         },
         {
-          "command": "fossil.add",
+          "command": "fossil.stage",
           "when": "config.fossil.enabled && scmProvider == fossil && scmResourceGroup == untracked",
           "group": "inline"
         },

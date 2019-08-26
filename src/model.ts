@@ -151,7 +151,6 @@ export class Model implements Disposable {
     }
 
     private onPossibleHgRepositoryChange(uri: Uri): void {
-        console.log(uri.fsPath)
         const possibleHgRepositoryPath = uri.fsPath.replace(/\.hg.*$/, '');
         this.possibleHgRepositoryPaths.add(possibleHgRepositoryPath);
         this.eventuallyScanPossibleHgRepositories();

@@ -440,7 +440,7 @@ export class CommandCenter {
                         (
                             s.resourceGroup instanceof WorkingDirectoryGroup
                             || s.resourceGroup instanceof MergeGroup
-                            // || s.resourceGroup instanceof UntrackedGroup
+                            || s.resourceGroup instanceof UntrackedGroup
                         )
                     ) as Resource[];
 

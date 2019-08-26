@@ -525,11 +525,18 @@ export class Repository implements IDisposable {
                 resources = this._groups.working.resources;
             }
 
-            const [missingResources, otherResources] = partition(resources, r => r.status === Status.MISSING);
+            const missingResources = partition(resources, r => r.status === Status.MISSING);
 
-            if (missingResources.length) {
-                const relativePaths: string[] = missingResources.map(r => this.mapResourceToRepoRelativePath(r));
+            if (missingResources[0].length) {
+                const relativePaths: string[] = missingResources[0].map(r => this.mapResourceToRepoRelativePath(r));
                 await this.run(Operation.Remove, () => this.repository.remove(relativePaths));
+            }
+
+            const untrackedResources = partition(resources, r => r.status === Status.UNTRACKED);
+
+            if (untrackedResources[0].length) {
+                const relativePaths: string[] = untrackedResources[0].map(r => this.mapResourceToRepoRelativePath(r));
+                await this.run(Operation.Remove, () => this.repository.add(relativePaths));
             }
 
             this._groups.staging = this._groups.staging.intersect(resources);
