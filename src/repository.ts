@@ -7,13 +7,11 @@ import { StatusBarCommands } from './statusbar';
 import typedConfig, { PushPullScopeOptions } from "./config";
 
 import * as path from 'path';
-import * as fs from 'fs';
 import * as nls from 'vscode-nls';
 import { ResourceGroup, createEmptyStatusGroups, UntrackedGroup, WorkingDirectoryGroup, StagingGroup, ConflictGroup, MergeGroup, IStatusGroups, groupStatuses, IGroupStatusesParams } from './resourceGroups';
 import { Path } from './fossilBase';
 import { AutoInOutState, AutoInOutStatuses, AutoIncomingOutgoing } from './autoinout';
 import { interaction, PushCreatesNewHeadAction } from './interaction';
-// import { exists } from 'fs';
 import { toFossilUri } from './uri';
 
 const timeout = (millis: number) => new Promise(c => setTimeout(c, millis));

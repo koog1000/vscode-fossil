@@ -47,6 +47,7 @@ export class CommandCenter {
 
     private model: Model;
     private disposables: Disposable[];
+    private open_resources : Resource[]
 
     constructor(
         private fossil: Fossil,
@@ -56,6 +57,8 @@ export class CommandCenter {
         if (model) {
             this.model = model;
         }
+
+        this.open_resources = []
 
         this.disposables = Commands.map(({ commandId, key, method, options }) => {
             const command = this.createCommand(commandId, key, method, options);
@@ -75,13 +78,16 @@ export class CommandCenter {
 
     @command('fossil.openResource')
     async openResource(resource: Resource): Promise<void> {
+        this.open_resources.push(resource)
         await this._openResource(resource, undefined, true, false);
     }
 
-    private async _openResource(resource: Resource, preview?: boolean, preserveFocus?: boolean, preserveSelection?: boolean): Promise<void> {
+    private async _openResource(resource: Resource | undefined, preview?: boolean, preserveFocus?: boolean, preserveSelection?: boolean): Promise<void> {
+        if(!resource) return;
         const left = this.getLeftResource(resource);
         const right = this.getRightResource(resource);
         const title = this.getTitle(resource);
+        console.log("open resource: " + resource.resourceUri)
 
         if (!right) {
             // TODO
@@ -109,7 +115,6 @@ export class CommandCenter {
             await window.showTextDocument(document, opts);
             return;
         }
-
         return await commands.executeCommand<void>('vscode.diff', left, right, title, opts);
     }
 
@@ -132,6 +137,7 @@ export class CommandCenter {
             case Status.MISSING:
             case Status.UNTRACKED:
             case Status.CLEAN:
+            default:
                 return undefined;
         }
     }
@@ -146,6 +152,9 @@ export class CommandCenter {
         switch (resource.status) {
             case Status.DELETED:
                 return resource.resourceUri.with({ scheme: 'fossil', query: '.' });
+                
+            case Status.MISSING:
+                    return undefined;
 
             case Status.ADDED:
             case Status.IGNORED:
@@ -154,11 +163,9 @@ export class CommandCenter {
             case Status.UNTRACKED:
             case Status.CLEAN:
             case Status.CONFLICT:
+            default:
                 console.log('Right resource: ' + resource.resourceUri)
                 return resource.resourceUri;
-
-            case Status.MISSING:
-                return undefined;
         }
     }
 
@@ -323,6 +330,7 @@ export class CommandCenter {
 
         const preview = resources.length === 1 ? undefined : false;
         for (let resource of resources) {
+            this.open_resources.push(resource)
             await this._openResource(resource, preview, true, false);
         }
     }
@@ -346,6 +354,7 @@ export class CommandCenter {
             return;
         }
 
+        this.open_resources.push(resource)
         return await this._openResource(resource);
     }
 
@@ -598,6 +607,10 @@ export class CommandCenter {
 
         if (message && didCommit) {
             scm.inputBox.value = "";
+            this.open_resources.map(r => {
+                
+                this._openResource(this.getSCMResource(r.resourceUri))
+            });
         }
     }
 
@@ -612,6 +625,7 @@ export class CommandCenter {
 
         if (didCommit) {
             scm.inputBox.value = "";
+            this.open_resources.map(r => this._openResource(r));
         }
     }
 
@@ -775,6 +789,7 @@ export class CommandCenter {
 
                 if (didCommit) {
                     scm.inputBox.value = "";
+                    this.open_resources.map(r => this._openResource(r));
                 }
             }
         }
@@ -965,7 +980,6 @@ export class CommandCenter {
         }
 
         if (uri.scheme === 'file') {
-            const uriString = uri.toString();
             const repository = this.model.getRepository(uri);
 
             if (!repository) {
