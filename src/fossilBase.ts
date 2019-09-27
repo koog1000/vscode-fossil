@@ -396,6 +396,8 @@ export interface CommitDetails extends Commit {
 
 export class Repository {
 
+    private status_msg: string = '';
+
     constructor(
         private _fossil: Fossil,
         private repositoryRoot: string
@@ -610,7 +612,7 @@ export class Repository {
         try {
             return {
                 message: await this.getLastCommitMessage(),
-                affectedFiles: this.parseStatusLines(await this.getStatus())
+                affectedFiles: this.parseStatusLines(this.status_msg)
             }
         }
         catch (e) {
@@ -736,7 +738,7 @@ export class Repository {
     }
 
     async getSummary(): Promise<IRepoStatus> {
-        const summary = await this.getStatus();
+        const summary = this.status_msg;
         const parents = this.parseParentLines(summary);
         const isMerge = /\bMERGED WITH\b/.test(summary);
         return { isMerge, parents };
@@ -756,21 +758,21 @@ export class Repository {
     }
 
     async getLastCommitMessage(): Promise<string> {
-        const message = await this.getStatus();
+        const message = this.status_msg;
         var comment = message.match(/comment:\s+(.*)\(/)
         if (comment) return comment[1];
         return "";
     }
 
     async getLastCommitAuthor(): Promise<string> {
-        const message = await this.getStatus();
+        const message = this.status_msg;
         var comment = message.match(/user:\s+(.*)\n/)
         if (comment) return comment[1];
         return "";
     }
 
     async getLastCommitDate(): Promise<string> {
-        const message = await this.getStatus();
+        const message = this.status_msg;
         var comment = message.match(/checkout:\s+(.*)\s(.*)\n/)
         if (comment) return comment[2];
         return "";
@@ -779,6 +781,7 @@ export class Repository {
     async getStatus(): Promise<string> {
         const args = ['status'];
         const executionResult = await this.exec(args); // quiet, include renames/copies
+        this.status_msg = executionResult.stdout;
         return executionResult.stdout;
     }
 
@@ -840,7 +843,7 @@ export class Repository {
     }
 
     async getCurrentBranch(): Promise<Ref> {
-        const message = await this.getStatus();
+        const message = this.status_msg;
         var branch = message.match(/tags:\s+(.*)\b(.*)\n/)
         var comment = message.match(/comment:\s+(.*)\(/)
         if (branch && comment) {
@@ -883,8 +886,7 @@ export class Repository {
     }
 
     async getParents(): Promise<string> {
-        const message = await this.getStatus();
-        var comment = message.match(/parent:\s+(.*)\s(.*)\n/)
+        var comment = this.status_msg.match(/parent:\s+(.*)\s(.*)\n/)
         if (comment) return comment[1];
         return "";
     }
