@@ -9,11 +9,10 @@
 import { Event } from 'vscode';
 import { dirname } from 'path';
 import * as fs from 'fs';
-import * as tmp from 'tmp';
 
-export function log(...args: any[]): void {
-    console.log.apply(console, ['fossil:', ...args]);
-}
+// export function log(...args: any[]): void {
+//     console.log.apply(console, ['fossil:', ...args]);
+// }
 
 export interface IDisposable {
     dispose(): void;
