@@ -620,17 +620,17 @@
           "group": "inline"
         },
         {
-          "command": "fossil.ignore",
+          "command": "fossil.add",
           "when": "config.fossil.enabled && scmProvider == fossil && scmResourceGroup == untracked",
           "group": "inline"
         },
         {
           "command": "fossil.stage",
           "when": "config.fossil.enabled && scmProvider == fossil && scmResourceGroup == untracked",
-          "group": "inline"
+          "group": "1_modification"
         },
         {
-          "command": "fossil.add",
+          "command": "fossil.ignore",
           "when": "config.fossil.enabled && scmProvider == fossil && scmResourceGroup == untracked",
           "group": "1_modification"
         },
