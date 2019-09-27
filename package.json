@@ -264,8 +264,8 @@
         "title": "%command.stage%",
         "category": "Fossil",
         "icon": {
-          "light": "resources/icons/light/stage.svg",
-          "dark": "resources/icons/dark/stage.svg"
+          "light": "resources/icons/light/add.svg",
+          "dark": "resources/icons/dark/add.svg"
         }
       },
       {
@@ -273,8 +273,8 @@
         "title": "%command.stageAll%",
         "category": "Fossil",
         "icon": {
-          "light": "resources/icons/light/stage.svg",
-          "dark": "resources/icons/dark/stage.svg"
+            "light": "resources/icons/light/add.svg",
+            "dark": "resources/icons/dark/add.svg"
         }
       },
       {
