@@ -25,17 +25,10 @@ export interface LogEntryOptions {
     revQuery?: string;
 }
 
-export interface PushOptions extends PullOptions {
-    allowPushNewBranches?: boolean;
-}
-
-export interface PullOptions extends SyncOptions {
-    autoUpdate: boolean; // run an update after the pull?
-}
-
-export interface SyncOptions {
+export interface PullOptions {
     branch?: string;
     revs?: string[];
+    autoUpdate: boolean; // run an update after the pull?
 }
 
 export interface IMergeResult {
@@ -499,7 +492,7 @@ export class Repository {
         const disposables: IDisposable[] = [];
         const args = ['commit'];
 
-        if (opts.fileList && opts.fileList.length) {
+        if (opts.fileList.length) {
             args.push(...opts.fileList);
         }
 
@@ -675,7 +668,7 @@ export class Repository {
         }
     }
 
-    async push(path?: string, options?: PushOptions): Promise<void> {
+    async push(): Promise<void> {
         const args = ['push'];
 
         try {

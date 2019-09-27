@@ -649,7 +649,7 @@
         {
           "command": "fossil.openFileFromUri",
           "group": "navigation",
-          "when": "config.fossil.enabled && fossilOpenRepositoryCount != 0 && isInDiffEditor && resourceScheme != extension"
+          "when": "config.fossil.enabled && fossilOpenRepositoryCount != 0 && isInDiffEditor && resourceScheme != extension && scmProvider == fossil"
         },
         {
           "command": "fossil.openChangeFromUri",
@@ -670,16 +670,6 @@
           "description": "%config.enabled%",
           "default": true
         },
-        "fossil.allowPushNewBranches": {
-          "type": "boolean",
-          "description": "%config.allowPushNewBranches%",
-          "default": true
-        },
-        "fossil.autoInOut": {
-          "type": "boolean",
-          "description": "%config.autoInOut%",
-          "default": true
-        },
         "fossil.autoInOutInterval": {
           "type": "number",
           "description": "%config.autoInOutInterval%",
@@ -695,21 +685,6 @@
           "description": "%config.autoUpdate%",
           "default": true
         },
-        "fossil.countBadge": {
-          "type": "string",
-          "description": "%config.countBadge%",
-          "enum": [
-            "tracked",
-            "all",
-            "off"
-          ],
-          "enumDescriptions": [
-            "%config.countBadge.tracked%",
-            "%config.countBadge.all%",
-            "%config.countBadge.off%"
-          ],
-          "default": "all"
-        },
         "fossil.path": {
           "type": [
             "string",
@@ -718,36 +693,6 @@
           "description": "%config.path%",
           "default": null,
           "isExecutable": true
-        },
-        "fossil.pushPullBranch": {
-          "type": "string",
-          "description": "%config.pushPullBranch%",
-          "enum": [
-            "all",
-            "current",
-            "default"
-          ],
-          "enumDescriptions": [
-            "%config.pushPullBranch.all%",
-            "%config.pushPullBranch.current%",
-            "%config.pushPullBranch.default%"
-          ],
-          "default": "all"
-        },
-        "fossil.pushPullScope": {
-          "type": "string",
-          "description": "%config.pushPullScope%",
-          "enum": [
-            "all",
-            "current",
-            "default"
-          ],
-          "enumDescriptions": [
-            "%config.pushPullScope.all%",
-            "%config.pushPullScope.current%",
-            "%config.pushPullScope.default%"
-          ],
-          "default": "all"
         }
       }
     }

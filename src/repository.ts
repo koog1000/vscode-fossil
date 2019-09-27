@@ -1,10 +1,10 @@
 
 import { Uri, Command, EventEmitter, Event, scm, SourceControl, SourceControlResourceState, SourceControlResourceDecorations, Disposable, ProgressLocation, window, workspace, commands } from 'vscode';
-import { Repository as BaseRepository, Ref, Commit, FossilError, IRepoStatus, SyncOptions, PullOptions, PushOptions, FossilErrorCodes, IMergeResult, CommitDetails, LogEntryRepositoryOptions, FossilUndoDetails } from './fossilBase';
+import { Repository as BaseRepository, Ref, Commit, FossilError, IRepoStatus, PullOptions, FossilErrorCodes, IMergeResult, CommitDetails, LogEntryRepositoryOptions, FossilUndoDetails } from './fossilBase';
 import { anyEvent, filterEvent, eventToPromise, dispose, IDisposable, delay, partition } from './util';
 import { memoize, throttle, debounce } from './decorators';
 import { StatusBarCommands } from './statusbar';
-import typedConfig, { PushPullScopeOptions } from "./config";
+import typedConfig from "./config";
 
 import * as path from 'path';
 import * as nls from 'vscode-nls';
@@ -184,7 +184,6 @@ export const enum Operation {
     Update = 1 << 6,
     Undo = 1 << 7,
     UndoDryRun = 1 << 8,
-    // CountIncoming = 1 << 8,
     Pull = 1 << 9,
     Push = 1 << 10,
     Sync = 1 << 11,
@@ -192,15 +191,11 @@ export const enum Operation {
     Show = 1 << 13,
     Stage = 1 << 14,
     GetCommitTemplate = 1 << 15,
-    // CountOutgoing = 1 << 16,
     Resolve = 1 << 17,
     Unresolve = 1 << 18,
     Parents = 1 << 19,
     Remove = 1 << 20,
     Merge = 1 << 21,
-    // AddRemove = 1 << 22,
-    // SetBookmark = 1 << 23,
-    // RemoveBookmark = 1 << 24,
     Close = 1 << 25,
     Ignore = 1 << 26
 }
@@ -319,9 +314,6 @@ export class Repository implements IDisposable {
     private _operations = new OperationsImpl();
     get operations(): Operations { return this._operations; }
 
-    private _syncCounts = { incoming: 0, outgoing: 0 };
-    get syncCounts(): { incoming: number; outgoing: number } { return this._syncCounts; }
-
     private _autoInOutState: AutoInOutState = { status: AutoInOutStatuses.Disabled };
     get autoInOutState() { return this._autoInOutState; }
 
@@ -352,7 +344,6 @@ export class Repository implements IDisposable {
 
         this._currentBranch = undefined;
         this._refs = [];
-        this._syncCounts = { incoming: 0, outgoing: 0 };
         this._groups.conflict.clear();
         this._groups.merge.clear();
         this._groups.staging.clear();
@@ -383,7 +374,7 @@ export class Repository implements IDisposable {
         const onRelevantHgChange = filterEvent(onRelevantRepositoryChange, uri => /\/\.hg\//.test(uri.path));
         onRelevantHgChange(this._onDidChangeRepository.fire, this._onDidChangeRepository, this.disposables);
 
-        this._sourceControl = scm.createSourceControl('fossil', 'Fossil', Uri.parse(repository.root));
+        this._sourceControl = scm.createSourceControl('fossil', 'Fossil', Uri.file(repository.root));
         this.disposables.push(this._sourceControl);
 
         this._sourceControl.acceptInputCommand = { command: 'fossil.commitWithInput', title: localize('commit', "Commit") };
@@ -413,7 +404,7 @@ export class Repository implements IDisposable {
 
         // As a mitigation for extensions like ESLint showing warnings and errors
         // for hg URIs, let's change the file extension of these uris to .hg.
-        return toFossilUri(uri, '');
+        return toFossilUri(uri);
     }
 
     @throttle
@@ -592,19 +583,15 @@ export class Repository implements IDisposable {
     async commit(message: string, opts: CommitOptions = Object.create(null)): Promise<void> {
         await this.run(Operation.Commit, async () => {
             let fileList: string[] = [];
-            if (opts.scope === CommitScope.STAGED_CHANGES) {
-                fileList = this.stagingGroup.resources.map(r => this.mapResourceToRepoRelativePath(r));
+            if (opts.scope){
+                if (opts.scope === CommitScope.STAGED_CHANGES) {
+                    fileList = this.stagingGroup.resources.map(r => this.mapResourceToRepoRelativePath(r));
+                }
+                else if (opts.scope === CommitScope.CHANGES) {
+                    fileList = this.workingDirectoryGroup.resources.map(r => this.mapResourceToRepoRelativePath(r));
+                }
                 await this.repository.commit(message, { fileList });
-                return;
-            }
-            if (opts.scope === CommitScope.CHANGES) {
-                fileList = this.workingDirectoryGroup.resources.map(r => this.mapResourceToRepoRelativePath(r));
-                await this.repository.commit(message, { fileList });
-                return;
-            }
-            if (opts.scope === CommitScope.ALL) {
-                await this.repository.commit(message);
-                return;
+                return
             }
             interaction.informNoChangesToCommit();
         });
@@ -731,102 +718,25 @@ export class Repository implements IDisposable {
         return undefined;
     }
 
-    get pushPullBranchName(): string | undefined {
-        return this.expandScopeOption(typedConfig.pushPullScope, this.currentBranch);
-    }
-
-    private async createSyncOptions(): Promise<SyncOptions> {
-        return { branch: this.pushPullBranchName }
-    }
-
     public async createPullOptions(): Promise<PullOptions> {
-        const syncOptions = await this.createSyncOptions();
-        const autoUpdate = typedConfig.autoUpdate;
-
-        // branches
-        return { branch: syncOptions.branch, autoUpdate }
+        return { autoUpdate: typedConfig.autoUpdate }
     }
 
-    public async createPushOptions(): Promise<PushOptions> {
-        const pullOptions = await this.createPullOptions();
-
-        return {
-            allowPushNewBranches: typedConfig.allowPushNewBranches,
-            ...pullOptions
-        }
-    }
-
-    private expandScopeOption(branchOptions: PushPullScopeOptions, ref: Ref | undefined): string | undefined {
-        switch (branchOptions) {
-            case "current":
-                return ref ? ref.name : undefined;
-
-            case "default":
-                return "default";
-
-            case "all":
-            default:
-                return undefined;
-        }
-    }
-
-    async countIncomingOutgoingAfterDelay(expectedDeltas?: { incoming: number, outgoing: number }, delayMillis: number = 3000) {
+    async changeInoutAfterDelay(delayMillis: number = 3000): Promise<void> {
         try {
-            await Promise.all([
-                this.countIncomingAfterDelay(expectedDeltas && expectedDeltas.incoming, delayMillis),
-                this.countOutgoingAfterDelay(expectedDeltas && expectedDeltas.outgoing, delayMillis)
-            ]);
+            // then confirm after delay
+            if (delayMillis) {
+                await delay(delayMillis);
+            }
+            this._onDidChangeInOutState.fire();
         }
         catch (err) {
-            if (err instanceof FossilError && (
-                err.fossilErrorCode === FossilErrorCodes.AuthenticationFailed ||
-                err.fossilErrorCode === FossilErrorCodes.RepositoryIsUnrelated ||
-                err.fossilErrorCode === FossilErrorCodes.RepositoryDefaultNotFound)) {
 
-                this.changeAutoInoutState({
-                    status: AutoInOutStatuses.Error,
-                    error: ((err.stderr || "").replace(/^abort:\s*/, '') || err.fossilErrorCode || err.message).trim(),
-                })
-            }
+            this.changeAutoInoutState({
+                status: AutoInOutStatuses.Error,
+                error: ((err.stderr || "").replace(/^abort:\s*/, '') || err.fossilErrorCode || err.message).trim(),
+            })
             throw err;
-        }
-    }
-
-    async countIncomingAfterDelay(expectedDelta: number = 0, delayMillis: number = 3000): Promise<void> {
-        try {
-            // immediate UI update with expected
-            if (expectedDelta) {
-                this._syncCounts.incoming = Math.max(0, this._syncCounts.incoming + expectedDelta);
-                this._onDidChangeInOutState.fire();
-            }
-
-            // then confirm after delay
-            if (delayMillis) {
-                await delay(delayMillis);
-            }
-            this._onDidChangeInOutState.fire();
-        }
-        catch (e) {
-            throw e;
-        }
-    }
-
-    async countOutgoingAfterDelay(expectedDelta: number = 0, delayMillis: number = 3000): Promise<void> {
-        try {
-            // immediate UI update with expected
-            if (expectedDelta) {
-                this._syncCounts.outgoing = Math.max(0, this._syncCounts.outgoing + expectedDelta);
-                this._onDidChangeInOutState.fire();
-            }
-
-            // then confirm after delay
-            if (delayMillis) {
-                await delay(delayMillis);
-            }
-            this._onDidChangeInOutState.fire();
-        }
-        catch (e) {
-            throw e;
         }
     }
 
@@ -843,24 +753,24 @@ export class Repository implements IDisposable {
     }
 
     @throttle
-    async push(path: string | undefined, options: PushOptions): Promise<void> {
+    async push(path: string | undefined): Promise<void> {
         return await this.run(Operation.Push, async () => {
             try {
                 this._lastPushPath = path;
-                await this.repository.push(path, options);
+                await this.repository.push();
             }
             catch (e) {
                 if (e instanceof FossilError && e.fossilErrorCode === FossilErrorCodes.PushCreatesNewRemoteHead) {
                     const action = await interaction.warnPushCreatesNewHead();
                     if (action === PushCreatesNewHeadAction.Pull) {
-                        commands.executeCommand("hg.pull");
+                        commands.executeCommand("fossil.pull");
                     }
                     return;
                 }
                 else if (e instanceof FossilError && e.fossilErrorCode === FossilErrorCodes.PushCreatesNewRemoteBranches) {
                     const allow = interaction.warnPushCreatesNewBranchesAllow();
                     if (allow) {
-                        return this.push(path, { ...options, allowPushNewBranches: true })
+                        return this.push(path)
                     }
 
                     return;
@@ -930,9 +840,7 @@ export class Repository implements IDisposable {
             this._onRunOperation.fire(operation);
 
             try {
-                // console.log('Running operation: ' + runOperation)
                 const result = await runOperation();
-                // console.log('completed operation')
 
                 if (!isReadOnly(operation)) {
                     await this.updateModelState();
@@ -1058,26 +966,11 @@ export class Repository implements IDisposable {
     }
 
     get count(): number {
-        const countBadge = workspace.getConfiguration('hg').get<BadgeOptions>('countBadge');
-
-        switch (countBadge) {
-            case 'off':
-                return 0;
-
-            case 'tracked':
-                return this.mergeGroup.resources.length
-                    + this.stagingGroup.resources.length
-                    + this.workingDirectoryGroup.resources.length
-                    + this.conflictGroup.resources.length;
-
-            case 'all':
-            default:
-                return this.mergeGroup.resources.length
+        return this.mergeGroup.resources.length
                     + this.stagingGroup.resources.length
                     + this.workingDirectoryGroup.resources.length
                     + this.conflictGroup.resources.length
                     + this.untrackedGroup.resources.length
-        }
     }
 
     dispose(): void {

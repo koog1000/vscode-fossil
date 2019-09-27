@@ -6,10 +6,9 @@
 
 import { workspace, Disposable } from 'vscode';
 import { FossilErrorCodes, FossilError } from "./fossilBase";
-// import { Model} from "./model";
 import { throttle } from './decorators';
 import typedConfig from "./config";
-import { Repository, Operation, /*Operations*/ } from './repository';
+import { Repository, Operation } from './repository';
 
 export const enum AutoInOutStatuses {
     Disabled,
@@ -39,14 +38,8 @@ export class AutoIncomingOutgoing {
     }
 
     private onConfiguration(): void {
-        if (typedConfig.autoInOut) {
-            this.repository.changeAutoInoutState({ status: AutoInOutStatuses.Enabled })
-            this.enable();
-        }
-        else {
-            this.repository.changeAutoInoutState({ status: AutoInOutStatuses.Disabled })
-            this.disable();
-        }
+        this.repository.changeAutoInoutState({ status: AutoInOutStatuses.Enabled })
+        this.enable();
     }
 
     enable(): void {
@@ -73,45 +66,7 @@ export class AutoIncomingOutgoing {
         if (!this.enabled || !opAffectsInOut(op)) {
             return;
         }
-
-        const pushPullBranchName = this.repository.pushPullBranchName;
-        switch (op) {
-            case Operation.Push:
-                const path = this.repository.lastPushPath;
-                if (!path || path === "default" || path === "default-push") {
-                    const delta = -this.repository.syncCounts.outgoing;
-                    this.repository.countOutgoingAfterDelay(delta);
-                }
-                break;
-
-            case Operation.Pull:
-                const delta = -this.repository.syncCounts.incoming;
-                this.repository.countIncomingAfterDelay(delta);
-                break;
-
-            case Operation.Commit:
-            case Operation.RevertFiles:
-                const currentBranch = this.repository.currentBranch;
-                const affectsInOut =
-                    pushPullBranchName === undefined // all branches
-                    || currentBranch && pushPullBranchName === currentBranch.name;
-
-                if (affectsInOut) {
-                    const delta = (op === Operation.Commit) ? +1 : -1;
-                    this.repository.countOutgoingAfterDelay(delta);
-                }
-                break;
-
-            case Operation.Update:
-                if (pushPullBranchName && pushPullBranchName !== "default") { // i.e. "current" setting
-                    const incoming = -this.repository.syncCounts.incoming;
-                    const outgoing = -this.repository.syncCounts.outgoing;
-                    this.repository.countIncomingOutgoingAfterDelay({ incoming, outgoing })
-                }
-
-            default:
-            // no-op
-        }
+        this.repository.changeInoutAfterDelay();
     }
 
     @throttle
@@ -120,7 +75,7 @@ export class AutoIncomingOutgoing {
         this.repository.changeAutoInoutState({ nextCheckTime });
 
         try {
-            await this.repository.countIncomingOutgoingAfterDelay();
+            await this.repository.changeInoutAfterDelay();
         }
         catch (err) {
             if (err instanceof FossilError && (

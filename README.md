@@ -64,15 +64,6 @@ __TODO__: update gif for fossil
 
   * Enables Fossil as a source control manager in VS Code.
 
-
-`fossil.pushPullScope { all / current / default }`
-
-  * Specifies what to include in Push/Pull operations.
-  * For named-branches mode: &nbsp;
-  `"all"` &mdash; all branches / unrestricted (this is the default)
-  `"current"` &mdash; only includes changesets for the current branch
-  `"default"` &mdash; only includes changesets for the _default_ branch
-
 `fossil.autoUpdate { boolean }`
 
   * Enables automatic update of working directory to branch head after
@@ -80,36 +71,12 @@ __TODO__: update gif for fossil
   *  `"true"` &mdash; enabled
   *  `"false"` &mdash; disabled, manual update/merge required
 
-`fossil.autoInOut { boolean }`
-
-  * Enables automatic counting of incoming/outgoing changes.
-  * When enabled, these show in the status bar.
-  * Updated every 3 minutes, or whenever a commit/push/pull is done.
-  * Note: when `fossil.pushPullBranch` is set to `"current"` or
-  `"default"` then only the respective branch will be included in the
-  counts.
-
 `fossil.autoRefresh { boolean }`
 
   * Enables automatic refreshing of Source Control tab and badge counter
   when files within the project change:
   `"true"` &mdash; enabled
   `"false"` &mdash; disabled, manual refresh still available.
-
-`fossil.countBadge { tracked / all / off }`
-
-  * Controls the badge counter for Source Control in the activity bar:
-  `"tracked"` &mdash; only count changes to tracked files (default).
-  `"all"` &mdash; include untracked files in count.
-  `"off"` &mdash; no badge counter.
-
-`fossil.allowPushNewBranches { boolean }`
-
-  * Overrides the warning that normally occurs when a new branch is
-  pushed:
-  * `"true"` &mdash; new branches are pushed without warning (default).
-  * `"false"` &mdash; shows a prompt when new branches are being
-    pushed (e.g `fossil push --new-branch`)
 
 `fossil.path { string / null }`
 
@@ -140,12 +107,12 @@ Reference that documentation as much as possible.
 
 
 # Building Extension from Source
-**Note:** The official way to install vscode-fossil is from within 
+**Note:** The official way to install vscode-fossil is from within
 [VSCode Extensions](https://code.visualstudio.com/docs/editor/extension-gallery#_browse-for-extensions)
 
 ### Dependencies
-You will need to install [Node.js](https://nodejs.org/en/download/) 
-on your computer and add it to your `$PATH`. 
+You will need to install [Node.js](https://nodejs.org/en/download/)
+on your computer and add it to your `$PATH`.
 
 ### Build Steps
 1. `git clone` repository and place it in your VSCode extension folder (~/.vscode/extensions/ or similar).

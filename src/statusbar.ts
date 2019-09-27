@@ -68,7 +68,6 @@ interface SyncStatusBarState {
     nextCheckTime: Date;
     hasPaths: boolean;
     branch: Ref | undefined;
-    syncCounts: { incoming: number, outgoing: number };
 }
 
 class SyncStatusBar {
@@ -82,7 +81,6 @@ class SyncStatusBar {
         syncStatus: SyncStatus.None,
         hasPaths: false,
         branch: undefined,
-        syncCounts: { incoming: 0, outgoing: 0 }
     };
 
     private _onDidChange = new EventEmitter<void>();
@@ -127,25 +125,22 @@ class SyncStatusBar {
             ...this.state,
             hasPaths: this.repository.path.url != "",
             branch: this.repository.currentBranch,
-            syncCounts: this.repository.syncCounts,
             autoInOut: this.repository.autoInOutState
         };
     }
 
-    private describeAutoInOutStatus(refName: string | undefined): { icon: string, message?: string, status: AutoInOutStatuses } {
+    private describeAutoInOutStatus(): { icon: string, message?: string, status: AutoInOutStatuses } {
         const { autoInOut } = this.state;
         switch (autoInOut.status) {
             case AutoInOutStatuses.Enabled:
                 if (autoInOut.nextCheckTime) {
                     const time = autoInOut.nextCheckTime.toLocaleTimeString();
-                    const message = refName ?
-                        localize('synced next check scoped', '{0} is synced (next check {1})', refName, time) :
-                        localize('synced next check', 'Synced (next check {0})', time);
+                    const message = localize('synced next check', 'Synced (next check {0})', time);
 
                     return { icon: '$(check)', message, status: AutoInOutStatuses.Enabled };
                 }
                 else {
-                    return { icon: '', message: '', status: AutoInOutStatuses.Enabled };
+                    return { icon: '', message: 'Enabled but no next sync time', status: AutoInOutStatuses.Enabled };
                 }
 
             case AutoInOutStatuses.Error:
@@ -153,10 +148,8 @@ class SyncStatusBar {
 
             case AutoInOutStatuses.Disabled:
             default:
-                const message = refName ?
-                    localize('pull scoped', 'Pull ({0} only)', refName) :
-                    localize('pull', 'Pull');
-                return { icon: '$(cloud-download)', message, status: AutoInOutStatuses.Disabled };
+                const message = localize('sync', 'Sync');
+                return { icon: '$(check)', message, status: AutoInOutStatuses.Disabled };
         }
     }
 
@@ -165,48 +158,18 @@ class SyncStatusBar {
             return undefined;
         }
 
-        const { pushPullBranchName } = this.repository;
-        const scopeName = pushPullBranchName;
-        let autoInOut = this.describeAutoInOutStatus(scopeName);
+        let autoInOut = this.describeAutoInOutStatus();
         let icon = autoInOut.icon;
         let text = '';
-        let command = 'fossil.pull';
+        let command = 'fossil.pull'; // pull in autoupdate context performs an 'update'
         let tooltip = autoInOut.message;
-        let syncCounts = this.state.syncCounts;
-        let plural = '';
-
-        if (syncCounts && syncCounts.incoming) {
-            text = `${syncCounts.incoming}↓ ${syncCounts.outgoing}↑`;
-            icon = '$(cloud-download)';
-            command = 'fossil.pull';
-            plural = (syncCounts.incoming === 1) ? '' : 's';
-            tooltip = scopeName ?
-                localize('pull changesets scoped', "Pull {0} changeset{1} ({2} only)", syncCounts.incoming, plural, scopeName) :
-                localize('pull changesets', "Pull {0} changeset{1}", syncCounts.incoming, plural);
-        }
-        else if (syncCounts && syncCounts.outgoing) {
-            if (autoInOut.status === AutoInOutStatuses.Enabled) {
-                text = `${syncCounts.incoming}↓ ${syncCounts.outgoing}↑`;
-            }
-            else {
-                text = `${syncCounts.outgoing}`;
-            }
-            icon = '$(cloud-upload)';
-            command = 'fossil.push';
-            plural = (syncCounts.outgoing === 1) ? '' : 's';
-            tooltip = scopeName ?
-                localize('push changesets scoped', "Push {0} changeset{1} ({2} only)", syncCounts.outgoing, plural, scopeName) :
-                localize('push changesets', "Push {0} changeset{1}", syncCounts.outgoing, plural);
-        }
 
         const { syncStatus } = this.state;
         if (syncStatus) {
             icon = '$(sync~spin)'
             text = '';
             command = '';
-            tooltip = (syncStatus === SyncStatus.Pushing) ?
-                localize('pushing', "Pushing changes...") :
-                localize('pulling', "Pulling changes...");
+            tooltip = localize('syncing', "Syncing changes...");
         }
 
         return {
