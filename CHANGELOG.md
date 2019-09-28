@@ -2,6 +2,15 @@ Changelog
 =============================================
 
 
+v0.0.10
+---------------------------------------------
+## What's New
+- Fix for diff files not refreshing after commit
+- Update icons and menus to be more intuitive
+- Performance improvements, fewer calls to fossil db
+- General cleanup and removal of dead code
+
+
 v0.0.9
 ---------------------------------------------
 ## What's New

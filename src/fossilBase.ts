@@ -6,8 +6,9 @@
 
 import * as path from 'path';
 import * as cp from 'child_process';
+import { existsSync, appendFileSync, writeFileSync } from 'fs';
 import { groupBy, IDisposable, toDisposable, dispose, mkdirp } from "./util";
-import { EventEmitter, Event, workspace, Disposable } from "vscode";
+import { EventEmitter, Event, workspace, window, Disposable, Uri } from "vscode";
 import { interaction } from './interaction';
 
 export interface IFossil {
@@ -24,17 +25,10 @@ export interface LogEntryOptions {
     revQuery?: string;
 }
 
-export interface PushOptions extends PullOptions {
-    allowPushNewBranches?: boolean;
-}
-
-export interface PullOptions extends SyncOptions {
-    autoUpdate: boolean; // run an update after the pull?
-}
-
-export interface SyncOptions {
+export interface PullOptions {
     branch?: string;
     revs?: string[];
+    autoUpdate: boolean; // run an update after the pull?
 }
 
 export interface IMergeResult {
@@ -402,6 +396,8 @@ export interface CommitDetails extends Commit {
 
 export class Repository {
 
+    private status_msg: string = '';
+
     constructor(
         private _fossil: Fossil,
         private repositoryRoot: string
@@ -498,7 +494,7 @@ export class Repository {
         const disposables: IDisposable[] = [];
         const args = ['commit'];
 
-        if (opts.fileList && opts.fileList.length) {
+        if (opts.fileList.length) {
             args.push(...opts.fileList);
         }
 
@@ -562,6 +558,20 @@ export class Repository {
         }
     }
 
+    async ignore(paths: string[]): Promise<void> {
+        const ignore_file = this.repositoryRoot + '/.fossil-settings/ignore-glob'
+        if(existsSync(ignore_file)){
+            appendFileSync(ignore_file, paths.join('\n') + '\n' )
+        }
+        else{
+            mkdirp(this.repositoryRoot + '/.fossil-settings/')
+            writeFileSync(ignore_file, paths.join('\n')+ '\n');
+            this.add([ignore_file])
+        }
+        const document = await workspace.openTextDocument(ignore_file)
+        window.showTextDocument(document);
+    }
+
     async undo(dryRun?: boolean): Promise<FossilUndoDetails> {
         const args = ['undo'];
 
@@ -602,7 +612,7 @@ export class Repository {
         try {
             return {
                 message: await this.getLastCommitMessage(),
-                affectedFiles: this.parseStatusLines(await this.getStatus())
+                affectedFiles: this.parseStatusLines(this.status_msg)
             }
         }
         catch (e) {
@@ -660,7 +670,7 @@ export class Repository {
         }
     }
 
-    async push(path?: string, options?: PushOptions): Promise<void> {
+    async push(): Promise<void> {
         const args = ['push'];
 
         try {
@@ -728,7 +738,7 @@ export class Repository {
     }
 
     async getSummary(): Promise<IRepoStatus> {
-        const summary = await this.getStatus();
+        const summary = this.status_msg;
         const parents = this.parseParentLines(summary);
         const isMerge = /\bMERGED WITH\b/.test(summary);
         return { isMerge, parents };
@@ -748,21 +758,21 @@ export class Repository {
     }
 
     async getLastCommitMessage(): Promise<string> {
-        const message = await this.getStatus();
+        const message = this.status_msg;
         var comment = message.match(/comment:\s+(.*)\(/)
         if (comment) return comment[1];
         return "";
     }
 
     async getLastCommitAuthor(): Promise<string> {
-        const message = await this.getStatus();
+        const message = this.status_msg;
         var comment = message.match(/user:\s+(.*)\n/)
         if (comment) return comment[1];
         return "";
     }
 
     async getLastCommitDate(): Promise<string> {
-        const message = await this.getStatus();
+        const message = this.status_msg;
         var comment = message.match(/checkout:\s+(.*)\s(.*)\n/)
         if (comment) return comment[2];
         return "";
@@ -771,6 +781,7 @@ export class Repository {
     async getStatus(): Promise<string> {
         const args = ['status'];
         const executionResult = await this.exec(args); // quiet, include renames/copies
+        this.status_msg = executionResult.stdout;
         return executionResult.stdout;
     }
 
@@ -832,7 +843,7 @@ export class Repository {
     }
 
     async getCurrentBranch(): Promise<Ref> {
-        const message = await this.getStatus();
+        const message = this.status_msg;
         var branch = message.match(/tags:\s+(.*)\b(.*)\n/)
         var comment = message.match(/comment:\s+(.*)\(/)
         if (branch && comment) {
@@ -875,8 +886,7 @@ export class Repository {
     }
 
     async getParents(): Promise<string> {
-        const message = await this.getStatus();
-        var comment = message.match(/parent:\s+(.*)\s(.*)\n/)
+        var comment = this.status_msg.match(/parent:\s+(.*)\s(.*)\n/)
         if (comment) return comment[1];
         return "";
     }

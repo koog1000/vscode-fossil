@@ -48,7 +48,7 @@ export class FossilContentProvider {
             return;
         }
 
-        this._onDidChange.fire(toFossilUri(uri, ''));
+        this._onDidChange.fire(toFossilUri(uri));
     }
 
     @debounce(1100)
@@ -65,14 +65,16 @@ export class FossilContentProvider {
 
         Object.keys(this.cache).forEach(key => {
             const uri = this.cache[key].uri;
-            const fsPath = uri.fsPath;
+            // const fsPath = uri.fsPath;
 
-            for (const root of this.changedRepositoryRoots) {
-                if (fsPath.startsWith(root)) {
-                    this._onDidChange.fire(uri);
-                    return;
-                }
-            }
+            this._onDidChange.fire(uri);
+
+            // for (const root of this.changedRepositoryRoots) {
+            //     if (fsPath.startsWith(root)) {
+            //         this._onDidChange.fire(uri);
+            //         return;
+            //     }
+            // }
         });
 
         this.changedRepositoryRoots.clear();
@@ -99,7 +101,7 @@ export class FossilContentProvider {
             uri = uri.with({ scheme: 'fossil', path: uri.query });
         }
 
-        let { path, ref } = fromFossilUri(uri);
+        let { path } = fromFossilUri(uri);
 
         try {
             return await repository.show('', path);

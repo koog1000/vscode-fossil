@@ -25,10 +25,6 @@ class Config {
         return this.get("enabled", true);
     }
 
-    get instrumentation(): boolean {
-        return this.get("instrumentation", false);
-    }
-
     get path(): string | undefined {
         return this.get("path", undefined);
     }
@@ -41,28 +37,12 @@ class Config {
         return this.get("autoRefresh", true);
     }
 
-    get autoInOut(): boolean {
-        return this.get("autoInOut", true);
-    }
-
     get autoInOutInterval(): number {
         return this.get("autoInOutInterval", DEFAULT_AUTO_IN_OUT_INTERVAL_SECONDS);
     }
 
     get autoInOutIntervalMillis(): number {
         return this.autoInOutInterval * 1000;
-    }
-
-    get allowPushNewBranches(): boolean {
-        return this.get("allowPushNewBranches", false);
-    }
-
-    get pushPullScope(): PushPullScopeOptions {
-        return this.get<PushPullScopeOptions>("pushPullScope", "all");
-    }
-
-    get pushPullBranch(): PushPullScopeOptions {
-        return this.get<PushPullScopeOptions>("pushPullBranch", this.pushPullScope);
     }
 }
 

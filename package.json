@@ -16,7 +16,7 @@
   "bugs": {
     "url": "https://github.com/koog1000/vscode-fossil/issues"
   },
-  "version": "0.0.9",
+  "version": "0.0.10",
   "engines": {
     "vscode": "^1.23.0"
   },
@@ -54,6 +54,15 @@
         "icon": {
           "light": "resources/icons/light/add.svg",
           "dark": "resources/icons/dark/add.svg"
+        }
+      },
+      {
+        "command": "fossil.ignore",
+        "title": "%command.ignore%",
+        "category": "Fossil",
+        "icon": {
+          "light": "resources/icons/light/discard.svg",
+          "dark": "resources/icons/dark/discard.svg"
         }
       },
       {
@@ -255,8 +264,8 @@
         "title": "%command.stage%",
         "category": "Fossil",
         "icon": {
-          "light": "resources/icons/light/stage.svg",
-          "dark": "resources/icons/dark/stage.svg"
+          "light": "resources/icons/light/add.svg",
+          "dark": "resources/icons/dark/add.svg"
         }
       },
       {
@@ -264,8 +273,8 @@
         "title": "%command.stageAll%",
         "category": "Fossil",
         "icon": {
-          "light": "resources/icons/light/stage.svg",
-          "dark": "resources/icons/dark/stage.svg"
+            "light": "resources/icons/light/add.svg",
+            "dark": "resources/icons/dark/add.svg"
         }
       },
       {
@@ -566,26 +575,6 @@
       ],
       "scm/resourceState/context": [
         {
-          "command": "fossil.resolveAgain",
-          "when": "config.fossil.enabled && scmProvider == fossil && scmResourceGroup == conflict",
-          "group": "inline"
-        },
-        {
-          "command": "fossil.markResolved",
-          "when": "config.fossil.enabled && scmProvider == fossil && scmResourceGroup == conflict",
-          "group": "inline"
-        },
-        {
-          "command": "fossil.resolveAgain",
-          "when": "config.fossil.enabled && scmProvider == fossil && scmResourceGroup == conflict",
-          "group": "0_resolution"
-        },
-        {
-          "command": "fossil.markResolved",
-          "when": "config.fossil.enabled && scmProvider == fossil && scmResourceGroup == conflict",
-          "group": "0_resolution"
-        },
-        {
           "command": "fossil.unresolve",
           "when": "config.fossil.enabled && scmProvider == fossil && scmResourceGroup == merge",
           "group": "1_modification"
@@ -636,7 +625,12 @@
           "group": "inline"
         },
         {
-          "command": "fossil.add",
+          "command": "fossil.stage",
+          "when": "config.fossil.enabled && scmProvider == fossil && scmResourceGroup == untracked",
+          "group": "1_modification"
+        },
+        {
+          "command": "fossil.ignore",
           "when": "config.fossil.enabled && scmProvider == fossil && scmResourceGroup == untracked",
           "group": "1_modification"
         },
@@ -655,7 +649,7 @@
         {
           "command": "fossil.openFileFromUri",
           "group": "navigation",
-          "when": "config.fossil.enabled && fossilOpenRepositoryCount != 0 && isInDiffEditor && resourceScheme != extension"
+          "when": "config.fossil.enabled && fossilOpenRepositoryCount != 0 && isInDiffEditor && resourceScheme != extension && scmProvider == fossil"
         },
         {
           "command": "fossil.openChangeFromUri",
@@ -676,16 +670,6 @@
           "description": "%config.enabled%",
           "default": true
         },
-        "fossil.allowPushNewBranches": {
-          "type": "boolean",
-          "description": "%config.allowPushNewBranches%",
-          "default": true
-        },
-        "fossil.autoInOut": {
-          "type": "boolean",
-          "description": "%config.autoInOut%",
-          "default": true
-        },
         "fossil.autoInOutInterval": {
           "type": "number",
           "description": "%config.autoInOutInterval%",
@@ -701,21 +685,6 @@
           "description": "%config.autoUpdate%",
           "default": true
         },
-        "fossil.countBadge": {
-          "type": "string",
-          "description": "%config.countBadge%",
-          "enum": [
-            "tracked",
-            "all",
-            "off"
-          ],
-          "enumDescriptions": [
-            "%config.countBadge.tracked%",
-            "%config.countBadge.all%",
-            "%config.countBadge.off%"
-          ],
-          "default": "all"
-        },
         "fossil.path": {
           "type": [
             "string",
@@ -724,36 +693,6 @@
           "description": "%config.path%",
           "default": null,
           "isExecutable": true
-        },
-        "fossil.pushPullBranch": {
-          "type": "string",
-          "description": "%config.pushPullBranch%",
-          "enum": [
-            "all",
-            "current",
-            "default"
-          ],
-          "enumDescriptions": [
-            "%config.pushPullBranch.all%",
-            "%config.pushPullBranch.current%",
-            "%config.pushPullBranch.default%"
-          ],
-          "default": "all"
-        },
-        "fossil.pushPullScope": {
-          "type": "string",
-          "description": "%config.pushPullScope%",
-          "enum": [
-            "all",
-            "current",
-            "default"
-          ],
-          "enumDescriptions": [
-            "%config.pushPullScope.all%",
-            "%config.pushPullScope.current%",
-            "%config.pushPullScope.default%"
-          ],
-          "default": "all"
         }
       }
     }

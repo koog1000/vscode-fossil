@@ -13,11 +13,7 @@ import { memoize, debounce, sequentialize } from "./decorators";
 import * as path from 'path';
 import * as fs from 'fs';
 import * as nls from 'vscode-nls';
-// import { groupStatuses, IStatusGroups, IGroupStatusesParams, createEmptyStatusGroups, ResourceGroup, MergeGroup, ConflictGroup, StagingGroup, WorkingDirectoryGroup, UntrackedGroup, ResourceGroupId } from "./resourceGroups";
-// import { interaction, PushCreatesNewHeadAction, DefaultRepoNotConfiguredAction } from "./interaction";
-// import { AutoInOutStatuses, AutoInOutState } from "./autoinout";
 import typedConfig from "./config";
-// import { PushPullScopeOptions } from "./config";
 import { Repository, RepositoryState } from "./repository";
 
 const localize = nls.loadMessageBundle();
@@ -38,8 +34,6 @@ class RepositoryPick implements QuickPickItem {
 
     constructor(public readonly repository: Repository) { }
 }
-
-const exists = (path: string) => new Promise(c => fs.exists(path, c));
 
 export interface ModelChangeEvent {
     repository: Repository;
@@ -151,7 +145,6 @@ export class Model implements Disposable {
     }
 
     private onPossibleHgRepositoryChange(uri: Uri): void {
-        console.log(uri.fsPath)
         const possibleHgRepositoryPath = uri.fsPath.replace(/\.hg.*$/, '');
         this.possibleHgRepositoryPaths.add(possibleHgRepositoryPath);
         this.eventuallyScanPossibleHgRepositories();
