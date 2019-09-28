@@ -8,17 +8,16 @@
 
 import { Uri } from 'vscode';
 
-export function fromFossilUri(uri: Uri): { path: string; ref: string; } {
+export function fromFossilUri(uri: Uri): { path: string} {
     return JSON.parse(uri.query);
 }
 
-export function toFossilUri(uri: Uri, ref: string): Uri {
+export function toFossilUri(uri: Uri): Uri {
     return uri.with({
         scheme: 'fossil-original',
         path: uri.path,
         query: JSON.stringify({
-            path: uri.fsPath,
-            ref
+            path: uri.fsPath
         })
     });
 }
