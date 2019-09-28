@@ -6,8 +6,8 @@
 
 // based on https://github.com/Microsoft/vscode/commit/41f0ff15d7327da30fdae73aa04ca570ce34fa0a
 
-import { ExtensionContext, workspace, window, Disposable, commands, Uri, OutputChannel } from 'vscode';
-import { FossilFinder, Fossil, IFossil, FossilFindAttemptLogger } from './fossilBase';
+import { ExtensionContext, window, Disposable, commands, OutputChannel } from 'vscode';
+import { FossilFinder, Fossil, IFossil } from './fossilBase';
 import { Model } from './model';
 import { CommandCenter } from './commands';
 import { FossilContentProvider } from './contentProvider';
@@ -17,7 +17,7 @@ import typedConfig from './config';
 const localize = nls.config(process.env.VSCODE_NLS_CONFIG)();
 
 async function init(context: ExtensionContext, disposables: Disposable[]): Promise<void> {
-    const { name, version, aiKey } = require(context.asAbsolutePath('./package.json')) as { name: string, version: string, aiKey: string };
+    // const { name, version, aiKey } = require(context.asAbsolutePath('./package.json')) as { name: string, version: string, aiKey: string };
 
     const outputChannel = window.createOutputChannel('Fossil');
     disposables.push(outputChannel);
@@ -25,8 +25,8 @@ async function init(context: ExtensionContext, disposables: Disposable[]): Promi
     const enabled = typedConfig.enabled;
     const pathHint = typedConfig.path;
     const info: IFossil = await findFossil(pathHint, outputChannel);
-    const hg = new Fossil({ fossilPath: info.path, version: info.version, enableInstrumentation: enabled });
-    const model = new Model(hg);
+    const fossil = new Fossil({ fossilPath: info.path, version: info.version, enableInstrumentation: enabled });
+    const model = new Model(fossil);
     disposables.push(model);
 
     const onRepository = () => commands.executeCommand('setContext', 'fossilOpenRepositoryCount', model.repositories.length);
@@ -36,20 +36,18 @@ async function init(context: ExtensionContext, disposables: Disposable[]): Promi
 
     if (!enabled)
     {
-        const commandCenter = new CommandCenter(hg, model, outputChannel);
+        const commandCenter = new CommandCenter(fossil, model, outputChannel);
         disposables.push(commandCenter);
         return;
     }
 
     outputChannel.appendLine(localize('using fossil', "Using fossil {0} from {1}", info.version, info.path));
-    hg.onOutput(str => outputChannel.append(str), null, disposables);
+    fossil.onOutput(str => outputChannel.append(str), null, disposables);
 
     disposables.push(
-        new CommandCenter(hg, model, outputChannel),
+        new CommandCenter(fossil, model, outputChannel),
         new FossilContentProvider(model),
     );
-
-    // await checkHgVersion(info);
 }
 
 export async function findFossil(pathHint: string | undefined, outputChannel: OutputChannel): Promise<IFossil> {
@@ -76,14 +74,3 @@ export function activate(context: ExtensionContext) {
     init(context, disposables)
         .catch(err => console.error(err));
 }
-
-// async function checkHgVersion(info: IFossil): Promise<void> {
-//     if (/^[01]/.test(info.version)) {
-//         const update = localize('updateHg', "Update Hg");
-//         const choice = await window.showWarningMessage(localize('hg20', "You seem to have hg {0} installed. Code works best with hg >= 2", info.version), update);
-
-//         if (choice === update) {
-//             commands.executeCommand('vscode.open', Uri.parse('https://fossil-scm.org/'));
-//         }
-//     }
-// }
