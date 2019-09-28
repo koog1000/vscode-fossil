@@ -48,7 +48,7 @@ export class FossilContentProvider {
             return;
         }
 
-        this._onDidChange.fire(toFossilUri(uri, ''));
+        this._onDidChange.fire(toFossilUri(uri));
     }
 
     @debounce(1100)
@@ -99,7 +99,7 @@ export class FossilContentProvider {
             uri = uri.with({ scheme: 'fossil', path: uri.query });
         }
 
-        let { path, ref } = fromFossilUri(uri);
+        let { path } = fromFossilUri(uri);
 
         try {
             return await repository.show('', path);
