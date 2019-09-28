@@ -65,14 +65,16 @@ export class FossilContentProvider {
 
         Object.keys(this.cache).forEach(key => {
             const uri = this.cache[key].uri;
-            const fsPath = uri.fsPath;
+            // const fsPath = uri.fsPath;
 
-            for (const root of this.changedRepositoryRoots) {
-                if (fsPath.startsWith(root)) {
-                    this._onDidChange.fire(uri);
-                    return;
-                }
-            }
+            this._onDidChange.fire(uri);
+
+            // for (const root of this.changedRepositoryRoots) {
+            //     if (fsPath.startsWith(root)) {
+            //         this._onDidChange.fire(uri);
+            //         return;
+            //     }
+            // }
         });
 
         this.changedRepositoryRoots.clear();
