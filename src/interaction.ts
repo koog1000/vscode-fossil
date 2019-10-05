@@ -143,14 +143,13 @@ export namespace interaction {
             default:
                 const hint = (err.stderr || err.message || String(err))
                     .replace(/^abort: /mi, '')
-                    .replace(/^> husky.*$/mi, '')
                     .split(/[\r\n]/)
                     .filter(line => !!line)
                 [0];
 
                 message = hint
-                    ? localize('hg error details', "Hg: {0}", hint)
-                    : localize('hg error', "Hg error");
+                    ? localize('fossil error details', "Fossil: {0}", hint)
+                    : localize('fossil error', "Fossil error");
 
                 break;
         }
@@ -160,7 +159,7 @@ export namespace interaction {
             return false;
         }
 
-        const openOutputChannelChoice = localize('open hg log', "Open Hg Log");
+        const openOutputChannelChoice = localize('open fossil log', "Open Fossil Log");
         const choice = await window.showErrorMessage(message, openOutputChannelChoice);
         return choice === openOutputChannelChoice;
     }
