@@ -306,7 +306,19 @@ export class Fossil {
 
     async exec(cwd: string, args: string[], options: any = {}): Promise<IExecutionResult> {
         options = { cwd, ...options };
-        return await this._exec(args, options);
+        try{
+            let result = await this._exec(args, options);
+            return result
+        }
+        catch(err){
+            if(err instanceof FossilError){
+                interaction.errorPromptOpenLog(err)
+            }
+        }
+        const exitCode = 0
+        const stdout = ''
+        const stderr = ''
+        return {exitCode, stdout, stderr}
     }
 
     private async _exec(args: string[], options: any = {}): Promise<IExecutionResult> {
