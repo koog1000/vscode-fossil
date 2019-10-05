@@ -583,17 +583,14 @@ export class Repository implements IDisposable {
     async commit(message: string, opts: CommitOptions = Object.create(null)): Promise<void> {
         await this.run(Operation.Commit, async () => {
             let fileList: string[] = [];
-            if (opts.scope){
-                if (opts.scope === CommitScope.STAGED_CHANGES) {
-                    fileList = this.stagingGroup.resources.map(r => this.mapResourceToRepoRelativePath(r));
-                }
-                else if (opts.scope === CommitScope.CHANGES) {
-                    fileList = this.workingDirectoryGroup.resources.map(r => this.mapResourceToRepoRelativePath(r));
-                }
-                await this.repository.commit(message, { fileList });
-                return
+            if (opts.scope === CommitScope.STAGED_CHANGES) {
+                fileList = this.stagingGroup.resources.map(r => this.mapResourceToRepoRelativePath(r));
             }
-            interaction.informNoChangesToCommit();
+            else if (opts.scope === CommitScope.CHANGES) {
+                fileList = this.workingDirectoryGroup.resources.map(r => this.mapResourceToRepoRelativePath(r));
+            }
+            await this.repository.commit(message, { fileList });
+            return
         });
     }
 

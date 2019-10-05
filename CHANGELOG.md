@@ -2,6 +2,14 @@ Changelog
 =============================================
 
 
+v0.0.11
+---------------------------------------------
+## What's New
+- Actually Fix `Fossil: Commit All`, v0.0.9 didn't fix it
+- When error occurs prompt to open Fossil output log
+- General cleanup
+
+
 v0.0.10
 ---------------------------------------------
 ## What's New
