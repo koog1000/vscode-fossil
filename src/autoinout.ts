@@ -80,8 +80,7 @@ export class AutoIncomingOutgoing {
         catch (err) {
             if (err instanceof FossilError && (
                 err.fossilErrorCode === FossilErrorCodes.AuthenticationFailed ||
-                err.fossilErrorCode === FossilErrorCodes.RepositoryIsUnrelated ||
-                err.fossilErrorCode === FossilErrorCodes.RepositoryDefaultNotFound)) {
+                err.fossilErrorCode === FossilErrorCodes.NotAFossilRepository )) {
                 this.disable();
             }
         }

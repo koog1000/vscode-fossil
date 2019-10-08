@@ -217,7 +217,7 @@ export class Model implements Disposable {
 
             this.open(repository);
         } catch (err) {
-            if (err.fossilErrorCode === FossilErrorCodes.NotAnHgRepository) {
+            if (err.fossilErrorCode === FossilErrorCodes.NotAFossilRepository) {
                 return;
             }
 

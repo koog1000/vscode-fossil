@@ -764,14 +764,6 @@ export class Repository implements IDisposable {
                     }
                     return;
                 }
-                else if (e instanceof FossilError && e.fossilErrorCode === FossilErrorCodes.PushCreatesNewRemoteBranches) {
-                    const allow = interaction.warnPushCreatesNewBranchesAllow();
-                    if (allow) {
-                        return this.push(path)
-                    }
-
-                    return;
-                }
 
                 throw e;
             }
@@ -811,7 +803,7 @@ export class Repository implements IDisposable {
                 return await this.repository.cat(relativePath, ref)
             }
             catch (e) {
-                if (e && e instanceof FossilError && e.fossilErrorCode === 'NoSuchFile') {
+                if (e && e instanceof FossilError && e.fossilErrorCode === FossilErrorCodes.NoSuchFile) {
                     return '';
                 }
 
@@ -846,14 +838,8 @@ export class Repository implements IDisposable {
                 return result;
             }
             catch (err) {
-                if (err.fossilErrorCode === FossilErrorCodes.NotAnHgRepository) {
+                if (err.fossilErrorCode === FossilErrorCodes.NotAFossilRepository) {
                     this.state = RepositoryState.Disposed;
-
-                    // const disposables: Disposable[] = [];
-                    // this.onWorkspaceChange(this.onFSChange, this, disposables);
-                    // this.repositoryDisposable = combinedDisposable(disposables);
-
-                    // this.state = State.NotAnHgRepository;
                 }
 
                 throw err;
