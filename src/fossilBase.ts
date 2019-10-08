@@ -8,7 +8,7 @@ import * as path from 'path';
 import * as cp from 'child_process';
 import { existsSync, appendFileSync, writeFileSync } from 'fs';
 import { groupBy, IDisposable, toDisposable, dispose, mkdirp } from "./util";
-import { EventEmitter, Event, workspace, window, Disposable, Uri } from "vscode";
+import { EventEmitter, Event, workspace, window, Disposable, OutputChannel } from "vscode";
 import { interaction } from './interaction';
 
 export interface IFossil {
@@ -234,26 +234,14 @@ export interface IFossilOptions {
     version: string;
     env?: any;
     enableInstrumentation: boolean;
+    outputChannel: OutputChannel;
 }
 
 export const FossilErrorCodes = {
-    BadConfigFile: 'BadConfigFile',
     AuthenticationFailed: 'AuthenticationFailed',
-    NoUserNameConfigured: 'NoUserNameConfigured',
-    RepositoryDefaultNotFound: 'RepositoryDefaultNotFound',
-    RepositoryIsUnrelated: 'RepositoryIsUnrelated',
-    NotAnHgRepository: 'NotAnHgRepository',
-    NotAtRepositoryRoot: 'NotAtRepositoryRoot',
+    NotAFossilRepository: 'NotAFossilRepository',
     UnmergedChanges: 'UnmergedChanges',
     PushCreatesNewRemoteHead: 'PushCreatesNewRemoteHead',
-    PushCreatesNewRemoteBranches: 'PushCreatesNewRemoteBranches',
-    RemoteConnectionError: 'RemoteConnectionError',
-    DirtyWorkingDirectory: 'DirtyWorkingDirectory',
-    CantOpenResource: 'CantOpenResource',
-    HgNotFound: 'HgNotFound',
-    CantCreatePipe: 'CantCreatePipe',
-    CantAccessRemote: 'CantAccessRemote',
-    RepositoryNotFound: 'RepositoryNotFound',
     NoSuchFile: 'NoSuchFile',
     BranchAlreadyExists: 'BranchAlreadyExists',
     NoUndoInformationAvailable: 'NoUndoInformationAvailable',
@@ -264,6 +252,7 @@ export const FossilErrorCodes = {
 export class Fossil {
 
     private fossilPath: string;
+    private outputChannel: OutputChannel;
     private disposables: Disposable[] = [];
     private openRepository: Repository | undefined;
 
@@ -272,6 +261,7 @@ export class Fossil {
 
     constructor(options: IFossilOptions) {
         this.fossilPath = options.fossilPath;
+        this.outputChannel = options.outputChannel;
     }
 
     open(repository: string): Repository {
@@ -311,8 +301,13 @@ export class Fossil {
             return result
         }
         catch(err){
-            if(err instanceof FossilError){
-                interaction.errorPromptOpenLog(err)
+            if(err instanceof FossilError &&
+                err.fossilErrorCode !== FossilErrorCodes.NoSuchFile &&
+                err.fossilErrorCode !== FossilErrorCodes.NotAFossilRepository){
+                const openLog = interaction.errorPromptOpenLog(err)
+                if (openLog) {
+                    this.outputChannel.show();
+                }
             }
         }
         const exitCode = 0
@@ -337,8 +332,8 @@ export class Fossil {
             if (/Authentication failed/.test(result.stderr)) {
                 fossilErrorCode = FossilErrorCodes.AuthenticationFailed;
             }
-            else if (/no repository found/.test(result.stderr)) {
-                fossilErrorCode = FossilErrorCodes.NotAnHgRepository;
+            else if (/not within an open checkout/.test(result.stderr)) {
+                fossilErrorCode = FossilErrorCodes.NotAFossilRepository;
             }
             else if (/no such file/.test(result.stderr)) {
                 fossilErrorCode = FossilErrorCodes.NoSuchFile;
@@ -494,10 +489,6 @@ export class Repository {
             await this.exec(args);
         }
         catch (err) {
-            if (/uncommitted changes/.test(err.stderr || '')) {
-                err.fossilErrorCode = FossilErrorCodes.DirtyWorkingDirectory;
-            }
-
             throw err;
         }
     }
@@ -518,7 +509,7 @@ export class Repository {
             await this.exec(args);
         }
         catch (err) {
-            if (/not possible because you have unmerged files/.test(err.stderr)) {
+            if (/partial commit of a merge/.test(err.stderr)) {
                 err.fossilErrorCode = FossilErrorCodes.UnmergedChanges;
                 throw err;
             }
@@ -613,7 +604,7 @@ export class Repository {
             };
         }
         catch (error) {
-            if (error instanceof FossilError && /no undo information available/.test(error.stderr || '')) {
+            if (error instanceof FossilError && /nothing to undo/.test(error.stderr || '')) {
                 error.fossilErrorCode = FossilErrorCodes.NoUndoInformationAvailable;
             }
             throw error;
@@ -657,27 +648,16 @@ export class Repository {
     }
 
     async pull(options?: PullOptions): Promise<void> {
-        var args = ['none'];
+        var args = ['pull'];
 
         if (options && options.autoUpdate) {
             args = ['update'];
-        }
-        else{
-            args = ['pull'];
         }
 
         try {
             await this.exec(args);
         }
         catch (err) {
-            if (err instanceof FossilError && err.exitCode === 1) {
-                return;
-            }
-
-            if (err instanceof FossilError && err.stderr && /default repository not configured/.test(err.stderr)) {
-                err.fossilErrorCode = FossilErrorCodes.DefaultRepositoryNotConfigured;
-            }
-
             throw err;
         }
     }
@@ -689,22 +669,8 @@ export class Repository {
             await this.exec(args);
         }
         catch (err) {
-            if (err instanceof FossilError && err.exitCode === 1) {
-                return;
-            }
-
-            if (err instanceof FossilError && err.stderr && /default repository not configured/.test(err.stderr)) {
-                err.fossilErrorCode = FossilErrorCodes.DefaultRepositoryNotConfigured;
-            }
-            else if (/push creates new remote head/.test(err.stderr || '')) {
+            if (/would fork/.test(err.stderr || '')) {
                 err.fossilErrorCode = FossilErrorCodes.PushCreatesNewRemoteHead;
-            }
-            else if (err instanceof FossilError && err.stderr && /push creates new remote branches/.test(err.stderr)) {
-                err.fossilErrorCode = FossilErrorCodes.PushCreatesNewRemoteBranches;
-                const branchMatch = err.stderr.match(/: (.*)!/)
-                if (branchMatch) {
-                    err.hgBranches = branchMatch[1];
-                }
             }
 
             throw err;

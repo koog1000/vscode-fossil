@@ -114,14 +114,8 @@ export namespace interaction {
         return window.showWarningMessage(localize('multi head branches', "These branches have multiple heads: {0}. Merges required before pushing.", branchesWithMultipleHeads.join(",")));
     }
 
-    export async function warnDefaultRepositoryNotConfigured(message?: string): Promise<void> {
-        const defaultMessage = localize('no default repo', "No default repository is configured.");
-        await window.showErrorMessage(message || defaultMessage, "");
-        return;
-    }
-
-    export function warnNoPaths(type: string) {
-        return warnDefaultRepositoryNotConfigured(localize(`no paths to ${type}`, `Your repository has no paths configured for ${type}ing.`));
+    export async function warnNoPaths(type: string) {
+        return await window.showErrorMessage(localize(`no paths to ${type}`, `Your repository has no paths configured for ${type}ing.`));
     }
 
     export function warnResolveConflicts(this: void) {
@@ -135,24 +129,14 @@ export namespace interaction {
     export async function errorPromptOpenLog(err: any): Promise<boolean> {
         let message: string;
 
-        switch (err.fossilErrorCode) {
-            case 'DirtyWorkingDirectory':
-                message = localize('clean repo', "Please clean your repository working directory before updating.");
-                break;
+        const hint = (err.stderr || err.message || String(err))
+            .replace(/^abort: /mi, '')
+            .split(/[\r\n]/)
+            .filter(line => !!line)[0];
 
-            default:
-                const hint = (err.stderr || err.message || String(err))
-                    .replace(/^abort: /mi, '')
-                    .split(/[\r\n]/)
-                    .filter(line => !!line)
-                [0];
-
-                message = hint
-                    ? localize('fossil error details', "Fossil: {0}", hint)
-                    : localize('fossil error', "Fossil error");
-
-                break;
-        }
+        message = hint
+            ? localize('fossil error details', "Fossil: {0}", hint)
+            : localize('fossil error', "Fossil error");
 
         if (!message) {
             console.error(err);
