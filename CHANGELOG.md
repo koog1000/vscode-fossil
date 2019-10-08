@@ -2,6 +2,14 @@ Changelog
 =============================================
 
 
+v0.0.12
+---------------------------------------------
+## What's New
+- Actually open Fossil output log on error prompt
+- Update which errors generate error prompt
+- General cleanup
+
+
 v0.0.11
 ---------------------------------------------
 ## What's New
