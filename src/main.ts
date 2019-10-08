@@ -25,7 +25,10 @@ async function init(context: ExtensionContext, disposables: Disposable[]): Promi
     const enabled = typedConfig.enabled;
     const pathHint = typedConfig.path;
     const info: IFossil = await findFossil(pathHint, outputChannel);
-    const fossil = new Fossil({ fossilPath: info.path, version: info.version, enableInstrumentation: enabled });
+    const fossil = new Fossil({ fossilPath: info.path,
+                                version: info.version,
+                                enableInstrumentation: enabled,
+                                outputChannel: outputChannel });
     const model = new Model(fossil);
     disposables.push(model);
 
