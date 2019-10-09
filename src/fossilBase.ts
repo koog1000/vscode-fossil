@@ -304,7 +304,7 @@ export class Fossil {
             if(err instanceof FossilError &&
                 err.fossilErrorCode !== FossilErrorCodes.NoSuchFile &&
                 err.fossilErrorCode !== FossilErrorCodes.NotAFossilRepository){
-                const openLog = interaction.errorPromptOpenLog(err)
+                const openLog = await interaction.errorPromptOpenLog(err)
                 if (openLog) {
                     this.outputChannel.show();
                 }
@@ -332,7 +332,8 @@ export class Fossil {
             if (/Authentication failed/.test(result.stderr)) {
                 fossilErrorCode = FossilErrorCodes.AuthenticationFailed;
             }
-            else if (/not within an open checkout/.test(result.stderr)) {
+            else if (/not within an open checkout/.test(result.stderr) ||
+                     /specify the repository database/.test(result.stderr)) {
                 fossilErrorCode = FossilErrorCodes.NotAFossilRepository;
             }
             else if (/no such file/.test(result.stderr)) {
