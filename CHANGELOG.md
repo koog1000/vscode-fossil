@@ -2,10 +2,17 @@ Changelog
 =============================================
 
 
+v0.0.13
+---------------------------------------------
+## What's New
+- Wait for user to select to open error prompt before opening it
+- Filter out additional error case of `fossil cat` command
+
+
 v0.0.12
 ---------------------------------------------
 ## What's New
-- Actually open Fossil output log on error prompt
+- Open Fossil output log on error prompt
 - Update which errors generate error prompt
 - General cleanup
 
