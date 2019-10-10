@@ -2,6 +2,13 @@ Changelog
 =============================================
 
 
+v0.0.14
+---------------------------------------------
+## What's New
+- Throw error when caught by exec command instead of returning empty string
+   This fixes a host of odd behaviors
+
+
 v0.0.13
 ---------------------------------------------
 ## What's New
