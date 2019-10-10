@@ -309,11 +309,8 @@ export class Fossil {
                     this.outputChannel.show();
                 }
             }
+            throw err;
         }
-        const exitCode = 0
-        const stdout = ''
-        const stderr = ''
-        return {exitCode, stdout, stderr}
     }
 
     private async _exec(args: string[], options: any = {}): Promise<IExecutionResult> {
