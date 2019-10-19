@@ -122,7 +122,7 @@ export interface IExecutionResult {
     stderr: string;
 }
 
-export async function exec(child: cp.ChildProcess): Promise<IExecutionResult> {
+export async function exec(child: cp.ChildProcess, no_err_check?: boolean): Promise<IExecutionResult> {
     const disposables: IDisposable[] = [];
 
     const once = (ee: NodeJS.EventEmitter, name: string, fn: Function) => {
@@ -146,8 +146,9 @@ export async function exec(child: cp.ChildProcess): Promise<IExecutionResult> {
                 buffers.push(input);
                 const inputStr: string = input.toString()
                 if(inputStr){
-                    if(inputStr.endsWith("? ") || inputStr.endsWith("?") ||
-                       inputStr.endsWith(": ") || inputStr.endsWith(":")){
+                    if((inputStr.endsWith("? ") || inputStr.endsWith("?") ||
+                       inputStr.endsWith(": ") || inputStr.endsWith(":")) &&
+                       !no_err_check){
                         const resp = await interaction.inputPrompt(buffers.toString())
                         child.stdin.write(resp + '\n')
                     }
@@ -318,7 +319,7 @@ export class Fossil {
 
         let result: IExecutionResult;
         const child = this.spawn(args, options);
-        result = await exec(child);
+        result = await exec(child, args.includes('cat'));
 
         const durationHR = process.hrtime(startTimeHR);
         this.log(`fossil ${args.join(' ')}: ${Math.floor(msFromHighResTime(durationHR))}ms\n`);
