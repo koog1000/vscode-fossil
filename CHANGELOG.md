@@ -2,6 +2,13 @@ Changelog
 =============================================
 
 
+v0.0.15
+---------------------------------------------
+## What's New
+- Don't perform input checking for `fossil cat` commands
+- update dependencies to reduce extension size
+
+
 v0.0.14
 ---------------------------------------------
 ## What's New
@@ -118,4 +125,3 @@ v0.0.0
 ## What's New
 - Everything. Work In Progress, based on Ben Crowl's excellent
   [Hg extension](https://github.com/mrcrowl/vscode-hg/).
-
