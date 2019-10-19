@@ -273,8 +273,8 @@
         "title": "%command.stageAll%",
         "category": "Fossil",
         "icon": {
-            "light": "resources/icons/light/add.svg",
-            "dark": "resources/icons/dark/add.svg"
+          "light": "resources/icons/light/add.svg",
+          "dark": "resources/icons/dark/add.svg"
         }
       },
       {
@@ -705,15 +705,13 @@
   "dependencies": {
     "@types/mocha": "^5.2.7",
     "tmp": "0.0.31",
-    "tsc": "^1.20150623.0",
-    "typescript": "^3.5.3",
     "vscode-nls": "^2.0.1"
   },
   "devDependencies": {
     "@types/node": "^7.0.4",
     "@types/tmp": "0.0.33",
     "vscode": "^1.1.23"
-    },
+  },
   "__metadata": {
     "id": "e828bfe6-95e7-4c7a-a334-ae2cc5ba8788",
     "publisherDisplayName": "koog1000",
