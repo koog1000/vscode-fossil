@@ -16,7 +16,7 @@
   "bugs": {
     "url": "https://github.com/koog1000/vscode-fossil/issues"
   },
-  "version": "0.0.15",
+  "version": "0.0.16",
   "engines": {
     "vscode": "^1.23.0"
   },
@@ -578,8 +578,13 @@
         },
         {
           "command": "fossil.clean",
-          "group": "1_modification",
-          "when": "config.fossil.enabled && scmProvider == fossil && scmResourceGroup == untracked"
+          "when": "config.fossil.enabled && scmProvider == fossil && scmResourceGroup == untracked",
+          "group": "1_modification"
+        },
+        {
+          "command": "fossil.addFilePicker",
+          "when": "config.fossil.enabled && scmProvider == fossil && scmResourceGroup == untracked",
+          "group": "1_modification"
         },
         {
           "command": "fossil.addAll",
