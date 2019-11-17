@@ -499,12 +499,13 @@ export class Repository implements IDisposable {
         const resources: Resource[] = [];
         const { conflict, merge, working, untracked, staging } = this._groups;
         const groups = [working, staging, merge, untracked, conflict];
-        nextUri: for (const uri of resourceUris) {
+        for (const uri of resourceUris) {
+            var found = false
             for (const group of groups) {
                 const resource = group.getResource(uri);
-                if (resource) {
+                if (resource && !found) {
                     resources.push(resource);
-                    break nextUri;
+                    found = true;
                 }
             }
         }
