@@ -2,6 +2,15 @@ Changelog
 =============================================
 
 
+v0.0.16
+---------------------------------------------
+## What's New
+- Added `Select Files to Add` to command palette
+- Added `Delete Extras` command
+- Fixed issue where attempting to remove multiple resources
+  only removed one resource
+
+
 v0.0.15
 ---------------------------------------------
 ## What's New
@@ -12,8 +21,8 @@ v0.0.15
 v0.0.14
 ---------------------------------------------
 ## What's New
-- Throw error when caught by exec command instead of returning empty string
-   This fixes a host of odd behaviors
+- Throw error when caught by exec command instead of returning empty string.
+  This fixes a host of odd behaviors.
 
 
 v0.0.13

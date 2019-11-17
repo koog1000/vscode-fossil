@@ -6,7 +6,8 @@
 
 import * as nls from "vscode-nls";
 import * as path from "path";
-import { window, QuickPickItem, workspace, ViewColumn } from "vscode";
+import * as os from "os";
+import { window, QuickPickItem, workspace, ViewColumn, Uri } from "vscode";
 import { FossilUndoDetails, Path, Ref, RefType, Commit, LogEntryOptions, CommitDetails, IFileStatus } from "./fossilBase";
 import { humanise } from "./humanise";
 import { Repository, LogEntriesOptions } from "./repository";
@@ -29,6 +30,30 @@ export const enum WarnScenario { Merge, Update }
 export const enum CommitSources { File, Branch, Repo }
 
 export namespace interaction {
+
+    export async function openFileDialog(
+            fileSelect: boolean,
+            folderSelect: boolean,
+            multiSelect: boolean,
+            btnName: string
+    ): Promise<Uri[]|undefined> {
+        const homeUri = Uri.file(os.homedir());
+        const defaultUri = workspace.workspaceFolders && workspace.workspaceFolders.length > 0
+            ? Uri.file(workspace.workspaceFolders[0].uri.fsPath)
+            : homeUri;
+
+        const result = await window.showOpenDialog({
+            canSelectFiles: fileSelect,
+            canSelectFolders: folderSelect,
+            canSelectMany: multiSelect,
+            defaultUri: defaultUri,
+            openLabel: btnName,
+            filters: {
+                'All files': ['*']
+            }
+        });
+        return result
+    }
 
     export function statusCloning(clonePromise: Promise<any>) {
         return window.setStatusBarMessage(localize('cloning', "Cloning fossil repository..."), clonePromise);
@@ -55,7 +80,7 @@ export namespace interaction {
         if (!repository.isClean) {
             let nextStep: string = "";
             if (scenario === WarnScenario.Merge) {
-                const discardAllChanges = localize('command.cleanAll', "Discard All Changes");
+                const discardAllChanges = localize('command.revertAll', "Discard All Changes");
                 const abandonMerge = localize('abandon merge', "abandon merge");
                 nextStep = localize('use x to y', "Use {0} to {1}", discardAllChanges, abandonMerge);
             }
@@ -69,7 +94,7 @@ export namespace interaction {
         if (!repository.isClean) {
             let nextStep: string = "";
             if (scenario === WarnScenario.Merge) {
-                const discardAllChanges = localize('command.cleanAll', "Discard All Changes");
+                const discardAllChanges = localize('command.revertAll', "Discard All Changes");
                 const abandonMerge = localize('abandon merge', "abandon merge");
                 nextStep = localize('use x to y', "Use {0} to {1}", discardAllChanges, abandonMerge);
             }
@@ -417,6 +442,13 @@ export namespace interaction {
     export async function confirmDiscardAllChanges(this: void): Promise<boolean> {
         const message = localize('confirm discard all', "Are you sure you want to discard ALL changes?");
         const discard = localize('discard', "Discard Changes");
+        const choice = await window.showWarningMessage(message, { modal: true }, discard);
+        return choice === discard;
+    }
+
+    export async function confirmDeleteExtras(this: void): Promise<boolean> {
+        const message = localize('confirm delete extras', "Are you sure you want to delete untracked and uningnored files?");
+        const discard = localize('discard', "Delete Extras");
         const choice = await window.showWarningMessage(message, { modal: true }, discard);
         return choice === discard;
     }

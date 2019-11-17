@@ -44,7 +44,7 @@ export enum Status {
     IGNORED,
     MISSING,
     RENAMED,
-    CLEAN,
+    UNMODIFIED,
     CONFLICT
 }
 
@@ -112,7 +112,7 @@ export class Resource implements SourceControlResourceState {
             Untracked: getIconUri('status-untracked', 'light'),
             Ignored: getIconUri('status-ignored', 'light'),
             Conflict: getIconUri('status-conflict', 'light'),
-            Clean: getIconUri('status-clean', 'light'),
+            Unmodified: getIconUri('status-clean', 'light'),
         },
         dark: {
             Modified: getIconUri('status-modified', 'dark'),
@@ -124,7 +124,7 @@ export class Resource implements SourceControlResourceState {
             Untracked: getIconUri('status-untracked', 'dark'),
             Ignored: getIconUri('status-ignored', 'dark'),
             Conflict: getIconUri('status-conflict', 'dark'),
-            Clean: getIconUri('status-clean', 'dark'),
+            Unmodified: getIconUri('status-clean', 'dark'),
         }
     };
 
@@ -143,7 +143,7 @@ export class Resource implements SourceControlResourceState {
             case Status.RENAMED: return Resource.Icons[theme].Renamed;
             case Status.UNTRACKED: return Resource.Icons[theme].Untracked;
             case Status.IGNORED: return Resource.Icons[theme].Ignored;
-            case Status.CLEAN: return Resource.Icons[theme].Clean;
+            case Status.UNMODIFIED: return Resource.Icons[theme].Unmodified;
             case Status.CONFLICT: return Resource.Icons[theme].Conflict;
             default: return void 0;
         }
@@ -191,6 +191,7 @@ export const enum Operation {
     Show = 1 << 13,
     Stage = 1 << 14,
     GetCommitTemplate = 1 << 15,
+    Revert = 1 << 16,
     Resolve = 1 << 17,
     Unresolve = 1 << 18,
     Parents = 1 << 19,
@@ -466,6 +467,12 @@ export class Repository implements IDisposable {
     }
 
     @throttle
+    async addSimple(...uris: Uri[]): Promise<void> {
+        const relativePaths: string[] = uris.map(uri => uri.fsPath);
+        await this.run(Operation.Add, () => this.repository.add(relativePaths));
+    }
+
+    @throttle
     async remove(...uris: Uri[]): Promise<void> {
         let resources: Resource[];
         if (uris.length === 0) {
@@ -493,12 +500,13 @@ export class Repository implements IDisposable {
         const resources: Resource[] = [];
         const { conflict, merge, working, untracked, staging } = this._groups;
         const groups = [working, staging, merge, untracked, conflict];
-        nextUri: for (const uri of resourceUris) {
+        for (const uri of resourceUris) {
+            var found = false
             for (const group of groups) {
                 const resource = group.getResource(uri);
-                if (resource) {
+                if (resource && !found) {
                     resources.push(resource);
-                    break nextUri;
+                    found = true;
                 }
             }
         }
@@ -594,35 +602,66 @@ export class Repository implements IDisposable {
         });
     }
 
-    async cleanOrUpdate(...resources: Uri[]) {
-        const parents = await this.getParents();
-        if (parents.length > 1) {
-            return this.update('', { discard: true });
-        }
+    // async cleanOrUpdate(...resources: Uri[]) {
+    //     const parents = await this.getParents();
+    //     if (parents.length > 1) {
+    //         return this.update('', { discard: true });
+    //     }
 
-        return this.clean(...resources);
-    }
+    //     return this.clean(...resources);
+    // }
+
+    // @throttle
+    // async clean(...uris: Uri[]): Promise<void> {
+    //     let resources = this.mapResources(uris);
+    //     await this.run(Operation.Clean, async () => {
+    //         const toRevert: string[] = [];
+    //         const toForget: string[] = [];
+
+    //         for (let r of resources) {
+    //             switch (r.status) {
+    //                 case Status.UNTRACKED:
+    //                 case Status.IGNORED:
+    //                     break;
+
+    //                 case Status.ADDED:
+    //                     toForget.push(this.mapResourceToRepoRelativePath(r));
+    //                     break;
+
+    //                 case Status.DELETED:
+    //                 case Status.MISSING:
+    //                 case Status.MODIFIED:
+    //                 default:
+    //                     toRevert.push(this.mapResourceToRepoRelativePath(r));
+    //                     break;
+    //             }
+    //         }
+
+    //         const promises: Promise<void>[] = [];
+
+    //         if (toRevert.length > 0) {
+    //             promises.push(this.repository.revert(toRevert));
+    //         }
+
+    //         if (toForget.length > 0) {
+    //             promises.push(this.repository.remove(toForget));
+    //         }
+
+    //         await Promise.all(promises);
+    //     });
+    // }
 
     @throttle
-    async clean(...uris: Uri[]): Promise<void> {
+    async revert(...uris: Uri[]): Promise<void> {
         let resources = this.mapResources(uris);
-        await this.run(Operation.Clean, async () => {
+        await this.run(Operation.Revert, async () => {
             const toRevert: string[] = [];
-            const toForget: string[] = [];
 
             for (let r of resources) {
                 switch (r.status) {
                     case Status.UNTRACKED:
                     case Status.IGNORED:
                         break;
-
-                    case Status.ADDED:
-                        toForget.push(this.mapResourceToRepoRelativePath(r));
-                        break;
-
-                    case Status.DELETED:
-                    case Status.MISSING:
-                    case Status.MODIFIED:
                     default:
                         toRevert.push(this.mapResourceToRepoRelativePath(r));
                         break;
@@ -633,10 +672,6 @@ export class Repository implements IDisposable {
 
             if (toRevert.length > 0) {
                 promises.push(this.repository.revert(toRevert));
-            }
-
-            if (toForget.length > 0) {
-                promises.push(this.repository.remove(toForget));
             }
 
             await Promise.all(promises);
@@ -644,29 +679,9 @@ export class Repository implements IDisposable {
     }
 
     @throttle
-    async revert(...uris: Uri[]): Promise<void> {
-        let resources = this.mapResources(uris);
+    async clean(): Promise<void> {
         await this.run(Operation.Clean, async () => {
-            const toRevert: string[] = [];
-
-            for (let r of resources) {
-                switch (r.status) {
-                    case Status.UNTRACKED:
-                    case Status.IGNORED:
-                        break;
-                    default:
-                        toRevert.push(this.mapResourceToRepoRelativePath(r));
-                        break;
-                }
-            }
-
-            const promises: Promise<void>[] = [];
-
-            if (toRevert.length > 0) {
-                promises.push(this.repository.revert(toRevert));
-            }
-
-            await Promise.all(promises);
+            this.repository.clean();
         });
     }
 
