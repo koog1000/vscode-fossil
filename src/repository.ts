@@ -44,7 +44,7 @@ export enum Status {
     IGNORED,
     MISSING,
     RENAMED,
-    CLEAN,
+    UNMODIFIED,
     CONFLICT
 }
 
@@ -112,7 +112,7 @@ export class Resource implements SourceControlResourceState {
             Untracked: getIconUri('status-untracked', 'light'),
             Ignored: getIconUri('status-ignored', 'light'),
             Conflict: getIconUri('status-conflict', 'light'),
-            Clean: getIconUri('status-clean', 'light'),
+            Unmodified: getIconUri('status-clean', 'light'),
         },
         dark: {
             Modified: getIconUri('status-modified', 'dark'),
@@ -124,7 +124,7 @@ export class Resource implements SourceControlResourceState {
             Untracked: getIconUri('status-untracked', 'dark'),
             Ignored: getIconUri('status-ignored', 'dark'),
             Conflict: getIconUri('status-conflict', 'dark'),
-            Clean: getIconUri('status-clean', 'dark'),
+            Unmodified: getIconUri('status-clean', 'dark'),
         }
     };
 
@@ -143,7 +143,7 @@ export class Resource implements SourceControlResourceState {
             case Status.RENAMED: return Resource.Icons[theme].Renamed;
             case Status.UNTRACKED: return Resource.Icons[theme].Untracked;
             case Status.IGNORED: return Resource.Icons[theme].Ignored;
-            case Status.CLEAN: return Resource.Icons[theme].Clean;
+            case Status.UNMODIFIED: return Resource.Icons[theme].Unmodified;
             case Status.CONFLICT: return Resource.Icons[theme].Conflict;
             default: return void 0;
         }
@@ -466,6 +466,12 @@ export class Repository implements IDisposable {
     }
 
     @throttle
+    async addSimple(...uris: Uri[]): Promise<void> {
+        const relativePaths: string[] = uris.map(uri => uri.fsPath);
+        await this.run(Operation.Add, () => this.repository.add(relativePaths));
+    }
+
+    @throttle
     async remove(...uris: Uri[]): Promise<void> {
         let resources: Resource[];
         if (uris.length === 0) {
@@ -594,54 +600,54 @@ export class Repository implements IDisposable {
         });
     }
 
-    async cleanOrUpdate(...resources: Uri[]) {
-        const parents = await this.getParents();
-        if (parents.length > 1) {
-            return this.update('', { discard: true });
-        }
+    // async cleanOrUpdate(...resources: Uri[]) {
+    //     const parents = await this.getParents();
+    //     if (parents.length > 1) {
+    //         return this.update('', { discard: true });
+    //     }
 
-        return this.clean(...resources);
-    }
+    //     return this.clean(...resources);
+    // }
 
-    @throttle
-    async clean(...uris: Uri[]): Promise<void> {
-        let resources = this.mapResources(uris);
-        await this.run(Operation.Clean, async () => {
-            const toRevert: string[] = [];
-            const toForget: string[] = [];
+    // @throttle
+    // async clean(...uris: Uri[]): Promise<void> {
+    //     let resources = this.mapResources(uris);
+    //     await this.run(Operation.Clean, async () => {
+    //         const toRevert: string[] = [];
+    //         const toForget: string[] = [];
 
-            for (let r of resources) {
-                switch (r.status) {
-                    case Status.UNTRACKED:
-                    case Status.IGNORED:
-                        break;
+    //         for (let r of resources) {
+    //             switch (r.status) {
+    //                 case Status.UNTRACKED:
+    //                 case Status.IGNORED:
+    //                     break;
 
-                    case Status.ADDED:
-                        toForget.push(this.mapResourceToRepoRelativePath(r));
-                        break;
+    //                 case Status.ADDED:
+    //                     toForget.push(this.mapResourceToRepoRelativePath(r));
+    //                     break;
 
-                    case Status.DELETED:
-                    case Status.MISSING:
-                    case Status.MODIFIED:
-                    default:
-                        toRevert.push(this.mapResourceToRepoRelativePath(r));
-                        break;
-                }
-            }
+    //                 case Status.DELETED:
+    //                 case Status.MISSING:
+    //                 case Status.MODIFIED:
+    //                 default:
+    //                     toRevert.push(this.mapResourceToRepoRelativePath(r));
+    //                     break;
+    //             }
+    //         }
 
-            const promises: Promise<void>[] = [];
+    //         const promises: Promise<void>[] = [];
 
-            if (toRevert.length > 0) {
-                promises.push(this.repository.revert(toRevert));
-            }
+    //         if (toRevert.length > 0) {
+    //             promises.push(this.repository.revert(toRevert));
+    //         }
 
-            if (toForget.length > 0) {
-                promises.push(this.repository.remove(toForget));
-            }
+    //         if (toForget.length > 0) {
+    //             promises.push(this.repository.remove(toForget));
+    //         }
 
-            await Promise.all(promises);
-        });
-    }
+    //         await Promise.all(promises);
+    //     });
+    // }
 
     @throttle
     async revert(...uris: Uri[]): Promise<void> {

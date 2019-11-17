@@ -9,7 +9,6 @@ import {Uri, commands, scm, Disposable, window, workspace, OutputChannel,
         TextDocumentShowOptions, ViewColumn } from "vscode";
 import * as nls from "vscode-nls";
 import * as path from "path";
-import * as os from "os";
 import { Ref, Fossil, Commit, FossilError, FossilErrorCodes, IFileStatus, CommitDetails } from "./fossilBase";
 import { Model } from "./model";
 import { Resource, Status, CommitOptions, CommitScope, MergeStatus, LogEntriesOptions, Repository } from "./repository"
@@ -119,7 +118,7 @@ export class CommandCenter {
             case Status.ADDED:
             case Status.IGNORED:
             case Status.UNTRACKED:
-            case Status.CLEAN:
+            case Status.UNMODIFIED:
                 return undefined;
 
             case Status.MODIFIED:
@@ -148,7 +147,7 @@ export class CommandCenter {
             case Status.MODIFIED:
             case Status.RENAMED:
             case Status.UNTRACKED:
-            case Status.CLEAN:
+            case Status.UNMODIFIED:
             case Status.CONFLICT:
             default:
                 return resource.resourceUri;
@@ -222,19 +221,7 @@ export class CommandCenter {
 
     @command('fossil.init')
     async init(): Promise<void> {
-        const homeUri = Uri.file(os.homedir());
-        const defaultUri = workspace.workspaceFolders && workspace.workspaceFolders.length > 0
-            ? Uri.file(workspace.workspaceFolders[0].uri.fsPath)
-            : homeUri;
-
-        const result = await window.showOpenDialog({
-            canSelectFiles: false,
-            canSelectFolders: true,
-            canSelectMany: false,
-            defaultUri,
-
-            openLabel: localize('init repo', "Repository Folder")
-        });
+        const result = await interaction.openFileDialog(false, true, false, localize('init repo', 'Respository Folder'))
 
         if (!result || result.length === 0) {
             return;
@@ -373,6 +360,14 @@ export class CommandCenter {
         return await repository.add();
     }
 
+    @command('fossil.addFilePicker', { repository: true })
+    async addFilePicker(repository: Repository): Promise<void> {
+        const uris = await interaction.openFileDialog(true, false, true, 'Add Paths')
+        if (uris){
+            return await repository.addSimple(...uris);
+        }
+    }
+
     @command('fossil.add')
     async add(...resourceStates: SourceControlResourceState[]): Promise<void> {
         if (resourceStates.length === 0) {
@@ -482,8 +477,8 @@ export class CommandCenter {
         return await repository.unstage();
     }
 
-    @command('fossil.clean')
-    async clean(...resourceStates: SourceControlResourceState[]): Promise<void> {
+    @command('fossil.revert')
+    async revert(...resourceStates: SourceControlResourceState[]): Promise<void> {
         if (resourceStates.length === 0) {
             const resource = this.getSCMResource();
 
@@ -518,8 +513,8 @@ export class CommandCenter {
 
     }
 
-    @command('fossil.cleanAll', { repository: true })
-    async cleanAll(repository: Repository): Promise<void> {
+    @command('fossil.revertAll', { repository: true })
+    async revertAll(repository: Repository): Promise<void> {
         if (await interaction.confirmDiscardAllChanges()) {
             const resources = repository.workingDirectoryGroup.resources;
             await repository.revert(...resources.map(r => r.resourceUri));
