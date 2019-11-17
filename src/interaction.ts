@@ -446,6 +446,13 @@ export namespace interaction {
         return choice === discard;
     }
 
+    export async function confirmDeleteExtras(this: void): Promise<boolean> {
+        const message = localize('confirm delete extras', "Are you sure you want to delete untracked and uningnored files?");
+        const discard = localize('discard', "Delete Extras");
+        const choice = await window.showWarningMessage(message, { modal: true }, discard);
+        return choice === discard;
+    }
+
     export async function confirmDiscardChanges(discardFilesnames: string[], addedFilenames: string[]): Promise<boolean> {
         let message: string;
         let addedMessage: string = "";

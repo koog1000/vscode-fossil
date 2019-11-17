@@ -11,6 +11,7 @@
     "command.stageAll": "Stage All Changes",
     "command.unstage": "Unstage Changes",
     "command.unstageAll": "Unstage All Changes",
+    "command.clean": "Delete Extras",
     "command.revert": "Discard Changes",
     "command.revertAll": "Discard All Changes",
     "command.commit": "Commit",

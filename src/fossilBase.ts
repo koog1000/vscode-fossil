@@ -560,6 +560,10 @@ export class Repository {
         }
     }
 
+    async clean(): Promise<void> {
+        this.exec(['clean']);
+    }
+
     async ignore(paths: string[]): Promise<void> {
         const ignore_file = this.repositoryRoot + '/.fossil-settings/ignore-glob'
         if(existsSync(ignore_file)){

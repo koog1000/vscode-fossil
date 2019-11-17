@@ -521,6 +521,13 @@ export class CommandCenter {
         }
     }
 
+    @command('fossil.clean', { repository: true })
+    async clean(repository: Repository): Promise<void> {
+        if (await interaction.confirmDeleteExtras()) {
+            await repository.clean();
+        }
+    }
+
     private async smartCommit(repository: Repository, getCommitMessage: () => Promise<string | undefined>, opts?: CommitOptions): Promise<boolean> {
         // validate no conflicts
         const numConflictResources = repository.conflictGroup.resources.length;

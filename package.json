@@ -76,6 +76,11 @@
         "category": "Fossil"
       },
       {
+        "command": "fossil.clean",
+        "title": "%command.clean%",
+        "category": "Fossil"
+      },
+      {
         "command": "fossil.revert",
         "title": "%command.revert%",
         "category": "Fossil",
@@ -508,6 +513,11 @@
           "when": "config.fossil.enabled && scmProvider == fossil"
         },
         {
+          "command": "fossil.clean",
+          "group": "4_stage",
+          "when": "config.fossil.enabled && scmProvider == fossil"
+        },
+        {
           "command": "fossil.mergeHeads",
           "group": "5_merge",
           "when": "config.fossil.enabled && scmProvider == fossil"
@@ -565,6 +575,11 @@
           "command": "fossil.addAll",
           "when": "config.fossil.enabled && scmProvider == fossil && scmResourceGroup == untracked",
           "group": "1_modification"
+        },
+        {
+          "command": "fossil.clean",
+          "group": "1_modification",
+          "when": "config.fossil.enabled && scmProvider == fossil && scmResourceGroup == untracked"
         },
         {
           "command": "fossil.addAll",

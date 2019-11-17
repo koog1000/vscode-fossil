@@ -191,6 +191,7 @@ export const enum Operation {
     Show = 1 << 13,
     Stage = 1 << 14,
     GetCommitTemplate = 1 << 15,
+    Revert = 1 << 16,
     Resolve = 1 << 17,
     Unresolve = 1 << 18,
     Parents = 1 << 19,
@@ -653,7 +654,7 @@ export class Repository implements IDisposable {
     @throttle
     async revert(...uris: Uri[]): Promise<void> {
         let resources = this.mapResources(uris);
-        await this.run(Operation.Clean, async () => {
+        await this.run(Operation.Revert, async () => {
             const toRevert: string[] = [];
 
             for (let r of resources) {
@@ -674,6 +675,13 @@ export class Repository implements IDisposable {
             }
 
             await Promise.all(promises);
+        });
+    }
+
+    @throttle
+    async clean(): Promise<void> {
+        await this.run(Operation.Clean, async () => {
+            this.repository.clean();
         });
     }
 
