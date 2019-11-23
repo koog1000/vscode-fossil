@@ -16,7 +16,7 @@
   "bugs": {
     "url": "https://github.com/koog1000/vscode-fossil/issues"
   },
-  "version": "0.0.16",
+  "version": "0.0.17",
   "engines": {
     "vscode": "^1.23.0"
   },
@@ -672,6 +672,68 @@
           "command": "fossil.remove",
           "when": "config.fossil.enabled && scmProvider == fossil && scmResourceGroup == working",
           "group": "2_modification"
+        }
+      ],
+      "scm/resourceFolder/context": [
+        {
+          "command": "fossil.unstageAll",
+          "when": "config.fossil.enabled && scmProvider == fossil && scmResourceGroup == staging",
+          "group": "1_modification"
+        },
+        {
+          "command": "fossil.unstageAll",
+          "when": "config.fossil.enabled && scmProvider == fossil && scmResourceGroup == staging",
+          "group": "inline"
+        },
+        {
+          "command": "fossil.revertAll",
+          "when": "config.fossil.enabled && scmProvider == fossil && scmResourceGroup == working",
+          "group": "1_modification"
+        },
+        {
+          "command": "fossil.stageAll",
+          "when": "config.fossil.enabled && scmProvider == fossil && scmResourceGroup == working",
+          "group": "1_modification"
+        },
+        {
+          "command": "fossil.stageAll",
+          "when": "config.fossil.enabled && scmProvider == fossil && scmResourceGroup == working",
+          "group": "inline"
+        },
+        {
+          "command": "fossil.revertAll",
+          "when": "config.fossil.enabled && scmProvider == fossil && scmResourceGroup == working",
+          "group": "inline"
+        },
+        {
+          "command": "fossil.addAll",
+          "when": "config.fossil.enabled && scmProvider == fossil && scmResourceGroup == untracked",
+          "group": "1_modification"
+        },
+        {
+          "command": "fossil.clean",
+          "when": "config.fossil.enabled && scmProvider == fossil && scmResourceGroup == untracked",
+          "group": "1_modification"
+        },
+        {
+          "command": "fossil.addFilePicker",
+          "when": "config.fossil.enabled && scmProvider == fossil && scmResourceGroup == untracked",
+          "group": "1_modification"
+        },
+        {
+          "command": "fossil.addAll",
+          "when": "config.fossil.enabled && scmProvider == fossil && scmResourceGroup == untracked",
+          "group": "inline"
+        },
+        {
+          "command": "fossil.openFiles",
+          "when": "config.fossil.enabled && scmProvider == fossil",
+          "group": "navigation"
+        },
+        {
+          "command": "fossil.openChange",
+          "when": "config.fossil.enabled && scmProvider == fossil && scmResourceGroup != untracked",
+          "group": "navigation"
         }
       ],
       "editor/title": [
