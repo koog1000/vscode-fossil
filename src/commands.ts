@@ -360,14 +360,6 @@ export class CommandCenter {
         return await repository.add();
     }
 
-    @command('fossil.addFilePicker', { repository: true })
-    async addFilePicker(repository: Repository): Promise<void> {
-        const uris = await interaction.openFileDialog(true, false, true, 'Add Paths')
-        if (uris){
-            return await repository.addSimple(...uris);
-        }
-    }
-
     @command('fossil.add')
     async add(...resourceStates: SourceControlResourceState[]): Promise<void> {
         if (resourceStates.length === 0) {
