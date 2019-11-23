@@ -16,7 +16,7 @@
   "bugs": {
     "url": "https://github.com/koog1000/vscode-fossil/issues"
   },
-  "version": "0.0.17",
+  "version": "0.0.18",
   "engines": {
     "vscode": "^1.23.0"
   },
@@ -55,11 +55,6 @@
           "light": "resources/icons/light/add.svg",
           "dark": "resources/icons/dark/add.svg"
         }
-      },
-      {
-        "command": "fossil.addFilePicker",
-        "title": "%command.addFilePicker%",
-        "category": "Fossil"
       },
       {
         "command": "fossil.ignore",
@@ -450,10 +445,6 @@
         {
           "command": "fossil.logRepo",
           "when": "config.fossil.enabled && fossilOpenRepositoryCount != 0"
-        },
-        {
-          "command": "fossil.addFilePicker",
-          "when": "config.fossil.enabled && fossilOpenRepositoryCount != 0"
         }
       ],
       "scm/title": [
@@ -582,11 +573,6 @@
           "group": "1_modification"
         },
         {
-          "command": "fossil.addFilePicker",
-          "when": "config.fossil.enabled && scmProvider == fossil && scmResourceGroup == untracked",
-          "group": "1_modification"
-        },
-        {
           "command": "fossil.addAll",
           "when": "config.fossil.enabled && scmProvider == fossil && scmResourceGroup == untracked",
           "group": "inline"
@@ -676,37 +662,37 @@
       ],
       "scm/resourceFolder/context": [
         {
-          "command": "fossil.unstageAll",
+          "command": "fossil.unstage",
           "when": "config.fossil.enabled && scmProvider == fossil && scmResourceGroup == staging",
           "group": "1_modification"
         },
         {
-          "command": "fossil.unstageAll",
+          "command": "fossil.unstage",
           "when": "config.fossil.enabled && scmProvider == fossil && scmResourceGroup == staging",
           "group": "inline"
         },
         {
-          "command": "fossil.revertAll",
+          "command": "fossil.revert",
           "when": "config.fossil.enabled && scmProvider == fossil && scmResourceGroup == working",
           "group": "1_modification"
         },
         {
-          "command": "fossil.stageAll",
+          "command": "fossil.stage",
           "when": "config.fossil.enabled && scmProvider == fossil && scmResourceGroup == working",
           "group": "1_modification"
         },
         {
-          "command": "fossil.stageAll",
+          "command": "fossil.stage",
           "when": "config.fossil.enabled && scmProvider == fossil && scmResourceGroup == working",
           "group": "inline"
         },
         {
-          "command": "fossil.revertAll",
+          "command": "fossil.revert",
           "when": "config.fossil.enabled && scmProvider == fossil && scmResourceGroup == working",
           "group": "inline"
         },
         {
-          "command": "fossil.addAll",
+          "command": "fossil.add",
           "when": "config.fossil.enabled && scmProvider == fossil && scmResourceGroup == untracked",
           "group": "1_modification"
         },
@@ -716,12 +702,7 @@
           "group": "1_modification"
         },
         {
-          "command": "fossil.addFilePicker",
-          "when": "config.fossil.enabled && scmProvider == fossil && scmResourceGroup == untracked",
-          "group": "1_modification"
-        },
-        {
-          "command": "fossil.addAll",
+          "command": "fossil.add",
           "when": "config.fossil.enabled && scmProvider == fossil && scmResourceGroup == untracked",
           "group": "inline"
         },
