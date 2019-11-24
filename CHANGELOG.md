@@ -5,6 +5,13 @@ Changelog
 v0.0.18
 ---------------------------------------------
 ## What's New
+- More fixes to repo actions to resouce folders,
+  Maybe somedeay I'll leran to test beter...
+
+
+v0.0.18
+---------------------------------------------
+## What's New
 - Fix repo actions to resouce folders
 
 

@@ -352,7 +352,11 @@ export class CommandCenter {
         }
 
         const resources = scmResources.map(r => r.resourceUri);
-        await this.runByRepository(resources, async (repository, uris) => repository.ignore(...uris));
+        const repository = this.model.getRepository(resources[0])
+        if (repository){
+            await repository.ignore(...resources)
+        }
+        // await this.runByRepository(resources, async (repository, uris) => repository.ignore(...uris));
     }
 
     @command('fossil.addAll', { repository: true })
@@ -380,7 +384,10 @@ export class CommandCenter {
         }
 
         const resources = scmResources.map(r => r.resourceUri);
-        await this.runByRepository(resources, async (repository, uris) => repository.add(...uris));
+        const repository = this.model.getRepository(resources[0])
+        if (repository){
+            await repository.add(...resources)
+        }
     }
 
     @command('fossil.remove')
@@ -403,7 +410,11 @@ export class CommandCenter {
         }
 
         const resources = scmResources.map(r => r.resourceUri);
-        await this.runByRepository(resources, async (repository, uris) => repository.remove(...uris));
+        const repository = this.model.getRepository(resources[0])
+        if (repository){
+            await repository.remove(...resources)
+        }
+        // await this.runByRepository(resources, async (repository, uris) => repository.remove(...uris));
     }
 
     @command('fossil.stage') // run by repo
@@ -432,7 +443,11 @@ export class CommandCenter {
         }
 
         const resources = scmResources.map(r => r.resourceUri);
-        await this.runByRepository(resources, async (repository, uris) => repository.stage(...uris));
+        const repository = this.model.getRepository(resources[0])
+        if (repository){
+            await repository.stage(...resources)
+        }
+        // await this.runByRepository(resources, async (repository, uris) => repository.stage(...uris));
     }
 
     @command('fossil.stageAll', { repository: true })
@@ -461,7 +476,11 @@ export class CommandCenter {
         }
 
         const resources = scmResources.map(r => r.resourceUri);
-        await this.runByRepository(resources, async (repository, uris) => repository.unstage(...uris));
+        const repository = this.model.getRepository(resources[0])
+        if (repository){
+            await repository.unstage(...resources)
+        }
+        // await this.runByRepository(resources, async (repository, uris) => repository.unstage(...uris));
     }
 
     @command('fossil.unstageAll', { repository: true })
@@ -501,8 +520,11 @@ export class CommandCenter {
         }
 
         const resources = scmResources.map(r => r.resourceUri);
-        await this.runByRepository(resources, async (repository, uris) => repository.revert(...uris));
-
+        const repository = this.model.getRepository(resources[0])
+        if (repository){
+            await repository.revert(...resources)
+        }
+        // await this.runByRepository(resources, async (repository, uris) => repository.revert(...uris));
     }
 
     @command('fossil.revertAll', { repository: true })
@@ -954,36 +976,36 @@ export class CommandCenter {
         }
     }
 
-    private runByRepository<T>(resource: Uri, fn: (repository: Repository, resource: Uri) => Promise<T>): Promise<T[]>;
-    private runByRepository<T>(resources: Uri[], fn: (repository: Repository, resources: Uri[]) => Promise<T>): Promise<T[]>;
-    private async runByRepository<T>(arg: Uri | Uri[], fn: (repository: Repository, resources: any) => Promise<T>): Promise<T[]> {
-        const resources = arg instanceof Uri ? [arg] : arg;
-        const isSingleResource = arg instanceof Uri;
+    // private runByRepository<T>(resource: Uri, fn: (repository: Repository, resource: Uri) => Promise<T>): Promise<T[]>;
+    // private runByRepository<T>(resources: Uri[], fn: (repository: Repository, resources: Uri[]) => Promise<T>): Promise<T[]>;
+    // private async runByRepository<T>(arg: Uri | Uri[], fn: (repository: Repository, resources: any) => Promise<T>): Promise<T[]> {
+    //     const resources = arg instanceof Uri ? [arg] : arg;
+    //     const isSingleResource = arg instanceof Uri;
 
-        const groups = resources.reduce((result, resource) => {
-            const repository = this.model.getRepository(resource);
+    //     const groups = resources.reduce((result, resource) => {
+    //         const repository = this.model.getRepository(resource);
 
-            if (!repository) {
-                console.warn('Could not find fossil repository for ', resource);
-                return result;
-            }
+    //         if (!repository) {
+    //             console.warn('Could not find fossil repository for ', resource);
+    //             return result;
+    //         }
 
-            const tuple = result.filter(p => p[0] === repository)[0];
+    //         const tuple = result.filter(p => p[0] === repository)[0];
 
-            if (tuple) {
-                tuple.resources.push(resource);
-            } else {
-                result.push({ repository, resources: [resource] });
-            }
+    //         if (tuple) {
+    //             tuple.resources.push(resource);
+    //         } else {
+    //             result.push({ repository, resources: [resource] });
+    //         }
 
-            return result;
-        }, [] as { repository: Repository, resources: Uri[] }[]);
+    //         return result;
+    //     }, [] as { repository: Repository, resources: Uri[] }[]);
 
-        const promises = groups
-            .map(({ repository, resources }) => fn(repository as Repository, isSingleResource ? resources[0] : resources));
+    //     const promises = groups
+    //         .map(({ repository, resources }) => fn(repository as Repository, isSingleResource ? resources[0] : resources));
 
-        return Promise.all(promises);
-    }
+    //     return Promise.all(promises);
+    // }
 
     dispose(): void {
         this.disposables.forEach(d => d.dispose());
