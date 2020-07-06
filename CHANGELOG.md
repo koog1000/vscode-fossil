@@ -2,7 +2,13 @@ Changelog
 =============================================
 
 
-v0.0.18
+v0.1.0
+---------------------------------------------
+## What's New
+- Add username configuration override for commits
+
+
+v0.0.19
 ---------------------------------------------
 ## What's New
 - More fixes to repo actions to resouce folders,

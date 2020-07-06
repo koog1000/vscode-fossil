@@ -142,13 +142,13 @@ export async function exec(child: cp.ChildProcess, no_err_check?: boolean): Prom
         }),
         new Promise<string>(c => {
             const buffers: string[] = [];
-            async function checkForPrompt(input: any){
+            async function checkForPrompt(input: any) {
                 buffers.push(input);
                 const inputStr: string = input.toString()
-                if(inputStr){
-                    if((inputStr.endsWith("? ") || inputStr.endsWith("?") ||
-                       inputStr.endsWith(": ") || inputStr.endsWith(":")) &&
-                       !no_err_check){
+                if (inputStr) {
+                    if ((inputStr.endsWith("? ") || inputStr.endsWith("?") ||
+                        inputStr.endsWith(": ") || inputStr.endsWith(":")) &&
+                        !no_err_check) {
                         const resp = await interaction.inputPrompt(buffers.toString())
                         child.stdin.write(resp + '\n')
                     }
@@ -291,20 +291,20 @@ export class Fossil {
     async getRepositoryRoot(path: string): Promise<string> {
         const result = await this.exec(path, ['stat']);
         var root = result.stdout.match(/local-root:\s*(.+)\/\s/);
-        if(root) return root[1];
+        if (root) return root[1];
         return ""
     }
 
     async exec(cwd: string, args: string[], options: any = {}): Promise<IExecutionResult> {
         options = { cwd, ...options };
-        try{
+        try {
             let result = await this._exec(args, options);
             return result
         }
-        catch(err){
-            if(err instanceof FossilError &&
+        catch (err) {
+            if (err instanceof FossilError &&
                 err.fossilErrorCode !== FossilErrorCodes.NoSuchFile &&
-                err.fossilErrorCode !== FossilErrorCodes.NotAFossilRepository){
+                err.fossilErrorCode !== FossilErrorCodes.NotAFossilRepository) {
                 const openLog = await interaction.errorPromptOpenLog(err)
                 if (openLog) {
                     this.outputChannel.show();
@@ -331,7 +331,7 @@ export class Fossil {
                 fossilErrorCode = FossilErrorCodes.AuthenticationFailed;
             }
             else if (/not within an open checkout/.test(result.stderr) ||
-                     /specify the repository database/.test(result.stderr)) {
+                /specify the repository database/.test(result.stderr)) {
                 fossilErrorCode = FossilErrorCodes.NotAFossilRepository;
             }
             else if (/no such file/.test(result.stderr)) {
@@ -459,15 +459,15 @@ export class Repository {
 
     async close(): Promise<string> {
         const args = ['close'];
-        try{
+        try {
             const result = await this.exec(args);
             return result.stdout + result.stderr;
         }
         catch (err) {
-            if(err instanceof FossilError && err.stderr){
+            if (err instanceof FossilError && err.stderr) {
                 return err.stdout + err.stderr
             }
-            else{
+            else {
                 return 'Unknown Err'
             }
         }
@@ -492,9 +492,13 @@ export class Repository {
         }
     }
 
-    async commit(message: string, opts: { fileList: string[] } = Object.create(null)): Promise<void> {
+    async commit(message: string, opts: { fileList: string[], user?: string | undefined } = Object.create(null)): Promise<void> {
         const disposables: IDisposable[] = [];
         const args = ['commit'];
+
+        if (opts.user != undefined) {
+            args.push('--user-override', opts.user);
+        }
 
         if (opts.fileList.length) {
             args.push(...opts.fileList);
@@ -523,8 +527,7 @@ export class Repository {
     async branch(name: string, opts?: { force: boolean }): Promise<void> {
         const args = ['branch', 'new', name];
         const currBranch = await this.getCurrentBranch();
-        if(currBranch && currBranch.name)
-        {
+        if (currBranch && currBranch.name) {
             args.push(currBranch.name)
         }
 
@@ -566,12 +569,12 @@ export class Repository {
 
     async ignore(paths: string[]): Promise<void> {
         const ignore_file = this.repositoryRoot + '/.fossil-settings/ignore-glob'
-        if(existsSync(ignore_file)){
-            appendFileSync(ignore_file, paths.join('\n') + '\n' )
+        if (existsSync(ignore_file)) {
+            appendFileSync(ignore_file, paths.join('\n') + '\n')
         }
-        else{
+        else {
             mkdirp(this.repositoryRoot + '/.fossil-settings/')
-            writeFileSync(ignore_file, paths.join('\n')+ '\n');
+            writeFileSync(ignore_file, paths.join('\n') + '\n');
             this.add([ignore_file])
         }
         const document = await workspace.openTextDocument(ignore_file)
@@ -774,31 +777,31 @@ export class Repository {
             if (line.length > 0) {
                 if (line.startsWith("UPDATED_BY_MERGE")) {
                     var fileUri: string = line.substr(17).trim();
-                    result.push({status: "M", path: fileUri});
+                    result.push({ status: "M", path: fileUri });
                 }
                 else if (line.startsWith("ADDED_BY_MERGE")) {
                     var fileUri: string = line.substr(15).trim();
-                    result.push({status: "A", path: fileUri});
+                    result.push({ status: "A", path: fileUri });
                 }
                 else if (line.startsWith("DELETED")) {
                     var fileUri: string = line.substr(8).trim();
-                    result.push({status: "R", path: fileUri});
+                    result.push({ status: "R", path: fileUri });
                 }
                 else if (line.startsWith("EDITED")) {
                     var fileUri: string = line.substr(7).trim();
-                    result.push({status: "M", path: fileUri});
+                    result.push({ status: "M", path: fileUri });
                 }
                 else if (line.startsWith("ADDED")) {
                     var fileUri: string = line.substr(6).trim();
-                    result.push({status: "A", path: fileUri});
+                    result.push({ status: "A", path: fileUri });
                 }
                 else if (line.startsWith("MISSING")) {
                     var fileUri: string = line.substr(8).trim();
-                    result.push({status: "!", path: fileUri});
+                    result.push({ status: "!", path: fileUri });
                 }
                 else if (line.startsWith("CONFLICT")) {
                     var fileUri: string = line.substr(9).trim();
-                    result.push({status: "C", path: fileUri});
+                    result.push({ status: "C", path: fileUri });
                 }
             }
         });
@@ -817,7 +820,7 @@ export class Repository {
         lines.forEach(line => {
             if (line.length > 0) {
                 var fileUri: string = line.trim();
-                result.push({status: "?", path: fileUri});
+                result.push({ status: "?", path: fileUri });
             }
         });
         return result;
