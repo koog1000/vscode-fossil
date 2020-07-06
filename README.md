@@ -85,6 +85,11 @@ __TODO__: update gif for fossil
   * The default behaviour is to search for `fossil` in commonly-known
     install locations and on the PATH.
 
+`fossil.username { string / null }`
+
+  * Specifies an explicit user to use for fossil commits.
+  * This should only be used if the user is different than the fossil default user.
+
 # Troubleshooting
 
 In general, Fossil designers maintain an abundance of
