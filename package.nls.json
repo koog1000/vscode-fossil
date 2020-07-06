@@ -41,6 +41,7 @@
     "command.mergeWithLocal": "Merge into working directory...",
     "config.enabled": "Whether Fossil is enabled",
     "config.path": "Path to the 'fossil' executable (only required if auto-detection fails)",
+    "config.username": "The username associated with each commit (only required if different from user that originally cloned repo).",
     "config.autoInOut": "Whether auto-incoming/outgoing counts are enabled",
     "config.autoInOutInterval": "How many seconds between each autoInOut poll",
     "config.autoRefresh": "Whether auto refreshing is enabled",

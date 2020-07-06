@@ -597,7 +597,8 @@ export class Repository implements IDisposable {
             else if (opts.scope === CommitScope.CHANGES) {
                 fileList = this.workingDirectoryGroup.resources.map(r => this.mapResourceToRepoRelativePath(r));
             }
-            await this.repository.commit(message, { fileList });
+            let user = typedConfig.username;
+            await this.repository.commit(message, { fileList, user });
             return
         });
     }
@@ -701,7 +702,7 @@ export class Repository implements IDisposable {
     @throttle
     async close(): Promise<boolean> {
         const msg = await this.run(Operation.Close, () => this.repository.close())
-        if(msg){
+        if (msg) {
             interaction.warnUnsavedChanges(msg);
             return false
         }
@@ -884,7 +885,7 @@ export class Repository implements IDisposable {
             // noop
         }
 
-        return {name:"", url:""};
+        return { name: "", url: "" };
     }
 
     @throttle
@@ -941,7 +942,7 @@ export class Repository implements IDisposable {
         const currentRefPromise: Promise<Ref | undefined> = this.repository.getCurrentBranch()
 
         var fileStat = this.repository.parseStatusLines(await this.repository.getStatus())
-                        .concat(this.repository.parseExtrasLines(await this.repository.getExtras()));
+            .concat(this.repository.parseExtrasLines(await this.repository.getExtras()));
 
         const [currentRef, resolveStatuses] = await Promise.all([
             currentRefPromise,
@@ -966,10 +967,10 @@ export class Repository implements IDisposable {
 
     get count(): number {
         return this.mergeGroup.resources.length
-                    + this.stagingGroup.resources.length
-                    + this.workingDirectoryGroup.resources.length
-                    + this.conflictGroup.resources.length
-                    + this.untrackedGroup.resources.length
+            + this.stagingGroup.resources.length
+            + this.workingDirectoryGroup.resources.length
+            + this.conflictGroup.resources.length
+            + this.untrackedGroup.resources.length
     }
 
     dispose(): void {

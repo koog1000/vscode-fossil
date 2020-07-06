@@ -44,6 +44,10 @@ class Config {
     get autoInOutIntervalMillis(): number {
         return this.autoInOutInterval * 1000;
     }
+
+    get username(): string | undefined {
+        return this.get("username", undefined);
+    }
 }
 
 const typedConfig = new Config()
