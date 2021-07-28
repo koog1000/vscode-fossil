@@ -37,6 +37,11 @@ about cloning from the extension.
 
 * Undo
 
+* Use command palette `Ctrl-Shift-P` >> `fossil:` to see all commands. (Not everything has a UI control.)
+
+* Keybindings can be added via right-click context menu from palette
+ ![add keybinding](https://user-images.githubusercontent.com/486200/127265219-ab259b53-d134-462e-85e2-f93d90673e29.png)
+
 
 ## View file changes
 ![View changes](images/fossil-diff.gif)
