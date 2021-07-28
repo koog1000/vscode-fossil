@@ -37,6 +37,8 @@ about cloning from the extension.
 
 * Undo
 
+* Use command palette `Ctrl-Shift-P` >> `fossil:` to see all commands. (Not everything has a UI control.)
+
 
 ## View file changes
 ![View changes](images/fossil-diff.gif)
