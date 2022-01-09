@@ -6,7 +6,8 @@
 
 import {Uri, commands, scm, Disposable, window, workspace, OutputChannel,
         SourceControlResourceState, SourceControl, SourceControlResourceGroup,
-        TextDocumentShowOptions, ViewColumn } from "vscode";
+        TextDocumentShowOptions, ViewColumn, Selection} from 'vscode';
+import { LineChange, revertChanges } from './revert';
 import * as nls from "vscode-nls";
 import * as path from "path";
 import { Ref, Fossil, Commit, FossilError, FossilErrorCodes, IFileStatus, CommitDetails } from "./fossilBase";
@@ -879,6 +880,20 @@ export class CommandCenter {
         if (choice) {
             choice.run();
         }
+    }
+
+    @command('fossil.revertChange')
+    async revertChange(uri: Uri, changes: LineChange[], index: number) {
+        if (!uri) {
+            return;
+        }
+        const textEditor = window.visibleTextEditors.filter(e => e.document.uri.toString() === uri.toString())[0];
+        if (!textEditor) {
+            return;
+        }
+        await revertChanges(textEditor, [...changes.slice(0, index), ...changes.slice(index + 1)]);
+        const firstStagedLine = changes[index].modifiedStartLineNumber - 1;
+        textEditor.selections = [new Selection(firstStagedLine, 0, firstStagedLine, 0)];
     }
 
     private async diffFile(repository: Repository, rev1: string, rev2: string, file: IFileStatus) {

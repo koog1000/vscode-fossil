@@ -314,6 +314,15 @@
                 "command": "fossil.update",
                 "title": "%command.update%",
                 "category": "Fossil"
+            },
+            {
+                "command": "fossil.revertChange",
+                "title": "Revert Change",
+                "category": "Fossil",
+                "icon": {
+                    "light": "resources/icons/light/discard.svg",
+                    "dark": "resources/icons/dark/discard.svg"
+                }
             }
         ],
         "menus": {
@@ -521,6 +530,12 @@
                 {
                     "command": "fossil.showOutput",
                     "group": "6_output",
+                    "when": "config.fossil.enabled && scmProvider == fossil"
+                }
+            ],
+            "scm/change/title": [
+                {
+                    "command": "fossil.revertChange",
                     "when": "config.fossil.enabled && scmProvider == fossil"
                 }
             ],
