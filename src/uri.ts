@@ -8,16 +8,25 @@
 
 import { Uri } from 'vscode';
 
-export function fromFossilUri(uri: Uri): { path: string} {
+export interface FossilUriParams {
+    // full filesystem path
+    path: string;
+    // https://fossil-scm.org/home/doc/trunk/www/checkin_names.wiki
+    checkin: string;
+}
+
+export function fromFossilUri(uri: Uri): FossilUriParams {
     return JSON.parse(uri.query);
 }
 
-export function toFossilUri(uri: Uri): Uri {
+export function toFossilUri(uri: Uri, checkin: string=''): Uri {
+    const params: FossilUriParams = {
+        path: uri.fsPath,
+        checkin: checkin,
+    };
     return uri.with({
-        scheme: 'fossil-original',
+        scheme: 'fossil',
         path: uri.path,
-        query: JSON.stringify({
-            path: uri.fsPath
-        })
+        query: JSON.stringify(params)
     });
 }

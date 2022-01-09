@@ -12,7 +12,7 @@ import { ResourceGroup, createEmptyStatusGroups, UntrackedGroup, WorkingDirector
 import { Path } from './fossilBase';
 import { AutoInOutState, AutoInOutStatuses, AutoIncomingOutgoing } from './autoinout';
 import { interaction, PushCreatesNewHeadAction } from './interaction';
-import { toFossilUri } from './uri';
+import { FossilUriParams, toFossilUri } from './uri';
 
 const timeout = (millis: number) => new Promise(c => setTimeout(c, millis));
 
@@ -402,9 +402,6 @@ export class Repository implements IDisposable {
         if (uri.scheme !== 'file') {
             return;
         }
-
-        // As a mitigation for extensions like ESLint showing warnings and errors
-        // for hg URIs, let's change the file extension of these uris to .hg.
         return toFossilUri(uri);
     }
 
@@ -808,15 +805,15 @@ export class Repository implements IDisposable {
         return true;
     }
 
-    async show(ref: string, filePath: string): Promise<string> {
+    async show(params: FossilUriParams): Promise<string> {
         // TODO@Joao: should we make this a general concept?
         await this.whenIdleAndFocused();
 
         return await this.run(Operation.Show, async () => {
-            const relativePath = path.relative(this.repository.root, filePath).replace(/\\/g, '/');
+            const relativePath = path.relative(this.repository.root, params.path).replace(/\\/g, '/');
             try {
-                console.log('Repository: show: relativePath: ' + relativePath + ' ref: ' + ref)
-                return await this.repository.cat(relativePath, ref)
+                console.log('Repository: show: relativePath: ' + relativePath + ' checkin: ' + params.checkin)
+                return await this.repository.cat(relativePath, params.checkin)
             }
             catch (e) {
                 if (e && e instanceof FossilError && e.fossilErrorCode === FossilErrorCodes.NoSuchFile) {
