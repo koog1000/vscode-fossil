@@ -894,10 +894,10 @@ export class CommandCenter {
     }
 
     private async diff(commit: Commit, uri: Uri) {
-        const left = uri.with({ scheme: 'fossil', query: commit.hash });
+        const left = toFossilUri(uri, commit.hash);
         const right = uri;
         const baseName = path.basename(uri.fsPath);
-        const title = `${baseName} (#${commit.revision} vs. local)`;
+        const title = `${baseName} (${commit.hash} vs. local)`;
 
         if (left && right) {
             return await commands.executeCommand<void>('vscode.diff', left, right, title);

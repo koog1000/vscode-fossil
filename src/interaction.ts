@@ -300,7 +300,7 @@ export namespace interaction {
     }
 
     function describeCommitOneLine(commit: Commit): string {
-        return `#${commit.revision} ${BULLET} ${commit.author}, ${humanise.ageFromNow(commit.date)} ${BULLET} ${commit.message}`;
+        return `#${commit.hash} ${BULLET} ${commit.author}, ${humanise.ageFromNow(commit.date)} ${BULLET} ${commit.message}`;
     }
 
     function asLabelItem(label: string, description: string = "", action: RunnableAction = NOOP): RunnableQuickPickItem {
@@ -571,7 +571,7 @@ class CommitItem implements RunnableQuickPickItem {
     get label() {
         return this.commit.branch;
     }
-    get detail() { return `${this.commit.revision}(${this.shortHash}) `; }
+    get detail() { return `${this.commit.hash}(${this.shortHash}) `; }
     get description() { return this.commit.message; }
     run() { }
 }
@@ -586,7 +586,7 @@ class LogEntryItem extends CommitItem {
     get description() {
         let scope: string = "";
         scope = '\u2014 ' + this.commit.branch;
-        return `${NBSP}${BULLET}${NBSP}${NBSP}#${this.commit.revision}${scope}`;
+        return `${NBSP}${BULLET}${NBSP}${NBSP}#${this.commit.hash}${scope}`;
     }
     get label() { return this.commit.message; }
     get detail() { return `${NBSP}${NBSP}${NBSP}${this.commit.author}, ${this.age}`; }

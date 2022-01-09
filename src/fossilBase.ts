@@ -384,7 +384,6 @@ export class Fossil {
 }
 
 export interface Revision {
-    revision: number;
     hash: string;
 }
 
@@ -448,10 +447,10 @@ export class Repository {
         await this.exec(args);
     }
 
-    async cat(relativePath: string, ref?: string): Promise<string> {
+    async cat(relativePath: string, checkin: string): Promise<string> {
         const args = ['cat', relativePath];
-        if (ref) {
-            args.push('-r', ref);
+        if (checkin) {
+            args.push('-r', checkin);
         }
         const result = await this.exec(args, { logErrors: false });
         return result.stdout;
@@ -849,23 +848,23 @@ export class Repository {
         if (filePath) {
             args.push('-p', filePath);
         }
-        args.push('-t', 'ci');
+        args.push('--type', 'ci');
+        args.push('--format', '%H+++%d+++%b+++%a+++%c')
 
         const result = await this.exec(args);
         const logEntries = result.stdout.trim().split('\n')
-            .filter(line => !!line)
-            .map((line: string): Commit | null => {
-                const parts = line.split(":");
-                const [revision, hash, hgDate, author, branch, tabDelimBookmarks] = parts;
-                const message = parts.slice(6).join(":");
-                const [unixDateSeconds, _] = hgDate.split(' ').map(part => parseFloat(part));
+            .filter(line => !!line && !line.startsWith("+++"))
+            .map((line: string): Commit => {
+                const parts = line.split("+++", 5);
+                const [hash, date, branch, author, message] = parts;
                 return {
-                    revision: parseInt(revision),
-                    date: new Date(unixDateSeconds * 1e3),
-                    hash, branch, message, author
+                    hash: hash,
+                    branch: branch,
+                    message: message,
+                    author: author,
+                    date: new Date(date),
                 }
-            })
-            .filter(ref => !!ref) as Commit[];
+            }) as Commit[];
         return logEntries;
     }
 
