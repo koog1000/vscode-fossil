@@ -178,7 +178,7 @@ export class Model implements Disposable {
         openRepositoriesToDispose.forEach(r => r.dispose());
     }
 
-    private onDidChangeVisibleTextEditors(editors: TextEditor[]): void {
+    private onDidChangeVisibleTextEditors(editors: readonly TextEditor[]): void {
         editors.forEach(editor => {
             const uri = editor.document.uri;
 

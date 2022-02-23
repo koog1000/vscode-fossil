@@ -4,6 +4,5 @@
  *  Licensed under the MIT License. See LICENSE.txt in the project root for license information.
  *--------------------------------------------------------------------------------------------*/
 
-/// <reference path='../../node_modules/vscode/vscode.d.ts'/>
 /// <reference types='@types/node'/>
 /// <reference types='@types/tmp'/>

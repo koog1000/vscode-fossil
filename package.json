@@ -16,9 +16,9 @@
     "bugs": {
         "url": "https://github.com/koog1000/vscode-fossil/issues"
     },
-    "version": "0.1.0",
+    "version": "0.1.1",
     "engines": {
-        "vscode": "^1.23.0"
+        "vscode": "^1.36.0"
     },
     "keywords": [
         "fossil-scm",
@@ -799,13 +799,15 @@
     },
     "dependencies": {
         "@types/mocha": "^5.2.7",
+        "glob": "^7.2.0",
         "tmp": "0.0.31",
-        "vscode-nls": "^2.0.1"
+        "vscode-nls": "^2.0.1",
+        "vscode-test": "^1.6.1"
     },
     "devDependencies": {
         "@types/node": "^7.0.4",
         "@types/tmp": "0.0.33",
-        "vscode": "^1.1.23"
+        "@types/vscode": "^1.36.0"
     },
     "__metadata": {
         "id": "e828bfe6-95e7-4c7a-a334-ae2cc5ba8788",
