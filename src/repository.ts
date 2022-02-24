@@ -959,7 +959,7 @@ export class Repository implements IDisposable {
         this._groups = groupStatuses(groupInput);
         this._sourceControl.count = this.count;
         this._onDidChangeStatus.fire();
-        this._onDidChangeRepository.fire()
+        // this._onDidChangeRepository.fire()
     }
 
     get count(): number {
