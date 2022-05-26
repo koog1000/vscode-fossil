@@ -225,6 +225,7 @@ export class Model implements Disposable {
             const repository = new Repository(this._hg.open(repositoryRoot));
 
             this.open(repository);
+            return true;
         } catch (err) {
             if (err.fossilErrorCode !== FossilErrorCodes.NotAFossilRepository) {
                 console.error('Failed to find repository:', err);
