@@ -410,7 +410,7 @@ export class Repository implements IDisposable {
         await this.run(Operation.Status);
     }
 
-    private onFSChange(uri: Uri): void {
+    private onFSChange(_uri: Uri): void {
         if (!typedConfig.autoRefresh) {
             return;
         }
