@@ -10,7 +10,7 @@ import {Uri, commands, scm, Disposable, window, workspace, OutputChannel,
 import { LineChange, revertChanges } from './revert';
 import * as nls from "vscode-nls";
 import * as path from "path";
-import { Ref, Fossil, Commit, FossilError, FossilErrorCodes, IFileStatus, CommitDetails } from "./fossilBase";
+import { Ref, Fossil, Commit, FossilError, FossilErrorCodes, IFileStatus, CommitDetails, FossilPath,FossilRoot, FossilURI } from "./fossilBase";
 import { Model } from "./model";
 import { Resource, Status, CommitOptions, CommitScope, MergeStatus, LogEntriesOptions, Repository } from "./repository"
 import { WorkingDirectoryGroup, StagingGroup, MergeGroup, UntrackedGroup, isResourceGroup } from "./resourceGroups";
@@ -197,7 +197,7 @@ export class CommandCenter {
             const regex = (url.search('@') < 0) ? /(^.+\:\/\/)(.+)/ : /(^.+\:\/\/).*@(.+)/
             const match = url.match(regex);
             if(match){
-                url = match[1] + username + ':' + userauth + '@' + match[2]
+                url = match[1] + username + ':' + userauth + '@' + match[2] as FossilURI
             }
         }
         const parentPath = await interaction.inputCloneParentPath();
@@ -208,37 +208,61 @@ export class CommandCenter {
         const clonePromise = this.fossil.clone(url, parentPath);
         interaction.statusCloning(clonePromise);
 
+        const repositoryPath = await clonePromise;
+        await this.askOpenRepository(repositoryPath, parentPath);
+    }
+
+    async openRepository(filePath: FossilPath, parentPath: FossilRoot) : Promise<void> {
         try {
-            const repositoryPath = await clonePromise;
-            const openClonedRepo = await interaction.promptOpenClonedRepo();
-            if (openClonedRepo) {
-                this.fossil.openClone(repositoryPath, parentPath)
+            await this.fossil.openClone(filePath, parentPath);
+        } catch (err) {
+            if (err instanceof FossilError && err.fossilErrorCode === FossilErrorCodes.OperationMustBeforced) {
+                const openNotEmpty = await interaction.confirmOpenNotEmpty(parentPath);
+                if (openNotEmpty) {
+                    this.fossil.openCloneForce(filePath, parentPath);
+                }
+            } else {
+                throw err;
             }
         }
-        catch (err) {
-            throw err;
+    }
+
+    /**
+     * ask user to open the repo after `clone` or `init`
+     */
+    async askOpenRepository(filePath: FossilPath, fossilRoot: FossilRoot) : Promise<void> {
+        const openClonedRepo = await interaction.promptOpenClonedRepo();
+        if (openClonedRepo) {
+            await this.openRepository(filePath, fossilRoot);
         }
     }
 
     @command('fossil.init')
     async init(): Promise<void> {
-        const result = await interaction.openFileDialog(false, true, false, localize('init repo', 'Respository Folder'))
+        const fossilFilePath = await interaction.initFileDialog()
 
-        if (!result || result.length === 0) {
+        if (fossilFilePath === undefined) {
             return;
         }
+        const dirname = path.dirname(fossilFilePath) as FossilRoot;
 
-        const uri = result[0];
-        const path = uri.fsPath;
-        const fileName = await interaction.inputRepoName()
-        if(fileName && fileName.length){
-            await this.fossil.init(path, fileName);
-            const openClonedRepo = await interaction.promptOpenClonedRepo();
-            if (openClonedRepo) {
-                this.fossil.openClone(fileName, path)
-            }
+        // run init in the file folder in case any any artifacts appear
+        await this.fossil.init(dirname, fossilFilePath);
+        await this.askOpenRepository(fossilFilePath, dirname);
+        await this.model.tryOpenRepository(dirname);
+    }
+
+    @command('fossil.open')
+    async open(): Promise<void> {
+        const uri = await interaction.openFileDialog()
+        if (uri === undefined) {
+            return;
         }
-        await this.model.tryOpenRepository(path);
+        const parentPath = await interaction.inputCloneParentPath();
+        if (!parentPath) {
+            return;
+        }
+        await this.openRepository(uri, parentPath);
     }
 
     @command('fossil.close', { repository: true})
@@ -989,6 +1013,7 @@ export class CommandCenter {
                 || repository.mergeGroup.getResource(uri)
                 || repository.conflictGroup.getResource(uri);
         }
+        return undefined;
     }
 
     // private runByRepository<T>(resource: Uri, fn: (repository: Repository, resource: Uri) => Promise<T>): Promise<T[]>;

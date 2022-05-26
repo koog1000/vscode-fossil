@@ -8,8 +8,23 @@ import * as path from 'path';
 import * as cp from 'child_process';
 import { existsSync, appendFileSync, writeFileSync } from 'fs';
 import { groupBy, IDisposable, toDisposable, dispose, mkdirp } from "./util";
-import { EventEmitter, Event, workspace, window, Disposable, OutputChannel } from "vscode";
+import { EventEmitter, Event, workspace, window, Disposable, OutputChannel, Uri } from "vscode";
 import { interaction } from './interaction';
+
+type Distinct<T, DistinctName> = T & { __TYPE__: DistinctName };
+/** path to .fossil */
+export type FossilPath = Distinct<string, "path to .fossil">;
+/** local root */
+export type FossilRoot = Distinct<string, "local root">;
+/** something? */
+//export type FossilName = Distinct<Uri, "fossil name">;
+/** URI for the close
+ *
+ * * http[s]://[userid[:password]@]host[:port][/path]
+ * * ssh://[userid@]host[:port]/path/to/repo.fossil[?fossil=path/fossil.exe]
+ * * [file://]path/to/repo.fossil
+ */
+export type FossilURI = Distinct<string, "Fossil URI">;
 
 export interface IFossil {
     path: string;
@@ -125,12 +140,12 @@ export interface IExecutionResult {
 export async function exec(child: cp.ChildProcess, no_err_check?: boolean): Promise<IExecutionResult> {
     const disposables: IDisposable[] = [];
 
-    const once = (ee: NodeJS.EventEmitter, name: string, fn: Function) => {
+    const once = (ee: NodeJS.EventEmitter, name: string, fn: (...args: any[]) => void ) => {
         ee.once(name, fn);
         disposables.push(toDisposable(() => ee.removeListener(name, fn)));
     };
 
-    const on = (ee: NodeJS.EventEmitter, name: string, fn: Function) => {
+    const on = (ee: NodeJS.EventEmitter, name: string, fn: (...args: any[]) => void) => {
         ee.on(name, fn);
         disposables.push(toDisposable(() => ee.removeListener(name, fn)));
     };
@@ -172,8 +187,8 @@ export async function exec(child: cp.ChildProcess, no_err_check?: boolean): Prom
 export interface IFossilErrorData {
     error?: Error;
     message?: string;
-    stdout?: string;
-    stderr?: string;
+    stdout?: string; // ToDo: remove '?'
+    stderr?: string; // ToDo: remove '?'
     exitCode?: number;
     fossilErrorCode?: string;
     fossilCommand?: string;
@@ -238,6 +253,7 @@ export interface IFossilOptions {
     outputChannel: OutputChannel;
 }
 
+// ToDo: make it enum
 export const FossilErrorCodes = {
     AuthenticationFailed: 'AuthenticationFailed',
     NotAFossilRepository: 'NotAFossilRepository',
@@ -247,7 +263,8 @@ export const FossilErrorCodes = {
     BranchAlreadyExists: 'BranchAlreadyExists',
     NoUndoInformationAvailable: 'NoUndoInformationAvailable',
     UntrackedFilesDiffer: 'UntrackedFilesDiffer',
-    DefaultRepositoryNotConfigured: 'DefaultRepositoryNotConfigured'
+    DefaultRepositoryNotConfigured: 'DefaultRepositoryNotConfigured',
+    OperationMustBeforced: 'OperationMustBeforced'
 };
 
 export class Fossil {
@@ -270,29 +287,37 @@ export class Fossil {
         return this.openRepository;
     }
 
-    async init(repository: string, repoName: string): Promise<void> {
+    async init(repository: FossilRoot, repoName: FossilPath): Promise<void> {
         await this.exec(repository, ['init', repoName]);
-        return;
     }
 
-    async clone(url: string, parentPath: string): Promise<string> {
-        const folderName = url.replace(/^.*\//, '') || 'repository';
+    async clone(uri: FossilURI, parentPath: FossilRoot): Promise<FossilPath> {
+        const folderName = uri.replace(/^.*\//, '') || 'repository';
         const folderPath = path.join(parentPath, folderName + '.fossil');
 
         await mkdirp(parentPath);
-        await this.exec(parentPath, ['clone', url, folderPath]);
-        return folderPath;
+        await this.exec(parentPath, ['clone', uri, folderPath]);
+        return folderPath as FossilPath;
     }
 
-    async openClone(filePath: string, parentPath: string): Promise<void> {
-        await this.exec(parentPath, ['open', filePath]);
+    async openClone(fossilPath: FossilPath, workdir: FossilRoot): Promise<void> {
+        await this.exec(workdir, ['open', fossilPath]);
     }
 
-    async getRepositoryRoot(path: string): Promise<string> {
+    async openCloneForce(fossilPath: FossilPath, parentPath: FossilRoot): Promise<void> {
+        await this.exec(parentPath, ['open', fossilPath, '--force']);
+    }
+
+    /**
+     *
+     * @param path any path inside opened repository
+     * @returns path's root directory
+     */
+    async getRepositoryRoot(path: string): Promise<FossilRoot> {
         const result = await this.exec(path, ['stat']);
         var root = result.stdout.match(/local-root:\s*(.+)\/\s/);
-        if (root) return root[1];
-        return ""
+        if (root) return root[1] as FossilRoot;
+        return "" as FossilRoot
     }
 
     async exec(cwd: string, args: string[], options: any = {}): Promise<IExecutionResult> {
@@ -304,7 +329,8 @@ export class Fossil {
         catch (err) {
             if (err instanceof FossilError &&
                 err.fossilErrorCode !== FossilErrorCodes.NoSuchFile &&
-                err.fossilErrorCode !== FossilErrorCodes.NotAFossilRepository) {
+                err.fossilErrorCode !== FossilErrorCodes.NotAFossilRepository &&
+                err.fossilErrorCode !== FossilErrorCodes.OperationMustBeforced) {
                 const openLog = await interaction.errorPromptOpenLog(err)
                 if (openLog) {
                     this.outputChannel.show();
@@ -336,6 +362,8 @@ export class Fossil {
             }
             else if (/no such file/.test(result.stderr)) {
                 fossilErrorCode = FossilErrorCodes.NoSuchFile;
+            } else if (/--force\b/.test(result.stderr)) {
+                fossilErrorCode = FossilErrorCodes.OperationMustBeforced;
             }
 
             if (options.logErrors !== false && result.stderr) {

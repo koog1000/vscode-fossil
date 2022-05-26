@@ -8,7 +8,7 @@ import * as nls from "vscode-nls";
 import * as path from "path";
 import * as os from "os";
 import { window, QuickPickItem, workspace, ViewColumn, Uri } from "vscode";
-import { FossilUndoDetails, Path, Ref, RefType, Commit, LogEntryOptions, CommitDetails, IFileStatus } from "./fossilBase";
+import { FossilUndoDetails, Path, Ref, RefType, Commit, LogEntryOptions, CommitDetails, IFileStatus, FossilPath, FossilRoot, FossilURI } from "./fossilBase";
 import { humanise } from "./humanise";
 import { Repository, LogEntriesOptions } from "./repository";
 const localize = nls.loadMessageBundle();
@@ -30,30 +30,60 @@ export const enum WarnScenario { Merge, Update }
 export const enum CommitSources { File, Branch, Repo }
 
 export namespace interaction {
+    /**
+     *
+     * @param fsPath existing directory path
+     * @returns directory/filename.fossil
+     */
+    function suggestPath(fsPath: string): string {
+        return fsPath + '/' + (path.basename(fsPath) || 'repo_name') + '.fossil';
+    }
 
-    export async function openFileDialog(
-            fileSelect: boolean,
-            folderSelect: boolean,
-            multiSelect: boolean,
-            btnName: string
-    ): Promise<Uri[]|undefined> {
-        const homeUri = Uri.file(os.homedir());
-        const defaultUri = workspace.workspaceFolders && workspace.workspaceFolders.length > 0
-            ? Uri.file(workspace.workspaceFolders[0].uri.fsPath)
-            : homeUri;
+    /** ask user for the new .fossil file location */
+    export async function initFileDialog(): Promise<FossilPath|undefined> {
+        const folders = workspace.workspaceFolders;
+        const defaultUri = Uri.file(
+            folders?.length
+            ? suggestPath(folders[0].uri.fsPath)
+            : os.homedir()
+        );
 
-        const result = await window.showOpenDialog({
-            canSelectFiles: fileSelect,
-            canSelectFolders: folderSelect,
-            canSelectMany: multiSelect,
+        const uri = await window.showSaveDialog({
             defaultUri: defaultUri,
-            openLabel: btnName,
+            saveLabel: 'Repository Location',
             filters: {
                 'All files': ['*']
             }
         });
-        return result
+        return uri?.fsPath as FossilPath;
     }
+
+    /**
+     * ask user to open existing .fossil file
+     *
+     * @returns fossil file uri
+     */
+    export async function openFileDialog(): Promise<FossilPath|undefined> {
+        const folders = workspace.workspaceFolders;
+        const defaultUri = Uri.file(
+            folders?.length
+            ? suggestPath(folders[0].uri.fsPath)
+            : os.homedir()
+        );
+        const uri = await window.showOpenDialog({
+            defaultUri: defaultUri,
+            openLabel: 'Repository Location',
+            filters: {
+                'Fossil files': ['*.fossil'],
+                'All files': ['*']
+            },
+            canSelectMany: false
+        });
+        if (uri?.length)
+            return uri[0].fsPath as FossilPath;
+        return undefined;
+    }
+
 
     export function statusCloning(clonePromise: Promise<any>) {
         return window.setStatusBarMessage(localize('cloning', "Cloning fossil repository..."), clonePromise);
@@ -173,19 +203,26 @@ export namespace interaction {
         return choice === openOutputChannelChoice;
     }
 
-    export async function promptOpenClonedRepo(this: void) {
+    export async function promptOpenClonedRepo(this: void) : Promise<boolean> {
         const open = localize('openrepo', "Open Repository");
         const result = await window.showInformationMessage(localize('proposeopen', "Would you like to open the cloned repository?"), open);
-
         return result === open;
     }
 
-    export async function inputRepoUrl(this: void): Promise<string | undefined> {
+    export async function confirmOpenNotEmpty(this: void, dir: FossilRoot) {
+        const open = localize('openrepo', "Open Repository");
+
+        const message = localize('proposeforceopen', "The directory {0} is not empty.\nOpen repository here anyway?", dir);
+        const result = await window.showWarningMessage(message, { modal: true }, open);
+        return result === open;
+    }
+
+    export async function inputRepoUrl(this: void): Promise<FossilURI | undefined> {
         const url = await window.showInputBox({
             prompt: localize('repourl', "Repository URI"),
             ignoreFocusOut: true
         });
-        return url;
+        return url as FossilURI;
     }
 
     export async function inputPrompt(msg: string): Promise<string | undefined> {
@@ -221,13 +258,16 @@ export namespace interaction {
         return name;
     }
 
-    export async function inputCloneParentPath(this: void): Promise<string | undefined> {
+    /**
+     * poorly written function. what should it do? try to remove it!
+     */
+    export async function inputCloneParentPath(this: void): Promise<FossilRoot | undefined> {
         var val = workspace.workspaceFolders ? workspace.workspaceFolders[0].uri.fsPath : ''
         return await window.showInputBox({
             prompt: localize('parent', "Parent Directory"),
             value: val,
             ignoreFocusOut: true
-        });
+        }) as FossilRoot;
     }
 
     export async function inputCloneUser(this: void): Promise<string | undefined> {
@@ -502,7 +542,7 @@ export namespace interaction {
         return choice === respOpt;
     }
 
-    export async function handleChoices(stdout: string, limit: number): Promise<string> {
+    export async function handleChoices(stdout: string): Promise<string> {
         /* other [merge rev] changed letters.txt which local [working copy] deleted
     use (c)hanged version, leave (d)eleted, or leave (u)nresolved*/
         const [options, prompt, ..._] = stdout.split('\n').reverse();

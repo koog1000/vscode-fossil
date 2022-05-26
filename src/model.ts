@@ -131,16 +131,20 @@ export class Model implements Disposable {
 
     /**
      * Scans the first level of each workspace folder, looking
-     * for hg repositories.
+     * for fossil repositories.
      */
     private async scanWorkspaceFolders(): Promise<void> {
         for (const folder of workspace.workspaceFolders || []) {
             const root = folder.uri.fsPath;
-            const children = await new Promise<string[]>((c, e) => fs.readdir(root, (err, r) => err ? e(err) : c(r)));
+            const children = await new Promise<fs.Dirent[]>(
+                (c, e) => fs.readdir(
+                    root, {withFileTypes: true}, (err, r) => err ? e(err) : c(r)
+                )
+            );
 
             children
-                .filter(child => child !== '.hg')
-                .forEach(child => this.tryOpenRepository(path.join(root, child)));
+                .filter(child => child.isDirectory())
+                .some(child => this.tryOpenRepository(child.name));
         }
     }
 
@@ -196,10 +200,15 @@ export class Model implements Disposable {
         });
     }
 
+    /**
+     *
+     * @param path path to any file or directory in an opened repo
+     * @returns stop trying to open the repo
+     */
     @sequentialize
-    async tryOpenRepository(path: string): Promise<void> {
+    async tryOpenRepository(path: string): Promise<boolean> {
         if (this.getRepository(path)) {
-            return;
+            return true;
         }
 
         try {
@@ -210,19 +219,18 @@ export class Model implements Disposable {
             // https://github.com/Microsoft/vscode/issues/33498
 
             if (this.getRepository(repositoryRoot)) {
-                return;
+                return true;
             }
 
             const repository = new Repository(this._hg.open(repositoryRoot));
 
             this.open(repository);
         } catch (err) {
-            if (err.fossilErrorCode === FossilErrorCodes.NotAFossilRepository) {
-                return;
+            if (err.fossilErrorCode !== FossilErrorCodes.NotAFossilRepository) {
+                console.error('Failed to find repository:', err);
             }
-
-            console.error('Failed to find repository:', err);
         }
+        return false;
     }
 
     private open(repository: Repository): void {
