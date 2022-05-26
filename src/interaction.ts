@@ -258,16 +258,18 @@ export namespace interaction {
         return name;
     }
 
-    /**
-     * poorly written function. what should it do? try to remove it!
-     */
-    export async function inputCloneParentPath(this: void): Promise<FossilRoot | undefined> {
-        var val = workspace.workspaceFolders ? workspace.workspaceFolders[0].uri.fsPath : ''
-        return await window.showInputBox({
-            prompt: localize('parent', "Parent Directory"),
-            value: val,
-            ignoreFocusOut: true
-        }) as FossilRoot;
+    export async function inputFossilRootPath(this: void): Promise<FossilRoot | undefined> {
+        const default_uri = workspace.workspaceFolders ? workspace.workspaceFolders[0].uri : undefined
+        const uri = await window.showOpenDialog({
+            defaultUri: default_uri,
+            canSelectFiles: false,
+            canSelectFolders: true,
+            canSelectMany: false,
+            title: localize('root_directory', "Select Fossil Root Directory")
+        });
+        if (uri?.length)
+            return uri[0].fsPath as FossilRoot;
+        return undefined;
     }
 
     export async function inputCloneUser(this: void): Promise<string | undefined> {

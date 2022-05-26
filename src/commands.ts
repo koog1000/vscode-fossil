@@ -200,7 +200,7 @@ export class CommandCenter {
                 url = match[1] + username + ':' + userauth + '@' + match[2] as FossilURI
             }
         }
-        const parentPath = await interaction.inputCloneParentPath();
+        const parentPath = await interaction.inputFossilRootPath();
         if (!parentPath) {
             return;
         }
@@ -212,6 +212,10 @@ export class CommandCenter {
         await this.askOpenRepository(repositoryPath, parentPath);
     }
 
+    /**
+     * Execute "fossil open". When FossilRoot has files allow to
+     * run "fossil open --force"
+     */
     async openRepository(filePath: FossilPath, parentPath: FossilRoot) : Promise<void> {
         try {
             await this.fossil.openClone(filePath, parentPath);
@@ -228,7 +232,7 @@ export class CommandCenter {
     }
 
     /**
-     * ask user to open the repo after `clone` or `init`
+     * ask user to run "fossil open" after `clone` or `init`
      */
     async askOpenRepository(filePath: FossilPath, fossilRoot: FossilRoot) : Promise<void> {
         const openClonedRepo = await interaction.promptOpenClonedRepo();
@@ -244,25 +248,26 @@ export class CommandCenter {
         if (fossilFilePath === undefined) {
             return;
         }
-        const dirname = path.dirname(fossilFilePath) as FossilRoot;
+        const rootPath = path.dirname(fossilFilePath) as FossilRoot;
 
         // run init in the file folder in case any any artifacts appear
-        await this.fossil.init(dirname, fossilFilePath);
-        await this.askOpenRepository(fossilFilePath, dirname);
-        await this.model.tryOpenRepository(dirname);
+        await this.fossil.init(rootPath, fossilFilePath);
+        await this.askOpenRepository(fossilFilePath, rootPath);
+        await this.model.tryOpenRepository(rootPath);
     }
 
     @command('fossil.open')
     async open(): Promise<void> {
-        const uri = await interaction.openFileDialog()
-        if (uri === undefined) {
+        const fossilPath = await interaction.openFileDialog()
+        if (fossilPath === undefined) {
             return;
         }
-        const parentPath = await interaction.inputCloneParentPath();
-        if (!parentPath) {
+        const rootPath = await interaction.inputFossilRootPath();
+        if (!rootPath) {
             return;
         }
-        await this.openRepository(uri, parentPath);
+        await this.openRepository(fossilPath, rootPath);
+        await this.model.tryOpenRepository(rootPath);
     }
 
     @command('fossil.close', { repository: true})
