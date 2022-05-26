@@ -1,2 +1,5 @@
 .vscode
 **/*.ts
+**/.gitignore
+**/*.map
+images/
