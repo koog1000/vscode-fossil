@@ -1,13 +1,19 @@
 {
     "compileOnSave": true,
     "compilerOptions": {
-        "target": "es6",
+        "target": "es2018",
         "lib": [
-            "es2016"
+            "es6",
+            "es2018"
         ],
         "noImplicitThis": true,
         "module": "commonjs",
         "outDir": "out",
+        //"strict": true,
+        "noImplicitReturns": true,
+        "noFallthroughCasesInSwitch": true,
+        //"noUnusedParameters": true,
+        "removeComments": true,
         "sourceMap": true,
         "strictNullChecks": true,
         "experimentalDecorators": true
