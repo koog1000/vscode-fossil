@@ -812,9 +812,10 @@
         }
     },
     "scripts": {
-        "vscode:prepublish": "tsc -p ./",
+        "vscode:prepublish": "npm run compile",
         "compile": "tsc -watch -p ./",
-        "postinstall": "node ./node_modules/vscode/bin/install"
+        "package": "vsce package",
+        "deploy": "vsce publish"
     },
     "dependencies": {
         "glob": "^7.2.0",
