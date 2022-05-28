@@ -125,10 +125,10 @@ You will need to install [Node.js](https://nodejs.org/en/download/)
 on your computer and add it to your `$PATH`.
 
 ### Build Steps
-1. `git clone` repository and place it in your VSCode extension folder (~/.vscode/extensions/ or similar).
-2. `npm install` from clone directory to install local dependencies
+1. `git clone` repository anywhere on your filesystem.
+2. `npm install` from clone directory to install local dependencies.
 3. `npm run compile` to build extension.
-
+4. press `F5` to run the extension.
 
 # Acknowledgements
 
