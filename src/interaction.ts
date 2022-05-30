@@ -221,6 +221,8 @@ export namespace interaction {
 
     export async function inputRepoUrl(this: void): Promise<FossilURI | undefined> {
         const url = await window.showInputBox({
+            value: 'https://fossil-scm.org/home',
+            valueSelection: [8, 100],
             prompt: localize('repourl', "Repository URI"),
             ignoreFocusOut: true
         });
