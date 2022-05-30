@@ -243,9 +243,9 @@ export class CommandCenter {
 
     @command('fossil.init')
     async init(): Promise<void> {
-        const fossilFilePath = await interaction.initFileDialog()
+        const fossilFilePath = await interaction.selectNewFossilPath();
 
-        if (fossilFilePath === undefined) {
+        if (!fossilFilePath) {
             return;
         }
         const rootPath = path.dirname(fossilFilePath) as FossilRoot;

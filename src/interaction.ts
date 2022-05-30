@@ -36,21 +36,23 @@ export namespace interaction {
      * @returns directory/filename.fossil
      */
     function suggestPath(fsPath: string): string {
-        return fsPath + '/' + (path.basename(fsPath) || 'repo_name') + '.fossil';
+        return path.join(fsPath,
+            (path.basename(fsPath) || 'repo_name') + '.fossil')
     }
 
     /** ask user for the new .fossil file location */
-    export async function initFileDialog(): Promise<FossilPath|undefined> {
+    export async function selectNewFossilPath(): Promise<FossilPath|undefined> {
         const folders = workspace.workspaceFolders;
-        const defaultUri = Uri.file(
+        const defaultFossilFile = Uri.file(
             folders?.length
             ? suggestPath(folders[0].uri.fsPath)
             : os.homedir()
         );
 
         const uri = await window.showSaveDialog({
-            defaultUri: defaultUri,
-            saveLabel: 'Repository Location',
+            defaultUri: defaultFossilFile,
+            title: 'Select New Fossil File Location',
+            saveLabel: 'Create',
             filters: {
                 'All files': ['*']
             }
@@ -74,7 +76,7 @@ export namespace interaction {
             defaultUri: defaultUri,
             openLabel: 'Repository Location',
             filters: {
-                'Fossil files': ['*.fossil'],
+                'Fossil Files': ['fossil'],
                 'All files': ['*']
             },
             canSelectMany: false
