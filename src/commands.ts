@@ -200,16 +200,16 @@ export class CommandCenter {
                 url = match[1] + username + ':' + userauth + '@' + match[2] as FossilURI
             }
         }
-        const parentPath = await interaction.inputFossilRootPath();
-        if (!parentPath) {
+        const rootPath = await interaction.selectFossilRootPath();
+        if (!rootPath) {
             return;
         }
 
-        const clonePromise = this.fossil.clone(url, parentPath);
+        const clonePromise = this.fossil.clone(url, rootPath);
         interaction.statusCloning(clonePromise);
 
         const repositoryPath = await clonePromise;
-        await this.askOpenRepository(repositoryPath, parentPath);
+        await this.askOpenRepository(repositoryPath, rootPath);
     }
 
     /**
@@ -258,11 +258,11 @@ export class CommandCenter {
 
     @command('fossil.open')
     async open(): Promise<void> {
-        const fossilPath = await interaction.openFileDialog()
-        if (fossilPath === undefined) {
+        const fossilPath = await interaction.selectExistingFossilPath();
+        if (!fossilPath) {
             return;
         }
-        const rootPath = await interaction.inputFossilRootPath();
+        const rootPath = await interaction.selectFossilRootPath();
         if (!rootPath) {
             return;
         }

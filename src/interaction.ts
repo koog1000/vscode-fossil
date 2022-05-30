@@ -65,7 +65,7 @@ export namespace interaction {
      *
      * @returns fossil file uri
      */
-    export async function openFileDialog(): Promise<FossilPath|undefined> {
+    export async function selectExistingFossilPath(): Promise<FossilPath|undefined> {
         const folders = workspace.workspaceFolders;
         const defaultUri = Uri.file(
             folders?.length
@@ -260,7 +260,7 @@ export namespace interaction {
         return name;
     }
 
-    export async function inputFossilRootPath(this: void): Promise<FossilRoot | undefined> {
+    export async function selectFossilRootPath(this: void): Promise<FossilRoot | undefined> {
         const default_uri = workspace.workspaceFolders ? workspace.workspaceFolders[0].uri : undefined
         const uri = await window.showOpenDialog({
             defaultUri: default_uri,
