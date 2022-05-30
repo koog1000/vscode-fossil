@@ -296,7 +296,7 @@ export class Fossil {
         const folderPath = path.join(parentPath, folderName + '.fossil');
 
         await mkdirp(parentPath);
-        await this.exec(parentPath, ['clone', uri, folderPath]);
+        await this.exec(parentPath, ['clone', uri, folderPath, '--verbose']);
         return folderPath as FossilPath;
     }
 
