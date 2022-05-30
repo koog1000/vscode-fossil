@@ -200,16 +200,16 @@ export class CommandCenter {
                 url = match[1] + username + ':' + userauth + '@' + match[2] as FossilURI
             }
         }
-        const rootPath = await interaction.selectFossilRootPath();
-        if (!rootPath) {
+        const fossilRoot = await interaction.selectFossilRootPath();
+        if (!fossilRoot) {
             return;
         }
 
-        const clonePromise = this.fossil.clone(url, rootPath);
+        const clonePromise = this.fossil.clone(url, fossilRoot);
         interaction.statusCloning(clonePromise);
 
-        const repositoryPath = await clonePromise;
-        await this.askOpenRepository(repositoryPath, rootPath);
+        const fossilPath = await clonePromise;
+        await this.askOpenRepository(fossilPath, fossilRoot);
     }
 
     /**
@@ -238,22 +238,22 @@ export class CommandCenter {
         const openClonedRepo = await interaction.promptOpenClonedRepo();
         if (openClonedRepo) {
             await this.openRepository(filePath, fossilRoot);
+            await this.model.tryOpenRepository(fossilRoot);
         }
     }
 
     @command('fossil.init')
     async init(): Promise<void> {
-        const fossilFilePath = await interaction.selectNewFossilPath();
+        const fossilPath = await interaction.selectNewFossilPath();
 
-        if (!fossilFilePath) {
+        if (!fossilPath) {
             return;
         }
-        const rootPath = path.dirname(fossilFilePath) as FossilRoot;
+        const fossilRoot = path.dirname(fossilPath) as FossilRoot;
 
-        // run init in the file folder in case any any artifacts appear
-        await this.fossil.init(rootPath, fossilFilePath);
-        await this.askOpenRepository(fossilFilePath, rootPath);
-        await this.model.tryOpenRepository(rootPath);
+        // run init in the file folder in case any artifacts appear
+        await this.fossil.init(fossilRoot, fossilPath);
+        await this.askOpenRepository(fossilPath, fossilRoot);
     }
 
     @command('fossil.open')
