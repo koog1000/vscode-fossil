@@ -200,15 +200,14 @@ export class CommandCenter {
                 url = match[1] + username + ':' + userauth + '@' + match[2] as FossilURI
             }
         }
-        const fossilRoot = await interaction.selectFossilRootPath();
-        if (!fossilRoot) {
+        const fossilPath = await interaction.selectNewFossilPath('Clone');
+        if (!fossilPath) {
             return;
         }
 
-        const clonePromise = this.fossil.clone(url, fossilRoot);
+        const clonePromise = this.fossil.clone(url, fossilPath);
         interaction.statusCloning(clonePromise);
-
-        const fossilPath = await clonePromise;
+        const fossilRoot = await clonePromise;
         await this.askOpenRepository(fossilPath, fossilRoot);
     }
 
@@ -244,7 +243,7 @@ export class CommandCenter {
 
     @command('fossil.init')
     async init(): Promise<void> {
-        const fossilPath = await interaction.selectNewFossilPath();
+        const fossilPath = await interaction.selectNewFossilPath('Create');
 
         if (!fossilPath) {
             return;

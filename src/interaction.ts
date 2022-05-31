@@ -41,7 +41,7 @@ export namespace interaction {
     }
 
     /** ask user for the new .fossil file location */
-    export async function selectNewFossilPath(): Promise<FossilPath|undefined> {
+    export async function selectNewFossilPath(saveLabel: string): Promise<FossilPath|undefined> {
         const folders = workspace.workspaceFolders;
         const defaultFossilFile = Uri.file(
             folders?.length
@@ -52,7 +52,7 @@ export namespace interaction {
         const uri = await window.showSaveDialog({
             defaultUri: defaultFossilFile,
             title: 'Select New Fossil File Location',
-            saveLabel: 'Create',
+            saveLabel: saveLabel,
             filters: {
                 'All files': ['*']
             }

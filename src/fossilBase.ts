@@ -291,13 +291,11 @@ export class Fossil {
         await this.exec(repository, ['init', repoName]);
     }
 
-    async clone(uri: FossilURI, parentPath: FossilRoot): Promise<FossilPath> {
-        const folderName = uri.replace(/^.*\//, '') || 'repository';
-        const folderPath = path.join(parentPath, folderName + '.fossil');
-
-        await mkdirp(parentPath);
-        await this.exec(parentPath, ['clone', uri, folderPath, '--verbose']);
-        return folderPath as FossilPath;
+    async clone(uri: FossilURI, fossilPath: FossilPath): Promise<FossilRoot> {
+        const fossilRoot = path.dirname(fossilPath) as FossilRoot;
+        await mkdirp(fossilRoot);
+        await this.exec(fossilRoot, ['clone', uri, fossilPath, '--verbose']);
+        return fossilRoot;
     }
 
     async openClone(fossilPath: FossilPath, workdir: FossilRoot): Promise<void> {
