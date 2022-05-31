@@ -165,17 +165,17 @@ export async function exec(child: cp.ChildProcess, no_err_check?: boolean): Prom
                         inputStr.endsWith(": ") || inputStr.endsWith(":")) &&
                         !no_err_check) {
                         const resp = await interaction.inputPrompt(buffers.toString())
-                        child.stdin.write(resp + '\n')
+                        child.stdin!.write(resp + '\n')
                     }
                 }
             }
-            on(child.stdout, 'data', b => checkForPrompt(b));
-            once(child.stdout, 'close', () => c(buffers.join('')));
+            on(child.stdout!, 'data', b => checkForPrompt(b));
+            once(child.stdout!, 'close', () => c(buffers.join('')));
         }),
         new Promise<string>(c => {
             const buffers: string[] = [];
-            on(child.stderr, 'data', b => buffers.push(b));
-            once(child.stderr, 'close', () => c(buffers.join('')));
+            on(child.stderr!, 'data', b => buffers.push(b));
+            once(child.stderr!, 'close', () => c(buffers.join('')));
         })
     ]);
 
