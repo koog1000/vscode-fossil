@@ -16,7 +16,7 @@
     "bugs": {
         "url": "https://github.com/koog1000/vscode-fossil/issues"
     },
-    "version": "0.1.1",
+    "version": "0.1.2",
     "engines": {
         "vscode": "^1.36.0"
     },
@@ -27,7 +27,7 @@
         "scm"
     ],
     "icon": "icon.png",
-    "enableProposedApi": false,
+    "enabledApiProposals": [],
     "categories": [
         "SCM Providers",
         "Other"
@@ -130,6 +130,15 @@
             {
                 "command": "fossil.init",
                 "title": "%command.init%",
+                "category": "Fossil",
+                "icon": {
+                    "light": "icon.png",
+                    "dark": "icon.png"
+                }
+            },
+            {
+                "command": "fossil.open",
+                "title": "%command.open%",
                 "category": "Fossil",
                 "icon": {
                     "light": "icon.png",
@@ -460,7 +469,17 @@
                 {
                     "command": "fossil.init",
                     "group": "navigation",
-                    "when": "config.fossil.enabled && scmProvider == '' && fossilOpenRepositoryCount == 0"
+                    "when": "config.fossil.enabled && !scmProvider && fossilOpenRepositoryCount == 0"
+                },
+                {
+                    "command": "fossil.open",
+                    "group": "0_open",
+                    "when": "config.fossil.enabled && !scmProvider && fossilOpenRepositoryCount == 0"
+                },
+                {
+                    "command": "fossil.clone",
+                    "when": "config.fossil.enabled",
+                    "group": "0_open"
                 },
                 {
                     "command": "fossil.commit",
@@ -793,20 +812,21 @@
         }
     },
     "scripts": {
-        "vscode:prepublish": "tsc -p ./",
+        "vscode:prepublish": "npm run compile",
         "compile": "tsc -watch -p ./",
-        "postinstall": "node ./node_modules/vscode/bin/install"
+        "package": "vsce package",
+        "deploy": "vsce publish"
     },
     "dependencies": {
-        "@types/mocha": "^5.2.7",
         "glob": "^7.2.0",
-        "tmp": "0.0.31",
-        "vscode-nls": "^2.0.1",
-        "vscode-test": "^1.6.1"
+        "tmp": "0.2.1",
+        "vscode-nls": "^5.0.1"
     },
     "devDependencies": {
-        "@types/node": "^7.0.4",
-        "@types/tmp": "0.0.33",
+        "vscode-test": "^1.6.1",
+        "@types/mocha": "^9.1.0",
+        "@types/node": "^10.17.24",
+        "@types/tmp": "^0.2.1",
         "@types/vscode": "^1.36.0"
     },
     "__metadata": {

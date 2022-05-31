@@ -7,7 +7,9 @@
             "type": "extensionHost",
             "request": "launch",
             "runtimeExecutable": "${execPath}",
-            "args": ["--extensionDevelopmentPath=${workspaceRoot}" ],
+            "args": [
+                "--extensionDevelopmentPath=${workspaceRoot}"
+            ],
             "stopOnEntry": false,
             "sourceMaps": true,
             "outFiles": [
@@ -24,7 +26,9 @@
                 "--extensionDevelopmentPath=${workspaceFolder}",
                 "--extensionTestsPath=${workspaceFolder}/out/test/suite/index"
             ],
-            "outFiles": ["${workspaceFolder}/out/test/**/*.js"]
+            "outFiles": [
+                "${workspaceFolder}/out/test/**/*.js"
+            ]
         }
     ]
 }

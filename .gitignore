@@ -6,3 +6,5 @@ images/production
 test/sandbox
 resources/icons/*-dark
 resources/icons/*-light
+*.js
+package-lock.json

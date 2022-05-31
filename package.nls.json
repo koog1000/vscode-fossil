@@ -1,6 +1,7 @@
 {
-    "command.clone": "Clone",
-    "command.init": "Initialize Repository (Fossil)",
+    "command.clone": "Clone Fossil Repository",
+    "command.init": "Initialize Fossil Repository",
+    "command.open": "Open Fossil Repository",
     "command.close": "Close Repository",
     "command.openui": "Open web UI",
     "command.refresh": "Refresh",
