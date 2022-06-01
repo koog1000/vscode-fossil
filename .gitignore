@@ -2,6 +2,9 @@ node_modules
 out*/**
 *.vsix
 *.xcf
+.vscode-test
+yarn.lock
+yarn-error.log
 images/production
 test/sandbox
 resources/icons/*-dark

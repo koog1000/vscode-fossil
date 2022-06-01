@@ -1,23 +1,39 @@
 import * as assert from 'assert';
-import { after } from 'mocha';
-
-// You can import and use all API from the 'vscode' module
-// as well as import your extension to test it
+import { after, before } from 'mocha';
+import {window, Uri} from 'vscode';
 import * as vscode from 'vscode';
-// import * as myExtension from '../extension';
+import * as sinon from 'sinon';
+import * as fs from 'fs';
+import * as path from 'path';
 
-suite('Extension Test Suite', () => {
+suite('Fossil', () => {
+  before(() => {
+    vscode.window.showInformationMessage('Start all tests.');
+    const fossilPath = Uri.joinPath(vscode.workspace.workspaceFolders![0].uri, '/test.fossil');
+    fs.unlinkSync(fossilPath.fsPath);
+  })
+
   after(() => {
-    vscode.window.showInformationMessage('All tests done!');
+    window.showInformationMessage('All tests done!');
   });
 
-  test('Sample test', () => {
-    assert.equal(-1, [1, 2, 3].indexOf(5));
-    assert.equal(-1, [1, 2, 3].indexOf(0));
-  });
+  test("fossil.init", async () => {
+    assert.ok(vscode.workspace.workspaceFolders);
+    const fossilPath = Uri.joinPath(vscode.workspace.workspaceFolders![0].uri, '/test.fossil');
+    assert.ok(!fs.existsSync(fossilPath.fsPath), `repo '${fossilPath.fsPath}' already exists`);
 
-  test('Sample test', () => {
-    // assert.;
-    assert.equal(-1, [1, 2, 3].indexOf(0));
+    const showSaveDialogstub = sinon.stub(window, 'showSaveDialog');
+    showSaveDialogstub.resolves(fossilPath);
+
+    const showInformationMessage = sinon.stub(window, 'showInformationMessage');
+    showInformationMessage.resolves(undefined);
+
+    await vscode.commands.executeCommand('fossil.init');
+    assert.ok(showSaveDialogstub.calledOnce);
+    assert.ok(fs.existsSync(fossilPath.fsPath), `Not a file: '${fossilPath.fsPath}'`);
+    assert.ok(showInformationMessage.calledOnce);
+    showSaveDialogstub.restore();
+
+
   });
 });
