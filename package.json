@@ -813,21 +813,25 @@
     },
     "scripts": {
         "vscode:prepublish": "npm run compile",
-        "compile": "tsc -watch -p ./",
+        "compile": "tsc -p ./",
         "package": "vsce package",
-        "deploy": "vsce publish"
+        "deploy": "vsce publish",
+        "pretest": "npm run compile",
+        "test": "node ./out/test/runTest.js"
     },
     "dependencies": {
-        "glob": "^7.2.0",
-        "tmp": "0.2.1",
+        "nyc": "^15.1.0",
         "vscode-nls": "^5.0.1"
     },
     "devDependencies": {
-        "vscode-test": "^1.6.1",
-        "@types/mocha": "^9.1.0",
-        "@types/node": "^10.17.24",
-        "@types/tmp": "^0.2.1",
-        "@types/vscode": "^1.36.0"
+        "@types/glob": "^7.2.0",
+        "@types/mocha": "^9.1.1",
+        "@types/node": "^16.11.7",
+        "@types/vscode": "^1.36.0",
+        "@types/sinon": "^10.0.11",
+        "@vscode/test-electron": "^1.6.1",
+        "mocha": "^10.0.0",
+        "sinon": "^14.0.0"
     },
     "__metadata": {
         "id": "e828bfe6-95e7-4c7a-a334-ae2cc5ba8788",

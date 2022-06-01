@@ -1,6 +1,7 @@
 import * as path from 'path';
+import * as fs from 'fs/promises';
 
-import { runTests } from 'vscode-test';
+import { runTests } from '@vscode/test-electron';
 
 async function main() {
   try {
@@ -12,8 +13,18 @@ async function main() {
     // Passed to --extensionTestsPath
     const extensionTestsPath = path.resolve(__dirname, './suite/index');
 
+    const testWorkspace = path.resolve(__dirname, './test_repo');
+    await fs.mkdir(testWorkspace, {recursive: true});
+    console.log(`testWorkspace: '${testWorkspace}'`)
+    console.log(`extensionDevelopmentPath: '${extensionDevelopmentPath}'`)
+
     // Download VS Code, unzip it and run the integration test
-    await runTests({ extensionDevelopmentPath, extensionTestsPath});
+    await runTests({
+      extensionDevelopmentPath,
+      extensionTestsPath, launchArgs: [
+        testWorkspace,
+        '--disable-extensions'
+      ]});
   } catch (err) {
     console.error('Failed to run tests');
     process.exit(1);
