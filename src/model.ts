@@ -7,11 +7,11 @@
  *--------------------------------------------------------------------------------------------*/
 
 import { Uri, EventEmitter, Event, Disposable, window, workspace, SourceControlResourceGroup, SourceControl, WorkspaceFoldersChangeEvent, TextEditor, QuickPickItem } from "vscode";
-import { Fossil, FossilErrorCodes } from "./fossilBase";
+import { Fossil, FossilError, FossilErrorCodes } from "./fossilBase";
 import { anyEvent, filterEvent, dispose, } from "./util";
 import { memoize, debounce, sequentialize } from "./decorators";
 import * as path from 'path';
-import * as fs from 'fs';
+import * as fs from 'fs/promises';
 import * as nls from 'vscode-nls';
 import typedConfig from "./config";
 import { Repository, RepositoryState } from "./repository";
@@ -136,12 +136,7 @@ export class Model implements Disposable {
     private async scanWorkspaceFolders(): Promise<void> {
         for (const folder of workspace.workspaceFolders || []) {
             const root = folder.uri.fsPath;
-            const children = await new Promise<fs.Dirent[]>(
-                (c, e) => fs.readdir(
-                    root, {withFileTypes: true}, (err, r) => err ? e(err) : c(r)
-                )
-            );
-
+            const children = await fs.readdir(root, {withFileTypes: true})
             children
                 .filter(child => child.isDirectory())
                 .some(child => this.tryOpenRepository(child.name));
@@ -227,7 +222,7 @@ export class Model implements Disposable {
             this.open(repository);
             return true;
         } catch (err) {
-            if (err.fossilErrorCode !== FossilErrorCodes.NotAFossilRepository) {
+            if (!(err instanceof FossilError) || err.fossilErrorCode !== FossilErrorCodes.NotAFossilRepository) {
                 console.error('Failed to find repository:', err);
             }
         }

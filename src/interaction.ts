@@ -589,8 +589,8 @@ export namespace interaction {
 }
 
 abstract class RunnableQuickPickItem implements QuickPickItem {
-    abstract get label();
-    abstract get description();
+    abstract get label() : string;
+    abstract get description() : string;
     abstract run(): RunnableReturnType;
 }
 

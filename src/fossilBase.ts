@@ -6,7 +6,7 @@
 
 import * as path from 'path';
 import * as cp from 'child_process';
-import { existsSync, appendFileSync, writeFileSync } from 'fs';
+import { existsSync, appendFileSync, writeFileSync, fstat } from 'fs';
 import { groupBy, IDisposable, toDisposable, dispose, mkdirp } from "./util";
 import { EventEmitter, Event, workspace, window, Disposable, OutputChannel, Uri } from "vscode";
 import { interaction } from './interaction';
@@ -85,7 +85,7 @@ export interface Path {
 }
 
 export interface FossilFindAttemptLogger {
-    log(path: string);
+    log(path: string) : void;
 }
 
 export class FossilFinder {
@@ -195,8 +195,8 @@ export interface IFossilErrorData {
 }
 
 export class FossilUndoDetails {
-    revision: number;
-    kind: string;
+    revision!: number;
+    kind!: string;
 }
 
 export class FossilError {
@@ -218,9 +218,10 @@ export class FossilError {
         }
         else {
             this.error = void 0;
+            this.message = '';
         }
 
-        this.message = this.message || data.message || 'Fossil error';
+        this.message = this.message = data.message || 'Fossil error';
         this.stdout = data.stdout;
         this.stderr = data.stderr;
         this.exitCode = data.exitCode;
@@ -529,7 +530,7 @@ export class Repository {
             args.push(...opts.fileList);
         }
 
-        if (message && message.length) {
+        if (message?.length) {
             args.push('-m', message);
         }
 
@@ -537,7 +538,7 @@ export class Repository {
             await this.exec(args);
         }
         catch (err) {
-            if (/partial commit of a merge/.test(err.stderr)) {
+            if (err instanceof FossilError && /partial commit of a merge/.test(err.stderr || '')) {
                 err.fossilErrorCode = FossilErrorCodes.UnmergedChanges;
                 throw err;
             }
@@ -670,7 +671,7 @@ export class Repository {
         catch (err) {
             // In case there are merge conflicts to be resolved, fossil reset will output
             // some "needs merge" data. We try to get around that.
-            if (/([^:]+: needs merge\n)+/m.test(err.stdout || '')) {
+            if (err instanceof FossilError && /([^:]+: needs merge\n)+/m.test(err.stdout || '')) {
                 return;
             }
 
@@ -700,7 +701,7 @@ export class Repository {
             await this.exec(args);
         }
         catch (err) {
-            if (/would fork/.test(err.stderr || '')) {
+            if (err instanceof FossilError && /would fork/.test(err.stderr || '')) {
                 err.fossilErrorCode = FossilErrorCodes.PushCreatesNewRemoteHead;
             }
 

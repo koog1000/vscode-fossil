@@ -4,15 +4,9 @@
  *  Licensed under the MIT License. See LICENSE.txt in the project root for license information.
  *--------------------------------------------------------------------------------------------*/
 
-
-
 import { Event } from 'vscode';
 import { dirname } from 'path';
-import * as fs from 'fs';
-
-// export function log(...args: any[]): void {
-//     console.log.apply(console, ['fossil:', ...args]);
-// }
+import * as fs from 'fs/promises';
 
 export interface IDisposable {
     dispose(): void;
@@ -86,18 +80,15 @@ export function partition<T>(array: T[], fn: (el: T, i: number, ary: T[]) => boo
     }, <[T[], T[]]>[[], []]);
 };
 
-export function nfcall<R>(fn: Function, ...args): Promise<R> {
-    return new Promise((c, e) => fn(...args, (err, r) => err ? e(err) : c(r)));
-}
-
 export async function mkdirp(path: string, mode?: number): Promise<boolean> {
     const mkdir = async () => {
         try {
-            await nfcall(fs.mkdir, path, mode);
+            await fs.mkdir(path, mode);
         }
         catch (err) {
-            if (err.code === 'EEXIST') {
-                const stat = await nfcall<fs.Stats>(fs.stat, path);
+            const terr = err as NodeJS.ErrnoException;
+            if (terr.code === 'EEXIST') {
+                const stat = await fs.stat(path);
 
                 if (stat.isDirectory()) {
                     return;
@@ -119,7 +110,8 @@ export async function mkdirp(path: string, mode?: number): Promise<boolean> {
         await mkdir();
     }
     catch (err) {
-        if (err.code !== 'ENOENT') {
+        const terr = err as NodeJS.ErrnoException;
+        if (terr.code !== 'ENOENT') {
             throw err;
         }
 
