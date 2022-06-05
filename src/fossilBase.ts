@@ -272,7 +272,6 @@ export class Fossil {
 
     private fossilPath: string;
     private outputChannel: OutputChannel;
-    private disposables: Disposable[] = [];
     private openRepository: Repository | undefined;
 
     private _onOutput = new EventEmitter<string>();

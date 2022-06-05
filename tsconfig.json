@@ -9,7 +9,7 @@
         "noImplicitThis": true,
         "module": "commonjs",
         "outDir": "out",
-        //"strict": true,
+        "strict": true,
         "noImplicitReturns": true,
         "noFallthroughCasesInSwitch": true,
         //"noUnusedParameters": true,

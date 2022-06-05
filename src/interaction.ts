@@ -189,7 +189,7 @@ export namespace interaction {
         const hint = (err.stderr || err.message || String(err))
             .replace(/^abort: /mi, '')
             .split(/[\r\n]/)
-            .filter(line => !!line)[0];
+            .filter((line: string) => !!line)[0];
 
         message = hint
             ? localize('fossil error details', "Fossil: {0}", hint)
@@ -392,7 +392,7 @@ export namespace interaction {
         return choice;
     }
 
-    export async function pickCommit(source: CommitSources, logEntries: Commit[], actionFactory: (commit) => RunnableAction, backItem?: RunnableQuickPickItem): Promise<RunnableQuickPickItem | undefined> {
+    export async function pickCommit(source: CommitSources, logEntries: Commit[], actionFactory: (commit: Commit) => RunnableAction, backItem?: RunnableQuickPickItem): Promise<RunnableQuickPickItem | undefined> {
         const logEntryPickItems = logEntries.map(entry => new LogEntryItem(entry, actionFactory(entry)));
         const placeHolder = describeLogEntrySource(source);
         const pickItems = backItem ? [backItem, ...logEntryPickItems] : logEntryPickItems;
