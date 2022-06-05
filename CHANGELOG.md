@@ -1,6 +1,18 @@
 Changelog
 =============================================
 
+v0.1.2
+---------------------------------------------
+## What's New
+- Restore repositoty initialization buttons in "Source Control" tab
+  when no repository is opened
+- Reduce package size from 1.7MB to 0.25MB 
+- Extension codebase is modernized. It should be easier to add tests
+
+v0.1.1
+---------------------------------------------
+## What's New
+- Add "quick revert" button in quick diff window
 
 v0.1.0
 ---------------------------------------------
