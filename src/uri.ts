@@ -7,19 +7,19 @@
 'use strict';
 
 import { Uri } from 'vscode';
+import { FossilCheckin } from './fossilBase';
 
 export interface FossilUriParams {
     // full filesystem path
     path: string;
-    // https://fossil-scm.org/home/doc/trunk/www/checkin_names.wiki
-    checkin: string;
+    checkin?: FossilCheckin;
 }
 
 export function fromFossilUri(uri: Uri): FossilUriParams {
     return JSON.parse(uri.query);
 }
 
-export function toFossilUri(uri: Uri, checkin: string=''): Uri {
+export function toFossilUri(uri: Uri, checkin?: FossilCheckin): Uri {
     const params: FossilUriParams = {
         path: uri.fsPath,
         checkin: checkin,

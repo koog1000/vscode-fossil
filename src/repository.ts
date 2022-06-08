@@ -814,7 +814,7 @@ export class Repository implements IDisposable {
             const relativePath = path.relative(this.repository.root, params.path).replace(/\\/g, '/');
             try {
                 console.log('Repository: show: relativePath: ' + relativePath + ' checkin: ' + params.checkin)
-                return await this.repository.cat(relativePath, params.checkin)
+                return await this.repository.cat(relativePath, params.checkin!)
             }
             catch (e) {
                 if (e instanceof FossilError) {

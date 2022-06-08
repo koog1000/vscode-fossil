@@ -24,7 +24,7 @@ const localize = nls.loadMessageBundle();
 interface Command {
     commandId: string;
     key: string;
-    method: any;
+    method: Function;
     options: CommandOptions;
 }
 
@@ -273,7 +273,7 @@ export class CommandCenter {
 
     @command('fossil.close', { repository: true})
     async close(repository: Repository): Promise<void> {
-        this.model.close(repository);
+        return this.model.close(repository);
     }
 
     @command('fossil.openFiles')

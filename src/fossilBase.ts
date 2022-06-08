@@ -8,7 +8,7 @@ import * as path from 'path';
 import * as cp from 'child_process';
 import { existsSync, appendFileSync, writeFileSync, fstat } from 'fs';
 import { groupBy, IDisposable, toDisposable, dispose, mkdirp } from "./util";
-import { EventEmitter, Event, workspace, window, Disposable, OutputChannel, Uri } from "vscode";
+import { EventEmitter, Event, workspace, window, OutputChannel } from "vscode";
 import { interaction } from './interaction';
 
 type Distinct<T, DistinctName> = T & { __TYPE__: DistinctName };
@@ -16,15 +16,15 @@ type Distinct<T, DistinctName> = T & { __TYPE__: DistinctName };
 export type FossilPath = Distinct<string, "path to .fossil">;
 /** local root */
 export type FossilRoot = Distinct<string, "local root">;
-/** something? */
-//export type FossilName = Distinct<Uri, "fossil name">;
 /** URI for the close
  *
  * * http[s]://[userid[:password]@]host[:port][/path]
  * * ssh://[userid@]host[:port]/path/to/repo.fossil[?fossil=path/fossil.exe]
  * * [file://]path/to/repo.fossil
  */
-export type FossilURI = Distinct<string, "Fossil URI">;
+ export type FossilURI = Distinct<string, "Fossil URI">;
+ /** https://fossil-scm.org/home/doc/trunk/www/checkin_names.wiki */
+ export type FossilCheckin = Distinct<string, "Fossil Check-in Name">;
 
 export interface IFossil {
     path: string;
@@ -249,8 +249,8 @@ export class FossilError {
 export interface IFossilOptions {
     fossilPath: string;
     version: string;
-    env?: any;
-    enableInstrumentation: boolean;
+    // env?: any;
+    enableInstrumentation: boolean; // ToDo: remove unused property
     outputChannel: OutputChannel;
 }
 
@@ -282,7 +282,7 @@ export class Fossil {
         this.outputChannel = options.outputChannel;
     }
 
-    open(repository: string): Repository {
+    open(repository: FossilRoot): Repository {
         this.openRepository = new Repository(this, repository);
         return this.openRepository;
     }
@@ -410,7 +410,7 @@ export class Fossil {
 }
 
 export interface Revision {
-    hash: string;
+    hash: FossilCheckin;
 }
 
 export interface Commit extends Revision {
@@ -431,14 +431,14 @@ export class Repository {
 
     constructor(
         private _fossil: Fossil,
-        private repositoryRoot: string
+        private repositoryRoot: FossilRoot
     ) { }
 
     get fossil(): Fossil {
         return this._fossil;
     }
 
-    get root(): string {
+    get root(): FossilRoot {
         return this.repositoryRoot;
     }
 
@@ -446,7 +446,7 @@ export class Repository {
         return await this.fossil.exec(this.repositoryRoot, args, options);
     }
 
-    async config(scope: string, key: string, value: any, options: any): Promise<string> {
+    async config(scope: string, key: string, value: string, options: any): Promise<string> {
         const args = ['config'];
 
         if (scope) {
@@ -466,14 +466,14 @@ export class Repository {
     async add(paths?: string[]): Promise<void> {
         const args = ['add'];
 
-        if (paths && paths.length) {
+        if (paths?.length) {
             args.push.apply(args, paths);
         }
 
         await this.exec(args);
     }
 
-    async cat(relativePath: string, checkin: string): Promise<string> {
+    async cat(relativePath: string, checkin: FossilCheckin): Promise<string> {
         const args = ['cat', relativePath];
         if (checkin) {
             args.push('-r', checkin);
@@ -884,7 +884,7 @@ export class Repository {
                 const parts = line.split("+++", 5);
                 const [hash, date, branch, author, message] = parts;
                 return {
-                    hash: hash,
+                    hash: hash as FossilCheckin,
                     branch: branch,
                     message: message,
                     author: author,
