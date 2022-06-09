@@ -228,7 +228,7 @@ export class FossilError {
             this.message = '';
         }
 
-        this.message = this.message = data.message || 'Fossil error';
+        this.message = this.message || data.message || 'Fossil error';
         this.stdout = data.stdout;
         this.stderr = data.stderr;
         this.exitCode = data.exitCode;
