@@ -848,16 +848,25 @@ export class Repository implements IDisposable {
                 const result = await runOperation();
 
                 if (!isReadOnly(operation)) {
-                    await this.updateModelState();
+                    try {
+                        await this.updateModelState();
+                    }
+                    catch (err) {
+                        // expected to get here on executing `fossil close` operation
+                        if (err instanceof FossilError && err.fossilErrorCode === FossilErrorCodes.NotAFossilRepository) {
+                            this.state = RepositoryState.Disposed;
+                        } else {
+                            throw err;
+                        }
+                    }
                 }
-
                 return result;
             }
             catch (err) {
+                // we might get in this catch() when user deleted all files
                 if (err instanceof FossilError && err.fossilErrorCode === FossilErrorCodes.NotAFossilRepository) {
                     this.state = RepositoryState.Disposed;
                 }
-
                 throw err;
             } finally {
                 this._operations = this._operations.end(operation);
