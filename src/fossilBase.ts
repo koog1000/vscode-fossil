@@ -6,16 +6,19 @@
 
 import * as path from 'path';
 import * as cp from 'child_process';
-import { existsSync, appendFileSync, writeFileSync, fstat } from 'fs';
-import { groupBy, IDisposable, toDisposable, dispose, mkdirp } from "./util";
+import * as fs from 'fs/promises';
+import { appendFileSync, existsSync, writeFileSync } from 'fs';
+import { groupBy, IDisposable, toDisposable, dispose } from "./util";
 import { EventEmitter, Event, workspace, window, OutputChannel } from "vscode";
 import { interaction } from './interaction';
 
 type Distinct<T, DistinctName> = T & { __TYPE__: DistinctName };
 /** path to .fossil */
 export type FossilPath = Distinct<string, "path to .fossil">;
+/** cwd for executing fossil */
+export type FossilCWD = Distinct<string, "cwd for executing fossil">;
 /** local root */
-export type FossilRoot = Distinct<string, "local root">;
+export type FossilRoot = Distinct<FossilCWD, "local root">;
 /** URI for the close
  *
  * * http[s]://[userid[:password]@]host[:port][/path]
@@ -88,6 +91,10 @@ export interface FossilFindAttemptLogger {
     log(path: string) : void;
 }
 
+interface FossilSpawnOptions extends cp.SpawnOptionsWithoutStdio {
+    logErrors?: boolean;
+}
+
 export class FossilFinder {
     constructor(private logger: FossilFindAttemptLogger) { }
 
@@ -102,7 +109,7 @@ export class FossilFinder {
     }
 
     private parseVersion(raw: string): string {
-        let match = raw.match(/version (.+)\[/);
+        const match = raw.match(/version (.+)\[/);
         if (match) {
             return match[1];
         }
@@ -293,7 +300,7 @@ export class Fossil {
 
     async clone(uri: FossilURI, fossilPath: FossilPath): Promise<FossilRoot> {
         const fossilRoot = path.dirname(fossilPath) as FossilRoot;
-        await mkdirp(fossilRoot);
+        await fs.mkdir(fossilRoot, {recursive: true});
         await this.exec(fossilRoot, ['clone', uri, fossilPath, '--verbose']);
         return fossilRoot;
     }
@@ -311,14 +318,16 @@ export class Fossil {
      * @param path any path inside opened repository
      * @returns path's root directory
      */
-    async getRepositoryRoot(path: string): Promise<FossilRoot> {
-        const result = await this.exec(path, ['stat']);
-        var root = result.stdout.match(/local-root:\s*(.+)\/\s/);
+    async getRepositoryRoot(anypath: string): Promise<FossilRoot> {
+        const isFile = (await fs.stat(anypath)).isFile();
+        const cwd = (isFile ? path.dirname(anypath) : anypath) as FossilCWD; 
+        const result = await this.exec(cwd, ['stat']);
+        const root = result.stdout.match(/local-root:\s*(.+)\/\s/);
         if (root) return root[1] as FossilRoot;
         return "" as FossilRoot
     }
 
-    async exec(cwd: string, args: string[], options: any = {}): Promise<IExecutionResult> {
+    async exec(cwd: FossilCWD, args: string[], options: any = {}): Promise<IExecutionResult> {
         options = { cwd, ...options };
         try {
             let result = await this._exec(args, options);
@@ -338,7 +347,7 @@ export class Fossil {
         }
     }
 
-    private async _exec(args: string[], options: any = {}): Promise<IExecutionResult> {
+    private async _exec(args: string[], options: FossilSpawnOptions): Promise<IExecutionResult> {
         const startTimeHR = process.hrtime();
 
         let result: IExecutionResult;
@@ -381,13 +390,9 @@ export class Fossil {
         return result;
     }
 
-    spawn(args: string[], options: any = {}): cp.ChildProcess {
+    spawn(args: string[], options: cp.SpawnOptionsWithoutStdio): cp.ChildProcess {
         if (!this.fossilPath) {
             throw new Error('fossil could not be found in the system.');
-        }
-
-        if (!options) {
-            options = {};
         }
 
         if (!options.stdio) {
@@ -482,6 +487,11 @@ export class Repository {
         return result.stdout;
     }
 
+    /**
+     * @returns: close result. For example `there are unsaved changes
+     *           in the current checkout` in case of an error or an empty
+     *           string on success
+     */
     async close(): Promise<string> {
         const args = ['close'];
         try {
@@ -598,7 +608,7 @@ export class Repository {
             appendFileSync(ignore_file, paths.join('\n') + '\n')
         }
         else {
-            mkdirp(this.repositoryRoot + '/.fossil-settings/')
+            await fs.mkdir(this.repositoryRoot + '/.fossil-settings/')
             writeFileSync(ignore_file, paths.join('\n') + '\n');
             this.add([ignore_file])
         }

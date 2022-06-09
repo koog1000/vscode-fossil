@@ -80,48 +80,6 @@ export function partition<T>(array: T[], fn: (el: T, i: number, ary: T[]) => boo
     }, <[T[], T[]]>[[], []]);
 };
 
-export async function mkdirp(path: string, mode?: number): Promise<boolean> {
-    const mkdir = async () => {
-        try {
-            await fs.mkdir(path, mode);
-        }
-        catch (err) {
-            const terr = err as NodeJS.ErrnoException;
-            if (terr.code === 'EEXIST') {
-                const stat = await fs.stat(path);
-
-                if (stat.isDirectory()) {
-                    return;
-                }
-
-                throw new Error(`'${path}' exists and is not a directory.`);
-            }
-
-            throw err;
-        }
-    };
-
-    // is root?
-    if (path === dirname(path)) {
-        return true;
-    }
-
-    try {
-        await mkdir();
-    }
-    catch (err) {
-        const terr = err as NodeJS.ErrnoException;
-        if (terr.code !== 'ENOENT') {
-            throw err;
-        }
-
-        await mkdirp(dirname(path), mode);
-        await mkdir();
-    }
-
-    return true;
-}
-
 export async function delay(millis: number): Promise<any> {
     return new Promise((c, e) => setTimeout(c, millis));
 }
