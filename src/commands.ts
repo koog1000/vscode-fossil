@@ -35,8 +35,11 @@ interface CommandOptions {
 
 const Commands: Command[] = [];
 
+/**
+ * Decorator
+ */
 function command(commandId: string, options: CommandOptions = {}): Function {
-    return (target: any, key: string, descriptor: any) => {
+    return (target: CommandCenter, key: string, descriptor: PropertyDescriptor) => {
         if (!(typeof descriptor.value === 'function')) {
             throw new Error('not supported');
         }
@@ -46,18 +49,17 @@ function command(commandId: string, options: CommandOptions = {}): Function {
 }
 
 export class CommandCenter {
+    [index: string]: any
 
     private model: Model;
     private disposables: Disposable[];
 
     constructor(
         private fossil: Fossil,
-        model: Model | undefined,
+        model: Model,
         private outputChannel: OutputChannel
     ) {
-        if (model) {
-            this.model = model;
-        }
+        this.model = model;
 
         this.disposables = Commands.map(({ commandId, key, method, options }) => {
             const command = this.createCommand(commandId, key, method, options);
@@ -271,7 +273,7 @@ export class CommandCenter {
 
     @command('fossil.close', { repository: true})
     async close(repository: Repository): Promise<void> {
-        this.model.close(repository);
+        return this.model.close(repository);
     }
 
     @command('fossil.openFiles')
@@ -975,7 +977,7 @@ export class CommandCenter {
             }
 
             try {
-                return result;
+                return result;  // ??? this line will never throw?
             }
             catch (err) {
                 const openLog = await interaction.errorPromptOpenLog(err);

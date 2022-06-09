@@ -32,7 +32,7 @@ function decorate(decorator: (fn: Function, key: string) => Function): Function 
 function _memoize(fn: Function, key: string): Function {
     const memoizeKey = `$memoize$${key}`;
 
-    return function (this: Function, ...args: any[]) {
+    return function (this: Record<string, any>, ...args: any[]) {
         if (!this.hasOwnProperty(memoizeKey)) {
             Object.defineProperty(this, memoizeKey, {
                 configurable: false,
@@ -52,7 +52,7 @@ function _throttle<T>(fn: Function, key: string): Function {
     const currentKey = `$throttle$current$${key}`;
     const nextKey = `$throttle$next$${key}`;
 
-    const trigger = function (this: Function, ...args: any[]) {
+    const trigger = function (this: Record<string, any>, ...args: any[]) {
         if (this[nextKey]) {
             return this[nextKey];
         }
@@ -98,7 +98,7 @@ export function debounce(delay: number): Function {
     return decorate((fn, key) => {
         const timerKey = `$debounce$${key}`;
 
-        return function (this: Function, ...args: any[]) {
+        return function (this: Record<string, any>, ...args: any[]) {
             clearTimeout(this[timerKey]);
             this[timerKey] = setTimeout(() => fn.apply(this, args), delay);
         };

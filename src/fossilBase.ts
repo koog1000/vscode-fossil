@@ -6,25 +6,28 @@
 
 import * as path from 'path';
 import * as cp from 'child_process';
-import { existsSync, appendFileSync, writeFileSync } from 'fs';
-import { groupBy, IDisposable, toDisposable, dispose, mkdirp } from "./util";
-import { EventEmitter, Event, workspace, window, Disposable, OutputChannel, Uri } from "vscode";
+import * as fs from 'fs/promises';
+import { appendFileSync, existsSync, writeFileSync } from 'fs';
+import { groupBy, IDisposable, toDisposable, dispose } from "./util";
+import { EventEmitter, Event, workspace, window, OutputChannel } from "vscode";
 import { interaction } from './interaction';
 
 type Distinct<T, DistinctName> = T & { __TYPE__: DistinctName };
 /** path to .fossil */
 export type FossilPath = Distinct<string, "path to .fossil">;
+/** cwd for executing fossil */
+export type FossilCWD = Distinct<string, "cwd for executing fossil">;
 /** local root */
-export type FossilRoot = Distinct<string, "local root">;
-/** something? */
-//export type FossilName = Distinct<Uri, "fossil name">;
+export type FossilRoot = Distinct<FossilCWD, "local root">;
 /** URI for the close
  *
  * * http[s]://[userid[:password]@]host[:port][/path]
  * * ssh://[userid@]host[:port]/path/to/repo.fossil[?fossil=path/fossil.exe]
  * * [file://]path/to/repo.fossil
  */
-export type FossilURI = Distinct<string, "Fossil URI">;
+ export type FossilURI = Distinct<string, "Fossil URI">;
+ /** https://fossil-scm.org/home/doc/trunk/www/checkin_names.wiki */
+ export type FossilCheckin = Distinct<string, "Fossil Check-in Name">;
 
 export interface IFossil {
     path: string;
@@ -85,7 +88,11 @@ export interface Path {
 }
 
 export interface FossilFindAttemptLogger {
-    log(path: string);
+    log(path: string) : void;
+}
+
+interface FossilSpawnOptions extends cp.SpawnOptionsWithoutStdio {
+    logErrors?: boolean;
 }
 
 export class FossilFinder {
@@ -102,7 +109,7 @@ export class FossilFinder {
     }
 
     private parseVersion(raw: string): string {
-        let match = raw.match(/version (.+)\[/);
+        const match = raw.match(/version (.+)\[/);
         if (match) {
             return match[1];
         }
@@ -195,8 +202,8 @@ export interface IFossilErrorData {
 }
 
 export class FossilUndoDetails {
-    revision: number;
-    kind: string;
+    revision!: number;
+    kind!: string;
 }
 
 export class FossilError {
@@ -218,6 +225,7 @@ export class FossilError {
         }
         else {
             this.error = void 0;
+            this.message = '';
         }
 
         this.message = this.message || data.message || 'Fossil error';
@@ -248,8 +256,8 @@ export class FossilError {
 export interface IFossilOptions {
     fossilPath: string;
     version: string;
-    env?: any;
-    enableInstrumentation: boolean;
+    // env?: any;
+    enableInstrumentation: boolean; // ToDo: remove unused property
     outputChannel: OutputChannel;
 }
 
@@ -271,7 +279,6 @@ export class Fossil {
 
     private fossilPath: string;
     private outputChannel: OutputChannel;
-    private disposables: Disposable[] = [];
     private openRepository: Repository | undefined;
 
     private _onOutput = new EventEmitter<string>();
@@ -282,7 +289,7 @@ export class Fossil {
         this.outputChannel = options.outputChannel;
     }
 
-    open(repository: string): Repository {
+    open(repository: FossilRoot): Repository {
         this.openRepository = new Repository(this, repository);
         return this.openRepository;
     }
@@ -293,7 +300,7 @@ export class Fossil {
 
     async clone(uri: FossilURI, fossilPath: FossilPath): Promise<FossilRoot> {
         const fossilRoot = path.dirname(fossilPath) as FossilRoot;
-        await mkdirp(fossilRoot);
+        await fs.mkdir(fossilRoot, {recursive: true});
         await this.exec(fossilRoot, ['clone', uri, fossilPath, '--verbose']);
         return fossilRoot;
     }
@@ -311,14 +318,16 @@ export class Fossil {
      * @param path any path inside opened repository
      * @returns path's root directory
      */
-    async getRepositoryRoot(path: string): Promise<FossilRoot> {
-        const result = await this.exec(path, ['stat']);
-        var root = result.stdout.match(/local-root:\s*(.+)\/\s/);
+    async getRepositoryRoot(anypath: string): Promise<FossilRoot> {
+        const isFile = (await fs.stat(anypath)).isFile();
+        const cwd = (isFile ? path.dirname(anypath) : anypath) as FossilCWD; 
+        const result = await this.exec(cwd, ['stat']);
+        const root = result.stdout.match(/local-root:\s*(.+)\/\s/);
         if (root) return root[1] as FossilRoot;
         return "" as FossilRoot
     }
 
-    async exec(cwd: string, args: string[], options: any = {}): Promise<IExecutionResult> {
+    async exec(cwd: FossilCWD, args: string[], options: any = {}): Promise<IExecutionResult> {
         options = { cwd, ...options };
         try {
             let result = await this._exec(args, options);
@@ -338,7 +347,7 @@ export class Fossil {
         }
     }
 
-    private async _exec(args: string[], options: any = {}): Promise<IExecutionResult> {
+    private async _exec(args: string[], options: FossilSpawnOptions): Promise<IExecutionResult> {
         const startTimeHR = process.hrtime();
 
         let result: IExecutionResult;
@@ -381,13 +390,9 @@ export class Fossil {
         return result;
     }
 
-    spawn(args: string[], options: any = {}): cp.ChildProcess {
+    spawn(args: string[], options: cp.SpawnOptionsWithoutStdio): cp.ChildProcess {
         if (!this.fossilPath) {
             throw new Error('fossil could not be found in the system.');
-        }
-
-        if (!options) {
-            options = {};
         }
 
         if (!options.stdio) {
@@ -410,7 +415,7 @@ export class Fossil {
 }
 
 export interface Revision {
-    hash: string;
+    hash: FossilCheckin;
 }
 
 export interface Commit extends Revision {
@@ -431,14 +436,14 @@ export class Repository {
 
     constructor(
         private _fossil: Fossil,
-        private repositoryRoot: string
+        private repositoryRoot: FossilRoot
     ) { }
 
     get fossil(): Fossil {
         return this._fossil;
     }
 
-    get root(): string {
+    get root(): FossilRoot {
         return this.repositoryRoot;
     }
 
@@ -446,7 +451,7 @@ export class Repository {
         return await this.fossil.exec(this.repositoryRoot, args, options);
     }
 
-    async config(scope: string, key: string, value: any, options: any): Promise<string> {
+    async config(scope: string, key: string, value: string, options: any): Promise<string> {
         const args = ['config'];
 
         if (scope) {
@@ -466,14 +471,14 @@ export class Repository {
     async add(paths?: string[]): Promise<void> {
         const args = ['add'];
 
-        if (paths && paths.length) {
+        if (paths?.length) {
             args.push.apply(args, paths);
         }
 
         await this.exec(args);
     }
 
-    async cat(relativePath: string, checkin: string): Promise<string> {
+    async cat(relativePath: string, checkin: FossilCheckin): Promise<string> {
         const args = ['cat', relativePath];
         if (checkin) {
             args.push('-r', checkin);
@@ -482,6 +487,11 @@ export class Repository {
         return result.stdout;
     }
 
+    /**
+     * @returns: close result. For example `there are unsaved changes
+     *           in the current checkout` in case of an error or an empty
+     *           string on success
+     */
     async close(): Promise<string> {
         const args = ['close'];
         try {
@@ -529,7 +539,7 @@ export class Repository {
             args.push(...opts.fileList);
         }
 
-        if (message && message.length) {
+        if (message?.length) {
             args.push('-m', message);
         }
 
@@ -537,7 +547,7 @@ export class Repository {
             await this.exec(args);
         }
         catch (err) {
-            if (/partial commit of a merge/.test(err.stderr)) {
+            if (err instanceof FossilError && /partial commit of a merge/.test(err.stderr || '')) {
                 err.fossilErrorCode = FossilErrorCodes.UnmergedChanges;
                 throw err;
             }
@@ -598,7 +608,7 @@ export class Repository {
             appendFileSync(ignore_file, paths.join('\n') + '\n')
         }
         else {
-            mkdirp(this.repositoryRoot + '/.fossil-settings/')
+            await fs.mkdir(this.repositoryRoot + '/.fossil-settings/')
             writeFileSync(ignore_file, paths.join('\n') + '\n');
             this.add([ignore_file])
         }
@@ -670,7 +680,7 @@ export class Repository {
         catch (err) {
             // In case there are merge conflicts to be resolved, fossil reset will output
             // some "needs merge" data. We try to get around that.
-            if (/([^:]+: needs merge\n)+/m.test(err.stdout || '')) {
+            if (err instanceof FossilError && /([^:]+: needs merge\n)+/m.test(err.stdout || '')) {
                 return;
             }
 
@@ -700,7 +710,7 @@ export class Repository {
             await this.exec(args);
         }
         catch (err) {
-            if (/would fork/.test(err.stderr || '')) {
+            if (err instanceof FossilError && /would fork/.test(err.stderr || '')) {
                 err.fossilErrorCode = FossilErrorCodes.PushCreatesNewRemoteHead;
             }
 
@@ -884,7 +894,7 @@ export class Repository {
                 const parts = line.split("+++", 5);
                 const [hash, date, branch, author, message] = parts;
                 return {
-                    hash: hash,
+                    hash: hash as FossilCheckin,
                     branch: branch,
                     message: message,
                     author: author,

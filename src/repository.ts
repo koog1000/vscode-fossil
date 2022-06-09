@@ -101,7 +101,7 @@ export class Resource implements SourceControlResourceState {
     get status(): Status { return this._status; }
     get mergeStatus(): MergeStatus { return this._mergeStatus; }
 
-    private static Icons = {
+    private static Icons:{[key: string]: any} = {
         light: {
             Modified: getIconUri('status-modified', 'light'),
             Missing: getIconUri('status-missing', 'light'),
@@ -309,7 +309,7 @@ export class Repository implements IDisposable {
     private _refs: Ref[] = [];
     get refs(): Ref[] { return this._refs; }
 
-    private _path: Path;
+    private _path!: Path;
     get path(): Path { return this._path; }
 
     private _operations = new OperationsImpl();
@@ -741,11 +741,12 @@ export class Repository implements IDisposable {
             this._onDidChangeInOutState.fire();
         }
         catch (err) {
-
-            this.changeAutoInoutState({
-                status: AutoInOutStatuses.Error,
-                error: ((err.stderr || "").replace(/^abort:\s*/, '') || err.fossilErrorCode || err.message).trim(),
-            })
+            if (err instanceof FossilError) {
+                this.changeAutoInoutState({
+                    status: AutoInOutStatuses.Error,
+                    error: ((err.stderr || "").replace(/^abort:\s*/, '') || err.fossilErrorCode || err.message).trim(),
+                })
+            }
             throw err;
         }
     }
@@ -784,7 +785,7 @@ export class Repository implements IDisposable {
     }
 
     @throttle
-    merge(revQuery): Promise<IMergeResult> {
+    merge(revQuery: string): Promise<IMergeResult> {
         return this.run(Operation.Merge, async () => {
             try {
                 return await this.repository.merge(revQuery)
@@ -813,18 +814,20 @@ export class Repository implements IDisposable {
             const relativePath = path.relative(this.repository.root, params.path).replace(/\\/g, '/');
             try {
                 console.log('Repository: show: relativePath: ' + relativePath + ' checkin: ' + params.checkin)
-                return await this.repository.cat(relativePath, params.checkin)
+                return await this.repository.cat(relativePath, params.checkin!)
             }
             catch (e) {
-                if (e && e instanceof FossilError && e.fossilErrorCode === FossilErrorCodes.NoSuchFile) {
-                    return '';
-                }
+                if (e instanceof FossilError) {
+                    if (e.fossilErrorCode === FossilErrorCodes.NoSuchFile) {
+                        return '';
+                    }
 
-                if (e.exitCode !== 0) {
-                    throw new FossilError({
-                        message: localize('cantshow', "Could not show object"),
-                        exitCode: e.exitCode
-                    });
+                    if (e.exitCode !== 0) {
+                        throw new FossilError({
+                            message: localize('cantshow', "Could not show object"),
+                            exitCode: e.exitCode
+                        });
+                    }
                 }
 
                 throw e;
@@ -845,16 +848,25 @@ export class Repository implements IDisposable {
                 const result = await runOperation();
 
                 if (!isReadOnly(operation)) {
-                    await this.updateModelState();
+                    try {
+                        await this.updateModelState();
+                    }
+                    catch (err) {
+                        // expected to get here on executing `fossil close` operation
+                        if (err instanceof FossilError && err.fossilErrorCode === FossilErrorCodes.NotAFossilRepository) {
+                            this.state = RepositoryState.Disposed;
+                        } else {
+                            throw err;
+                        }
+                    }
                 }
-
                 return result;
             }
             catch (err) {
-                if (err.fossilErrorCode === FossilErrorCodes.NotAFossilRepository) {
+                // we might get in this catch() when user deleted all files
+                if (err instanceof FossilError && err.fossilErrorCode === FossilErrorCodes.NotAFossilRepository) {
                     this.state = RepositoryState.Disposed;
                 }
-
                 throw err;
             } finally {
                 this._operations = this._operations.end(operation);

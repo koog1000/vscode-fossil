@@ -4,15 +4,9 @@
  *  Licensed under the MIT License. See LICENSE.txt in the project root for license information.
  *--------------------------------------------------------------------------------------------*/
 
-
-
 import { Event } from 'vscode';
 import { dirname } from 'path';
-import * as fs from 'fs';
-
-// export function log(...args: any[]): void {
-//     console.log.apply(console, ['fossil:', ...args]);
-// }
+import * as fs from 'fs/promises';
 
 export interface IDisposable {
     dispose(): void;
@@ -85,50 +79,6 @@ export function partition<T>(array: T[], fn: (el: T, i: number, ary: T[]) => boo
         return result;
     }, <[T[], T[]]>[[], []]);
 };
-
-export function nfcall<R>(fn: Function, ...args): Promise<R> {
-    return new Promise((c, e) => fn(...args, (err, r) => err ? e(err) : c(r)));
-}
-
-export async function mkdirp(path: string, mode?: number): Promise<boolean> {
-    const mkdir = async () => {
-        try {
-            await nfcall(fs.mkdir, path, mode);
-        }
-        catch (err) {
-            if (err.code === 'EEXIST') {
-                const stat = await nfcall<fs.Stats>(fs.stat, path);
-
-                if (stat.isDirectory()) {
-                    return;
-                }
-
-                throw new Error(`'${path}' exists and is not a directory.`);
-            }
-
-            throw err;
-        }
-    };
-
-    // is root?
-    if (path === dirname(path)) {
-        return true;
-    }
-
-    try {
-        await mkdir();
-    }
-    catch (err) {
-        if (err.code !== 'ENOENT') {
-            throw err;
-        }
-
-        await mkdirp(dirname(path), mode);
-        await mkdir();
-    }
-
-    return true;
-}
 
 export async function delay(millis: number): Promise<any> {
     return new Promise((c, e) => setTimeout(c, millis));
