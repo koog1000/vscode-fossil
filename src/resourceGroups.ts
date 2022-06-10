@@ -1,4 +1,4 @@
-import { FossilError, IFileStatus, IRepoStatus } from "./fossilBase";
+import { FossilError, IFileStatus } from "./fossilBase";
 import { Uri, SourceControlResourceGroup, SourceControl } from "vscode";
 import * as path from "path";
 import * as nls from "vscode-nls";
@@ -11,7 +11,7 @@ export interface IGroupStatusesParams {
     respositoryRoot: string
     statusGroups: IStatusGroups,
     fileStatuses: IFileStatus[],
-    repoStatus: IRepoStatus,
+    // repoStatus: IRepoStatus,
     resolveStatuses: IFileStatus[] | undefined,
 }
 
@@ -48,7 +48,7 @@ export class ResourceGroup {
     get label(): string { return this._resourceGroup.label; }
     get resources(): Resource[] { return this._resources; }
 
-    public clear() {
+    public clear() : void {
         this._resources = [];
     }
 
@@ -125,7 +125,7 @@ export function groupStatuses({
     respositoryRoot,
     statusGroups: { conflict, staging, merge, working, untracked },
     fileStatuses,
-    repoStatus,
+    // repoStatus,
     resolveStatuses
 }: IGroupStatusesParams): IStatusGroups {
     const workingDirectoryResources: Resource[] = [];
@@ -136,7 +136,6 @@ export function groupStatuses({
 
     const chooseResourcesAndGroup = (uriString: Uri, rawStatus: string, mergeStatus: MergeStatus, renamed: boolean): [Resource[], ResourceGroup, Status] => {
         let status: Status;
-        let isStaged: boolean;
         switch (rawStatus) {
             case 'M': status = Status.MODIFIED;  break;
             case 'R': status = Status.DELETED;   break;
@@ -161,7 +160,7 @@ export function groupStatuses({
         if(status === Status.CONFLICT){
             return [conflictResources, conflict, status];
         }
-        isStaged = staging.includesUri(uriString) ? true : false;
+        const isStaged = staging.includesUri(uriString) ? true : false;
         const targetResources: Resource[] = isStaged ? stagingResources : workingDirectoryResources;
         const targetGroup: ResourceGroup = isStaged ? staging : working;
         return [targetResources, targetGroup, status];

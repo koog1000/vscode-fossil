@@ -330,7 +330,7 @@ export class Fossil {
     async exec(cwd: FossilCWD, args: string[], options: any = {}): Promise<IExecutionResult> {
         options = { cwd, ...options };
         try {
-            let result = await this._exec(args, options);
+            const result = await this._exec(args, options);
             return result
         }
         catch (err) {
@@ -349,10 +349,8 @@ export class Fossil {
 
     private async _exec(args: string[], options: FossilSpawnOptions): Promise<IExecutionResult> {
         const startTimeHR = process.hrtime();
-
-        let result: IExecutionResult;
         const child = this.spawn(args, options);
-        result = await exec(child, args.includes('cat'));
+        const result: IExecutionResult = await exec(child, args.includes('cat'));
 
         const durationHR = process.hrtime(startTimeHR);
         this.log(`fossil ${args.join(' ')}: ${Math.floor(msFromHighResTime(durationHR))}ms\n`);
@@ -432,7 +430,7 @@ export interface CommitDetails extends Commit {
 
 export class Repository {
 
-    private status_msg: string = '';
+    private status_msg = '';
 
     constructor(
         private _fossil: Fossil,
@@ -472,7 +470,7 @@ export class Repository {
         const args = ['add'];
 
         if (paths?.length) {
-            args.push.apply(args, paths);
+            args.push(...paths);
         }
 
         await this.exec(args);
@@ -511,7 +509,7 @@ export class Repository {
     async update(treeish: string, opts?: { discard: boolean }): Promise<void> {
         const args = ['update'];
 
-        if (opts && opts.discard) {
+        if (opts?.discard) {
             args.push('--dry-run');
         }
 
@@ -519,12 +517,7 @@ export class Repository {
             args.push(treeish);
         }
 
-        try {
-            await this.exec(args);
-        }
-        catch (err) {
-            throw err;
-        }
+        await this.exec(args);
     }
 
     async commit(message: string, opts: { fileList: string[], user?: string | undefined } = Object.create(null)): Promise<void> {
@@ -559,7 +552,7 @@ export class Repository {
         }
     }
 
-    async branch(name: string, opts?: { force: boolean }): Promise<void> {
+    async branch(name: string): Promise<void> {
         const args = ['branch', 'new', name];
         const currBranch = await this.getCurrentBranch();
         if (currBranch && currBranch.name) {
@@ -583,7 +576,7 @@ export class Repository {
         const groups = Object.keys(pathsByGroup).map(k => pathsByGroup[k]);
         const tasks = groups.map(paths => () => this.exec(['revert'].concat(paths))); // -C = no-backup
 
-        for (let task of tasks) {
+        for (const task of tasks) {
             await task();
         }
     }
@@ -593,7 +586,7 @@ export class Repository {
         const groups = Object.keys(pathsByGroup).map(k => pathsByGroup[k]);
         const tasks = groups.map(paths => () => this.exec(['rm'].concat(paths)));
 
-        for (let task of tasks) {
+        for (const task of tasks) {
             await task();
         }
     }
@@ -668,10 +661,10 @@ export class Repository {
     }
 
     async revertFiles(treeish: string, paths: string[]): Promise<void> {
-        let args: string[] = ['revert'];
+        const args: string[] = ['revert'];
 
-        if (paths && paths.length) {
-            args.push.apply(args, paths);
+        if (paths?.length) {
+            args.push(...paths);
         }
 
         try {
@@ -689,18 +682,13 @@ export class Repository {
     }
 
     async pull(options?: PullOptions): Promise<void> {
-        var args = ['pull'];
+        let args = ['pull'];
 
-        if (options && options.autoUpdate) {
+        if (options?.autoUpdate) {
             args = ['update'];
         }
 
-        try {
-            await this.exec(args);
-        }
-        catch (err) {
-            throw err;
-        }
+        await this.exec(args);
     }
 
     async push(): Promise<void> {
@@ -778,21 +766,21 @@ export class Repository {
 
     async getLastCommitMessage(): Promise<string> {
         const message = this.status_msg;
-        var comment = message.match(/comment:\s+(.*)\(/)
+        const comment = message.match(/comment:\s+(.*)\(/)
         if (comment) return comment[1];
         return "";
     }
 
     async getLastCommitAuthor(): Promise<string> {
         const message = this.status_msg;
-        var comment = message.match(/user:\s+(.*)\n/)
+        const comment = message.match(/user:\s+(.*)\n/)
         if (comment) return comment[1];
         return "";
     }
 
     async getLastCommitDate(): Promise<string> {
         const message = this.status_msg;
-        var comment = message.match(/checkout:\s+(.*)\s(.*)\n/)
+        const comment = message.match(/checkout:\s+(.*)\s(.*)\n/)
         if (comment) return comment[2];
         return "";
     }
@@ -806,36 +794,36 @@ export class Repository {
 
     parseStatusLines(status: string): IFileStatus[] {
         const result: IFileStatus[] = [];
-        let lines = status.split("\n");
+        const lines = status.split("\n");
 
         lines.forEach(line => {
             if (line.length > 0) {
                 if (line.startsWith("UPDATED_BY_MERGE")) {
-                    var fileUri: string = line.substr(17).trim();
+                    const fileUri: string = line.substr(17).trim();
                     result.push({ status: "M", path: fileUri });
                 }
                 else if (line.startsWith("ADDED_BY_MERGE")) {
-                    var fileUri: string = line.substr(15).trim();
+                    const fileUri: string = line.substr(15).trim();
                     result.push({ status: "A", path: fileUri });
                 }
                 else if (line.startsWith("DELETED")) {
-                    var fileUri: string = line.substr(8).trim();
+                    const fileUri: string = line.substr(8).trim();
                     result.push({ status: "R", path: fileUri });
                 }
                 else if (line.startsWith("EDITED")) {
-                    var fileUri: string = line.substr(7).trim();
+                    const fileUri: string = line.substr(7).trim();
                     result.push({ status: "M", path: fileUri });
                 }
                 else if (line.startsWith("ADDED")) {
-                    var fileUri: string = line.substr(6).trim();
+                    const fileUri: string = line.substr(6).trim();
                     result.push({ status: "A", path: fileUri });
                 }
                 else if (line.startsWith("MISSING")) {
-                    var fileUri: string = line.substr(8).trim();
+                    const fileUri: string = line.substr(8).trim();
                     result.push({ status: "!", path: fileUri });
                 }
                 else if (line.startsWith("CONFLICT")) {
-                    var fileUri: string = line.substr(9).trim();
+                    const fileUri: string = line.substr(9).trim();
                     result.push({ status: "C", path: fileUri });
                 }
             }
@@ -851,10 +839,10 @@ export class Repository {
 
     parseExtrasLines(status: string): IFileStatus[] {
         const result: IFileStatus[] = [];
-        let lines = status.split("\n");
+        const lines = status.split("\n");
         lines.forEach(line => {
             if (line.length > 0) {
-                var fileUri: string = line.trim();
+                const fileUri: string = line.trim();
                 result.push({ status: "?", path: fileUri });
             }
         });
@@ -863,8 +851,8 @@ export class Repository {
 
     async getCurrentBranch(): Promise<Ref> {
         const message = this.status_msg;
-        var branch = message.match(/tags:\s+(.*)\b(.*)\n/)
-        var comment = message.match(/comment:\s+(.*)\(/)
+        const branch = message.match(/tags:\s+(.*)\b(.*)\n/)
+        const comment = message.match(/comment:\s+(.*)\(/)
         if (branch && comment) {
             return { name: branch[1], commit: comment[1], type: RefType.Branch };
         }
@@ -905,7 +893,7 @@ export class Repository {
     }
 
     async getParents(): Promise<string> {
-        var comment = this.status_msg.match(/parent:\s+(.*)\s(.*)\n/)
+        const comment = this.status_msg.match(/parent:\s+(.*)\s(.*)\n/)
         if (comment) return comment[1];
         return "";
     }
@@ -927,7 +915,7 @@ export class Repository {
         const branchRefs = branchesResult.stdout.trim().split('\n')
             .filter(line => !!line)
             .map((line: string): Ref | null => {
-                let match = line.match(/\b(.+)$/);
+                const match = line.match(/\b(.+)$/);
                 if (match) {
                     return { name: match[1], commit: match[1], type: RefType.Branch };
                 }

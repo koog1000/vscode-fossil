@@ -7,7 +7,7 @@
 import * as nls from "vscode-nls";
 import * as path from "path";
 import * as os from "os";
-import { window, QuickPickItem, workspace, ViewColumn, Uri } from "vscode";
+import { window, QuickPickItem, workspace, ViewColumn, Uri, Disposable } from "vscode";
 import { FossilUndoDetails, Path, Ref, RefType, Commit, LogEntryOptions, CommitDetails, IFileStatus, FossilPath, FossilRoot, FossilURI } from "./fossilBase";
 import { humanise } from "./humanise";
 import { Repository, LogEntriesOptions } from "./repository";
@@ -21,8 +21,6 @@ const DELETE = "Delete";
 const SHORT_HASH_LENGTH = 12;
 const BULLET = "\u2022";
 const NBSP = "\u00a0";
-
-const NOOP = function () { }
 
 export const enum BranchExistsAction { None, Reopen, UpdateTo }
 export const enum PushCreatesNewHeadAction { None, Pull }
@@ -87,19 +85,15 @@ export namespace interaction {
     }
 
 
-    export function statusCloning(clonePromise: Promise<any>) {
+    export function statusCloning(clonePromise: Promise<any>) : Disposable {
         return window.setStatusBarMessage(localize('cloning', "Cloning fossil repository..."), clonePromise);
     }
 
-    // export function informFossilNotSupported(this: void) {
-    //     return window.showInformationMessage(localize('disabled', "Fossil is either disabled or not supported in this workspace"));
-    // }
-
-    export function informNoChangesToCommit(this: void) {
+    export function informNoChangesToCommit(this: void) : Thenable<string | undefined> {
         return window.showInformationMessage(localize('no changes', "There are no changes to commit."));
     }
 
-    export async function checkThenWarnOutstandingMerge(repository: Repository, scenario: WarnScenario): Promise<boolean> {
+    export async function checkThenWarnOutstandingMerge(repository: Repository): Promise<boolean> {
         const { repoStatus } = repository;
         if (repoStatus && repoStatus.isMerge) {
             window.showErrorMessage(localize('outstanding merge', "There is an outstanding merge in your working directory."));
@@ -110,7 +104,7 @@ export namespace interaction {
 
     export async function checkThenErrorUnclean(repository: Repository, scenario: WarnScenario): Promise<boolean> {
         if (!repository.isClean) {
-            let nextStep: string = "";
+            let nextStep = "";
             if (scenario === WarnScenario.Merge) {
                 const discardAllChanges = localize('command.revertAll', "Discard All Changes");
                 const abandonMerge = localize('abandon merge', "abandon merge");
@@ -124,7 +118,7 @@ export namespace interaction {
 
     export async function checkThenWarnUnclean(repository: Repository, scenario: WarnScenario): Promise<void> {
         if (!repository.isClean) {
-            let nextStep: string = "";
+            let nextStep = "";
             if (scenario === WarnScenario.Merge) {
                 const discardAllChanges = localize('command.revertAll', "Discard All Changes");
                 const abandonMerge = localize('abandon merge', "abandon merge");
@@ -134,16 +128,16 @@ export namespace interaction {
         }
     }
 
-    export function warnNonDistinctHeads(nonDistinctHeads: string[]) {
+    export function warnNonDistinctHeads(nonDistinctHeads: string[]) : Thenable<string | undefined> {
         const nonDistinctHeadShortHashes = nonDistinctHeads.map(h => h.slice(0, SHORT_HASH_LENGTH)).join(", ");
         return window.showWarningMessage(localize('non distinct heads', "{0} heads without bookmarks [{1}]. Set bookmark or merge heads before pushing.", nonDistinctHeads.length, nonDistinctHeadShortHashes));
     }
 
-    export function warnBranchMultipleHeads(branchWithMultipleHeads: string) {
+    export function warnBranchMultipleHeads(branchWithMultipleHeads: string) : Thenable<string | undefined> {
         return window.showWarningMessage(localize('multi head branch', "Branch '{0}' has multiple heads. Merge required before pushing.", branchWithMultipleHeads));
     }
 
-    export function warnMergeOnlyOneHead(branch?: string) {
+    export function warnMergeOnlyOneHead(branch?: string) : Thenable<string | undefined> {
         return window.showWarningMessage(localize('only one head', "There is only 1 head for branch '{0}'. Nothing to merge.", branch));
     }
 
@@ -167,38 +161,31 @@ export namespace interaction {
         return false;
     }
 
-    export function warnMultipleBranchMultipleHeads(branchesWithMultipleHeads: string[]) {
+    export function warnMultipleBranchMultipleHeads(branchesWithMultipleHeads: string[]) : Thenable<string | undefined> {
         return window.showWarningMessage(localize('multi head branches', "These branches have multiple heads: {0}. Merges required before pushing.", branchesWithMultipleHeads.join(",")));
     }
 
-    export async function warnNoPaths(type: string) {
+    export async function warnNoPaths(type: string) : Promise<string | undefined> {
         return await window.showErrorMessage(localize(`no paths to ${type}`, `Your repository has no paths configured for ${type}ing.`));
     }
 
-    export function warnResolveConflicts(this: void) {
+    export function warnResolveConflicts(this: void) : Thenable<string | undefined> {
         return window.showWarningMessage(localize('conflicts', "Resolve conflicts before committing."));
     }
 
-    export function warnNoUndo(this: void) {
+    export function warnNoUndo(this: void) : Thenable<string | undefined> {
         return window.showWarningMessage(localize('no undo', "Nothing to undo."));
     }
 
     export async function errorPromptOpenLog(err: any): Promise<boolean> {
-        let message: string;
-
         const hint = (err.stderr || err.message || String(err))
             .replace(/^abort: /mi, '')
             .split(/[\r\n]/)
             .filter((line: string) => !!line)[0];
 
-        message = hint
+        const message = hint
             ? localize('fossil error details', "Fossil: {0}", hint)
             : localize('fossil error', "Fossil error");
-
-        if (!message) {
-            console.error(err);
-            return false;
-        }
 
         const openOutputChannelChoice = localize('open fossil log', "Open Fossil Log");
         const choice = await window.showErrorMessage(message, openOutputChannelChoice);
@@ -211,7 +198,7 @@ export namespace interaction {
         return result === open;
     }
 
-    export async function confirmOpenNotEmpty(this: void, dir: FossilRoot) {
+    export async function confirmOpenNotEmpty(this: void, dir: FossilRoot): Promise<boolean> {
         const open = localize('openrepo', "Open Repository");
 
         const message = localize('proposeforceopen', "The directory {0} is not empty.\nOpen repository here anyway?", dir);
@@ -324,7 +311,7 @@ export namespace interaction {
         return choice && choice.commit;
     }
 
-    export async function pickUpdateRevision(refs: Ref[], unclean: boolean = false): Promise<UpdateRefItem | undefined> {
+    export async function pickUpdateRevision(refs: Ref[], unclean = false): Promise<UpdateRefItem | undefined> {
 
         const branches = refs.filter(ref => ref.type === RefType.Branch).map(ref => new UpdateRefItem(ref))
         const tags = refs.filter(ref => ref.type === RefType.Tag).map(ref => new UpdateTagItem(ref))
@@ -349,7 +336,7 @@ export namespace interaction {
         return `#${commit.hash} ${BULLET} ${commit.author}, ${humanise.ageFromNow(commit.date)} ${BULLET} ${commit.message}`;
     }
 
-    function asLabelItem(label: string, description: string = "", action: RunnableAction = NOOP): RunnableQuickPickItem {
+    function asLabelItem(label: string, description = "", action: RunnableAction): RunnableQuickPickItem {
         return new LiteralRunnableQuickPickItem(label, description, action);
     }
 
@@ -359,7 +346,7 @@ export namespace interaction {
         return new LiteralRunnableQuickPickItem(`$(arrow-left)${NBSP}${NBSP}${goBack}`, `${to} ${description}`, action);
     }
 
-    export async function presentLogSourcesMenu(commands: LogMenuAPI) {
+    export async function presentLogSourcesMenu(commands: LogMenuAPI): Promise<void> {
         const repoName = commands.getRepoName();
         const branchName = commands.getBranchName();
         const source = await interaction.pickLogSource(repoName, branchName);
@@ -370,7 +357,7 @@ export namespace interaction {
         }
     }
 
-    export async function presentLogMenu(source: CommitSources, logOptions: LogEntryOptions, commands: LogMenuAPI, back?: RunnableQuickPickItem) {
+    export async function presentLogMenu(source: CommitSources, logOptions: LogEntryOptions, commands: LogMenuAPI, back?: RunnableQuickPickItem): Promise<void> {
         const entries = await commands.getLogEntries(logOptions);
         let result = await pickCommitAsShowCommitDetailsRunnable(source, entries, commands, back);
         while (result) {
@@ -428,8 +415,8 @@ export namespace interaction {
     }
 
     export async function pickLogSource(repoName: string, branchName: string | undefined): Promise<LogSourcePickItem | undefined> {
-        const branchLabel: string = '$(git-branch)';//localize('branch', 'branch');
-        const repoLabel: string = `$(repo)`;// ${localize('repo', 'repo')}`;
+        const branchLabel = '$(git-branch)';//localize('branch', 'branch');
+        const repoLabel = `$(repo)`;// ${localize('repo', 'repo')}`;
         const branch: LogSourcePickItem = { description: branchLabel, label: branchName || "???", source: CommitSources.Branch, options: {} };
         const default_: LogSourcePickItem = { description: branchLabel, label: "default", source: CommitSources.Branch, options: {} };
         const repo: LogSourcePickItem = { description: repoLabel, label: "entire repo", source: CommitSources.Repo, options: {} };
@@ -454,16 +441,16 @@ export namespace interaction {
         return;
     }
 
-    export function warnUnresolvedFiles(unresolvedCount: number) {
+    export function warnUnresolvedFiles(unresolvedCount: number): void {
         const fileOrFiles = unresolvedCount === 1 ? localize('file', 'file') : localize('files', 'files');
         window.showWarningMessage(localize('unresolved files', "Merge leaves {0} {1} unresolved.", unresolvedCount, fileOrFiles));
     }
 
-    export function warnUnsavedChanges(msg: string) {
+    export function warnUnsavedChanges(msg: string): void {
         window.showWarningMessage(localize('unsaved changes', `Fossil: ${msg}`));
     }
 
-    export async function confirmUndo({ revision, kind }: FossilUndoDetails) {
+    export async function confirmUndo({ revision, kind }: FossilUndoDetails) : Promise<boolean> {
         // prompt
         console.log('confirmUndo with args' + revision + kind);
         const undo = "Undo";
@@ -472,7 +459,7 @@ export namespace interaction {
         return choice === undo;
     }
 
-    export async function inputCommitMessage(message: string, defaultMessage?: string) {
+    export async function inputCommitMessage(message: string, defaultMessage?: string) : Promise<string | undefined>{
         if (message) {
             return message;
         }
@@ -483,7 +470,7 @@ export namespace interaction {
             prompt: localize('provide commit message', "Please provide a commit message"),
             ignoreFocusOut: true
         });
-    };
+    }
 
     export async function confirmDiscardAllChanges(this: void): Promise<boolean> {
         const message = localize('confirm discard all', "Are you sure you want to discard ALL changes?");
@@ -500,8 +487,7 @@ export namespace interaction {
     }
 
     export async function confirmDiscardChanges(discardFilesnames: string[], addedFilenames: string[]): Promise<boolean> {
-        let message: string;
-        let addedMessage: string = "";
+        let addedMessage = "";
         if (addedFilenames.length > 0) {
             if (addedFilenames.length === 1) {
                 addedMessage = localize('and forget', "\n\n(and forget added file '{0}')", path.basename(addedFilenames[0]));
@@ -511,6 +497,7 @@ export namespace interaction {
             }
         }
 
+        let message: string;
         if (discardFilesnames.length === 1) {
             message = localize('confirm discard', "Are you sure you want to discard changes to '{0}'?{1}", path.basename(discardFilesnames[0]), addedMessage);
         }
@@ -540,9 +527,7 @@ export namespace interaction {
     }
 
     export async function confirmCommitWorkingGroup(): Promise<boolean> {
-        let message: string;
-        message = localize('confirm commit working group', "There are no staged changes, do you want to commit working changes?\n");
-
+        const message = localize('confirm commit working group', "There are no staged changes, do you want to commit working changes?\n");
         const respOpt = localize('confirm', "Confirm");
         const choice = await window.showWarningMessage(message, { modal: true }, respOpt);
         return choice === respOpt;
@@ -581,7 +566,7 @@ export namespace interaction {
         }
     }
 
-    export function errorUntrackedFilesDiffer(filenames: string[]) {
+    export function errorUntrackedFilesDiffer(filenames: string[]) : void {
         const fileList = humanise.formatFilesAsBulletedList(filenames);
         const message = localize('untracked files differ', "Merge failed!\n\nUntracked files in your working directory would be overwritten by files of the same name from the merge revision:\n\n{0}\n\nEither track these files, move them, or delete them before merging.", fileList);
         window.showErrorMessage(message, { modal: true });
@@ -608,7 +593,9 @@ class RefItem implements RunnableQuickPickItem {
         if (this.commit.name) return this.commit.name;
         else return '';
     }
-    run() { }
+    run() {
+        // do nothing.
+    }
 }
 
 class CommitItem implements RunnableQuickPickItem {
@@ -619,7 +606,9 @@ class CommitItem implements RunnableQuickPickItem {
     }
     get detail() { return `${this.commit.hash}(${this.shortHash}) `; }
     get description() { return this.commit.message; }
-    run() { }
+    run() {
+        // do nothing.
+    }
 }
 
 class LogEntryItem extends CommitItem {
@@ -629,9 +618,8 @@ class LogEntryItem extends CommitItem {
     protected get age(): string {
         return humanise.ageFromNow(this.commit.date);
     }
-    get description() {
-        let scope: string = "";
-        scope = '\u2014 ' + this.commit.branch;
+    get description() : string {
+        const scope = '\u2014 ' + this.commit.branch;
         return `${NBSP}${BULLET}${NBSP}${NBSP}#${this.commit.hash}${scope}`;
     }
     get label() { return this.commit.message; }
@@ -714,6 +702,6 @@ export interface LogMenuAPI {
     getBranchName: () => string | undefined;
     getCommitDetails: (revision: string) => Promise<CommitDetails>;
     getLogEntries(options: LogEntriesOptions): Promise<Commit[]>;
-    diffToLocal: (file: IFileStatus, commit: CommitDetails) => any,
+    // diffToLocal: (file: IFileStatus, commit: CommitDetails) => any,
     diffToParent: (file: IFileStatus, commit: CommitDetails) => any,
 }

@@ -147,9 +147,10 @@ class SyncStatusBar {
                 return { icon: '$(stop)', message: `${localize('remote error', 'Remote error')}: ${autoInOut.error}`, status: AutoInOutStatuses.Error };
 
             case AutoInOutStatuses.Disabled:
-            default:
+            default: {
                 const message = localize('sync', 'Sync');
                 return { icon: '$(check)', message, status: AutoInOutStatuses.Disabled };
+            }
         }
     }
 
@@ -158,7 +159,7 @@ class SyncStatusBar {
             return undefined;
         }
 
-        let autoInOut = this.describeAutoInOutStatus();
+        const autoInOut = this.describeAutoInOutStatus();
         let icon = autoInOut.icon;
         let text = '';
         let command = 'fossil.pull'; // pull in autoupdate context performs an 'update'

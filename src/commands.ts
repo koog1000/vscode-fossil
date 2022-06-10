@@ -186,17 +186,17 @@ export class CommandCenter {
 
     @command('fossil.clone')
     async clone(): Promise<void> {
-        var url = await interaction.inputRepoUrl();
+        let url = await interaction.inputRepoUrl();
         if (!url) {
             return;
         }
         const username = await interaction.inputCloneUser();
-        var userauth: string | undefined;
+        let userauth: string | undefined;
         if (username) {
             userauth = await interaction.inputCloneUserAuth();
         }
         if (userauth){
-            const regex = (url.search('@') < 0) ? /(^.+\:\/\/)(.+)/ : /(^.+\:\/\/).*@(.+)/
+            const regex = (url.search('@') < 0) ? /(^.+:\/\/)(.+)/ : /(^.+:\/\/).*@(.+)/
             const match = url.match(regex);
             if(match){
                 url = match[1] + username + ':' + userauth + '@' + match[2] as FossilURI
@@ -282,7 +282,7 @@ export class CommandCenter {
             // a resource group proxy object?
             const [resourceGroup] = resources;
             if (isResourceGroup(resourceGroup)) {
-                const groupId = resourceGroup.id
+                // const groupId = resourceGroup.id
                 const resources = resourceGroup.resourceStates as Resource[];
                 return this.openFile(...resources);
             }
@@ -329,14 +329,14 @@ export class CommandCenter {
             // a resource group proxy object?
             const [resourceGroup] = resources;
             if (isResourceGroup(resourceGroup)) {
-                const groupId = resourceGroup.id;
+                // const groupId = resourceGroup.id;
                 const resources = resourceGroup.resourceStates as Resource[];
                 return this.openChange(...resources);
             }
         }
 
         const preview = resources.length === 1 ? undefined : false;
-        for (let resource of resources) {
+        for (const resource of resources) {
             await this._openResource(resource, preview, true, false);
         }
     }
@@ -689,16 +689,15 @@ export class CommandCenter {
 
     @command('fossil.update', { repository: true })
     async update(repository: Repository): Promise<void> {
-        let refs: Ref[];
-        let unclean = false;
+        const unclean = false;
 
         // branches/tags
-        if (await interaction.checkThenWarnOutstandingMerge(repository, WarnScenario.Update) ||
+        if (await interaction.checkThenWarnOutstandingMerge(repository) ||
             await interaction.checkThenErrorUnclean(repository, WarnScenario.Update)) {
             this.focusScm();
             return;
         }
-        refs = await repository.getRefs();
+        const refs: Ref[] = await repository.getRefs();
 
         const choice = await interaction.pickUpdateRevision(refs, unclean);
 
@@ -709,16 +708,15 @@ export class CommandCenter {
 
     @command('fossil.branchChange', { repository: true })
     async branchChange(repository: Repository): Promise<void> {
-        let refs: Ref[];
-        let unclean = false;
+        const unclean = false;
 
         // branches/tags
-        if (await interaction.checkThenWarnOutstandingMerge(repository, WarnScenario.Update)) {
+        if (await interaction.checkThenWarnOutstandingMerge(repository)) {
             this.focusScm();
             return;
         }
         await interaction.checkThenWarnUnclean(repository, WarnScenario.Update)
-        refs = await repository.getRefs();
+        const refs: Ref[] = await repository.getRefs();
 
         const choice = await interaction.pickUpdateRevision(refs, unclean);
 
@@ -742,7 +740,7 @@ export class CommandCenter {
             if (e instanceof FossilError && e.fossilErrorCode === FossilErrorCodes.BranchAlreadyExists) {
                 const action = await interaction.warnBranchAlreadyExists(name);
                 if (action === BranchExistsAction.Reopen) {
-                    await repository.branch(name, { allowBranchReuse: true });
+                    await repository.branch(name);
                 }
                 else if (action === BranchExistsAction.UpdateTo) {
                     await repository.update(name);
@@ -765,8 +763,8 @@ export class CommandCenter {
     }
 
     @command('fossil.mergeWithLocal', { repository: true })
-    async mergeWithLocal(repository: Repository) {
-        if (await interaction.checkThenWarnOutstandingMerge(repository, WarnScenario.Merge) ||
+    async mergeWithLocal(repository: Repository) : Promise<void> {
+        if (await interaction.checkThenWarnOutstandingMerge(repository) ||
             await interaction.checkThenErrorUnclean(repository, WarnScenario.Merge)) {
             this.focusScm();
             return;
@@ -781,8 +779,8 @@ export class CommandCenter {
     }
 
     @command('fossil.mergeHeads', { repository: true })
-    async mergeHeads(repository: Repository) {
-        if (await interaction.checkThenWarnOutstandingMerge(repository, WarnScenario.Merge) ||
+    async mergeHeads(repository: Repository) : Promise<void> {
+        if (await interaction.checkThenWarnOutstandingMerge(repository) ||
             await interaction.checkThenErrorUnclean(repository, WarnScenario.Merge)) {
             this.focusScm();
             return;
@@ -858,33 +856,33 @@ export class CommandCenter {
             getBranchName: () => repository.currentBranch && repository.currentBranch.name,
             getCommitDetails: (revision: string) => repository.getCommitDetails(revision),
             getLogEntries: (options: LogEntriesOptions) => repository.getLogEntries(options),
-            diffToLocal: (file: IFileStatus, commit: CommitDetails) => { },
+            // diffToLocal: (_file: IFileStatus, _commit: CommitDetails) => { },
             diffToParent: (file: IFileStatus, commit: CommitDetails) => this.diffFile(repository, commit.parent1, commit.hash, file)
         }
     }
 
     @command('fossil.log', { repository: true })
-    async log(repository: Repository) {
-        interaction.presentLogSourcesMenu(this.createLogMenuAPI(repository));
+    async log(repository: Repository): Promise<void> {
+        await interaction.presentLogSourcesMenu(this.createLogMenuAPI(repository));
     }
 
     @command('fossil.logBranch', { repository: true })
-    async logBranch(repository: Repository) {
-        interaction.presentLogMenu(CommitSources.Branch, { }, this.createLogMenuAPI(repository));
+    async logBranch(repository: Repository): Promise<void> {
+        await interaction.presentLogMenu(CommitSources.Branch, { }, this.createLogMenuAPI(repository));
     }
 
     @command('fossil.logDefault', { repository: true })
-    async logDefault(repository: Repository) {
-        interaction.presentLogMenu(CommitSources.Branch, { }, this.createLogMenuAPI(repository));
+    async logDefault(repository: Repository): Promise<void> {
+        await interaction.presentLogMenu(CommitSources.Branch, { }, this.createLogMenuAPI(repository));
     }
 
     @command('fossil.logRepo', { repository: true })
-    async logRepo(repository: Repository) {
-        interaction.presentLogMenu(CommitSources.Repo, {}, this.createLogMenuAPI(repository));
+    async logRepo(repository: Repository) : Promise<void> {
+        await interaction.presentLogMenu(CommitSources.Repo, {}, this.createLogMenuAPI(repository));
     }
 
     @command('fossil.fileLog')
-    async fileLog(uri?: Uri) {
+    async fileLog(uri?: Uri) : Promise<void> {
         if (!uri) {
             if (window.activeTextEditor) {
                 uri = window.activeTextEditor.document.uri;
@@ -913,7 +911,7 @@ export class CommandCenter {
     }
 
     @command('fossil.revertChange')
-    async revertChange(uri: Uri, changes: LineChange[], index: number) {
+    async revertChange(uri: Uri, changes: LineChange[], index: number) : Promise<void> {
         if (!uri) {
             return;
         }
@@ -926,7 +924,7 @@ export class CommandCenter {
         textEditor.selections = [new Selection(firstStagedLine, 0, firstStagedLine, 0)];
     }
 
-    private async diffFile(repository: Repository, rev1: string, rev2: string, file: IFileStatus) {
+    private async diffFile(repository: Repository, rev1: string, rev2: string, file: IFileStatus) : Promise<void> {
         const uri = repository.toUri(file.path);
         const left = uri.with({ scheme: 'fossil', query: rev1 });
         const right = uri.with({ scheme: 'fossil', query: rev2 });

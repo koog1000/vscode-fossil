@@ -5,8 +5,6 @@
  *--------------------------------------------------------------------------------------------*/
 
 import { Event } from 'vscode';
-import { dirname } from 'path';
-import * as fs from 'fs/promises';
 
 export interface IDisposable {
     dispose(): void;
@@ -78,8 +76,8 @@ export function partition<T>(array: T[], fn: (el: T, i: number, ary: T[]) => boo
         }
         return result;
     }, <[T[], T[]]>[[], []]);
-};
+}
 
 export async function delay(millis: number): Promise<any> {
-    return new Promise((c, e) => setTimeout(c, millis));
+    return new Promise((c, _e) => setTimeout(c, millis));
 }

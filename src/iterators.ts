@@ -8,7 +8,7 @@
 
 function* filter<T>(it: IterableIterator<T>, condition: (t: T, i: number) => boolean): IterableIterator<T> {
     let i = 0;
-    for (let t of it) {
+    for (const t of it) {
         if (condition(t, i++)) {
             yield t;
         }
@@ -17,7 +17,7 @@ function* filter<T>(it: IterableIterator<T>, condition: (t: T, i: number) => boo
 
 function* map<T, R>(it: IterableIterator<T>, fn: (t: T, i: number) => R): IterableIterator<R> {
     let i = 0;
-    for (let t of it) {
+    for (const t of it) {
         yield fn(t, i++);
     }
 }
