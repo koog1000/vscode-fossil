@@ -8,26 +8,26 @@ import * as path from 'path';
 import * as cp from 'child_process';
 import * as fs from 'fs/promises';
 import { appendFileSync, existsSync, writeFileSync } from 'fs';
-import { groupBy, IDisposable, toDisposable, dispose } from "./util";
-import { EventEmitter, Event, workspace, window, OutputChannel } from "vscode";
+import { groupBy, IDisposable, toDisposable, dispose } from './util';
+import { EventEmitter, Event, workspace, window, OutputChannel } from 'vscode';
 import { interaction } from './interaction';
 
 type Distinct<T, DistinctName> = T & { __TYPE__: DistinctName };
 /** path to .fossil */
-export type FossilPath = Distinct<string, "path to .fossil">;
+export type FossilPath = Distinct<string, 'path to .fossil'>;
 /** cwd for executing fossil */
-export type FossilCWD = Distinct<string, "cwd for executing fossil">;
+export type FossilCWD = Distinct<string, 'cwd for executing fossil'>;
 /** local root */
-export type FossilRoot = Distinct<FossilCWD, "local root">;
+export type FossilRoot = Distinct<FossilCWD, 'local root'>;
 /** URI for the close
  *
  * * http[s]://[userid[:password]@]host[:port][/path]
  * * ssh://[userid@]host[:port]/path/to/repo.fossil[?fossil=path/fossil.exe]
  * * [file://]path/to/repo.fossil
  */
- export type FossilURI = Distinct<string, "Fossil URI">;
- /** https://fossil-scm.org/home/doc/trunk/www/checkin_names.wiki */
- export type FossilCheckin = Distinct<string, "Fossil Check-in Name">;
+export type FossilURI = Distinct<string, 'Fossil URI'>;
+/** https://fossil-scm.org/home/doc/trunk/www/checkin_names.wiki */
+export type FossilCheckin = Distinct<string, 'Fossil Check-in Name'>;
 
 export interface IFossil {
     path: string;
@@ -56,7 +56,6 @@ export interface IMergeResult {
 export interface IRepoStatus {
     isMerge: boolean;
     parents: Ref[];
-
 }
 
 export interface IFileStatus {
@@ -73,7 +72,7 @@ export interface ICommitDetails {
 export enum RefType {
     Branch,
     Tag,
-    Commit
+    Commit,
 }
 
 export interface Ref {
@@ -88,7 +87,7 @@ export interface Path {
 }
 
 export interface FossilFindAttemptLogger {
-    log(path: string) : void;
+    log(path: string): void;
 }
 
 interface FossilSpawnOptions extends cp.SpawnOptionsWithoutStdio {
@@ -96,14 +95,16 @@ interface FossilSpawnOptions extends cp.SpawnOptionsWithoutStdio {
 }
 
 export class FossilFinder {
-    constructor(private logger: FossilFindAttemptLogger) { }
+    constructor(private logger: FossilFindAttemptLogger) {}
 
     private logAttempt(path: string) {
         this.logger.log(path);
     }
 
     public async find(hint?: string): Promise<IFossil> {
-        const first = hint ? this.findSpecificFossil(hint) : Promise.reject<IFossil>(null);
+        const first = hint
+            ? this.findSpecificFossil(hint)
+            : Promise.reject<IFossil>(null);
 
         return first.then(undefined, () => this.findSpecificFossil('fossil'));
     }
@@ -114,7 +115,7 @@ export class FossilFinder {
             return match[1];
         }
 
-        return "?";
+        return '?';
     }
 
     private findSpecificFossil(path: string): Promise<IFossil> {
@@ -129,10 +130,10 @@ export class FossilFinder {
                     const output = Buffer.concat(buffers).toString('utf8');
                     return c({
                         path,
-                        version: this.parseVersion(output)
+                        version: this.parseVersion(output),
                     });
                 }
-                return e(new Error('Not found'))
+                return e(new Error('Not found'));
             });
         });
     }
@@ -144,15 +145,26 @@ export interface IExecutionResult {
     stderr: string;
 }
 
-export async function exec(child: cp.ChildProcess, no_err_check?: boolean): Promise<IExecutionResult> {
+export async function exec(
+    child: cp.ChildProcess,
+    no_err_check?: boolean
+): Promise<IExecutionResult> {
     const disposables: IDisposable[] = [];
 
-    const once = (ee: NodeJS.EventEmitter, name: string, fn: (...args: any[]) => void ) => {
+    const once = (
+        ee: NodeJS.EventEmitter,
+        name: string,
+        fn: (...args: any[]) => void
+    ) => {
         ee.once(name, fn);
         disposables.push(toDisposable(() => ee.removeListener(name, fn)));
     };
 
-    const on = (ee: NodeJS.EventEmitter, name: string, fn: (...args: any[]) => void) => {
+    const on = (
+        ee: NodeJS.EventEmitter,
+        name: string,
+        fn: (...args: any[]) => void
+    ) => {
         ee.on(name, fn);
         disposables.push(toDisposable(() => ee.removeListener(name, fn)));
     };
@@ -166,13 +178,19 @@ export async function exec(child: cp.ChildProcess, no_err_check?: boolean): Prom
             const buffers: string[] = [];
             async function checkForPrompt(input: any) {
                 buffers.push(input);
-                const inputStr: string = input.toString()
+                const inputStr: string = input.toString();
                 if (inputStr) {
-                    if ((inputStr.endsWith("? ") || inputStr.endsWith("?") ||
-                        inputStr.endsWith(": ") || inputStr.endsWith(":")) &&
-                        !no_err_check) {
-                        const resp = await interaction.inputPrompt(buffers.toString())
-                        child.stdin!.write(resp + '\n')
+                    if (
+                        (inputStr.endsWith('? ') ||
+                            inputStr.endsWith('?') ||
+                            inputStr.endsWith(': ') ||
+                            inputStr.endsWith(':')) &&
+                        !no_err_check
+                    ) {
+                        const resp = await interaction.inputPrompt(
+                            buffers.toString()
+                        );
+                        child.stdin!.write(resp + '\n');
                     }
                 }
             }
@@ -183,7 +201,7 @@ export async function exec(child: cp.ChildProcess, no_err_check?: boolean): Prom
             const buffers: string[] = [];
             on(child.stderr!, 'data', b => buffers.push(b));
             once(child.stderr!, 'close', () => c(buffers.join('')));
-        })
+        }),
     ]);
 
     dispose(disposables);
@@ -207,7 +225,6 @@ export class FossilUndoDetails {
 }
 
 export class FossilError {
-
     error?: Error;
     message: string;
     stdout?: string;
@@ -222,8 +239,7 @@ export class FossilError {
         if (data.error) {
             this.error = data.error;
             this.message = data.error.message;
-        }
-        else {
+        } else {
             this.error = void 0;
             this.message = '';
         }
@@ -237,13 +253,20 @@ export class FossilError {
     }
 
     toString(): string {
-        let result = this.message + ' ' + JSON.stringify({
-            exitCode: this.exitCode,
-            fossilErrorCode: this.fossilErrorCode,
-            fossilCommand: this.fossilCommand,
-            stdout: this.stdout,
-            stderr: this.stderr
-        }, [], 2);
+        let result =
+            this.message +
+            ' ' +
+            JSON.stringify(
+                {
+                    exitCode: this.exitCode,
+                    fossilErrorCode: this.fossilErrorCode,
+                    fossilCommand: this.fossilCommand,
+                    stdout: this.stdout,
+                    stderr: this.stderr,
+                },
+                [],
+                2
+            );
 
         if (this.error) {
             result += (<any>this.error).stack;
@@ -272,17 +295,18 @@ export const FossilErrorCodes = {
     NoUndoInformationAvailable: 'NoUndoInformationAvailable',
     UntrackedFilesDiffer: 'UntrackedFilesDiffer',
     DefaultRepositoryNotConfigured: 'DefaultRepositoryNotConfigured',
-    OperationMustBeforced: 'OperationMustBeforced'
+    OperationMustBeforced: 'OperationMustBeforced',
 };
 
 export class Fossil {
-
     private fossilPath: string;
     private outputChannel: OutputChannel;
     private openRepository: Repository | undefined;
 
     private _onOutput = new EventEmitter<string>();
-    get onOutput(): Event<string> { return this._onOutput.event; }
+    get onOutput(): Event<string> {
+        return this._onOutput.event;
+    }
 
     constructor(options: IFossilOptions) {
         this.fossilPath = options.fossilPath;
@@ -300,16 +324,22 @@ export class Fossil {
 
     async clone(uri: FossilURI, fossilPath: FossilPath): Promise<FossilRoot> {
         const fossilRoot = path.dirname(fossilPath) as FossilRoot;
-        await fs.mkdir(fossilRoot, {recursive: true});
+        await fs.mkdir(fossilRoot, { recursive: true });
         await this.exec(fossilRoot, ['clone', uri, fossilPath, '--verbose']);
         return fossilRoot;
     }
 
-    async openClone(fossilPath: FossilPath, workdir: FossilRoot): Promise<void> {
+    async openClone(
+        fossilPath: FossilPath,
+        workdir: FossilRoot
+    ): Promise<void> {
         await this.exec(workdir, ['open', fossilPath]);
     }
 
-    async openCloneForce(fossilPath: FossilPath, parentPath: FossilRoot): Promise<void> {
+    async openCloneForce(
+        fossilPath: FossilPath,
+        parentPath: FossilRoot
+    ): Promise<void> {
         await this.exec(parentPath, ['open', fossilPath, '--force']);
     }
 
@@ -320,25 +350,30 @@ export class Fossil {
      */
     async getRepositoryRoot(anypath: string): Promise<FossilRoot> {
         const isFile = (await fs.stat(anypath)).isFile();
-        const cwd = (isFile ? path.dirname(anypath) : anypath) as FossilCWD; 
+        const cwd = (isFile ? path.dirname(anypath) : anypath) as FossilCWD;
         const result = await this.exec(cwd, ['stat']);
         const root = result.stdout.match(/local-root:\s*(.+)\/\s/);
         if (root) return root[1] as FossilRoot;
-        return "" as FossilRoot
+        return '' as FossilRoot;
     }
 
-    async exec(cwd: FossilCWD, args: string[], options: any = {}): Promise<IExecutionResult> {
+    async exec(
+        cwd: FossilCWD,
+        args: string[],
+        options: any = {}
+    ): Promise<IExecutionResult> {
         options = { cwd, ...options };
         try {
             const result = await this._exec(args, options);
-            return result
-        }
-        catch (err) {
-            if (err instanceof FossilError &&
+            return result;
+        } catch (err) {
+            if (
+                err instanceof FossilError &&
                 err.fossilErrorCode !== FossilErrorCodes.NoSuchFile &&
                 err.fossilErrorCode !== FossilErrorCodes.NotAFossilRepository &&
-                err.fossilErrorCode !== FossilErrorCodes.OperationMustBeforced) {
-                const openLog = await interaction.errorPromptOpenLog(err)
+                err.fossilErrorCode !== FossilErrorCodes.OperationMustBeforced
+            ) {
+                const openLog = await interaction.errorPromptOpenLog(err);
                 if (openLog) {
                     this.outputChannel.show();
                 }
@@ -347,25 +382,35 @@ export class Fossil {
         }
     }
 
-    private async _exec(args: string[], options: FossilSpawnOptions): Promise<IExecutionResult> {
+    private async _exec(
+        args: string[],
+        options: FossilSpawnOptions
+    ): Promise<IExecutionResult> {
         const startTimeHR = process.hrtime();
         const child = this.spawn(args, options);
-        const result: IExecutionResult = await exec(child, args.includes('cat'));
+        const result: IExecutionResult = await exec(
+            child,
+            args.includes('cat')
+        );
 
         const durationHR = process.hrtime(startTimeHR);
-        this.log(`fossil ${args.join(' ')}: ${Math.floor(msFromHighResTime(durationHR))}ms\n`);
+        this.log(
+            `fossil ${args.join(' ')}: ${Math.floor(
+                msFromHighResTime(durationHR)
+            )}ms\n`
+        );
 
         if (result.exitCode) {
             let fossilErrorCode: string | undefined = void 0;
 
             if (/Authentication failed/.test(result.stderr)) {
                 fossilErrorCode = FossilErrorCodes.AuthenticationFailed;
-            }
-            else if (/not within an open checkout/.test(result.stderr) ||
-                /specify the repository database/.test(result.stderr)) {
+            } else if (
+                /not within an open checkout/.test(result.stderr) ||
+                /specify the repository database/.test(result.stderr)
+            ) {
                 fossilErrorCode = FossilErrorCodes.NotAFossilRepository;
-            }
-            else if (/no such file/.test(result.stderr)) {
+            } else if (/no such file/.test(result.stderr)) {
                 fossilErrorCode = FossilErrorCodes.NoSuchFile;
             } else if (/--force\b/.test(result.stderr)) {
                 fossilErrorCode = FossilErrorCodes.OperationMustBeforced;
@@ -375,20 +420,25 @@ export class Fossil {
                 this.log(`${result.stderr}\n`);
             }
 
-            return Promise.reject<IExecutionResult>(new FossilError({
-                message: 'Failed to execute fossil',
-                stdout: result.stdout,
-                stderr: result.stderr,
-                exitCode: result.exitCode,
-                fossilErrorCode,
-                fossilCommand: args[0]
-            }));
+            return Promise.reject<IExecutionResult>(
+                new FossilError({
+                    message: 'Failed to execute fossil',
+                    stdout: result.stdout,
+                    stderr: result.stderr,
+                    exitCode: result.exitCode,
+                    fossilErrorCode,
+                    fossilCommand: args[0],
+                })
+            );
         }
 
         return result;
     }
 
-    spawn(args: string[], options: cp.SpawnOptionsWithoutStdio): cp.ChildProcess {
+    spawn(
+        args: string[],
+        options: cp.SpawnOptionsWithoutStdio
+    ): cp.ChildProcess {
         if (!this.fossilPath) {
             throw new Error('fossil could not be found in the system.');
         }
@@ -401,8 +451,8 @@ export class Fossil {
             ...process.env,
             ...options.env,
             LC_ALL: 'en_US',
-            LANG: 'en_US.UTF-8'
-        }
+            LANG: 'en_US.UTF-8',
+        };
 
         return cp.spawn(this.fossilPath, args, options);
     }
@@ -429,13 +479,9 @@ export interface CommitDetails extends Commit {
 }
 
 export class Repository {
-
     private status_msg = '';
 
-    constructor(
-        private _fossil: Fossil,
-        private repositoryRoot: FossilRoot
-    ) { }
+    constructor(private _fossil: Fossil, private repositoryRoot: FossilRoot) {}
 
     get fossil(): Fossil {
         return this._fossil;
@@ -449,7 +495,12 @@ export class Repository {
         return await this.fossil.exec(this.repositoryRoot, args, options);
     }
 
-    async config(scope: string, key: string, value: string, options: any): Promise<string> {
+    async config(
+        scope: string,
+        key: string,
+        value: string,
+        options: any
+    ): Promise<string> {
         const args = ['config'];
 
         if (scope) {
@@ -495,13 +546,11 @@ export class Repository {
         try {
             const result = await this.exec(args);
             return result.stdout + result.stderr;
-        }
-        catch (err) {
+        } catch (err) {
             if (err instanceof FossilError && err.stderr) {
-                return err.stdout + err.stderr
-            }
-            else {
-                return 'Unknown Err'
+                return err.stdout + err.stderr;
+            } else {
+                return 'Unknown Err';
             }
         }
     }
@@ -520,7 +569,12 @@ export class Repository {
         await this.exec(args);
     }
 
-    async commit(message: string, opts: { fileList: string[], user?: string | undefined } = Object.create(null)): Promise<void> {
+    async commit(
+        message: string,
+        opts: { fileList: string[]; user?: string | undefined } = Object.create(
+            null
+        )
+    ): Promise<void> {
         const disposables: IDisposable[] = [];
         const args = ['commit'];
 
@@ -538,16 +592,17 @@ export class Repository {
 
         try {
             await this.exec(args);
-        }
-        catch (err) {
-            if (err instanceof FossilError && /partial commit of a merge/.test(err.stderr || '')) {
+        } catch (err) {
+            if (
+                err instanceof FossilError &&
+                /partial commit of a merge/.test(err.stderr || '')
+            ) {
                 err.fossilErrorCode = FossilErrorCodes.UnmergedChanges;
                 throw err;
             }
 
             throw err;
-        }
-        finally {
+        } finally {
             dispose(disposables);
         }
     }
@@ -556,14 +611,18 @@ export class Repository {
         const args = ['branch', 'new', name];
         const currBranch = await this.getCurrentBranch();
         if (currBranch && currBranch.name) {
-            args.push(currBranch.name)
+            args.push(currBranch.name);
         }
 
         try {
             await this.exec(args);
-        }
-        catch (err) {
-            if (err instanceof FossilError && /a branch of the same name already exists/.test(err.stderr || '')) {
+        } catch (err) {
+            if (
+                err instanceof FossilError &&
+                /a branch of the same name already exists/.test(
+                    err.stderr || ''
+                )
+            ) {
                 err.fossilErrorCode = FossilErrorCodes.BranchAlreadyExists;
             }
 
@@ -574,7 +633,9 @@ export class Repository {
     async revert(paths: string[]): Promise<void> {
         const pathsByGroup = groupBy(paths, p => path.dirname(p));
         const groups = Object.keys(pathsByGroup).map(k => pathsByGroup[k]);
-        const tasks = groups.map(paths => () => this.exec(['revert'].concat(paths))); // -C = no-backup
+        const tasks = groups.map(
+            paths => () => this.exec(['revert'].concat(paths))
+        ); // -C = no-backup
 
         for (const task of tasks) {
             await task();
@@ -584,7 +645,9 @@ export class Repository {
     async remove(paths: string[]): Promise<void> {
         const pathsByGroup = groupBy(paths, p => path.dirname(p));
         const groups = Object.keys(pathsByGroup).map(k => pathsByGroup[k]);
-        const tasks = groups.map(paths => () => this.exec(['rm'].concat(paths)));
+        const tasks = groups.map(
+            paths => () => this.exec(['rm'].concat(paths))
+        );
 
         for (const task of tasks) {
             await task();
@@ -596,16 +659,16 @@ export class Repository {
     }
 
     async ignore(paths: string[]): Promise<void> {
-        const ignore_file = this.repositoryRoot + '/.fossil-settings/ignore-glob'
+        const ignore_file =
+            this.repositoryRoot + '/.fossil-settings/ignore-glob';
         if (existsSync(ignore_file)) {
-            appendFileSync(ignore_file, paths.join('\n') + '\n')
-        }
-        else {
-            await fs.mkdir(this.repositoryRoot + '/.fossil-settings/')
+            appendFileSync(ignore_file, paths.join('\n') + '\n');
+        } else {
+            await fs.mkdir(this.repositoryRoot + '/.fossil-settings/');
             writeFileSync(ignore_file, paths.join('\n') + '\n');
-            this.add([ignore_file])
+            this.add([ignore_file]);
         }
-        const document = await workspace.openTextDocument(ignore_file)
+        const document = await workspace.openTextDocument(ignore_file);
         window.showTextDocument(document);
     }
 
@@ -618,28 +681,35 @@ export class Repository {
 
         try {
             const result = await this.exec(args);
-            const match = /back to revision (\d+) \(undo (.*)\)/.exec(result.stdout);
+            const match = /back to revision (\d+) \(undo (.*)\)/.exec(
+                result.stdout
+            );
 
             if (!match) {
                 throw new FossilError({
-                    message: `Unexpected undo result: ${JSON.stringify(result.stdout)}`,
+                    message: `Unexpected undo result: ${JSON.stringify(
+                        result.stdout
+                    )}`,
                     stdout: result.stdout,
                     stderr: result.stderr,
                     exitCode: result.exitCode,
-                    fossilCommand: "undo"
-                })
+                    fossilCommand: 'undo',
+                });
             }
 
             const [_, revision, kind] = match;
 
             return {
                 revision: parseInt(revision),
-                kind
+                kind,
             };
-        }
-        catch (error) {
-            if (error instanceof FossilError && /nothing to undo/.test(error.stderr || '')) {
-                error.fossilErrorCode = FossilErrorCodes.NoUndoInformationAvailable;
+        } catch (error) {
+            if (
+                error instanceof FossilError &&
+                /nothing to undo/.test(error.stderr || '')
+            ) {
+                error.fossilErrorCode =
+                    FossilErrorCodes.NoUndoInformationAvailable;
             }
             throw error;
         }
@@ -649,13 +719,12 @@ export class Repository {
         try {
             return {
                 message: await this.getLastCommitMessage(),
-                affectedFiles: this.parseStatusLines(this.status_msg)
-            }
-        }
-        catch (e) {
+                affectedFiles: this.parseStatusLines(this.status_msg),
+            };
+        } catch (e) {
             return {
-                message: "",
-                affectedFiles: []
+                message: '',
+                affectedFiles: [],
             };
         }
     }
@@ -669,11 +738,13 @@ export class Repository {
 
         try {
             await this.exec(args);
-        }
-        catch (err) {
+        } catch (err) {
             // In case there are merge conflicts to be resolved, fossil reset will output
             // some "needs merge" data. We try to get around that.
-            if (err instanceof FossilError && /([^:]+: needs merge\n)+/m.test(err.stdout || '')) {
+            if (
+                err instanceof FossilError &&
+                /([^:]+: needs merge\n)+/m.test(err.stdout || '')
+            ) {
                 return;
             }
 
@@ -696,9 +767,11 @@ export class Repository {
 
         try {
             await this.exec(args);
-        }
-        catch (err) {
-            if (err instanceof FossilError && /would fork/.test(err.stderr || '')) {
+        } catch (err) {
+            if (
+                err instanceof FossilError &&
+                /would fork/.test(err.stderr || '')
+            ) {
                 err.fossilErrorCode = FossilErrorCodes.PushCreatesNewRemoteHead;
             }
 
@@ -710,7 +783,7 @@ export class Repository {
         const untrackedFilesPattern = /([^:]+): untracked file differs\n/g;
         let match: RegExpExecArray | null;
         const files: string[] = [];
-        while (match = untrackedFilesPattern.exec(stderr)) {
+        while ((match = untrackedFilesPattern.exec(stderr))) {
             if (match !== null) {
                 files.push(match[1]);
             }
@@ -722,21 +795,24 @@ export class Repository {
         try {
             await this.exec(['merge', revQuery]);
             return {
-                unresolvedCount: 0
-            }
-        }
-        catch (e) {
-            if (e instanceof FossilError && e.stderr && e.stderr.match(/untracked files in working directory differ/)) {
+                unresolvedCount: 0,
+            };
+        } catch (e) {
+            if (
+                e instanceof FossilError &&
+                e.stderr &&
+                e.stderr.match(/untracked files in working directory differ/)
+            ) {
                 e.fossilErrorCode = FossilErrorCodes.UntrackedFilesDiffer;
                 e.hgFilenames = this.parseUntrackedFilenames(e.stderr);
             }
 
             if (e instanceof FossilError && e.exitCode === 1) {
-                const match = (e.stdout || "").match(/(\d+) files unresolved/);
+                const match = (e.stdout || '').match(/(\d+) files unresolved/);
                 if (match) {
                     return {
-                        unresolvedCount: parseInt(match[1])
-                    }
+                        unresolvedCount: parseInt(match[1]),
+                    };
                 }
             }
 
@@ -758,7 +834,7 @@ export class Repository {
             const [_, hash] = match;
             refs.push({
                 type: RefType.Commit,
-                commit: hash
+                commit: hash,
             });
         }
         return refs;
@@ -766,23 +842,23 @@ export class Repository {
 
     async getLastCommitMessage(): Promise<string> {
         const message = this.status_msg;
-        const comment = message.match(/comment:\s+(.*)\(/)
+        const comment = message.match(/comment:\s+(.*)\(/);
         if (comment) return comment[1];
-        return "";
+        return '';
     }
 
     async getLastCommitAuthor(): Promise<string> {
         const message = this.status_msg;
-        const comment = message.match(/user:\s+(.*)\n/)
+        const comment = message.match(/user:\s+(.*)\n/);
         if (comment) return comment[1];
-        return "";
+        return '';
     }
 
     async getLastCommitDate(): Promise<string> {
         const message = this.status_msg;
-        const comment = message.match(/checkout:\s+(.*)\s(.*)\n/)
+        const comment = message.match(/checkout:\s+(.*)\s(.*)\n/);
         if (comment) return comment[2];
-        return "";
+        return '';
     }
 
     async getStatus(): Promise<string> {
@@ -794,37 +870,31 @@ export class Repository {
 
     parseStatusLines(status: string): IFileStatus[] {
         const result: IFileStatus[] = [];
-        const lines = status.split("\n");
+        const lines = status.split('\n');
 
         lines.forEach(line => {
             if (line.length > 0) {
-                if (line.startsWith("UPDATED_BY_MERGE")) {
+                if (line.startsWith('UPDATED_BY_MERGE')) {
                     const fileUri: string = line.substr(17).trim();
-                    result.push({ status: "M", path: fileUri });
-                }
-                else if (line.startsWith("ADDED_BY_MERGE")) {
+                    result.push({ status: 'M', path: fileUri });
+                } else if (line.startsWith('ADDED_BY_MERGE')) {
                     const fileUri: string = line.substr(15).trim();
-                    result.push({ status: "A", path: fileUri });
-                }
-                else if (line.startsWith("DELETED")) {
+                    result.push({ status: 'A', path: fileUri });
+                } else if (line.startsWith('DELETED')) {
                     const fileUri: string = line.substr(8).trim();
-                    result.push({ status: "R", path: fileUri });
-                }
-                else if (line.startsWith("EDITED")) {
+                    result.push({ status: 'R', path: fileUri });
+                } else if (line.startsWith('EDITED')) {
                     const fileUri: string = line.substr(7).trim();
-                    result.push({ status: "M", path: fileUri });
-                }
-                else if (line.startsWith("ADDED")) {
+                    result.push({ status: 'M', path: fileUri });
+                } else if (line.startsWith('ADDED')) {
                     const fileUri: string = line.substr(6).trim();
-                    result.push({ status: "A", path: fileUri });
-                }
-                else if (line.startsWith("MISSING")) {
+                    result.push({ status: 'A', path: fileUri });
+                } else if (line.startsWith('MISSING')) {
                     const fileUri: string = line.substr(8).trim();
-                    result.push({ status: "!", path: fileUri });
-                }
-                else if (line.startsWith("CONFLICT")) {
+                    result.push({ status: '!', path: fileUri });
+                } else if (line.startsWith('CONFLICT')) {
                     const fileUri: string = line.substr(9).trim();
-                    result.push({ status: "C", path: fileUri });
+                    result.push({ status: 'C', path: fileUri });
                 }
             }
         });
@@ -839,11 +909,11 @@ export class Repository {
 
     parseExtrasLines(status: string): IFileStatus[] {
         const result: IFileStatus[] = [];
-        const lines = status.split("\n");
+        const lines = status.split('\n');
         lines.forEach(line => {
             if (line.length > 0) {
                 const fileUri: string = line.trim();
-                result.push({ status: "?", path: fileUri });
+                result.push({ status: '?', path: fileUri });
             }
         });
         return result;
@@ -851,16 +921,24 @@ export class Repository {
 
     async getCurrentBranch(): Promise<Ref> {
         const message = this.status_msg;
-        const branch = message.match(/tags:\s+(.*)\b(.*)\n/)
-        const comment = message.match(/comment:\s+(.*)\(/)
+        const branch = message.match(/tags:\s+(.*)\b(.*)\n/);
+        const comment = message.match(/comment:\s+(.*)\(/);
         if (branch && comment) {
-            return { name: branch[1], commit: comment[1], type: RefType.Branch };
+            return {
+                name: branch[1],
+                commit: comment[1],
+                type: RefType.Branch,
+            };
         }
-        return { name: "", commit: "", type: RefType.Branch };
+        return { name: '', commit: '', type: RefType.Branch };
     }
 
-    async getLogEntries({ revQuery, filePath, limit }: LogEntryRepositoryOptions = {}): Promise<Commit[]> {
-        const args = ['timeline']
+    async getLogEntries({
+        revQuery,
+        filePath,
+        limit,
+    }: LogEntryRepositoryOptions = {}): Promise<Commit[]> {
+        const args = ['timeline'];
 
         if (revQuery) {
             args.push('before', revQuery);
@@ -873,13 +951,15 @@ export class Repository {
             args.push('-p', filePath);
         }
         args.push('--type', 'ci');
-        args.push('--format', '%H+++%d+++%b+++%a+++%c')
+        args.push('--format', '%H+++%d+++%b+++%a+++%c');
 
         const result = await this.exec(args);
-        const logEntries = result.stdout.trim().split('\n')
-            .filter(line => !!line && !line.startsWith("+++"))
+        const logEntries = result.stdout
+            .trim()
+            .split('\n')
+            .filter(line => !!line && !line.startsWith('+++'))
             .map((line: string): Commit => {
-                const parts = line.split("+++", 5);
+                const parts = line.split('+++', 5);
                 const [hash, date, branch, author, message] = parts;
                 return {
                     hash: hash as FossilCheckin,
@@ -887,20 +967,22 @@ export class Repository {
                     message: message,
                     author: author,
                     date: new Date(date),
-                }
+                };
             }) as Commit[];
         return logEntries;
     }
 
     async getParents(): Promise<string> {
-        const comment = this.status_msg.match(/parent:\s+(.*)\s(.*)\n/)
+        const comment = this.status_msg.match(/parent:\s+(.*)\s(.*)\n/);
         if (comment) return comment[1];
-        return "";
+        return '';
     }
 
     async getTags(): Promise<Ref[]> {
         const tagsResult = await this.exec(['tag', 'list']);
-        const tagRefs = tagsResult.stdout.trim().split('\n')
+        const tagRefs = tagsResult.stdout
+            .trim()
+            .split('\n')
             .filter(line => !!line)
             .map((line: string): Ref | null => {
                 return { name: line, commit: line, type: RefType.Tag };
@@ -912,12 +994,18 @@ export class Repository {
 
     async getBranches(): Promise<Ref[]> {
         const branchesResult = await this.exec(['branch']);
-        const branchRefs = branchesResult.stdout.trim().split('\n')
+        const branchRefs = branchesResult.stdout
+            .trim()
+            .split('\n')
             .filter(line => !!line)
             .map((line: string): Ref | null => {
                 const match = line.match(/\b(.+)$/);
                 if (match) {
-                    return { name: match[1], commit: match[1], type: RefType.Branch };
+                    return {
+                        name: match[1],
+                        commit: match[1],
+                        type: RefType.Branch,
+                    };
                 }
                 return null;
             })

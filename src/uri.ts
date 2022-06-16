@@ -27,6 +27,6 @@ export function toFossilUri(uri: Uri, checkin?: FossilCheckin): Uri {
     return uri.with({
         scheme: 'fossil',
         path: uri.path,
-        query: JSON.stringify(params)
+        query: JSON.stringify(params),
     });
 }

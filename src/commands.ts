@@ -4,20 +4,63 @@
  *  Licensed under the MIT License. See LICENSE.txt in the project root for license information.
  *--------------------------------------------------------------------------------------------*/
 
-import {Uri, commands, scm, Disposable, window, workspace, OutputChannel,
-        SourceControlResourceState, SourceControl, SourceControlResourceGroup,
-        TextDocumentShowOptions, ViewColumn, Selection} from 'vscode';
+import {
+    Uri,
+    commands,
+    scm,
+    Disposable,
+    window,
+    workspace,
+    OutputChannel,
+    SourceControlResourceState,
+    SourceControl,
+    SourceControlResourceGroup,
+    TextDocumentShowOptions,
+    ViewColumn,
+    Selection,
+} from 'vscode';
 import { LineChange, revertChanges } from './revert';
-import * as nls from "vscode-nls";
-import * as path from "path";
-import { Ref, Fossil, Commit, FossilError, FossilErrorCodes, IFileStatus, CommitDetails, FossilPath,FossilRoot, FossilURI } from "./fossilBase";
-import { Model } from "./model";
-import { Resource, Status, CommitOptions, CommitScope, MergeStatus, LogEntriesOptions, Repository } from "./repository"
-import { WorkingDirectoryGroup, StagingGroup, MergeGroup, UntrackedGroup, isResourceGroup } from "./resourceGroups";
-import { interaction, BranchExistsAction, WarnScenario, CommitSources, LogMenuAPI } from "./interaction";
-import { humanise } from "./humanise"
-import { partition } from "./util";
-import { toFossilUri } from "./uri";
+import * as nls from 'vscode-nls';
+import * as path from 'path';
+import {
+    Ref,
+    Fossil,
+    Commit,
+    FossilError,
+    FossilErrorCodes,
+    IFileStatus,
+    CommitDetails,
+    FossilPath,
+    FossilRoot,
+    FossilURI,
+} from './fossilBase';
+import { Model } from './model';
+import {
+    Resource,
+    Status,
+    CommitOptions,
+    CommitScope,
+    MergeStatus,
+    LogEntriesOptions,
+    Repository,
+} from './repository';
+import {
+    WorkingDirectoryGroup,
+    StagingGroup,
+    MergeGroup,
+    UntrackedGroup,
+    isResourceGroup,
+} from './resourceGroups';
+import {
+    interaction,
+    BranchExistsAction,
+    WarnScenario,
+    CommitSources,
+    LogMenuAPI,
+} from './interaction';
+import { humanise } from './humanise';
+import { partition } from './util';
+import { toFossilUri } from './uri';
 
 const localize = nls.loadMessageBundle();
 
@@ -39,7 +82,11 @@ const Commands: Command[] = [];
  * Decorator
  */
 function command(commandId: string, options: CommandOptions = {}): Function {
-    return (target: CommandCenter, key: string, descriptor: PropertyDescriptor) => {
+    return (
+        target: CommandCenter,
+        key: string,
+        descriptor: PropertyDescriptor
+    ) => {
         if (!(typeof descriptor.value === 'function')) {
             throw new Error('not supported');
         }
@@ -49,7 +96,7 @@ function command(commandId: string, options: CommandOptions = {}): Function {
 }
 
 export class CommandCenter {
-    [index: string]: any
+    [index: string]: any;
 
     private model: Model;
     private disposables: Disposable[];
@@ -61,15 +108,22 @@ export class CommandCenter {
     ) {
         this.model = model;
 
-        this.disposables = Commands.map(({ commandId, key, method, options }) => {
-            const command = this.createCommand(commandId, key, method, options);
+        this.disposables = Commands.map(
+            ({ commandId, key, method, options }) => {
+                const command = this.createCommand(
+                    commandId,
+                    key,
+                    method,
+                    options
+                );
 
-            // if (options.diff) {
-            //  return commands.registerDiffInformationCommand(commandId, command);
-            // } else {
-            return commands.registerCommand(commandId, command);
-            // }
-        });
+                // if (options.diff) {
+                //  return commands.registerDiffInformationCommand(commandId, command);
+                // } else {
+                return commands.registerCommand(commandId, command);
+                // }
+            }
+        );
     }
 
     @command('fossil.refresh', { repository: true })
@@ -82,8 +136,13 @@ export class CommandCenter {
         await this._openResource(resource, undefined, true, false);
     }
 
-    private async _openResource(resource: Resource | undefined, preview?: boolean, preserveFocus?: boolean, preserveSelection?: boolean): Promise<void> {
-        if(!resource) return;
+    private async _openResource(
+        resource: Resource | undefined,
+        preview?: boolean,
+        preserveFocus?: boolean,
+        preserveSelection?: boolean
+    ): Promise<void> {
+        if (!resource) return;
         const left = this.getLeftResource(resource);
         const right = this.getRightResource(resource);
         const title = this.getTitle(resource);
@@ -91,14 +150,18 @@ export class CommandCenter {
         const opts: TextDocumentShowOptions = {
             preserveFocus,
             preview,
-            viewColumn: ViewColumn.Active
+            viewColumn: ViewColumn.Active,
         };
 
         const activeTextEditor = window.activeTextEditor;
 
         // Check if active text editor has same path as other editor. we cannot compare via
         // URI.toString() here because the schemas can be different. Instead we just go by path.
-        if (preserveSelection && activeTextEditor && activeTextEditor.document.uri.path === right.path) {
+        if (
+            preserveSelection &&
+            activeTextEditor &&
+            activeTextEditor.document.uri.path === right.path
+        ) {
             opts.selection = activeTextEditor.selection;
         }
 
@@ -107,7 +170,13 @@ export class CommandCenter {
             await window.showTextDocument(document, opts);
             return;
         }
-        return await commands.executeCommand<void>('vscode.diff', left, right, title, opts);
+        return await commands.executeCommand<void>(
+            'vscode.diff',
+            left,
+            right,
+            title,
+            opts
+        );
     }
 
     private getLeftResource(resource: Resource): Uri | undefined {
@@ -134,16 +203,21 @@ export class CommandCenter {
     }
 
     private getRightResource(resource: Resource): Uri {
-        if (resource.mergeStatus === MergeStatus.UNRESOLVED &&
+        if (
+            resource.mergeStatus === MergeStatus.UNRESOLVED &&
             resource.status !== Status.MISSING &&
-            resource.status !== Status.DELETED) {
+            resource.status !== Status.DELETED
+        ) {
             return resource.resourceUri.with({ scheme: 'fossil' });
         }
 
         switch (resource.status) {
             case Status.DELETED:
             case Status.MISSING:
-                return resource.resourceUri.with({ scheme: 'fossil', query: 'empty' });
+                return resource.resourceUri.with({
+                    scheme: 'fossil',
+                    query: 'empty',
+                });
 
             case Status.ADDED:
             case Status.IGNORED:
@@ -159,10 +233,12 @@ export class CommandCenter {
 
     private getTitle(resource: Resource): string {
         const basename = path.basename(resource.resourceUri.fsPath);
-        if (resource.mergeStatus === MergeStatus.UNRESOLVED &&
+        if (
+            resource.mergeStatus === MergeStatus.UNRESOLVED &&
             resource.status !== Status.MISSING &&
-            resource.status !== Status.DELETED) {
-            return `${basename} (local <-> other)`
+            resource.status !== Status.DELETED
+        ) {
+            return `${basename} (local <-> other)`;
         }
 
         switch (resource.status) {
@@ -195,11 +271,17 @@ export class CommandCenter {
         if (username) {
             userauth = await interaction.inputCloneUserAuth();
         }
-        if (userauth){
-            const regex = (url.search('@') < 0) ? /(^.+:\/\/)(.+)/ : /(^.+:\/\/).*@(.+)/
+        if (userauth) {
+            const regex =
+                url.search('@') < 0 ? /(^.+:\/\/)(.+)/ : /(^.+:\/\/).*@(.+)/;
             const match = url.match(regex);
-            if(match){
-                url = match[1] + username + ':' + userauth + '@' + match[2] as FossilURI
+            if (match) {
+                url = (match[1] +
+                    username +
+                    ':' +
+                    userauth +
+                    '@' +
+                    match[2]) as FossilURI;
             }
         }
         const fossilPath = await interaction.selectNewFossilPath('Clone');
@@ -217,12 +299,20 @@ export class CommandCenter {
      * Execute "fossil open". When FossilRoot has files allow to
      * run "fossil open --force"
      */
-    async openRepository(filePath: FossilPath, parentPath: FossilRoot) : Promise<void> {
+    async openRepository(
+        filePath: FossilPath,
+        parentPath: FossilRoot
+    ): Promise<void> {
         try {
             await this.fossil.openClone(filePath, parentPath);
         } catch (err) {
-            if (err instanceof FossilError && err.fossilErrorCode === FossilErrorCodes.OperationMustBeforced) {
-                const openNotEmpty = await interaction.confirmOpenNotEmpty(parentPath);
+            if (
+                err instanceof FossilError &&
+                err.fossilErrorCode === FossilErrorCodes.OperationMustBeforced
+            ) {
+                const openNotEmpty = await interaction.confirmOpenNotEmpty(
+                    parentPath
+                );
                 if (openNotEmpty) {
                     this.fossil.openCloneForce(filePath, parentPath);
                 }
@@ -235,7 +325,10 @@ export class CommandCenter {
     /**
      * ask user to run "fossil open" after `clone` or `init`
      */
-    async askOpenRepository(filePath: FossilPath, fossilRoot: FossilRoot) : Promise<void> {
+    async askOpenRepository(
+        filePath: FossilPath,
+        fossilRoot: FossilRoot
+    ): Promise<void> {
         const openClonedRepo = await interaction.promptOpenClonedRepo();
         if (openClonedRepo) {
             await this.openRepository(filePath, fossilRoot);
@@ -271,13 +364,15 @@ export class CommandCenter {
         await this.model.tryOpenRepository(rootPath);
     }
 
-    @command('fossil.close', { repository: true})
+    @command('fossil.close', { repository: true })
     async close(repository: Repository): Promise<void> {
         return this.model.close(repository);
     }
 
     @command('fossil.openFiles')
-    openFiles(...resources: (Resource | SourceControlResourceGroup)[]): Promise<void> {
+    openFiles(
+        ...resources: (Resource | SourceControlResourceGroup)[]
+    ): Promise<void> {
         if (resources.length === 1) {
             // a resource group proxy object?
             const [resourceGroup] = resources;
@@ -288,7 +383,7 @@ export class CommandCenter {
             }
         }
 
-        return this.openFile(...<Resource[]>resources);
+        return this.openFile(...(<Resource[]>resources));
     }
 
     @command('fossil.openFile')
@@ -305,12 +400,15 @@ export class CommandCenter {
             const opts: TextDocumentShowOptions = {
                 preserveFocus: true,
                 preview,
-                viewColumn: ViewColumn.Active
+                viewColumn: ViewColumn.Active,
             };
 
             // Check if active text editor has same path as other editor. we cannot compare via
             // URI.toString() here because the schemas can be different. Instead we just go by path.
-            if (activeTextEditor && activeTextEditor.document.uri.path === uri.path) {
+            if (
+                activeTextEditor &&
+                activeTextEditor.document.uri.path === uri.path
+            ) {
                 opts.selection = activeTextEditor.selection;
             }
 
@@ -364,7 +462,9 @@ export class CommandCenter {
     }
 
     @command('fossil.ignore')
-    async ignore(...resourceStates: SourceControlResourceState[]): Promise<void> {
+    async ignore(
+        ...resourceStates: SourceControlResourceState[]
+    ): Promise<void> {
         if (resourceStates.length === 0) {
             const resource = this.getSCMResource();
 
@@ -375,17 +475,20 @@ export class CommandCenter {
             resourceStates = [resource];
         }
 
-        const scmResources = resourceStates
-            .filter(s => s instanceof Resource && s.resourceGroup instanceof UntrackedGroup) as Resource[];
+        const scmResources = resourceStates.filter(
+            s =>
+                s instanceof Resource &&
+                s.resourceGroup instanceof UntrackedGroup
+        ) as Resource[];
 
         if (!scmResources.length) {
             return;
         }
 
         const resources = scmResources.map(r => r.resourceUri);
-        const repository = this.model.getRepository(resources[0])
-        if (repository){
-            await repository.ignore(...resources)
+        const repository = this.model.getRepository(resources[0]);
+        if (repository) {
+            await repository.ignore(...resources);
         }
         // await this.runByRepository(resources, async (repository, uris) => repository.ignore(...uris));
     }
@@ -407,22 +510,27 @@ export class CommandCenter {
             resourceStates = [resource];
         }
 
-        const scmResources = resourceStates
-            .filter(s => s instanceof Resource && s.resourceGroup instanceof UntrackedGroup) as Resource[];
+        const scmResources = resourceStates.filter(
+            s =>
+                s instanceof Resource &&
+                s.resourceGroup instanceof UntrackedGroup
+        ) as Resource[];
 
         if (!scmResources.length) {
             return;
         }
 
         const resources = scmResources.map(r => r.resourceUri);
-        const repository = this.model.getRepository(resources[0])
-        if (repository){
-            await repository.add(...resources)
+        const repository = this.model.getRepository(resources[0]);
+        if (repository) {
+            await repository.add(...resources);
         }
     }
 
     @command('fossil.remove')
-    async remove(...resourceStates: SourceControlResourceState[]): Promise<void> {
+    async remove(
+        ...resourceStates: SourceControlResourceState[]
+    ): Promise<void> {
         if (resourceStates.length === 0) {
             const resource = this.getSCMResource();
 
@@ -433,23 +541,28 @@ export class CommandCenter {
             resourceStates = [resource];
         }
 
-        const scmResources = resourceStates
-            .filter(s => s instanceof Resource && s.resourceGroup instanceof WorkingDirectoryGroup) as Resource[];
+        const scmResources = resourceStates.filter(
+            s =>
+                s instanceof Resource &&
+                s.resourceGroup instanceof WorkingDirectoryGroup
+        ) as Resource[];
 
         if (!scmResources.length) {
             return;
         }
 
         const resources = scmResources.map(r => r.resourceUri);
-        const repository = this.model.getRepository(resources[0])
-        if (repository){
-            await repository.remove(...resources)
+        const repository = this.model.getRepository(resources[0]);
+        if (repository) {
+            await repository.remove(...resources);
         }
         // await this.runByRepository(resources, async (repository, uris) => repository.remove(...uris));
     }
 
     @command('fossil.stage') // run by repo
-    async stage(...resourceStates: SourceControlResourceState[]): Promise<void> {
+    async stage(
+        ...resourceStates: SourceControlResourceState[]
+    ): Promise<void> {
         if (resourceStates.length === 0) {
             const resource = this.getSCMResource();
 
@@ -460,23 +573,22 @@ export class CommandCenter {
             resourceStates = [resource];
         }
 
-        const scmResources = resourceStates
-            .filter(s => s instanceof Resource &&
-                        (
-                            s.resourceGroup instanceof WorkingDirectoryGroup
-                            || s.resourceGroup instanceof MergeGroup
-                            || s.resourceGroup instanceof UntrackedGroup
-                        )
-                    ) as Resource[];
+        const scmResources = resourceStates.filter(
+            s =>
+                s instanceof Resource &&
+                (s.resourceGroup instanceof WorkingDirectoryGroup ||
+                    s.resourceGroup instanceof MergeGroup ||
+                    s.resourceGroup instanceof UntrackedGroup)
+        ) as Resource[];
 
         if (!scmResources.length) {
             return;
         }
 
         const resources = scmResources.map(r => r.resourceUri);
-        const repository = this.model.getRepository(resources[0])
-        if (repository){
-            await repository.stage(...resources)
+        const repository = this.model.getRepository(resources[0]);
+        if (repository) {
+            await repository.stage(...resources);
         }
         // await this.runByRepository(resources, async (repository, uris) => repository.stage(...uris));
     }
@@ -487,7 +599,9 @@ export class CommandCenter {
     }
 
     @command('fossil.unstage')
-    async unstage(...resourceStates: SourceControlResourceState[]): Promise<void> {
+    async unstage(
+        ...resourceStates: SourceControlResourceState[]
+    ): Promise<void> {
         if (resourceStates.length === 0) {
             const resource = this.getSCMResource();
 
@@ -498,18 +612,19 @@ export class CommandCenter {
             resourceStates = [resource];
         }
 
-        const scmResources = resourceStates.filter(s =>
-            s instanceof Resource &&
-            s.resourceGroup instanceof StagingGroup) as Resource[];
+        const scmResources = resourceStates.filter(
+            s =>
+                s instanceof Resource && s.resourceGroup instanceof StagingGroup
+        ) as Resource[];
 
         if (!scmResources.length) {
             return;
         }
 
         const resources = scmResources.map(r => r.resourceUri);
-        const repository = this.model.getRepository(resources[0])
-        if (repository){
-            await repository.unstage(...resources)
+        const repository = this.model.getRepository(resources[0]);
+        if (repository) {
+            await repository.unstage(...resources);
         }
         // await this.runByRepository(resources, async (repository, uris) => repository.unstage(...uris));
     }
@@ -520,7 +635,9 @@ export class CommandCenter {
     }
 
     @command('fossil.revert')
-    async revert(...resourceStates: SourceControlResourceState[]): Promise<void> {
+    async revert(
+        ...resourceStates: SourceControlResourceState[]
+    ): Promise<void> {
         if (resourceStates.length === 0) {
             const resource = this.getSCMResource();
 
@@ -531,29 +648,39 @@ export class CommandCenter {
             resourceStates = [resource];
         }
 
-        const scmResources = resourceStates.filter(s =>
-            s instanceof Resource &&
-            s.isDirtyStatus) as Resource[];
+        const scmResources = resourceStates.filter(
+            s => s instanceof Resource && s.isDirtyStatus
+        ) as Resource[];
 
         if (!scmResources.length) {
             return;
         }
 
-        const [discardResources, addedResources] = partition(scmResources, s => s.status !== Status.ADDED);
+        const [discardResources, addedResources] = partition(
+            scmResources,
+            s => s.status !== Status.ADDED
+        );
         if (discardResources.length > 0) {
-            const confirmFilenames = discardResources.map(r => path.basename(r.resourceUri.fsPath));
-            const addedFilenames = addedResources.map(r => path.basename(r.resourceUri.fsPath));
+            const confirmFilenames = discardResources.map(r =>
+                path.basename(r.resourceUri.fsPath)
+            );
+            const addedFilenames = addedResources.map(r =>
+                path.basename(r.resourceUri.fsPath)
+            );
 
-            const confirmed = await interaction.confirmDiscardChanges(confirmFilenames, addedFilenames);
+            const confirmed = await interaction.confirmDiscardChanges(
+                confirmFilenames,
+                addedFilenames
+            );
             if (!confirmed) {
                 return;
             }
         }
 
         const resources = scmResources.map(r => r.resourceUri);
-        const repository = this.model.getRepository(resources[0])
-        if (repository){
-            await repository.revert(...resources)
+        const repository = this.model.getRepository(resources[0]);
+        if (repository) {
+            await repository.revert(...resources);
         }
         // await this.runByRepository(resources, async (repository, uris) => repository.revert(...uris));
     }
@@ -573,49 +700,66 @@ export class CommandCenter {
         }
     }
 
-    private async smartCommit(repository: Repository, getCommitMessage: () => Promise<string | undefined>, opts?: CommitOptions): Promise<boolean> {
+    private async smartCommit(
+        repository: Repository,
+        getCommitMessage: () => Promise<string | undefined>,
+        opts?: CommitOptions
+    ): Promise<boolean> {
         // validate no conflicts
         const numConflictResources = repository.conflictGroup.resources.length;
         if (numConflictResources > 0) {
             interaction.warnResolveConflicts();
             return false;
         }
-        const numWorkingResources = repository.workingDirectoryGroup.resources.length;
+        const numWorkingResources =
+            repository.workingDirectoryGroup.resources.length;
         const numStagingResources = repository.stagingGroup.resources.length;
-        const isMergeCommit = repository.repoStatus && repository.repoStatus.isMerge;
+        const isMergeCommit =
+            repository.repoStatus && repository.repoStatus.isMerge;
 
         if (isMergeCommit) {
             opts = { scope: CommitScope.ALL };
-        }
-        else {
+        } else {
             if (!opts || opts.scope === undefined) {
-                if(numWorkingResources > 0 && numStagingResources == 0){
-                    const confirm = await interaction.confirmCommitWorkingGroup()
-                    if (confirm){
+                if (numWorkingResources > 0 && numStagingResources == 0) {
+                    const confirm =
+                        await interaction.confirmCommitWorkingGroup();
+                    if (confirm) {
                         opts = { scope: CommitScope.CHANGES };
-                    }
-                    else return false;
-                }
-                else{
+                    } else return false;
+                } else {
                     opts = { scope: CommitScope.STAGED_CHANGES };
                 }
             }
 
             if (opts.scope === CommitScope.CHANGES) {
-                const missingResources = repository.workingDirectoryGroup.resources.filter(r => r.status === Status.MISSING);
+                const missingResources =
+                    repository.workingDirectoryGroup.resources.filter(
+                        r => r.status === Status.MISSING
+                    );
                 if (missingResources.length > 0) {
-                    const missingFilenames = missingResources.map(r => repository.mapResourceToWorkspaceRelativePath(r));
-                    const deleteConfirmed = await interaction.confirmDeleteMissingFilesForCommit(missingFilenames);
+                    const missingFilenames = missingResources.map(r =>
+                        repository.mapResourceToWorkspaceRelativePath(r)
+                    );
+                    const deleteConfirmed =
+                        await interaction.confirmDeleteMissingFilesForCommit(
+                            missingFilenames
+                        );
                     if (!deleteConfirmed) {
                         return false;
                     }
-                    await this.remove(...missingResources)
+                    await this.remove(...missingResources);
                 }
             }
 
-            if ((numWorkingResources === 0 && numStagingResources === 0) // no changes
-                || (opts && opts.scope === CommitScope.STAGED_CHANGES && numStagingResources === 0) // no staged changes
-                || (opts && opts.scope === CommitScope.CHANGES && numWorkingResources === 0) // no working directory changes
+            if (
+                (numWorkingResources === 0 && numStagingResources === 0) || // no changes
+                (opts &&
+                    opts.scope === CommitScope.STAGED_CHANGES &&
+                    numStagingResources === 0) || // no staged changes
+                (opts &&
+                    opts.scope === CommitScope.CHANGES &&
+                    numWorkingResources === 0) // no working directory changes
             ) {
                 interaction.informNoChangesToCommit();
                 return false;
@@ -634,13 +778,19 @@ export class CommandCenter {
         return true;
     }
 
-
-    private async commitWithAnyInput(repository: Repository, opts?: CommitOptions): Promise<void> {
+    private async commitWithAnyInput(
+        repository: Repository,
+        opts?: CommitOptions
+    ): Promise<void> {
         const message = scm.inputBox.value;
-        const didCommit = await this.smartCommit(repository, () => interaction.inputCommitMessage(message), opts);
+        const didCommit = await this.smartCommit(
+            repository,
+            () => interaction.inputCommitMessage(message),
+            opts
+        );
 
         if (message && didCommit) {
-            scm.inputBox.value = "";
+            scm.inputBox.value = '';
         }
     }
 
@@ -651,16 +801,21 @@ export class CommandCenter {
 
     @command('fossil.commitWithInput', { repository: true })
     async commitWithInput(repository: Repository): Promise<void> {
-        const didCommit = await this.smartCommit(repository, async () => repository.sourceControl.inputBox.value);
+        const didCommit = await this.smartCommit(
+            repository,
+            async () => repository.sourceControl.inputBox.value
+        );
 
         if (didCommit) {
-            scm.inputBox.value = "";
+            scm.inputBox.value = '';
         }
     }
 
     @command('fossil.commitStaged', { repository: true })
     async commitStaged(repository: Repository): Promise<void> {
-        await this.commitWithAnyInput(repository, { scope: CommitScope.STAGED_CHANGES });
+        await this.commitWithAnyInput(repository, {
+            scope: CommitScope.STAGED_CHANGES,
+        });
     }
 
     @command('fossil.commitAll', { repository: true })
@@ -669,7 +824,7 @@ export class CommandCenter {
     }
 
     private focusScm() {
-        commands.executeCommand("workbench.view.scm");
+        commands.executeCommand('workbench.view.scm');
     }
 
     @command('fossil.undo', { repository: true })
@@ -679,9 +834,12 @@ export class CommandCenter {
             if (await interaction.confirmUndo(undo)) {
                 await repository.undo(false); // real-thing
             }
-        }
-        catch (e) {
-            if (e instanceof FossilError && e.fossilErrorCode === FossilErrorCodes.NoUndoInformationAvailable) {
+        } catch (e) {
+            if (
+                e instanceof FossilError &&
+                e.fossilErrorCode ===
+                    FossilErrorCodes.NoUndoInformationAvailable
+            ) {
                 await interaction.warnNoUndo();
             }
         }
@@ -692,8 +850,13 @@ export class CommandCenter {
         const unclean = false;
 
         // branches/tags
-        if (await interaction.checkThenWarnOutstandingMerge(repository) ||
-            await interaction.checkThenErrorUnclean(repository, WarnScenario.Update)) {
+        if (
+            (await interaction.checkThenWarnOutstandingMerge(repository)) ||
+            (await interaction.checkThenErrorUnclean(
+                repository,
+                WarnScenario.Update
+            ))
+        ) {
             this.focusScm();
             return;
         }
@@ -715,7 +878,7 @@ export class CommandCenter {
             this.focusScm();
             return;
         }
-        await interaction.checkThenWarnUnclean(repository, WarnScenario.Update)
+        await interaction.checkThenWarnUnclean(repository, WarnScenario.Update);
         const refs: Ref[] = await repository.getRefs();
 
         const choice = await interaction.pickUpdateRevision(refs, unclean);
@@ -732,17 +895,21 @@ export class CommandCenter {
             return;
         }
 
-        const name = result.replace(/^\.|\/\.|\.\.|~|\^|:|\/$|\.lock$|\.lock\/|\\|\*|\s|^\s*$|\.$/g, '-');
+        const name = result.replace(
+            /^\.|\/\.|\.\.|~|\^|:|\/$|\.lock$|\.lock\/|\\|\*|\s|^\s*$|\.$/g,
+            '-'
+        );
         try {
             await repository.branch(name);
-        }
-        catch (e) {
-            if (e instanceof FossilError && e.fossilErrorCode === FossilErrorCodes.BranchAlreadyExists) {
+        } catch (e) {
+            if (
+                e instanceof FossilError &&
+                e.fossilErrorCode === FossilErrorCodes.BranchAlreadyExists
+            ) {
                 const action = await interaction.warnBranchAlreadyExists(name);
                 if (action === BranchExistsAction.Reopen) {
                     await repository.branch(name);
-                }
-                else if (action === BranchExistsAction.UpdateTo) {
+                } else if (action === BranchExistsAction.UpdateTo) {
                     await repository.update(name);
                 }
             }
@@ -753,7 +920,7 @@ export class CommandCenter {
     async pull(repository: Repository): Promise<void> {
         const paths = await repository.getPath();
 
-        if (paths.url == "") {
+        if (paths.url == '') {
             await interaction.warnNoPaths('pull');
             return;
         }
@@ -763,15 +930,23 @@ export class CommandCenter {
     }
 
     @command('fossil.mergeWithLocal', { repository: true })
-    async mergeWithLocal(repository: Repository) : Promise<void> {
-        if (await interaction.checkThenWarnOutstandingMerge(repository) ||
-            await interaction.checkThenErrorUnclean(repository, WarnScenario.Merge)) {
+    async mergeWithLocal(repository: Repository): Promise<void> {
+        if (
+            (await interaction.checkThenWarnOutstandingMerge(repository)) ||
+            (await interaction.checkThenErrorUnclean(
+                repository,
+                WarnScenario.Merge
+            ))
+        ) {
             this.focusScm();
             return;
         }
 
         const otherHeads = await repository.getBranches();
-        const placeholder = localize('choose branch', "Choose branch to merge into working directory:");
+        const placeholder = localize(
+            'choose branch',
+            'Choose branch to merge into working directory:'
+        );
         const branch = await interaction.pickHead(otherHeads, placeholder);
         if (branch && branch.name) {
             return await this.doMerge(repository, branch.name, branch.name);
@@ -779,9 +954,14 @@ export class CommandCenter {
     }
 
     @command('fossil.mergeHeads', { repository: true })
-    async mergeHeads(repository: Repository) : Promise<void> {
-        if (await interaction.checkThenWarnOutstandingMerge(repository) ||
-            await interaction.checkThenErrorUnclean(repository, WarnScenario.Merge)) {
+    async mergeHeads(repository: Repository): Promise<void> {
+        if (
+            (await interaction.checkThenWarnOutstandingMerge(repository)) ||
+            (await interaction.checkThenErrorUnclean(
+                repository,
+                WarnScenario.Merge
+            ))
+        ) {
             this.focusScm();
             return;
         }
@@ -791,10 +971,12 @@ export class CommandCenter {
             // 1 head
             interaction.warnMergeOnlyOneHead();
             return;
-        }
-        else {
+        } else {
             // 2+ heads
-            const placeHolder = localize('choose branch', "Choose branch to merge with:");
+            const placeHolder = localize(
+                'choose branch',
+                'Choose branch to merge with:'
+            );
             const head = await interaction.pickHead(otherHeads, placeHolder);
             if (head && head.name) {
                 return await this.doMerge(repository, head.name);
@@ -802,25 +984,41 @@ export class CommandCenter {
         }
     }
 
-    private async doMerge(repository: Repository, otherRevision: string, otherBranchName?: string) {
+    private async doMerge(
+        repository: Repository,
+        otherRevision: string,
+        otherBranchName?: string
+    ) {
         try {
             const result = await repository.merge(otherRevision);
             const { currentBranch } = repository;
 
             if (result.unresolvedCount > 0) {
                 interaction.warnUnresolvedFiles(result.unresolvedCount);
-            }
-            else if (currentBranch) {
-                const defaultMergeMessage = await humanise.describeMerge(currentBranch.name!, otherBranchName);
-                const didCommit = await this.smartCommit(repository, async () => await interaction.inputCommitMessage("", defaultMergeMessage));
+            } else if (currentBranch) {
+                const defaultMergeMessage = await humanise.describeMerge(
+                    currentBranch.name!,
+                    otherBranchName
+                );
+                const didCommit = await this.smartCommit(
+                    repository,
+                    async () =>
+                        await interaction.inputCommitMessage(
+                            '',
+                            defaultMergeMessage
+                        )
+                );
 
                 if (didCommit) {
-                    scm.inputBox.value = "";
+                    scm.inputBox.value = '';
                 }
             }
-        }
-        catch (e) {
-            if (e instanceof FossilError && e.fossilErrorCode === FossilErrorCodes.UntrackedFilesDiffer && e.hgFilenames) {
+        } catch (e) {
+            if (
+                e instanceof FossilError &&
+                e.fossilErrorCode === FossilErrorCodes.UntrackedFilesDiffer &&
+                e.hgFilenames
+            ) {
                 interaction.errorUntrackedFilesDiffer(e.hgFilenames);
                 return;
             }
@@ -838,7 +1036,7 @@ export class CommandCenter {
     async pushTo(repository: Repository): Promise<void> {
         const path = await repository.getPath();
 
-        if (path.url == "") {
+        if (path.url == '') {
             await interaction.warnNoPaths('push');
             return;
         }
@@ -853,36 +1051,54 @@ export class CommandCenter {
     createLogMenuAPI(repository: Repository): LogMenuAPI {
         return {
             getRepoName: () => repository.repoName,
-            getBranchName: () => repository.currentBranch && repository.currentBranch.name,
-            getCommitDetails: (revision: string) => repository.getCommitDetails(revision),
-            getLogEntries: (options: LogEntriesOptions) => repository.getLogEntries(options),
+            getBranchName: () =>
+                repository.currentBranch && repository.currentBranch.name,
+            getCommitDetails: (revision: string) =>
+                repository.getCommitDetails(revision),
+            getLogEntries: (options: LogEntriesOptions) =>
+                repository.getLogEntries(options),
             // diffToLocal: (_file: IFileStatus, _commit: CommitDetails) => { },
-            diffToParent: (file: IFileStatus, commit: CommitDetails) => this.diffFile(repository, commit.parent1, commit.hash, file)
-        }
+            diffToParent: (file: IFileStatus, commit: CommitDetails) =>
+                this.diffFile(repository, commit.parent1, commit.hash, file),
+        };
     }
 
     @command('fossil.log', { repository: true })
     async log(repository: Repository): Promise<void> {
-        await interaction.presentLogSourcesMenu(this.createLogMenuAPI(repository));
+        await interaction.presentLogSourcesMenu(
+            this.createLogMenuAPI(repository)
+        );
     }
 
     @command('fossil.logBranch', { repository: true })
     async logBranch(repository: Repository): Promise<void> {
-        await interaction.presentLogMenu(CommitSources.Branch, { }, this.createLogMenuAPI(repository));
+        await interaction.presentLogMenu(
+            CommitSources.Branch,
+            {},
+            this.createLogMenuAPI(repository)
+        );
     }
 
     @command('fossil.logDefault', { repository: true })
     async logDefault(repository: Repository): Promise<void> {
-        await interaction.presentLogMenu(CommitSources.Branch, { }, this.createLogMenuAPI(repository));
+        await interaction.presentLogMenu(
+            CommitSources.Branch,
+            {},
+            this.createLogMenuAPI(repository)
+        );
     }
 
     @command('fossil.logRepo', { repository: true })
-    async logRepo(repository: Repository) : Promise<void> {
-        await interaction.presentLogMenu(CommitSources.Repo, {}, this.createLogMenuAPI(repository));
+    async logRepo(repository: Repository): Promise<void> {
+        await interaction.presentLogMenu(
+            CommitSources.Repo,
+            {},
+            this.createLogMenuAPI(repository)
+        );
     }
 
     @command('fossil.fileLog')
-    async fileLog(uri?: Uri) : Promise<void> {
+    async fileLog(uri?: Uri): Promise<void> {
         if (!uri) {
             if (window.activeTextEditor) {
                 uri = window.activeTextEditor.document.uri;
@@ -899,11 +1115,15 @@ export class CommandCenter {
         }
 
         const logEntries = await repository.getLogEntries({ file: uri });
-        const choice = await interaction.pickCommit(CommitSources.File, logEntries, commit => () => {
-            if (uri) {
-                this.diff(commit, uri);
+        const choice = await interaction.pickCommit(
+            CommitSources.File,
+            logEntries,
+            commit => () => {
+                if (uri) {
+                    this.diff(commit, uri);
+                }
             }
-        });
+        );
 
         if (choice) {
             choice.run();
@@ -911,20 +1131,36 @@ export class CommandCenter {
     }
 
     @command('fossil.revertChange')
-    async revertChange(uri: Uri, changes: LineChange[], index: number) : Promise<void> {
+    async revertChange(
+        uri: Uri,
+        changes: LineChange[],
+        index: number
+    ): Promise<void> {
         if (!uri) {
             return;
         }
-        const textEditor = window.visibleTextEditors.filter(e => e.document.uri.toString() === uri.toString())[0];
+        const textEditor = window.visibleTextEditors.filter(
+            e => e.document.uri.toString() === uri.toString()
+        )[0];
         if (!textEditor) {
             return;
         }
-        await revertChanges(textEditor, [...changes.slice(0, index), ...changes.slice(index + 1)]);
+        await revertChanges(textEditor, [
+            ...changes.slice(0, index),
+            ...changes.slice(index + 1),
+        ]);
         const firstStagedLine = changes[index].modifiedStartLineNumber - 1;
-        textEditor.selections = [new Selection(firstStagedLine, 0, firstStagedLine, 0)];
+        textEditor.selections = [
+            new Selection(firstStagedLine, 0, firstStagedLine, 0),
+        ];
     }
 
-    private async diffFile(repository: Repository, rev1: string, rev2: string, file: IFileStatus) : Promise<void> {
+    private async diffFile(
+        repository: Repository,
+        rev1: string,
+        rev2: string,
+        file: IFileStatus
+    ): Promise<void> {
         const uri = repository.toUri(file.path);
         const left = uri.with({ scheme: 'fossil', query: rev1 });
         const right = uri.with({ scheme: 'fossil', query: rev2 });
@@ -932,7 +1168,12 @@ export class CommandCenter {
         const title = `${baseName} (#${rev1} vs. ${rev2})`;
 
         if (left && right) {
-            return await commands.executeCommand<void>('vscode.diff', left, right, title);
+            return await commands.executeCommand<void>(
+                'vscode.diff',
+                left,
+                right,
+                title
+            );
         }
     }
 
@@ -943,11 +1184,21 @@ export class CommandCenter {
         const title = `${baseName} (${commit.hash} vs. local)`;
 
         if (left && right) {
-            return await commands.executeCommand<void>('vscode.diff', left, right, title);
+            return await commands.executeCommand<void>(
+                'vscode.diff',
+                left,
+                right,
+                title
+            );
         }
     }
 
-    private createCommand(id: string, key: string, method: Function, options: CommandOptions): (...args: any[]) => Promise<any> | undefined {
+    private createCommand(
+        id: string,
+        key: string,
+        method: Function,
+        options: CommandOptions
+    ): (...args: any[]) => Promise<any> | undefined {
         const res = async (...args: SourceControl[]) => {
             let result: Promise<any>;
             if (!options.repository) {
@@ -960,7 +1211,9 @@ export class CommandCenter {
                 if (repository) {
                     repositoryPromise = Promise.resolve(repository);
                 } else if (this.model.repositories.length === 1) {
-                    repositoryPromise = Promise.resolve(this.model.repositories[0]);
+                    repositoryPromise = Promise.resolve(
+                        this.model.repositories[0]
+                    );
                 } else {
                     repositoryPromise = this.model.pickRepository();
                 }
@@ -970,19 +1223,19 @@ export class CommandCenter {
                         return Promise.resolve();
                     }
 
-                    return Promise.resolve(method.apply(this, [repository, ...args]));
+                    return Promise.resolve(
+                        method.apply(this, [repository, ...args])
+                    );
                 });
             }
 
             try {
-                return result;  // ??? this line will never throw?
-            }
-            catch (err) {
+                return result; // ??? this line will never throw?
+            } catch (err) {
                 const openLog = await interaction.errorPromptOpenLog(err);
                 if (openLog) {
                     this.outputChannel.show();
-                }
-                else {
+                } else {
                     this.focusScm();
                 }
             }
@@ -994,7 +1247,9 @@ export class CommandCenter {
     }
 
     private getSCMResource(uri?: Uri): Resource | undefined {
-        uri = uri ? uri : window.activeTextEditor && window.activeTextEditor.document.uri;
+        uri = uri
+            ? uri
+            : window.activeTextEditor && window.activeTextEditor.document.uri;
 
         if (!uri) {
             return undefined;
@@ -1011,11 +1266,13 @@ export class CommandCenter {
                 return undefined;
             }
 
-            return repository.workingDirectoryGroup.getResource(uri)
-                || repository.stagingGroup.getResource(uri)
-                || repository.untrackedGroup.getResource(uri)
-                || repository.mergeGroup.getResource(uri)
-                || repository.conflictGroup.getResource(uri);
+            return (
+                repository.workingDirectoryGroup.getResource(uri) ||
+                repository.stagingGroup.getResource(uri) ||
+                repository.untrackedGroup.getResource(uri) ||
+                repository.mergeGroup.getResource(uri) ||
+                repository.conflictGroup.getResource(uri)
+            );
         }
         return undefined;
     }

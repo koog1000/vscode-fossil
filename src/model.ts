@@ -1,20 +1,30 @@
-
-
 /*---------------------------------------------------------------------------------------------
  *  Copyright (c) Ben Crowl. All rights reserved.
  *  Original Copyright (c) Microsoft Corporation. All rights reserved.
  *  Licensed under the MIT License. See LICENSE.txt in the project root for license information.
  *--------------------------------------------------------------------------------------------*/
 
-import { Uri, EventEmitter, Event, Disposable, window, workspace, SourceControlResourceGroup, SourceControl, WorkspaceFoldersChangeEvent, TextEditor, QuickPickItem } from "vscode";
-import { Fossil, FossilError, FossilErrorCodes } from "./fossilBase";
-import { anyEvent, filterEvent, dispose, } from "./util";
-import { memoize, debounce, sequentialize } from "./decorators";
+import {
+    Uri,
+    EventEmitter,
+    Event,
+    Disposable,
+    window,
+    workspace,
+    SourceControlResourceGroup,
+    SourceControl,
+    WorkspaceFoldersChangeEvent,
+    TextEditor,
+    QuickPickItem,
+} from 'vscode';
+import { Fossil, FossilError, FossilErrorCodes } from './fossilBase';
+import { anyEvent, filterEvent, dispose } from './util';
+import { memoize, debounce, sequentialize } from './decorators';
 import * as path from 'path';
 import * as fs from 'fs/promises';
 import * as nls from 'vscode-nls';
-import typedConfig from "./config";
-import { Repository, RepositoryState } from "./repository";
+import typedConfig from './config';
+import { Repository, RepositoryState } from './repository';
 
 const localize = nls.loadMessageBundle();
 
@@ -24,7 +34,7 @@ class RepositoryPick implements QuickPickItem {
     }
 
     get description(): string {
-        return "";
+        return '';
     }
     // @memoize get description(): string {
     // return [this.repository.currentBranch, this.repository.syncLabel]
@@ -32,7 +42,7 @@ class RepositoryPick implements QuickPickItem {
     //  .join(' ');
     // }
 
-    constructor(public readonly repository: Repository) { }
+    constructor(public readonly repository: Repository) {}
 }
 
 export interface ModelChangeEvent {
@@ -54,21 +64,27 @@ function isParent(parent: string, child: string): boolean {
 }
 
 export class Model implements Disposable {
-
     private _onDidOpenRepository = new EventEmitter<Repository>();
-    readonly onDidOpenRepository: Event<Repository> = this._onDidOpenRepository.event;
+    readonly onDidOpenRepository: Event<Repository> =
+        this._onDidOpenRepository.event;
 
     private _onDidCloseRepository = new EventEmitter<Repository>();
-    readonly onDidCloseRepository: Event<Repository> = this._onDidCloseRepository.event;
+    readonly onDidCloseRepository: Event<Repository> =
+        this._onDidCloseRepository.event;
 
     private _onDidChangeRepository = new EventEmitter<ModelChangeEvent>();
-    readonly onDidChangeRepository: Event<ModelChangeEvent> = this._onDidChangeRepository.event;
+    readonly onDidChangeRepository: Event<ModelChangeEvent> =
+        this._onDidChangeRepository.event;
 
-    private _onDidChangeOriginalResource = new EventEmitter<OriginalResourceChangeEvent>();
-    readonly onDidChangeOriginalResource: Event<OriginalResourceChangeEvent> = this._onDidChangeOriginalResource.event;
+    private _onDidChangeOriginalResource =
+        new EventEmitter<OriginalResourceChangeEvent>();
+    readonly onDidChangeOriginalResource: Event<OriginalResourceChangeEvent> =
+        this._onDidChangeOriginalResource.event;
 
     private openRepositories: OpenRepository[] = [];
-    get repositories(): Repository[] { return this.openRepositories.map(r => r.repository); }
+    get repositories(): Repository[] {
+        return this.openRepositories.map(r => r.repository);
+    }
 
     private possibleHgRepositoryPaths = new Set<string>();
 
@@ -76,11 +92,12 @@ export class Model implements Disposable {
     private configurationChangeDisposable: Disposable;
     private disposables: Disposable[] = [];
 
-    constructor(
-        private _hg: Fossil
-    ) {
+    constructor(private _hg: Fossil) {
         this.enabled = typedConfig.enabled;
-        this.configurationChangeDisposable = workspace.onDidChangeConfiguration(this.onDidChangeConfiguration, this);
+        this.configurationChangeDisposable = workspace.onDidChangeConfiguration(
+            this.onDidChangeConfiguration,
+            this
+        );
 
         if (this.enabled) {
             this.enable();
@@ -104,17 +121,36 @@ export class Model implements Disposable {
     }
 
     private enable(): void {
-        workspace.onDidChangeWorkspaceFolders(this.onDidChangeWorkspaceFolders, this, this.disposables);
-        this.onDidChangeWorkspaceFolders({ added: workspace.workspaceFolders || [], removed: [] });
+        workspace.onDidChangeWorkspaceFolders(
+            this.onDidChangeWorkspaceFolders,
+            this,
+            this.disposables
+        );
+        this.onDidChangeWorkspaceFolders({
+            added: workspace.workspaceFolders || [],
+            removed: [],
+        });
 
-        window.onDidChangeVisibleTextEditors(this.onDidChangeVisibleTextEditors, this, this.disposables);
+        window.onDidChangeVisibleTextEditors(
+            this.onDidChangeVisibleTextEditors,
+            this,
+            this.disposables
+        );
         this.onDidChangeVisibleTextEditors(window.visibleTextEditors);
 
         const fsWatcher = workspace.createFileSystemWatcher('**');
         this.disposables.push(fsWatcher);
 
-        const onWorkspaceChange = anyEvent(fsWatcher.onDidChange, fsWatcher.onDidCreate, fsWatcher.onDidDelete);
-        onWorkspaceChange(this.onPossibleHgRepositoryChange, this, this.disposables);
+        const onWorkspaceChange = anyEvent(
+            fsWatcher.onDidChange,
+            fsWatcher.onDidCreate,
+            fsWatcher.onDidDelete
+        );
+        onWorkspaceChange(
+            this.onPossibleHgRepositoryChange,
+            this,
+            this.disposables
+        );
 
         this.scanWorkspaceFolders();
         // this.status();
@@ -136,7 +172,7 @@ export class Model implements Disposable {
     private async scanWorkspaceFolders(): Promise<void> {
         for (const folder of workspace.workspaceFolders || []) {
             const root = folder.uri.fsPath;
-            const children = await fs.readdir(root, {withFileTypes: true})
+            const children = await fs.readdir(root, { withFileTypes: true });
             children
                 .filter(child => child.isDirectory())
                 .some(child => this.tryOpenRepository(child.name));
@@ -158,9 +194,13 @@ export class Model implements Disposable {
         this.possibleHgRepositoryPaths.clear();
     }
 
-    private async onDidChangeWorkspaceFolders({ added, removed }: WorkspaceFoldersChangeEvent): Promise<void> {
-        const possibleRepositoryFolders = added
-            .filter(folder => !this.getOpenRepository(folder.uri));
+    private async onDidChangeWorkspaceFolders({
+        added,
+        removed,
+    }: WorkspaceFoldersChangeEvent): Promise<void> {
+        const possibleRepositoryFolders = added.filter(
+            folder => !this.getOpenRepository(folder.uri)
+        );
 
         const activeRepositoriesList = window.visibleTextEditors
             .map(editor => this.getRepository(editor.document.uri))
@@ -171,13 +211,22 @@ export class Model implements Disposable {
             .map(folder => this.getOpenRepository(folder.uri))
             .filter(r => !!r)
             .filter(r => !activeRepositories.has(r!.repository))
-            .filter(r => !(workspace.workspaceFolders || []).some(f => isParent(f.uri.fsPath, r!.repository.root))) as OpenRepository[];
+            .filter(
+                r =>
+                    !(workspace.workspaceFolders || []).some(f =>
+                        isParent(f.uri.fsPath, r!.repository.root)
+                    )
+            ) as OpenRepository[];
 
-        possibleRepositoryFolders.forEach(p => this.tryOpenRepository(p.uri.fsPath));
+        possibleRepositoryFolders.forEach(p =>
+            this.tryOpenRepository(p.uri.fsPath)
+        );
         openRepositoriesToDispose.forEach(r => r.dispose());
     }
 
-    private onDidChangeVisibleTextEditors(editors: readonly TextEditor[]): void {
+    private onDidChangeVisibleTextEditors(
+        editors: readonly TextEditor[]
+    ): void {
         editors.forEach(editor => {
             const uri = editor.document.uri;
 
@@ -222,7 +271,10 @@ export class Model implements Disposable {
             this.open(repository);
             return true;
         } catch (err) {
-            if (!(err instanceof FossilError) || err.fossilErrorCode !== FossilErrorCodes.NotAFossilRepository) {
+            if (
+                !(err instanceof FossilError) ||
+                err.fossilErrorCode !== FossilErrorCodes.NotAFossilRepository
+            ) {
                 console.error('Failed to find repository:', err);
             }
         }
@@ -230,10 +282,18 @@ export class Model implements Disposable {
     }
 
     private open(repository: Repository): void {
-        const onDidDisappearRepository = filterEvent(repository.onDidChangeState, state => state === RepositoryState.Disposed);
+        const onDidDisappearRepository = filterEvent(
+            repository.onDidChangeState,
+            state => state === RepositoryState.Disposed
+        );
         const disappearListener = onDidDisappearRepository(() => dispose());
-        const changeListener = repository.onDidChangeRepository(uri => this._onDidChangeRepository.fire({ repository, uri }));
-        const originalResourceChangeListener = repository.onDidChangeOriginalResource(uri => this._onDidChangeOriginalResource.fire({ repository, uri }));
+        const changeListener = repository.onDidChangeRepository(uri =>
+            this._onDidChangeRepository.fire({ repository, uri })
+        );
+        const originalResourceChangeListener =
+            repository.onDidChangeOriginalResource(uri =>
+                this._onDidChangeOriginalResource.fire({ repository, uri })
+            );
 
         const dispose = () => {
             disappearListener.dispose();
@@ -241,7 +301,9 @@ export class Model implements Disposable {
             originalResourceChangeListener.dispose();
             repository.dispose();
 
-            this.openRepositories = this.openRepositories.filter(e => e !== openRepository);
+            this.openRepositories = this.openRepositories.filter(
+                e => e !== openRepository
+            );
             this._onDidCloseRepository.fire(repository);
         };
 
@@ -255,18 +317,25 @@ export class Model implements Disposable {
         if (!openRepository) {
             return;
         }
-        if(await openRepository.repository.close()){
+        if (await openRepository.repository.close()) {
             openRepository.dispose();
         }
     }
 
     async pickRepository(): Promise<Repository | undefined> {
         if (this.openRepositories.length === 0) {
-            throw new Error(localize('no repositories', "There are no available repositories"));
+            throw new Error(
+                localize(
+                    'no repositories',
+                    'There are no available repositories'
+                )
+            );
         }
 
-        const picks = this.openRepositories.map(e => new RepositoryPick(e.repository));
-        const placeHolder = localize('pick repo', "Choose a repository");
+        const picks = this.openRepositories.map(
+            e => new RepositoryPick(e.repository)
+        );
+        const placeHolder = localize('pick repo', 'Choose a repository');
         const pick = await window.showQuickPick(picks, { placeHolder });
 
         return pick && pick.repository;
@@ -277,7 +346,9 @@ export class Model implements Disposable {
     }
 
     getRepository(sourceControl: SourceControl): Repository | undefined;
-    getRepository(resourceGroup: SourceControlResourceGroup): Repository | undefined;
+    getRepository(
+        resourceGroup: SourceControlResourceGroup
+    ): Repository | undefined;
     getRepository(path: string): Repository | undefined;
     getRepository(resource: Uri): Repository | undefined;
     getRepository(hint: any): Repository | undefined {
@@ -285,9 +356,15 @@ export class Model implements Disposable {
         return liveRepository && liveRepository.repository;
     }
 
-    private getOpenRepository(repository: Repository): OpenRepository | undefined;
-    private getOpenRepository(sourceControl: SourceControl): OpenRepository | undefined;
-    private getOpenRepository(resourceGroup: SourceControlResourceGroup): OpenRepository | undefined;
+    private getOpenRepository(
+        repository: Repository
+    ): OpenRepository | undefined;
+    private getOpenRepository(
+        sourceControl: SourceControl
+    ): OpenRepository | undefined;
+    private getOpenRepository(
+        resourceGroup: SourceControlResourceGroup
+    ): OpenRepository | undefined;
     private getOpenRepository(path: string): OpenRepository | undefined;
     private getOpenRepository(resource: Uri): OpenRepository | undefined;
     private getOpenRepository(hint: any): OpenRepository | undefined {
@@ -307,7 +384,10 @@ export class Model implements Disposable {
             const resourcePath = hint.fsPath;
 
             for (const liveRepository of this.openRepositories) {
-                const relativePath = path.relative(liveRepository.repository.root, resourcePath);
+                const relativePath = path.relative(
+                    liveRepository.repository.root,
+                    resourcePath
+                );
 
                 if (!/^\.\./.test(relativePath)) {
                     return liveRepository;
@@ -324,11 +404,13 @@ export class Model implements Disposable {
                 return liveRepository;
             }
 
-            if (hint === repository.mergeGroup.resourceGroup ||
+            if (
+                hint === repository.mergeGroup.resourceGroup ||
                 hint === repository.workingDirectoryGroup.resourceGroup ||
                 hint === repository.stagingGroup.resourceGroup ||
                 hint === repository.untrackedGroup.resourceGroup ||
-                hint === repository.conflictGroup.resourceGroup) {
+                hint === repository.conflictGroup.resourceGroup
+            ) {
                 return liveRepository;
             }
         }

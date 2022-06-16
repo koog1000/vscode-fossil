@@ -5,15 +5,15 @@
  *--------------------------------------------------------------------------------------------*/
 
 import { workspace, Disposable } from 'vscode';
-import { FossilErrorCodes, FossilError } from "./fossilBase";
+import { FossilErrorCodes, FossilError } from './fossilBase';
 import { throttle } from './decorators';
-import typedConfig from "./config";
+import typedConfig from './config';
 import { Repository, Operation } from './repository';
 
 export const enum AutoInOutStatuses {
     Disabled,
     Enabled,
-    Error
+    Error,
 }
 
 export interface AutoInOutState {
@@ -22,23 +22,38 @@ export interface AutoInOutState {
     readonly error?: string;
 }
 
-const STARTUP_DELAY = 3 * 1000 /* three seconds */;
-const OPS_AFFECTING_IN_OUT = Operation.Commit | Operation.RevertFiles | Operation.Update | Operation.Push | Operation.Pull;
-const opAffectsInOut = (op: Operation): boolean => (OPS_AFFECTING_IN_OUT & op) > 0;
+const STARTUP_DELAY = 3 * 1000; /* three seconds */
+const OPS_AFFECTING_IN_OUT =
+    Operation.Commit |
+    Operation.RevertFiles |
+    Operation.Update |
+    Operation.Push |
+    Operation.Pull;
+const opAffectsInOut = (op: Operation): boolean =>
+    (OPS_AFFECTING_IN_OUT & op) > 0;
 
 export class AutoIncomingOutgoing {
-
     private disposables: Disposable[] = [];
     private timer: NodeJS.Timer | undefined;
 
     constructor(private repository: Repository) {
-        workspace.onDidChangeConfiguration(this.onConfiguration, this, this.disposables);
-        this.repository.onDidRunOperation(this.onDidRunOperation, this, this.disposables);
+        workspace.onDidChangeConfiguration(
+            this.onConfiguration,
+            this,
+            this.disposables
+        );
+        this.repository.onDidRunOperation(
+            this.onDidRunOperation,
+            this,
+            this.disposables
+        );
         this.onConfiguration();
     }
 
     private onConfiguration(): void {
-        this.repository.changeAutoInoutState({ status: AutoInOutStatuses.Enabled })
+        this.repository.changeAutoInoutState({
+            status: AutoInOutStatuses.Enabled,
+        });
         this.enable();
     }
 
@@ -48,7 +63,10 @@ export class AutoIncomingOutgoing {
         }
 
         setTimeout(() => this.refresh(), STARTUP_DELAY); // delay to let 'status' run first
-        this.timer = setInterval(() => this.refresh(), typedConfig.autoInOutIntervalMillis);
+        this.timer = setInterval(
+            () => this.refresh(),
+            typedConfig.autoInOutIntervalMillis
+        );
     }
 
     disable(): void {
@@ -60,7 +78,9 @@ export class AutoIncomingOutgoing {
         this.timer = undefined;
     }
 
-    get enabled(): boolean { return this.timer !== undefined; }
+    get enabled(): boolean {
+        return this.timer !== undefined;
+    }
 
     private onDidRunOperation(op: Operation): void {
         if (!this.enabled || !opAffectsInOut(op)) {
@@ -71,16 +91,21 @@ export class AutoIncomingOutgoing {
 
     @throttle
     private async refresh(): Promise<void> {
-        const nextCheckTime = new Date(Date.now() + typedConfig.autoInOutIntervalMillis);
+        const nextCheckTime = new Date(
+            Date.now() + typedConfig.autoInOutIntervalMillis
+        );
         this.repository.changeAutoInoutState({ nextCheckTime });
 
         try {
             await this.repository.changeInoutAfterDelay();
-        }
-        catch (err) {
-            if (err instanceof FossilError && (
-                err.fossilErrorCode === FossilErrorCodes.AuthenticationFailed ||
-                err.fossilErrorCode === FossilErrorCodes.NotAFossilRepository )) {
+        } catch (err) {
+            if (
+                err instanceof FossilError &&
+                (err.fossilErrorCode ===
+                    FossilErrorCodes.AuthenticationFailed ||
+                    err.fossilErrorCode ===
+                        FossilErrorCodes.NotAFossilRepository)
+            ) {
                 this.disable();
             }
         }
