@@ -4,8 +4,14 @@
  *  Licensed under the MIT License. See LICENSE.txt in the project root for license information.
  *--------------------------------------------------------------------------------------------*/
 
-
-import { workspace, Uri, Disposable, Event, EventEmitter, window } from 'vscode';
+import {
+    workspace,
+    Uri,
+    Disposable,
+    Event,
+    EventEmitter,
+    window,
+} from 'vscode';
 import { debounce, throttle } from './decorators';
 import { Model, OriginalResourceChangeEvent } from './model';
 import { filterEvent, eventToPromise } from './util';
@@ -24,9 +30,10 @@ const THREE_MINUTES = 1000 * 60 * 3;
 const FIVE_MINUTES = 1000 * 60 * 5;
 
 export class FossilContentProvider {
-
     private _onDidChange = new EventEmitter<Uri>();
-    get onDidChange(): Event<Uri> { return this._onDidChange.event; }
+    get onDidChange(): Event<Uri> {
+        return this._onDidChange.event;
+    }
 
     private changedRepositoryRoots = new Set<string>();
     private cache: Cache = Object.create(null);
@@ -35,14 +42,19 @@ export class FossilContentProvider {
     constructor(private model: Model) {
         this.disposables.push(
             model.onDidChangeRepository(this.eventuallyFireChangeEvents, this),
-            model.onDidChangeOriginalResource(this.onDidChangeOriginalResource, this),
-            workspace.registerTextDocumentContentProvider('fossil', this),
+            model.onDidChangeOriginalResource(
+                this.onDidChangeOriginalResource,
+                this
+            ),
+            workspace.registerTextDocumentContentProvider('fossil', this)
         );
 
         setInterval(() => this.cleanup(), FIVE_MINUTES);
     }
 
-    private onDidChangeOriginalResource({ uri }: OriginalResourceChangeEvent): void {
+    private onDidChangeOriginalResource({
+        uri,
+    }: OriginalResourceChangeEvent): void {
         if (uri.scheme !== 'file') {
             return;
         }
@@ -58,7 +70,10 @@ export class FossilContentProvider {
     @throttle
     private async fireChangeEvents(): Promise<void> {
         if (!window.state.focused) {
-            const onDidFocusWindow = filterEvent(window.onDidChangeWindowState, e => e.focused);
+            const onDidFocusWindow = filterEvent(
+                window.onDidChangeWindowState,
+                e => e.focused
+            );
             await eventToPromise(onDidFocusWindow);
         }
 
@@ -100,8 +115,7 @@ export class FossilContentProvider {
 
         try {
             return await repository.show(params);
-        }
-        catch (err) {
+        } catch (err) {
             // no-op
         }
 
@@ -114,7 +128,9 @@ export class FossilContentProvider {
 
         Object.keys(this.cache).forEach(key => {
             const row = this.cache[key];
-            const isOpen = window.visibleTextEditors.some(e => e.document.uri.fsPath === row.uri.fsPath);
+            const isOpen = window.visibleTextEditors.some(
+                e => e.document.uri.fsPath === row.uri.fsPath
+            );
 
             if (isOpen || now - row.timestamp < THREE_MINUTES) {
                 cache[row.uri.toString()] = row;

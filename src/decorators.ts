@@ -8,7 +8,9 @@
 
 import { done } from './util';
 
-function decorate(decorator: (fn: Function, key: string) => Function): Function {
+function decorate(
+    decorator: (fn: Function, key: string) => Function
+): Function {
     return (target: any, key: string, descriptor: any) => {
         let fnKey: string | null = null;
         let fn: Function | null = null;
@@ -38,7 +40,7 @@ function _memoize(fn: Function, key: string): Function {
                 configurable: false,
                 enumerable: false,
                 writable: false,
-                value: fn.apply(this, args)
+                value: fn.apply(this, args),
             });
         }
 
@@ -80,12 +82,12 @@ function _throttle<T>(fn: Function, key: string): Function {
 
 export const throttle = decorate(_throttle);
 
-
-function _sequentialize<T>(fn: Function, key: string): Function {
+function _sequentialize(fn: Function, key: string): Function {
     const currentKey = `__$sequence$${key}`;
 
     return function (this: any, ...args: any[]) {
-        const currentPromise = this[currentKey] as Promise<any> || Promise.resolve(null);
+        const currentPromise =
+            (this[currentKey] as Promise<any>) || Promise.resolve(null);
         const run = async () => await fn.apply(this, args);
         this[currentKey] = currentPromise.then(run, run);
         return this[currentKey];
