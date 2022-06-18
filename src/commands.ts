@@ -36,7 +36,7 @@ import {
 } from './fossilBase';
 import { Model } from './model';
 import {
-    Resource,
+    FossilResource,
     Status,
     CommitOptions,
     CommitScope,
@@ -44,13 +44,7 @@ import {
     LogEntriesOptions,
     Repository,
 } from './repository';
-import {
-    WorkingDirectoryGroup,
-    StagingGroup,
-    MergeGroup,
-    UntrackedGroup,
-    isResourceGroup,
-} from './resourceGroups';
+import { isResourceGroup } from './resourceGroups';
 import {
     interaction,
     BranchExistsAction,
@@ -132,12 +126,12 @@ export class CommandCenter {
     }
 
     @command('fossil.openResource')
-    async openResource(resource: Resource): Promise<void> {
+    async openResource(resource: FossilResource): Promise<void> {
         await this._openResource(resource, undefined, true, false);
     }
 
     private async _openResource(
-        resource: Resource | undefined,
+        resource: FossilResource | undefined,
         preview?: boolean,
         preserveFocus?: boolean,
         preserveSelection?: boolean
@@ -179,7 +173,7 @@ export class CommandCenter {
         );
     }
 
-    private getLeftResource(resource: Resource): Uri | undefined {
+    private getLeftResource(resource: FossilResource): Uri | undefined {
         switch (resource.status) {
             case Status.RENAMED:
                 if (resource.renameResourceUri) {
@@ -202,7 +196,7 @@ export class CommandCenter {
         }
     }
 
-    private getRightResource(resource: Resource): Uri {
+    private getRightResource(resource: FossilResource): Uri {
         if (
             resource.mergeStatus === MergeStatus.UNRESOLVED &&
             resource.status !== Status.MISSING &&
@@ -231,7 +225,7 @@ export class CommandCenter {
         }
     }
 
-    private getTitle(resource: Resource): string {
+    private getTitle(resource: FossilResource): string {
         const basename = path.basename(resource.resourceUri.fsPath);
         if (
             resource.mergeStatus === MergeStatus.UNRESOLVED &&
@@ -371,23 +365,24 @@ export class CommandCenter {
 
     @command('fossil.openFiles')
     openFiles(
-        ...resources: (Resource | SourceControlResourceGroup)[]
+        ...resources: (FossilResource | SourceControlResourceGroup)[]
     ): Promise<void> {
         if (resources.length === 1) {
             // a resource group proxy object?
             const [resourceGroup] = resources;
             if (isResourceGroup(resourceGroup)) {
                 // const groupId = resourceGroup.id
-                const resources = resourceGroup.resourceStates as Resource[];
+                const resources =
+                    resourceGroup.resourceStates as FossilResource[];
                 return this.openFile(...resources);
             }
         }
 
-        return this.openFile(...(<Resource[]>resources));
+        return this.openFile(...(<FossilResource[]>resources));
     }
 
     @command('fossil.openFile')
-    async openFile(...resources: Resource[]): Promise<void> {
+    async openFile(...resources: FossilResource[]): Promise<void> {
         if (!resources) {
             return;
         }
@@ -418,7 +413,7 @@ export class CommandCenter {
     }
 
     @command('fossil.openChange')
-    async openChange(...resources: Resource[]): Promise<void> {
+    async openChange(...resources: FossilResource[]): Promise<void> {
         if (!resources) {
             return;
         }
@@ -428,7 +423,8 @@ export class CommandCenter {
             const [resourceGroup] = resources;
             if (isResourceGroup(resourceGroup)) {
                 // const groupId = resourceGroup.id;
-                const resources = resourceGroup.resourceStates as Resource[];
+                const resources =
+                    resourceGroup.resourceStates as FossilResource[];
                 return this.openChange(...resources);
             }
         }
@@ -476,10 +472,8 @@ export class CommandCenter {
         }
 
         const scmResources = resourceStates.filter(
-            s =>
-                s instanceof Resource &&
-                s.resourceGroup instanceof UntrackedGroup
-        ) as Resource[];
+            s => s instanceof FossilResource && s.resourceGroup.is('untracked')
+        );
 
         if (!scmResources.length) {
             return;
@@ -511,10 +505,8 @@ export class CommandCenter {
         }
 
         const scmResources = resourceStates.filter(
-            s =>
-                s instanceof Resource &&
-                s.resourceGroup instanceof UntrackedGroup
-        ) as Resource[];
+            s => s instanceof FossilResource && s.resourceGroup.is('untracked')
+        );
 
         if (!scmResources.length) {
             return;
@@ -542,10 +534,8 @@ export class CommandCenter {
         }
 
         const scmResources = resourceStates.filter(
-            s =>
-                s instanceof Resource &&
-                s.resourceGroup instanceof WorkingDirectoryGroup
-        ) as Resource[];
+            s => s instanceof FossilResource && s.resourceGroup.is('working')
+        );
 
         if (!scmResources.length) {
             return;
@@ -575,11 +565,11 @@ export class CommandCenter {
 
         const scmResources = resourceStates.filter(
             s =>
-                s instanceof Resource &&
-                (s.resourceGroup instanceof WorkingDirectoryGroup ||
-                    s.resourceGroup instanceof MergeGroup ||
-                    s.resourceGroup instanceof UntrackedGroup)
-        ) as Resource[];
+                s instanceof FossilResource &&
+                (s.resourceGroup.is('working') ||
+                    s.resourceGroup.is('merge') ||
+                    s.resourceGroup.is('untracked'))
+        );
 
         if (!scmResources.length) {
             return;
@@ -613,9 +603,8 @@ export class CommandCenter {
         }
 
         const scmResources = resourceStates.filter(
-            s =>
-                s instanceof Resource && s.resourceGroup instanceof StagingGroup
-        ) as Resource[];
+            s => s instanceof FossilResource && s.resourceGroup.is('staging')
+        );
 
         if (!scmResources.length) {
             return;
@@ -649,8 +638,9 @@ export class CommandCenter {
         }
 
         const scmResources = resourceStates.filter(
-            s => s instanceof Resource && s.isDirtyStatus
-        ) as Resource[];
+            (s): s is FossilResource =>
+                s instanceof FossilResource && s.isDirtyStatus
+        );
 
         if (!scmResources.length) {
             return;
@@ -688,7 +678,7 @@ export class CommandCenter {
     @command('fossil.revertAll', { repository: true })
     async revertAll(repository: Repository): Promise<void> {
         if (await interaction.confirmDiscardAllChanges()) {
-            const resources = repository.workingDirectoryGroup.resources;
+            const resources = repository.workingDirectoryGroup.resourceStates;
             await repository.revert(...resources.map(r => r.resourceUri));
         }
     }
@@ -706,14 +696,16 @@ export class CommandCenter {
         opts?: CommitOptions
     ): Promise<boolean> {
         // validate no conflicts
-        const numConflictResources = repository.conflictGroup.resources.length;
+        const numConflictResources =
+            repository.conflictGroup.resourceStates.length;
         if (numConflictResources > 0) {
             interaction.warnResolveConflicts();
             return false;
         }
         const numWorkingResources =
-            repository.workingDirectoryGroup.resources.length;
-        const numStagingResources = repository.stagingGroup.resources.length;
+            repository.workingDirectoryGroup.resourceStates.length;
+        const numStagingResources =
+            repository.stagingGroup.resourceStates.length;
         const isMergeCommit =
             repository.repoStatus && repository.repoStatus.isMerge;
 
@@ -734,7 +726,7 @@ export class CommandCenter {
 
             if (opts.scope === CommitScope.CHANGES) {
                 const missingResources =
-                    repository.workingDirectoryGroup.resources.filter(
+                    repository.workingDirectoryGroup.resourceStates.filter(
                         r => r.status === Status.MISSING
                     );
                 if (missingResources.length > 0) {
@@ -1246,7 +1238,7 @@ export class CommandCenter {
         return res;
     }
 
-    private getSCMResource(uri?: Uri): Resource | undefined {
+    private getSCMResource(uri?: Uri): FossilResource | undefined {
         uri = uri
             ? uri
             : window.activeTextEditor && window.activeTextEditor.document.uri;

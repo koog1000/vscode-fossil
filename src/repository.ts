@@ -42,13 +42,8 @@ import typedConfig from './config';
 import * as path from 'path';
 import * as nls from 'vscode-nls';
 import {
-    ResourceGroup,
+    FossilResourceGroup,
     createEmptyStatusGroups,
-    UntrackedGroup,
-    WorkingDirectoryGroup,
-    StagingGroup,
-    ConflictGroup,
-    MergeGroup,
     IStatusGroups,
     groupStatuses,
     IGroupStatusesParams,
@@ -100,7 +95,7 @@ export enum MergeStatus {
     RESOLVED,
 }
 
-export class Resource implements SourceControlResourceState {
+export class FossilResource implements SourceControlResourceState {
     @memoize
     get command(): Command {
         return {
@@ -151,7 +146,7 @@ export class Resource implements SourceControlResourceState {
         }
         return this._resourceUri;
     }
-    get resourceGroup(): ResourceGroup {
+    get resourceGroup(): FossilResourceGroup {
         return this._resourceGroup;
     }
     get status(): Status {
@@ -194,28 +189,28 @@ export class Resource implements SourceControlResourceState {
             this.status !== Status.MISSING &&
             this.status !== Status.DELETED
         ) {
-            return Resource.Icons[theme].Conflict;
+            return FossilResource.Icons[theme].Conflict;
         }
 
         switch (this.status) {
             case Status.MISSING:
-                return Resource.Icons[theme].Missing;
+                return FossilResource.Icons[theme].Missing;
             case Status.MODIFIED:
-                return Resource.Icons[theme].Modified;
+                return FossilResource.Icons[theme].Modified;
             case Status.ADDED:
-                return Resource.Icons[theme].Added;
+                return FossilResource.Icons[theme].Added;
             case Status.DELETED:
-                return Resource.Icons[theme].Deleted;
+                return FossilResource.Icons[theme].Deleted;
             case Status.RENAMED:
-                return Resource.Icons[theme].Renamed;
+                return FossilResource.Icons[theme].Renamed;
             case Status.UNTRACKED:
-                return Resource.Icons[theme].Untracked;
+                return FossilResource.Icons[theme].Untracked;
             case Status.IGNORED:
-                return Resource.Icons[theme].Ignored;
+                return FossilResource.Icons[theme].Ignored;
             case Status.UNMODIFIED:
-                return Resource.Icons[theme].Unmodified;
+                return FossilResource.Icons[theme].Unmodified;
             case Status.CONFLICT:
-                return Resource.Icons[theme].Conflict;
+                return FossilResource.Icons[theme].Conflict;
             default:
                 return void 0;
         }
@@ -238,7 +233,7 @@ export class Resource implements SourceControlResourceState {
     }
 
     constructor(
-        private _resourceGroup: ResourceGroup,
+        private _resourceGroup: FossilResourceGroup,
         private _resourceUri: Uri,
         private _status: Status,
         private _mergeStatus: MergeStatus,
@@ -380,19 +375,19 @@ export class Repository implements IDisposable {
     }
 
     private _groups: IStatusGroups;
-    get mergeGroup(): MergeGroup {
+    get mergeGroup(): FossilResourceGroup {
         return this._groups.merge;
     }
-    get conflictGroup(): ConflictGroup {
+    get conflictGroup(): FossilResourceGroup {
         return this._groups.conflict;
     }
-    get stagingGroup(): StagingGroup {
+    get stagingGroup(): FossilResourceGroup {
         return this._groups.staging;
     }
-    get workingDirectoryGroup(): WorkingDirectoryGroup {
+    get workingDirectoryGroup(): FossilResourceGroup {
         return this._groups.working;
     }
-    get untrackedGroup(): UntrackedGroup {
+    get untrackedGroup(): FossilResourceGroup {
         return this._groups.untracked;
     }
 
@@ -447,7 +442,7 @@ export class Repository implements IDisposable {
             this.conflictGroup,
             this.stagingGroup,
         ];
-        return groups.every(g => g.resources.length === 0);
+        return groups.every(g => g.resourceStates.length === 0);
     }
 
     toUri(rawPath: string): Uri {
@@ -464,11 +459,11 @@ export class Repository implements IDisposable {
 
         this._currentBranch = undefined;
         this._refs = [];
-        this._groups.conflict.clear();
-        this._groups.merge.clear();
-        this._groups.staging.clear();
-        this._groups.untracked.clear();
-        this._groups.working.clear();
+        this._groups.conflict.updateResources([]);
+        this._groups.merge.updateResources([]);
+        this._groups.staging.updateResources([]);
+        this._groups.untracked.updateResources([]);
+        this._groups.working.updateResources([]);
         this._onDidChangeResources.fire();
     }
 
@@ -522,14 +517,16 @@ export class Repository implements IDisposable {
         };
         this._sourceControl.quickDiffProvider = this;
 
-        const [groups, disposables] = createEmptyStatusGroups(
-            this._sourceControl
-        );
+        const groups = createEmptyStatusGroups(this._sourceControl);
 
         this.disposables.push(new AutoIncomingOutgoing(this));
 
         this._groups = groups;
-        this.disposables.push(...disposables);
+        this.disposables.push(
+            ...Object.values(groups).map(
+                (group: FossilResourceGroup) => group.disposable
+            )
+        );
 
         const statusBar = new StatusBarCommands(this);
         this.disposables.push(statusBar);
@@ -603,9 +600,9 @@ export class Repository implements IDisposable {
 
     @throttle
     async add(...uris: Uri[]): Promise<void> {
-        let resources: Resource[];
+        let resources: FossilResource[];
         if (uris.length === 0) {
-            resources = this._groups.untracked.resources;
+            resources = this._groups.untracked.resourceStates;
         } else {
             resources = this.mapResources(uris);
         }
@@ -623,9 +620,9 @@ export class Repository implements IDisposable {
 
     @throttle
     async remove(...uris: Uri[]): Promise<void> {
-        let resources: Resource[];
+        let resources: FossilResource[];
         if (uris.length === 0) {
-            resources = this._groups.untracked.resources;
+            resources = this._groups.untracked.resourceStates;
         } else {
             resources = this.mapResources(uris);
         }
@@ -639,9 +636,9 @@ export class Repository implements IDisposable {
 
     @throttle
     async ignore(...uris: Uri[]): Promise<void> {
-        let resources: Resource[];
+        let resources: FossilResource[];
         if (uris.length === 0) {
-            resources = this._groups.untracked.resources;
+            resources = this._groups.untracked.resourceStates;
         } else {
             resources = this.mapResources(uris);
         }
@@ -653,8 +650,8 @@ export class Repository implements IDisposable {
         );
     }
 
-    mapResources(resourceUris: Uri[]): Resource[] {
-        const resources: Resource[] = [];
+    mapResources(resourceUris: Uri[]): FossilResource[] {
+        const resources: FossilResource[] = [];
         const { conflict, merge, working, untracked, staging } = this._groups;
         const groups = [working, staging, merge, untracked, conflict];
         for (const uri of resourceUris) {
@@ -676,7 +673,7 @@ export class Repository implements IDisposable {
             let resources = this.mapResources(resourceUris);
 
             if (resources.length === 0) {
-                resources = this._groups.working.resources;
+                resources = this._groups.working.resourceStates;
             }
 
             const missingResources = partition(
@@ -707,14 +704,14 @@ export class Repository implements IDisposable {
                 );
             }
 
-            this._groups.staging = this._groups.staging.intersect(resources);
-            this._groups.working = this._groups.working.except(resources);
+            this._groups.staging.intersect(resources);
+            this._groups.working.except(resources);
             this._onDidChangeResources.fire();
         });
     }
 
     // resource --> repo-relative path
-    public mapResourceToRepoRelativePath(resource: Resource): string {
+    public mapResourceToRepoRelativePath(resource: FossilResource): string {
         const relativePath = this.mapFileUriToRepoRelativePath(
             resource.resourceUri
         );
@@ -730,7 +727,9 @@ export class Repository implements IDisposable {
     }
 
     // resource --> workspace-relative path
-    public mapResourceToWorkspaceRelativePath(resource: Resource): string {
+    public mapResourceToWorkspaceRelativePath(
+        resource: FossilResource
+    ): string {
         const relativePath = this.mapFileUriToWorkspaceRelativePath(
             resource.resourceUri
         );
@@ -760,13 +759,14 @@ export class Repository implements IDisposable {
     async unstage(...uris: Uri[]): Promise<void> {
         let resources = this.mapResources(uris);
         if (resources.length === 0) {
-            resources = this._groups.staging.resources;
+            resources = this._groups.staging.resourceStates;
         }
         // const relativePaths: string[] = resources.map(r => this.mapResourceToRepoRelativePath(r));
         // await this.run(Operation.Remove, () => this.repository.revert(relativePaths));
 
-        this._groups.staging = this._groups.staging.except(resources);
-        this._groups.working = this._groups.working.intersect(resources);
+        this._groups.staging.except(resources);
+        this._groups.working.intersect(resources);
+        // todo: remove useless event
         this._onDidChangeResources.fire();
     }
 
@@ -778,11 +778,11 @@ export class Repository implements IDisposable {
         await this.run(Operation.Commit, async () => {
             let fileList: string[] = [];
             if (opts.scope === CommitScope.STAGED_CHANGES) {
-                fileList = this.stagingGroup.resources.map(r =>
+                fileList = this.stagingGroup.resourceStates.map(r =>
                     this.mapResourceToRepoRelativePath(r)
                 );
             } else if (opts.scope === CommitScope.CHANGES) {
-                fileList = this.workingDirectoryGroup.resources.map(r =>
+                fileList = this.workingDirectoryGroup.resourceStates.map(r =>
                     this.mapResourceToRepoRelativePath(r)
                 );
             }
@@ -908,7 +908,7 @@ export class Repository implements IDisposable {
         return undo;
     }
 
-    findTrackedResourceByUri(uri: Uri): Resource | undefined {
+    findTrackedResourceByUri(uri: Uri): FossilResource | undefined {
         const groups = [
             this.workingDirectoryGroup,
             this.stagingGroup,
@@ -916,7 +916,7 @@ export class Repository implements IDisposable {
             this.conflictGroup,
         ];
         for (const group of groups) {
-            for (const resource of group.resources) {
+            for (const resource of group.resourceStates) {
                 if (resource.resourceUri.toString() === uri.toString()) {
                     return resource;
                 }
@@ -1208,7 +1208,7 @@ export class Repository implements IDisposable {
             statusGroups: this._groups,
         };
 
-        this._groups = groupStatuses(groupInput);
+        groupStatuses(groupInput);
         this._sourceControl.count = this.count;
         this._onDidChangeStatus.fire();
         // this._onDidChangeRepository.fire()
@@ -1216,11 +1216,11 @@ export class Repository implements IDisposable {
 
     get count(): number {
         return (
-            this.mergeGroup.resources.length +
-            this.stagingGroup.resources.length +
-            this.workingDirectoryGroup.resources.length +
-            this.conflictGroup.resources.length +
-            this.untrackedGroup.resources.length
+            this.mergeGroup.resourceStates.length +
+            this.stagingGroup.resourceStates.length +
+            this.workingDirectoryGroup.resourceStates.length +
+            this.conflictGroup.resourceStates.length +
+            this.untrackedGroup.resourceStates.length
         );
     }
 

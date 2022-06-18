@@ -11,7 +11,6 @@ import {
     Disposable,
     window,
     workspace,
-    SourceControlResourceGroup,
     SourceControl,
     WorkspaceFoldersChangeEvent,
     TextEditor,
@@ -251,7 +250,7 @@ export class Model implements Disposable {
      */
     @sequentialize
     async tryOpenRepository(path: string): Promise<boolean> {
-        if (this.getRepository(path)) {
+        if (this.getRepository(Uri.file(path))) {
             return true;
         }
 
@@ -345,39 +344,22 @@ export class Model implements Disposable {
         return this.openRepositories.map(r => r.repository);
     }
 
-    getRepository(sourceControl: SourceControl): Repository | undefined;
     getRepository(
-        resourceGroup: SourceControlResourceGroup
-    ): Repository | undefined;
-    getRepository(path: string): Repository | undefined;
-    getRepository(resource: Uri): Repository | undefined;
-    getRepository(hint: any): Repository | undefined {
+        hint: Uri | SourceControl | Repository
+    ): Repository | undefined {
         const liveRepository = this.getOpenRepository(hint);
         return liveRepository && liveRepository.repository;
     }
 
     private getOpenRepository(
-        repository: Repository
-    ): OpenRepository | undefined;
-    private getOpenRepository(
-        sourceControl: SourceControl
-    ): OpenRepository | undefined;
-    private getOpenRepository(
-        resourceGroup: SourceControlResourceGroup
-    ): OpenRepository | undefined;
-    private getOpenRepository(path: string): OpenRepository | undefined;
-    private getOpenRepository(resource: Uri): OpenRepository | undefined;
-    private getOpenRepository(hint: any): OpenRepository | undefined {
+        hint: Uri | SourceControl | Repository
+    ): OpenRepository | undefined {
         if (!hint) {
             return undefined;
         }
 
         if (hint instanceof Repository) {
             return this.openRepositories.filter(r => r.repository === hint)[0];
-        }
-
-        if (typeof hint === 'string') {
-            hint = Uri.file(hint);
         }
 
         if (hint instanceof Uri) {
@@ -401,16 +383,6 @@ export class Model implements Disposable {
             const repository = liveRepository.repository;
 
             if (hint === repository.sourceControl) {
-                return liveRepository;
-            }
-
-            if (
-                hint === repository.mergeGroup.resourceGroup ||
-                hint === repository.workingDirectoryGroup.resourceGroup ||
-                hint === repository.stagingGroup.resourceGroup ||
-                hint === repository.untrackedGroup.resourceGroup ||
-                hint === repository.conflictGroup.resourceGroup
-            ) {
                 return liveRepository;
             }
         }
