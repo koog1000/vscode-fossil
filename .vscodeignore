@@ -2,4 +2,8 @@
 **/*.ts
 **/.gitignore
 **/*.map
+.github/
 images/
+src/
+tsconfig.json
+node_modules

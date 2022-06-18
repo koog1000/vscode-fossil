@@ -1,12 +1,18 @@
 Changelog
 =============================================
 
+v0.1.3
+---------------------------------------------
+## What's New
+- Fix: renamed files don't appear in the changes tab
+- Reduce package size from 0.25MB to 0.07MB
+
 v0.1.2
 ---------------------------------------------
 ## What's New
 - Restore repositoty initialization buttons in "Source Control" tab
   when no repository is opened
-- Reduce package size from 1.7MB to 0.25MB 
+- Reduce package size from 1.7MB to 0.25MB
 - Extension codebase is modernized. It should be easier to add tests
 
 v0.1.1
