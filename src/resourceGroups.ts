@@ -1,9 +1,14 @@
 import { FossilError, IFileStatus } from './fossilBase';
-import { Uri, SourceControlResourceGroup, SourceControl } from 'vscode';
+import {
+    Uri,
+    SourceControlResourceGroup,
+    SourceControl,
+    Disposable,
+} from 'vscode';
 import * as path from 'path';
 import * as nls from 'vscode-nls';
 import * as fs from 'fs';
-import { Resource, Status, MergeStatus } from './repository';
+import { FossilResource, Status, MergeStatus } from './repository';
 
 const localize = nls.loadMessageBundle();
 
@@ -16,150 +21,119 @@ export interface IGroupStatusesParams {
 }
 
 export interface IStatusGroups {
-    conflict: ConflictGroup;
-    staging: StagingGroup;
-    merge: MergeGroup;
-    working: WorkingDirectoryGroup;
-    untracked: UntrackedGroup;
+    conflict: FossilResourceGroup;
+    staging: FossilResourceGroup;
+    merge: FossilResourceGroup;
+    working: FossilResourceGroup;
+    untracked: FossilResourceGroup;
 }
 
-export type ResourceGroupId = keyof IStatusGroups;
+export type FossilResourceId = keyof IStatusGroups;
 
-export function createEmptyStatusGroups(
-    scm: SourceControl
-): [IStatusGroups, SourceControlResourceGroup[]] {
-    const conflictGroup = scm.createResourceGroup(
-        ConflictGroup.ID,
+export function createEmptyStatusGroups(scm: SourceControl): IStatusGroups {
+    const conflictGroup = new FossilResourceGroup(
+        scm,
+        'conflict',
         localize('merge conflicts', 'Unresolved Conflicts')
     );
-    const stagingGroup = scm.createResourceGroup(
-        StagingGroup.ID,
+    const stagingGroup = new FossilResourceGroup(
+        scm,
+        'staging',
         localize('staged changes', 'Staged Changes')
-    );
-    const mergeGroup = scm.createResourceGroup(
-        MergeGroup.ID,
+    ) as FossilResourceGroup;
+    const mergeGroup = new FossilResourceGroup(
+        scm,
+        'merge',
         localize('merged changes', 'Merged Changes')
-    );
-    const workingGroup = scm.createResourceGroup(
-        WorkingDirectoryGroup.ID,
+    ) as FossilResourceGroup;
+    const workingGroup = new FossilResourceGroup(
+        scm,
+        'working',
         localize('changes', 'Changes')
-    );
-    const untrackedGroup = scm.createResourceGroup(
-        UntrackedGroup.ID,
+    ) as FossilResourceGroup;
+    const untrackedGroup = new FossilResourceGroup(
+        scm,
+        'untracked',
         localize('untracked files', 'Untracked Files')
-    );
+    ) as FossilResourceGroup;
 
-    return [
-        {
-            conflict: new ConflictGroup(conflictGroup, []),
-            staging: new StagingGroup(stagingGroup, []),
-            merge: new MergeGroup(mergeGroup, []),
-            working: new WorkingDirectoryGroup(workingGroup, []),
-            untracked: new UntrackedGroup(untrackedGroup, []),
-        },
-        [conflictGroup, stagingGroup, mergeGroup, workingGroup, untrackedGroup],
-    ];
+    return {
+        conflict: conflictGroup,
+        staging: stagingGroup,
+        merge: mergeGroup,
+        working: workingGroup,
+        untracked: untrackedGroup,
+    };
 }
 
-export class ResourceGroup {
-    get resourceGroup(): SourceControlResourceGroup {
-        return this._resourceGroup;
-    }
-    get id(): ResourceGroupId {
-        return this._resourceGroup.id as ResourceGroupId;
-    }
-    get contextKey(): string {
-        return this._resourceGroup.id;
-    }
-    get label(): string {
-        return this._resourceGroup.label;
-    }
-    get resources(): Resource[] {
-        return this._resources;
-    }
+export interface IFossilResourceGroup extends SourceControlResourceGroup {
+    resourceStates: FossilResource[];
+}
 
-    public clear(): void {
-        this._resources = [];
+export class FossilResourceGroup {
+    private _uriToResource: Map<string, FossilResource>;
+    private _vscode_group: IFossilResourceGroup;
+    get disposable(): Disposable {
+        return this._vscode_group;
     }
-
-    private _resourceUriIndex: Map<string, Resource>;
+    get resourceStates(): FossilResource[] {
+        return this._vscode_group.resourceStates;
+    }
+    getResource(uri: Uri): FossilResource | undefined {
+        return this._uriToResource.get(uri.toString());
+    }
+    includesUri(uri: Uri): boolean {
+        return this._uriToResource.has(uri.toString());
+    }
 
     constructor(
-        private readonly _resourceGroup: SourceControlResourceGroup,
-        private _resources: Resource[]
+        sourceControl: SourceControl,
+        id: FossilResourceId,
+        label: string
     ) {
-        _resourceGroup.resourceStates = _resources;
-        _resourceGroup.hideWhenEmpty = true;
-
-        this._resourceUriIndex = ResourceGroup.indexResources(_resources);
+        this._uriToResource = new Map<string, FossilResource>();
+        this._vscode_group = sourceControl.createResourceGroup(
+            id,
+            label
+        ) as IFossilResourceGroup;
+        this._vscode_group.hideWhenEmpty = true;
     }
 
-    private static indexResources(
-        resources: Resource[]
-    ): Map<string, Resource> {
-        const index = new Map<string, Resource>();
-        resources.forEach(r => index.set(r.resourceUri.toString(), r));
-        return index;
+    is(id: FossilResourceId): boolean {
+        return this._vscode_group.id === id;
     }
 
-    getResource(uri: Uri): Resource | undefined {
-        const uriString = uri.toString();
-        return this._resourceUriIndex.get(uriString);
+    updateResources(resources: FossilResource[]): void {
+        this._vscode_group.resourceStates = resources;
+        this._uriToResource.clear();
+        resources.forEach(resource =>
+            this._uriToResource.set(resource.resourceUri.toString(), resource)
+        );
     }
 
-    includes(resource: Resource): boolean {
-        return this.includesUri(resource.resourceUri);
-    }
-
-    includesUri(uri: Uri): boolean {
-        return this._resourceUriIndex.has(uri.toString());
-    }
-
-    intersect(resources: Resource[]): this {
-        const newUniqueResources = resources
-            .filter(r => !this.includes(r))
-            .map(
-                r => new Resource(this, r.resourceUri, r.status, r.mergeStatus)
-            );
-        const intersectionResources: Resource[] = [
-            ...this.resources,
+    intersect(resources: FossilResource[]): void {
+        const newUniqueResources = resources.filter(
+            resource =>
+                !this._uriToResource.has(resource.resourceUri.toString())
+        );
+        const intersectionResources: FossilResource[] = [
+            ...this.resourceStates,
             ...newUniqueResources,
         ];
-        return this.newResourceGroup(intersectionResources);
+        this.updateResources(intersectionResources);
     }
 
-    except(resources: Resource[]): this {
-        const excludeIndex = ResourceGroup.indexResources(resources);
-        const remainingResources = this.resources.filter(
-            r => !excludeIndex.has(r.resourceUri.toString())
+    except(resources_to_exclude: FossilResource[]): void {
+        const uri_to_exclude = new Set<string>(
+            resources_to_exclude.map(resource =>
+                resource.resourceUri.toString()
+            )
         );
-        return this.newResourceGroup(remainingResources);
+        const newResources = this.resourceStates.filter(
+            resource => !uri_to_exclude.has(resource.resourceUri.toString())
+        );
+        this.updateResources(newResources);
     }
-
-    private newResourceGroup(resources: Resource[]): this {
-        const SubClassConstructor = Object.getPrototypeOf(this).constructor;
-        return new SubClassConstructor(this._resourceGroup, resources);
-    }
-}
-
-export class MergeGroup extends ResourceGroup {
-    static readonly ID = 'merge';
-}
-
-export class ConflictGroup extends ResourceGroup {
-    static readonly ID = 'conflict';
-}
-
-export class StagingGroup extends ResourceGroup {
-    static readonly ID = 'staging';
-}
-
-export class UntrackedGroup extends ResourceGroup {
-    static readonly ID = 'untracked';
-}
-
-export class WorkingDirectoryGroup extends ResourceGroup {
-    static readonly ID = 'working';
 }
 
 export function groupStatuses({
@@ -168,19 +142,19 @@ export function groupStatuses({
     fileStatuses,
     // repoStatus,
     resolveStatuses,
-}: IGroupStatusesParams): IStatusGroups {
-    const workingDirectoryResources: Resource[] = [];
-    const stagingResources: Resource[] = [];
-    const conflictResources: Resource[] = [];
-    const mergeResources: Resource[] = [];
-    const untrackedResources: Resource[] = [];
+}: IGroupStatusesParams): void {
+    const workingDirectoryResources: FossilResource[] = [];
+    const stagingResources: FossilResource[] = [];
+    const conflictResources: FossilResource[] = [];
+    const mergeResources: FossilResource[] = [];
+    const untrackedResources: FossilResource[] = [];
 
     const chooseResourcesAndGroup = (
         uriString: Uri,
-        rawStatus: string,
+        rawStatus: IFileStatus['status'],
         mergeStatus: MergeStatus,
         renamed: boolean
-    ): [Resource[], ResourceGroup, Status] => {
+    ): [FossilResource[], FossilResourceGroup, Status] => {
         let status: Status;
         switch (rawStatus) {
             case 'M':
@@ -189,9 +163,9 @@ export function groupStatuses({
             case 'R':
                 status = Status.DELETED;
                 break;
-            case 'I':
-                status = Status.IGNORED;
-                break;
+            // case 'I':
+            //     status = Status.IGNORED;
+            //     break;
             case '?':
                 status = Status.UNTRACKED;
                 break;
@@ -210,7 +184,7 @@ export function groupStatuses({
                 });
         }
 
-        if (status === Status.IGNORED || status === Status.UNTRACKED) {
+        if (status === Status.UNTRACKED) {
             return [untrackedResources, untracked, status];
         }
 
@@ -224,10 +198,10 @@ export function groupStatuses({
             return [conflictResources, conflict, status];
         }
         const isStaged = staging.includesUri(uriString) ? true : false;
-        const targetResources: Resource[] = isStaged
+        const targetResources: FossilResource[] = isStaged
             ? stagingResources
             : workingDirectoryResources;
-        const targetGroup: ResourceGroup = isStaged ? staging : working;
+        const targetGroup: FossilResourceGroup = isStaged ? staging : working;
         return [targetResources, targetGroup, status];
     };
 
@@ -253,7 +227,7 @@ export function groupStatuses({
             !!raw.rename
         );
         resources.push(
-            new Resource(group, uri, status, mergeStatus, renameUri)
+            new FossilResource(group, uri, status, mergeStatus, renameUri)
         );
     }
 
@@ -267,7 +241,9 @@ export function groupStatuses({
                 continue; // dealt with by the fileStatuses (this is the norm)
             }
             const mergeStatus = toMergeStatus(raw.status);
-            const inferredStatus: string = fs.existsSync(uri.fsPath)
+            const inferredStatus: IFileStatus['status'] = fs.existsSync(
+                uri.fsPath
+            )
                 ? 'C'
                 : 'R';
             const [resources, group, status] = chooseResourcesAndGroup(
@@ -276,23 +252,14 @@ export function groupStatuses({
                 mergeStatus,
                 !!raw.rename
             );
-            resources.push(new Resource(group, uri, status, mergeStatus));
+            resources.push(new FossilResource(group, uri, status, mergeStatus));
         }
     }
-
-    return {
-        conflict: new ConflictGroup(conflict.resourceGroup, conflictResources),
-        merge: new MergeGroup(merge.resourceGroup, mergeResources),
-        staging: new StagingGroup(staging.resourceGroup, stagingResources),
-        working: new WorkingDirectoryGroup(
-            working.resourceGroup,
-            workingDirectoryResources
-        ),
-        untracked: new UntrackedGroup(
-            untracked.resourceGroup,
-            untrackedResources
-        ),
-    };
+    conflict.updateResources(conflictResources);
+    merge.updateResources(mergeResources);
+    staging.updateResources(stagingResources);
+    working.updateResources(workingDirectoryResources);
+    untracked.updateResources(untrackedResources);
 }
 
 function toMergeStatus(status: string): MergeStatus {

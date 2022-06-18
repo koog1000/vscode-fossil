@@ -59,9 +59,9 @@ export interface IRepoStatus {
 }
 
 export interface IFileStatus {
-    status: string;
+    status: 'M' | 'A' | 'R' | 'C' | '!' | '?';
     path: string;
-    rename?: string;
+    rename?: string; // ToDo: remove `rename` field
 }
 
 export interface ICommitDetails {
@@ -873,29 +873,40 @@ export class Repository {
         const lines = status.split('\n');
 
         lines.forEach(line => {
-            if (line.length > 0) {
-                if (line.startsWith('UPDATED_BY_MERGE')) {
-                    const fileUri: string = line.substr(17).trim();
+            const match = line.match(/(\S+)\s+(.+?)\s*$/);
+            if (!match) {
+                return;
+            }
+            const [_, rawStatus, fileUri] = match;
+            switch (rawStatus) {
+                case 'UPDATED_BY_MERGE':
                     result.push({ status: 'M', path: fileUri });
-                } else if (line.startsWith('ADDED_BY_MERGE')) {
-                    const fileUri: string = line.substr(15).trim();
+                    break;
+                case 'ADDED_BY_MERGE':
                     result.push({ status: 'A', path: fileUri });
-                } else if (line.startsWith('DELETED')) {
-                    const fileUri: string = line.substr(8).trim();
+                    break;
+                case 'DELETED':
                     result.push({ status: 'R', path: fileUri });
-                } else if (line.startsWith('EDITED')) {
-                    const fileUri: string = line.substr(7).trim();
+                    break;
+                case 'EDITED':
                     result.push({ status: 'M', path: fileUri });
-                } else if (line.startsWith('ADDED')) {
-                    const fileUri: string = line.substr(6).trim();
+                    break;
+                case 'ADDED':
                     result.push({ status: 'A', path: fileUri });
-                } else if (line.startsWith('MISSING')) {
-                    const fileUri: string = line.substr(8).trim();
+                    break;
+                case 'MISSING':
                     result.push({ status: '!', path: fileUri });
-                } else if (line.startsWith('CONFLICT')) {
-                    const fileUri: string = line.substr(9).trim();
+                    break;
+                case 'CONFLICT':
                     result.push({ status: 'C', path: fileUri });
-                }
+                    break;
+                case 'RENAMED':
+                    result.push({
+                        status: 'A',
+                        path: fileUri,
+                        rename: fileUri,
+                    });
+                    break;
             }
         });
         return result;

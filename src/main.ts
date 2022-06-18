@@ -25,7 +25,7 @@ const localize = nls.loadMessageBundle();
 async function init(
     _context: ExtensionContext,
     disposables: Disposable[]
-): Promise<void> {
+): Promise<Model | undefined> {
     // const { name, version, aiKey } = require(context.asAbsolutePath('./package.json')) as { name: string, version: string, aiKey: string };
 
     const outputChannel = window.createOutputChannel('Fossil');
@@ -73,6 +73,7 @@ async function init(
         new CommandCenter(fossil, model, outputChannel),
         new FossilContentProvider(model)
     );
+    return model;
 }
 
 export async function findFossil(
@@ -96,11 +97,13 @@ export async function findFossil(
     }
 }
 
-export function activate(context: ExtensionContext): void {
+export async function activate(
+    context: ExtensionContext
+): Promise<void | Model> {
     const disposables: Disposable[] = [];
     context.subscriptions.push(
         new Disposable(() => Disposable.from(...disposables).dispose())
     );
 
-    init(context, disposables).catch(err => console.error(err));
+    return await init(context, disposables).catch(err => console.error(err));
 }

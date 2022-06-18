@@ -63,10 +63,10 @@ class ScopeStatusBar {
             currentRef.icon +
             ' ' +
             label +
-            (this.repository.workingDirectoryGroup.resources.length > 0
+            (this.repository.workingDirectoryGroup.resourceStates.length > 0
                 ? '+'
                 : '') +
-            (this.repository.mergeGroup.resources.length > 0 ? '!' : '');
+            (this.repository.mergeGroup.resourceStates.length > 0 ? '!' : '');
 
         return {
             command: 'fossil.branchChange',

@@ -50,6 +50,9 @@ function _memoize(fn: Function, key: string): Function {
 
 export const memoize = decorate(_memoize);
 
+/**
+ * Decorator to not allow multiple async calls
+ */
 function _throttle<T>(fn: Function, key: string): Function {
     const currentKey = `$throttle$current$${key}`;
     const nextKey = `$throttle$next$${key}`;
