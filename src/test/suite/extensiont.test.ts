@@ -6,6 +6,9 @@ import * as sinon from 'sinon';
 import * as fs from 'fs';
 import { Fossil, FossilCWD } from '../../fossilBase';
 import { findFossil } from '../../main';
+import { Model } from '../../model';
+import { Repository, Status } from '../../repository';
+import { eventToPromise } from '../../util';
 
 async function createFossil(): Promise<Fossil> {
     const outputChannel = window.createOutputChannel('Fossil.Test');
@@ -73,7 +76,10 @@ suite('Fossil', () => {
         fossil = await createFossil();
     });
     beforeEach(() => {
-        const roorPath = vscode.workspace.workspaceFolders![0].uri;
+        if (!vscode.workspace.workspaceFolders) {
+            throw new Error('Expected opened workspace. Probably setup issue.');
+        }
+        const roorPath = vscode.workspace.workspaceFolders[0].uri;
         vscode.window.showInformationMessage(`Ensure '${roorPath}' is empty`);
         const entities = fs.readdirSync(roorPath.fsPath);
         entities.forEach(name =>
@@ -112,5 +118,53 @@ suite('Fossil', () => {
                 thrown.stderr
             );
         });
+    });
+
+    function assertGroups(
+        repository: Repository,
+        working: Status[],
+        staging: Status[]
+    ) {
+        assert.deepStrictEqual(
+            repository.workingDirectoryGroup.resourceStates.map(
+                res => res.status
+            ),
+            working
+        );
+        assert.deepStrictEqual(
+            repository.stagingGroup.resourceStates.map(res => res.status),
+            staging
+        );
+    }
+
+    test('fossil rename is visible in Source Control panel', async () => {
+        await fossilInit(sandbox);
+        await fossilOpen(sandbox, fossil);
+        const rootUri = vscode.workspace.workspaceFolders![0].uri;
+        const cwd = rootUri.fsPath as FossilCWD;
+        await fs.promises.writeFile(
+            Uri.joinPath(rootUri, 'foo.txt').fsPath,
+            'test\n'
+        );
+        await fossil.exec(cwd, ['add', 'foo.txt']);
+        const model = vscode.extensions.getExtension('koog1000.fossil')!
+            .exports as Model;
+        const repository = model.repositories[0];
+        await eventToPromise(repository.onDidRunOperation);
+        await repository.status();
+        assertGroups(repository, [Status.ADDED], []);
+
+        await fossil.exec(cwd, [
+            'commit',
+            '-m',
+            'add: foo.txt',
+            '--no-warnings',
+        ]);
+        await repository.status();
+        assertGroups(repository, [], []);
+
+        await fossil.exec(cwd, ['mv', 'foo.txt', 'bar.txt', '--hard']);
+        await repository.status();
+        assertGroups(repository, [Status.RENAMED], []);
     });
 });
