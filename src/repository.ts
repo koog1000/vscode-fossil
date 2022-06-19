@@ -25,6 +25,7 @@ import {
     CommitDetails,
     LogEntryRepositoryOptions,
     FossilUndoDetails,
+    FossilRoot,
 } from './fossilBase';
 import {
     anyEvent,
@@ -278,7 +279,7 @@ function isReadOnly(operation: Operation): boolean {
     }
 }
 
-export interface Operations {
+interface Operations {
     isIdle(): boolean;
     isRunning(operation: Operation): boolean;
 }
@@ -369,6 +370,7 @@ export class Repository implements IDisposable {
         );
     }
 
+    // ToDo: remove. nobody uses `lastPushPath`
     private _lastPushPath: string | undefined;
     get lastPushPath(): string | undefined {
         return this._lastPushPath;
@@ -467,7 +469,7 @@ export class Repository implements IDisposable {
         this._onDidChangeResources.fire();
     }
 
-    get root(): string {
+    get root(): FossilRoot {
         return this.repository.root;
     }
 
@@ -611,11 +613,10 @@ export class Repository implements IDisposable {
         );
         await this.run(Operation.Add, () => this.repository.add(relativePaths));
     }
-
-    @throttle
-    async addSimple(...uris: Uri[]): Promise<void> {
-        const relativePaths: string[] = uris.map(uri => uri.fsPath);
-        await this.run(Operation.Add, () => this.repository.add(relativePaths));
+    async ls(...uris: Uri[]): Promise<Uri[]> {
+        const lsResult = await this.repository.ls(uris.map(url => url.fsPath));
+        const rootUri = Uri.file(this.root);
+        return lsResult.map(path => Uri.joinPath(rootUri, path));
     }
 
     @throttle
@@ -908,22 +909,13 @@ export class Repository implements IDisposable {
         return undo;
     }
 
-    findTrackedResourceByUri(uri: Uri): FossilResource | undefined {
-        const groups = [
+    public isInAnyGroup(uri: Uri): boolean {
+        return [
             this.workingDirectoryGroup,
             this.stagingGroup,
             this.mergeGroup,
             this.conflictGroup,
-        ];
-        for (const group of groups) {
-            for (const resource of group.resourceStates) {
-                if (resource.resourceUri.toString() === uri.toString()) {
-                    return resource;
-                }
-            }
-        }
-
-        return undefined;
+        ].some(group => group.includesUri(uri));
     }
 
     public async createPullOptions(): Promise<PullOptions> {
@@ -1004,13 +996,6 @@ export class Repository implements IDisposable {
                 throw e;
             }
         });
-    }
-
-    repositoryContains(uri: Uri): boolean {
-        if (uri.fsPath) {
-            return uri.fsPath.startsWith(this.repository.root);
-        }
-        return true;
     }
 
     async show(params: FossilUriParams): Promise<string> {
