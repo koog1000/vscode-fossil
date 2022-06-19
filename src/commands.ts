@@ -7,7 +7,6 @@
 import {
     Uri,
     commands,
-    scm,
     Disposable,
     window,
     workspace,
@@ -774,7 +773,8 @@ export class CommandCenter {
         repository: Repository,
         opts?: CommitOptions
     ): Promise<void> {
-        const message = scm.inputBox.value;
+        const inputBox = repository.sourceControl.inputBox;
+        const message = inputBox.value;
         const didCommit = await this.smartCommit(
             repository,
             () => interaction.inputCommitMessage(message),
@@ -782,7 +782,7 @@ export class CommandCenter {
         );
 
         if (message && didCommit) {
-            scm.inputBox.value = '';
+            inputBox.value = '';
         }
     }
 
@@ -799,7 +799,7 @@ export class CommandCenter {
         );
 
         if (didCommit) {
-            scm.inputBox.value = '';
+            repository.sourceControl.inputBox.value = '';
         }
     }
 
@@ -1002,7 +1002,7 @@ export class CommandCenter {
                 );
 
                 if (didCommit) {
-                    scm.inputBox.value = '';
+                    repository.sourceControl.inputBox.value = '';
                 }
             }
         } catch (e) {
