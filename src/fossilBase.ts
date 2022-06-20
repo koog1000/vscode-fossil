@@ -527,6 +527,12 @@ export class Repository {
         await this.exec(args);
     }
 
+    async ls(paths: string[]): Promise<string[]> {
+        const args = ['ls', ...paths];
+        const result = await this.exec(args);
+        return result.stdout.split('\n').filter(Boolean);
+    }
+
     async cat(relativePath: string, checkin: FossilCheckin): Promise<string> {
         const args = ['cat', relativePath];
         if (checkin) {
