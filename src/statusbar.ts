@@ -127,11 +127,11 @@ class SyncStatusBar {
     }
 
     private getSyncStatus(): SyncStatus {
-        if (this.repository.operations.isRunning(Operation.Push)) {
+        if (this.repository.operations.has(Operation.Push)) {
             return SyncStatus.Pushing;
         }
 
-        if (this.repository.operations.isRunning(Operation.Pull)) {
+        if (this.repository.operations.has(Operation.Pull)) {
             return SyncStatus.Pulling;
         }
 

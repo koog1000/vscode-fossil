@@ -885,6 +885,22 @@ export class CommandCenter {
         }
     }
 
+    @command('fossil.patchCreate', { repository: true })
+    async patchCreate(repository: Repository): Promise<void> {
+        const newPatchPath = await interaction.inputPatchCreate();
+        if (newPatchPath) {
+            await repository.patchCreate(newPatchPath);
+        }
+    }
+
+    @command('fossil.patchApply', { repository: true })
+    async patchApply(repository: Repository): Promise<void> {
+        const newPatchPath = await interaction.inputPatchApply();
+        if (newPatchPath) {
+            await repository.patchApply(newPatchPath);
+        }
+    }
+
     @command('fossil.update', { repository: true })
     async update(repository: Repository): Promise<void> {
         const unclean = false;

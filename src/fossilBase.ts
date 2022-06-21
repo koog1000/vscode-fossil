@@ -826,6 +826,16 @@ export class Repository {
         }
     }
 
+    async patchCreate(path: string): Promise<void> {
+        const args = ['patch', 'create', path];
+        await this.exec(args);
+    }
+
+    async patchApply(path: string): Promise<void> {
+        const args = ['patch', 'apply', path];
+        await this.exec(args);
+    }
+
     async getSummary(): Promise<IRepoStatus> {
         const summary = this.status_msg;
         const parents = this.parseParentLines(summary);

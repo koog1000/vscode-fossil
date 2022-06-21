@@ -243,30 +243,32 @@ export class FossilResource implements SourceControlResourceState {
 }
 
 export const enum Operation {
-    Status = 1 << 0,
-    Add = 1 << 1,
-    RevertFiles = 1 << 2,
-    Commit = 1 << 3,
-    Clean = 1 << 4,
-    Branch = 1 << 5,
-    Update = 1 << 6,
-    Undo = 1 << 7,
-    UndoDryRun = 1 << 8,
-    Pull = 1 << 9,
-    Push = 1 << 10,
-    Sync = 1 << 11,
-    Init = 1 << 12,
-    Show = 1 << 13,
-    Stage = 1 << 14,
-    GetCommitTemplate = 1 << 15,
-    Revert = 1 << 16,
-    Resolve = 1 << 17,
-    Unresolve = 1 << 18,
-    Parents = 1 << 19,
-    Remove = 1 << 20,
-    Merge = 1 << 21,
-    Close = 1 << 25,
-    Ignore = 1 << 26,
+    Status,
+    Add,
+    RevertFiles,
+    Commit,
+    Clean,
+    Branch,
+    Update,
+    Undo,
+    UndoDryRun,
+    Pull,
+    Push,
+    Sync,
+    Init,
+    Show,
+    Stage,
+    GetCommitTemplate,
+    Revert,
+    Resolve,
+    Unresolve,
+    Parents,
+    Remove,
+    Merge,
+    Close,
+    Ignore,
+    PatchCreate,
+    PatchApply,
 }
 
 function isReadOnly(operation: Operation): boolean {
@@ -276,33 +278,6 @@ function isReadOnly(operation: Operation): boolean {
             return true;
         default:
             return false;
-    }
-}
-
-interface Operations {
-    isIdle(): boolean;
-    isRunning(operation: Operation): boolean;
-}
-
-class OperationsImpl implements Operations {
-    constructor(private readonly operations: number = 0) {
-        // noop
-    }
-
-    start(operation: Operation): OperationsImpl {
-        return new OperationsImpl(this.operations | operation);
-    }
-
-    end(operation: Operation): OperationsImpl {
-        return new OperationsImpl(this.operations & ~operation);
-    }
-
-    isRunning(operation: Operation): boolean {
-        return (this.operations & operation) !== 0;
-    }
-
-    isIdle(): boolean {
-        return this.operations === 0;
     }
 }
 
@@ -413,8 +388,8 @@ export class Repository implements IDisposable {
         return this._path;
     }
 
-    private _operations = new OperationsImpl();
-    get operations(): Operations {
+    private _operations = new Set<Operation>();
+    get operations(): Set<Operation> {
         return this._operations;
     }
 
@@ -561,7 +536,7 @@ export class Repository implements IDisposable {
             return;
         }
 
-        if (!this.operations.isIdle()) {
+        if (this.operations.size !== 0) {
             return;
         }
 
@@ -582,7 +557,7 @@ export class Repository implements IDisposable {
 
     async whenIdleAndFocused(): Promise<void> {
         while (true) {
-            if (!this.operations.isIdle()) {
+            if (this.operations.size !== 0) {
                 await eventToPromise(this.onDidRunOperation);
                 continue;
             }
@@ -1036,6 +1011,18 @@ export class Repository implements IDisposable {
         });
     }
 
+    async patchCreate(path: string): Promise<void> {
+        return this.run(Operation.PatchCreate, async () =>
+            this.repository.patchCreate(path)
+        );
+    }
+
+    async patchApply(path: string): Promise<void> {
+        return this.run(Operation.PatchApply, async () =>
+            this.repository.patchApply(path)
+        );
+    }
+
     private async run<T>(
         operation: Operation,
         runOperation: () => Promise<T> = () => Promise.resolve<any>(null)
@@ -1047,7 +1034,10 @@ export class Repository implements IDisposable {
         return window.withProgress(
             { location: ProgressLocation.SourceControl },
             async () => {
-                this._operations = this._operations.start(operation);
+                this._operations = new Set<Operation>([
+                    operation,
+                    ...this._operations.values(),
+                ]);
                 this._onRunOperation.fire(operation);
 
                 try {
@@ -1081,7 +1071,10 @@ export class Repository implements IDisposable {
                     }
                     throw err;
                 } finally {
-                    this._operations = this._operations.end(operation);
+                    this._operations = new Set<Operation>(
+                        this._operations.values()
+                    );
+                    this._operations.delete(operation);
                     this._onDidRunOperation.fire(operation);
                 }
             }
