@@ -331,6 +331,16 @@
                     "light": "resources/icons/light/discard.svg",
                     "dark": "resources/icons/dark/discard.svg"
                 }
+            },
+            {
+                "command": "fossil.patchCreate",
+                "title": "Create Patch",
+                "category": "Fossil"
+            },
+            {
+                "command": "fossil.patchApply",
+                "title": "Apply Patch",
+                "category": "Fossil"
             }
         ],
         "menus": {
@@ -549,6 +559,22 @@
                     "command": "fossil.showOutput",
                     "group": "6_output",
                     "when": "config.fossil.enabled && scmProvider == fossil"
+                },
+                {
+                    "submenu": "fossil.patch",
+                    "when": "scmProvider == fossil"
+                }
+            ],
+            "fossil.patch": [
+                {
+                    "command": "fossil.patchCreate",
+                    "when": "scmProvider == fossil",
+                    "group": "patch@0"
+                },
+                {
+                    "command": "fossil.patchApply",
+                    "when": "scmProvider == fossil",
+                    "group": "patch@1"
                 }
             ],
             "scm/change/title": [
@@ -767,6 +793,12 @@
                 }
             ]
         },
+        "submenus": [
+            {
+                "id": "fossil.patch",
+                "label": "%submenu.patch%"
+            }
+        ],
         "configuration": {
             "title": "Fossil",
             "properties": {

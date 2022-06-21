@@ -267,6 +267,8 @@ export const enum Operation {
     Merge,
     Close,
     Ignore,
+    PatchCreate,
+    PatchApply,
 }
 
 function isReadOnly(operation: Operation): boolean {
@@ -1007,6 +1009,18 @@ export class Repository implements IDisposable {
                 throw e;
             }
         });
+    }
+
+    async patchCreate(path: string): Promise<void> {
+        return this.run(Operation.PatchCreate, async () =>
+            this.repository.patchCreate(path)
+        );
+    }
+
+    async patchApply(path: string): Promise<void> {
+        return this.run(Operation.PatchApply, async () =>
+            this.repository.patchApply(path)
+        );
     }
 
     private async run<T>(

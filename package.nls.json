@@ -47,5 +47,6 @@
     "config.autoInOutInterval": "How many seconds between each autoInOut poll",
     "config.autoRefresh": "Whether auto refreshing is enabled",
     "config.autoUpdate": "Update to latest head after a pull (when there are incoming changesets)",
-    "config.enableLongCommitWarning": "Whether long commit messages should be warned about"
+    "config.enableLongCommitWarning": "Whether long commit messages should be warned about",
+    "submenu.patch": "Patch"
 }
