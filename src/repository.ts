@@ -361,7 +361,7 @@ export class Repository implements IDisposable {
     get stagingGroup(): FossilResourceGroup {
         return this._groups.staging;
     }
-    get workingDirectoryGroup(): FossilResourceGroup {
+    get workingGroup(): FossilResourceGroup {
         return this._groups.working;
     }
     get untrackedGroup(): FossilResourceGroup {
@@ -414,7 +414,7 @@ export class Repository implements IDisposable {
 
     get isClean(): boolean {
         const groups = [
-            this.workingDirectoryGroup,
+            this.workingGroup,
             this.mergeGroup,
             this.conflictGroup,
             this.stagingGroup,
@@ -758,7 +758,7 @@ export class Repository implements IDisposable {
                     this.mapResourceToRepoRelativePath(r)
                 );
             } else if (opts.scope === CommitScope.CHANGES) {
-                fileList = this.workingDirectoryGroup.resourceStates.map(r =>
+                fileList = this.workingGroup.resourceStates.map(r =>
                     this.mapResourceToRepoRelativePath(r)
                 );
             }
@@ -886,7 +886,7 @@ export class Repository implements IDisposable {
 
     public isInAnyGroup(uri: Uri): boolean {
         return [
-            this.workingDirectoryGroup,
+            this.workingGroup,
             this.stagingGroup,
             this.mergeGroup,
             this.conflictGroup,
@@ -1196,7 +1196,7 @@ export class Repository implements IDisposable {
         return (
             this.mergeGroup.resourceStates.length +
             this.stagingGroup.resourceStates.length +
-            this.workingDirectoryGroup.resourceStates.length +
+            this.workingGroup.resourceStates.length +
             this.conflictGroup.resourceStates.length +
             this.untrackedGroup.resourceStates.length
         );

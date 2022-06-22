@@ -677,7 +677,7 @@ export class CommandCenter {
     @command('fossil.revertAll', { repository: true })
     async revertAll(repository: Repository): Promise<void> {
         if (await interaction.confirmDiscardAllChanges()) {
-            const resources = repository.workingDirectoryGroup.resourceStates;
+            const resources = repository.workingGroup.resourceStates;
             await repository.revert(...resources.map(r => r.resourceUri));
         }
     }
@@ -750,7 +750,7 @@ export class CommandCenter {
             return false;
         }
         const numWorkingResources =
-            repository.workingDirectoryGroup.resourceStates.length;
+            repository.workingGroup.resourceStates.length;
         const numStagingResources =
             repository.stagingGroup.resourceStates.length;
         const isMergeCommit =
@@ -773,7 +773,7 @@ export class CommandCenter {
 
             if (opts.scope === CommitScope.CHANGES) {
                 const missingResources =
-                    repository.workingDirectoryGroup.resourceStates.filter(
+                    repository.workingGroup.resourceStates.filter(
                         r => r.status === Status.MISSING
                     );
                 if (missingResources.length > 0) {
@@ -1323,7 +1323,7 @@ export class CommandCenter {
             }
 
             return (
-                repository.workingDirectoryGroup.getResource(uri) ||
+                repository.workingGroup.getResource(uri) ||
                 repository.stagingGroup.getResource(uri) ||
                 repository.untrackedGroup.getResource(uri) ||
                 repository.mergeGroup.getResource(uri) ||

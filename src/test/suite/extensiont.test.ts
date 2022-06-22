@@ -134,10 +134,7 @@ suite('Fossil', () => {
                 ])
             );
         };
-        assert.deepStrictEqual(
-            to_map(repository.workingDirectoryGroup),
-            working
-        );
+        assert.deepStrictEqual(to_map(repository.workingGroup), working);
         assert.deepStrictEqual(to_map(repository.stagingGroup), staging);
     }
 
