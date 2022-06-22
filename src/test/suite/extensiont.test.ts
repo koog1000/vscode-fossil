@@ -9,6 +9,7 @@ import { findFossil } from '../../main';
 import { Model } from '../../model';
 import { Repository, Status } from '../../repository';
 import { eventToPromise } from '../../util';
+import { FossilResourceGroup } from '../../resourceGroups';
 
 async function createFossil(): Promise<Fossil> {
     const outputChannel = window.createOutputChannel('Fossil.Test');
@@ -122,37 +123,62 @@ suite('Fossil', () => {
 
     function assertGroups(
         repository: Repository,
-        working: Status[],
-        staging: Status[]
+        working: Map<string, Status>,
+        staging: Map<string, Status>
     ) {
-        assert.deepStrictEqual(
-            repository.workingDirectoryGroup.resourceStates.map(
-                res => res.status
-            ),
-            working
-        );
-        assert.deepStrictEqual(
-            repository.stagingGroup.resourceStates.map(res => res.status),
-            staging
-        );
+        const to_map = (grp: FossilResourceGroup) => {
+            return new Map<string, Status>(
+                grp.resourceStates.map(res => [
+                    res.resourceUri.fsPath,
+                    res.status,
+                ])
+            );
+        };
+        assert.deepStrictEqual(to_map(repository.workingGroup), working);
+        assert.deepStrictEqual(to_map(repository.stagingGroup), staging);
     }
+
+    test('fossil missing is visible in Source Control panel', async () => {
+        await fossilInit(sandbox);
+        await fossilOpen(sandbox, fossil);
+        const rootUri = vscode.workspace.workspaceFolders![0].uri;
+        const cwd = rootUri.fsPath as FossilCWD;
+        const fooPath = Uri.joinPath(rootUri, 'foo.txt').fsPath;
+        await fs.promises.writeFile(fooPath, 'test\n');
+        await fossil.exec(cwd, ['add', 'foo.txt']);
+        await fossil.exec(cwd, [
+            'commit',
+            '-m',
+            'add: foo.txt',
+            '--no-warnings',
+        ]);
+        await fs.promises.unlink(fooPath);
+        const model = vscode.extensions.getExtension('koog1000.fossil')!
+            .exports as Model;
+        const repository = model.repositories[0];
+        await eventToPromise(repository.onDidRunOperation);
+        await repository.status();
+        assertGroups(
+            repository,
+            new Map([[fooPath, Status.MISSING]]),
+            new Map()
+        );
+    }).timeout(5000);
 
     test('fossil rename is visible in Source Control panel', async () => {
         await fossilInit(sandbox);
         await fossilOpen(sandbox, fossil);
         const rootUri = vscode.workspace.workspaceFolders![0].uri;
         const cwd = rootUri.fsPath as FossilCWD;
-        await fs.promises.writeFile(
-            Uri.joinPath(rootUri, 'foo.txt').fsPath,
-            'test\n'
-        );
+        const fooPath = Uri.joinPath(rootUri, 'foo.txt').fsPath;
+        await fs.promises.writeFile(fooPath, 'test\n');
         await fossil.exec(cwd, ['add', 'foo.txt']);
         const model = vscode.extensions.getExtension('koog1000.fossil')!
             .exports as Model;
         const repository = model.repositories[0];
         await eventToPromise(repository.onDidRunOperation);
         await repository.status();
-        assertGroups(repository, [Status.ADDED], []);
+        assertGroups(repository, new Map([[fooPath, Status.ADDED]]), new Map());
 
         await fossil.exec(cwd, [
             'commit',
@@ -161,10 +187,62 @@ suite('Fossil', () => {
             '--no-warnings',
         ]);
         await repository.status();
-        assertGroups(repository, [], []);
+        assertGroups(repository, new Map(), new Map());
 
         await fossil.exec(cwd, ['mv', 'foo.txt', 'bar.txt', '--hard']);
         await repository.status();
-        assertGroups(repository, [Status.RENAMED], []);
-    });
+        await eventToPromise(repository.onDidRunOperation);
+        const barPath = Uri.joinPath(rootUri, 'bar.txt').fsPath;
+        assertGroups(
+            repository,
+            new Map([[barPath, Status.RENAMED]]),
+            new Map()
+        );
+    }).timeout(15000);
+
+    test('fossil integrate is visible in Source Control panel', async () => {
+        await fossilInit(sandbox);
+        await fossilOpen(sandbox, fossil);
+        const rootUri = vscode.workspace.workspaceFolders![0].uri;
+        const cwd = rootUri.fsPath as FossilCWD;
+        const fooPath = Uri.joinPath(rootUri, 'foo.txt').fsPath;
+
+        await fs.promises.writeFile(fooPath, 'test\n');
+        await fossil.exec(cwd, ['add', 'foo.txt']);
+        await fossil.exec(cwd, [
+            'commit',
+            '-m',
+            'add: foo.txt',
+            '--no-warnings',
+        ]);
+        const barPath = Uri.joinPath(rootUri, 'bar.txt').fsPath;
+        await fs.promises.writeFile(barPath, 'test bar\n');
+        await fs.promises.appendFile(fooPath, 'appended\n');
+        await fossil.exec(cwd, ['add', 'bar.txt']);
+        console.log;
+        await fossil.exec(cwd, [
+            'commit',
+            '-m',
+            'add: bar.txt, mod foo.txt',
+            '--branch',
+            'test_brunch',
+            '--no-warnings',
+        ]);
+
+        await fossil.exec(cwd, ['up', 'trunk']);
+        await fossil.exec(cwd, ['merge', 'test_brunch']);
+        const model = vscode.extensions.getExtension('koog1000.fossil')!
+            .exports as Model;
+        const repository = model.repositories[0];
+        await eventToPromise(repository.onDidRunOperation);
+        await repository.status();
+        assertGroups(
+            repository,
+            new Map([
+                [barPath, Status.ADDED],
+                [fooPath, Status.MODIFIED],
+            ]),
+            new Map()
+        );
+    }).timeout(10000);
 });

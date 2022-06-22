@@ -895,20 +895,18 @@ export class Repository {
             }
             const [_, rawStatus, fileUri] = match;
             switch (rawStatus) {
+                case 'EDITED':
+                case 'UPDATED_BY_INTEGRATE':
                 case 'UPDATED_BY_MERGE':
                     result.push({ status: 'M', path: fileUri });
                     break;
+                case 'ADDED_BY_INTEGRATE':
                 case 'ADDED_BY_MERGE':
+                case 'ADDED':
                     result.push({ status: 'A', path: fileUri });
                     break;
                 case 'DELETED':
                     result.push({ status: 'R', path: fileUri });
-                    break;
-                case 'EDITED':
-                    result.push({ status: 'M', path: fileUri });
-                    break;
-                case 'ADDED':
-                    result.push({ status: 'A', path: fileUri });
                     break;
                 case 'MISSING':
                     result.push({ status: '!', path: fileUri });

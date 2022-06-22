@@ -63,7 +63,7 @@ class ScopeStatusBar {
             currentRef.icon +
             ' ' +
             label +
-            (this.repository.workingDirectoryGroup.resourceStates.length > 0
+            (this.repository.workingGroup.resourceStates.length > 0
                 ? '+'
                 : '') +
             (this.repository.mergeGroup.resourceStates.length > 0 ? '!' : '');
