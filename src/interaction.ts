@@ -18,8 +18,6 @@ import {
 import {
     FossilUndoDetails,
     Path,
-    Ref,
-    RefType,
     Commit,
     LogEntryOptions,
     CommitDetails,
@@ -27,6 +25,10 @@ import {
     FossilPath,
     FossilRoot,
     FossilURI,
+    FossilBranch,
+    BranchDetails,
+    FossilTag,
+    FossilCheckin,
 } from './fossilBase';
 import { humanise } from './humanise';
 import { Repository, LogEntriesOptions } from './repository';
@@ -515,9 +517,9 @@ export namespace interaction {
         return BranchExistsAction.None;
     }
 
-    export async function inputBranchName(
+    export async function inputNewBranchName(
         this: void
-    ): Promise<string | undefined> {
+    ): Promise<FossilBranch | undefined> {
         const input = await window.showInputBox({
             placeHolder: localize('branch name', 'Branch name'),
             prompt: localize(
@@ -526,28 +528,24 @@ export namespace interaction {
             ),
             ignoreFocusOut: true,
         });
-        return input;
+        return input as FossilBranch | undefined;
     }
 
     export async function pickHead(
-        heads: Ref[],
+        heads: BranchDetails[],
         placeHolder: string
-    ): Promise<Ref | undefined> {
-        const headChoices = heads.map(head => new RefItem(head));
+    ): Promise<FossilCheckin | undefined> {
+        const headChoices = heads.map(head => new UpdateBranchItem(head));
         const choice = await window.showQuickPick(headChoices, { placeHolder });
-        return choice && choice.commit;
+        return choice?.checkin;
     }
 
     export async function pickUpdateRevision(
-        refs: Ref[],
+        refs: [BranchDetails[], FossilTag[]],
         unclean = false
-    ): Promise<UpdateRefItem | undefined> {
-        const branches = refs
-            .filter(ref => ref.type === RefType.Branch)
-            .map(ref => new UpdateRefItem(ref));
-        const tags = refs
-            .filter(ref => ref.type === RefType.Tag)
-            .map(ref => new UpdateTagItem(ref));
+    ): Promise<UpdatingItem | undefined> {
+        const branches = refs[0].map(ref => new UpdateBranchItem(ref));
+        const tags = refs[1].map(ref => new UpdateTagItem(ref));
         const picks = [...branches, ...tags];
         const revType = 'branch/tag';
 
@@ -556,7 +554,7 @@ export namespace interaction {
                 ? '(only showing local branches while working directory unclean)'
                 : ''
         }`;
-        const choice = await window.showQuickPick<UpdateRefItem>(picks, {
+        const choice = await window.showQuickPick(picks, {
             placeHolder,
         });
         return choice;
@@ -1028,27 +1026,6 @@ abstract class RunnableQuickPickItem implements QuickPickItem {
     abstract run(): RunnableReturnType;
 }
 
-class RefItem implements RunnableQuickPickItem {
-    constructor(public readonly commit: Ref) {}
-    get shortHash() {
-        return '';
-    }
-    get label() {
-        if (this.commit.name) return this.commit.name;
-        else return '';
-    }
-    get detail() {
-        return `${this.commit.name}(${this.shortHash}) `;
-    }
-    get description() {
-        if (this.commit.name) return this.commit.name;
-        else return '';
-    }
-    run() {
-        // do nothing.
-    }
-}
-
 class CommitItem implements RunnableQuickPickItem {
     constructor(public readonly commit: Commit) {}
     get shortHash() {
@@ -1090,42 +1067,32 @@ class LogEntryItem extends CommitItem {
     }
 }
 
-class UpdateRefItem implements QuickPickItem {
-    protected get shortCommit(): string {
-        return (this.ref.commit || '').substr(0, SHORT_HASH_LENGTH);
-    }
-    protected get treeish(): string | undefined {
-        return this.ref.name;
-    }
-    protected get icon(): string {
-        return '';
-    }
-    get label(): string {
-        return `${this.icon}${this.ref.name || this.shortCommit}`;
-    }
-    get description(): string {
-        return this.shortCommit;
-    }
-
-    constructor(protected ref: Ref) {}
+class UpdatingItem {
+    constructor(public checkin: FossilCheckin) {}
 
     async run(repository: Repository): Promise<void> {
-        const ref = this.treeish;
-
-        if (!ref) {
-            return;
-        }
-
-        await repository.update(ref);
+        await repository.update(this.checkin);
     }
 }
 
-class UpdateTagItem extends UpdateRefItem {
-    protected get icon(): string {
-        return '$(tag) ';
+class UpdateBranchItem extends UpdatingItem implements QuickPickItem {
+    get label(): string {
+        return `$(git-branch) ${this.checkin}`;
     }
     get description(): string {
-        return localize('tag at', 'Tag at {0}', this.shortCommit);
+        return [
+            ...(this.branch.isCurrent ? ['current'] : []),
+            ...(this.branch.isPrivate ? ['private'] : []),
+        ].join(', ');
+    }
+    constructor(private branch: BranchDetails) {
+        super(branch.name);
+    }
+}
+
+class UpdateTagItem extends UpdatingItem implements QuickPickItem {
+    get label(): string {
+        return `$(tag) ${this.checkin}`;
     }
 }
 

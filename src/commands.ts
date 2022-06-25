@@ -22,7 +22,6 @@ import { LineChange, revertChanges } from './revert';
 import * as nls from 'vscode-nls';
 import * as path from 'path';
 import {
-    Ref,
     Fossil,
     Commit,
     FossilError,
@@ -32,6 +31,7 @@ import {
     FossilPath,
     FossilRoot,
     FossilURI,
+    FossilCheckin,
 } from './fossilBase';
 import { Model } from './model';
 import {
@@ -916,7 +916,7 @@ export class CommandCenter {
             this.focusScm();
             return;
         }
-        const refs: Ref[] = await repository.getRefs();
+        const refs = await repository.getBranchesAndTags();
 
         const choice = await interaction.pickUpdateRevision(refs, unclean);
 
@@ -935,7 +935,7 @@ export class CommandCenter {
             return;
         }
         await interaction.checkThenWarnUnclean(repository, WarnScenario.Update);
-        const refs: Ref[] = await repository.getRefs();
+        const refs = await repository.getBranchesAndTags();
 
         const choice = await interaction.pickUpdateRevision(refs, unclean);
 
@@ -946,27 +946,24 @@ export class CommandCenter {
 
     @command('fossil.branch', { repository: true })
     async branch(repository: Repository): Promise<void> {
-        const result = await interaction.inputBranchName();
-        if (!result) {
+        const fossilBranch = await interaction.inputNewBranchName();
+        if (!fossilBranch) {
             return;
         }
-
-        const name = result.replace(
-            /^\.|\/\.|\.\.|~|\^|:|\/$|\.lock$|\.lock\/|\\|\*|\s|^\s*$|\.$/g,
-            '-'
-        );
         try {
-            await repository.branch(name);
+            await repository.newBranch(fossilBranch);
         } catch (e) {
             if (
                 e instanceof FossilError &&
                 e.fossilErrorCode === FossilErrorCodes.BranchAlreadyExists
             ) {
-                const action = await interaction.warnBranchAlreadyExists(name);
+                const action = await interaction.warnBranchAlreadyExists(
+                    fossilBranch
+                );
                 if (action === BranchExistsAction.Reopen) {
-                    await repository.branch(name);
+                    await repository.newBranch(fossilBranch);
                 } else if (action === BranchExistsAction.UpdateTo) {
-                    await repository.update(name);
+                    await repository.update(fossilBranch);
                 }
             }
         }
@@ -1004,8 +1001,8 @@ export class CommandCenter {
             'Choose branch to merge into working directory:'
         );
         const branch = await interaction.pickHead(otherHeads, placeholder);
-        if (branch && branch.name) {
-            return await this.doMerge(repository, branch.name, branch.name);
+        if (branch) {
+            return await this.doMerge(repository, branch, branch);
         }
     }
 
@@ -1034,16 +1031,16 @@ export class CommandCenter {
                 'Choose branch to merge with:'
             );
             const head = await interaction.pickHead(otherHeads, placeHolder);
-            if (head && head.name) {
-                return await this.doMerge(repository, head.name);
+            if (head) {
+                return await this.doMerge(repository, head);
             }
         }
     }
 
     private async doMerge(
         repository: Repository,
-        otherRevision: string,
-        otherBranchName?: string
+        otherRevision: FossilCheckin,
+        otherBranchName?: FossilCheckin
     ) {
         try {
             const result = await repository.merge(otherRevision);
@@ -1053,7 +1050,7 @@ export class CommandCenter {
                 interaction.warnUnresolvedFiles(result.unresolvedCount);
             } else if (currentBranch) {
                 const defaultMergeMessage = await humanise.describeMerge(
-                    currentBranch.name!,
+                    currentBranch,
                     otherBranchName
                 );
                 const didCommit = await this.smartCommit(
@@ -1107,8 +1104,7 @@ export class CommandCenter {
     createLogMenuAPI(repository: Repository): LogMenuAPI {
         return {
             getRepoName: () => repository.repoName,
-            getBranchName: () =>
-                repository.currentBranch && repository.currentBranch.name,
+            getBranchName: () => repository.currentBranch,
             getCommitDetails: (revision: string) =>
                 repository.getCommitDetails(revision),
             getLogEntries: (options: LogEntriesOptions) =>

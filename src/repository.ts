@@ -15,7 +15,6 @@ import {
 } from 'vscode';
 import {
     Repository as BaseRepository,
-    Ref,
     Commit,
     FossilError,
     IRepoStatus,
@@ -26,6 +25,10 @@ import {
     LogEntryRepositoryOptions,
     FossilUndoDetails,
     FossilRoot,
+    BranchDetails,
+    FossilCheckin,
+    FossilBranch,
+    FossilTag,
 } from './fossilBase';
 import {
     anyEvent,
@@ -368,19 +371,14 @@ export class Repository implements IDisposable {
         return this._groups.untracked;
     }
 
-    private _currentBranch: Ref | undefined;
-    get currentBranch(): Ref | undefined {
+    private _currentBranch: FossilBranch | undefined;
+    get currentBranch(): FossilBranch | undefined {
         return this._currentBranch;
     }
 
     private _repoStatus: IRepoStatus | undefined;
     get repoStatus(): IRepoStatus | undefined {
         return this._repoStatus;
-    }
-
-    private _refs: Ref[] = [];
-    get refs(): Ref[] {
-        return this._refs;
     }
 
     private _path!: Path;
@@ -435,7 +433,6 @@ export class Repository implements IDisposable {
         this._onDidChangeState.fire(state);
 
         this._currentBranch = undefined;
-        this._refs = [];
         this._groups.conflict.updateResources([]);
         this._groups.merge.updateResources([]);
         this._groups.staging.updateResources([]);
@@ -852,12 +849,15 @@ export class Repository implements IDisposable {
     }
 
     @throttle
-    async branch(name: string): Promise<void> {
-        await this.run(Operation.Branch, () => this.repository.branch(name));
+    async newBranch(name: FossilBranch): Promise<void> {
+        await this.run(Operation.Branch, () => this.repository.newBranch(name));
     }
 
     @throttle
-    async update(treeish: string, opts?: { discard: boolean }): Promise<void> {
+    async update(
+        treeish: FossilCheckin,
+        opts?: { discard: boolean }
+    ): Promise<void> {
         await this.run(Operation.Update, () =>
             this.repository.update(treeish, opts)
         );
@@ -1102,12 +1102,16 @@ export class Repository implements IDisposable {
     }
 
     @throttle
-    public async getRefs(): Promise<Ref[]> {
+    public async getBranchesAndTags(): Promise<[BranchDetails[], FossilTag[]]> {
         const [branches, tags] = await Promise.all([
             this.repository.getBranches(),
             this.repository.getTags(),
         ]);
-        return [...branches, ...tags];
+        const branchesSet = new Set<FossilCheckin>(
+            branches.map(info => info.name)
+        );
+        // Exclude tags that are branches
+        return [branches, tags.filter(tag => !branchesSet.has(tag))];
     }
 
     @throttle
@@ -1116,7 +1120,7 @@ export class Repository implements IDisposable {
     }
 
     @throttle
-    public getBranches(): Promise<Ref[]> {
+    public getBranches(): Promise<BranchDetails[]> {
         return this.repository.getBranches();
     }
 
@@ -1160,7 +1164,7 @@ export class Repository implements IDisposable {
     private async updateModelState(): Promise<void> {
         this._repoStatus = await this.repository.getSummary();
 
-        const currentRefPromise: Promise<Ref | undefined> =
+        const currentRefPromise: Promise<FossilBranch | undefined> =
             this.repository.getCurrentBranch();
 
         const fileStat = this.repository

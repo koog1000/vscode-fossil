@@ -5,7 +5,7 @@
  *--------------------------------------------------------------------------------------------*/
 
 import { Disposable, Command, EventEmitter, Event } from 'vscode';
-import { Ref, IRepoStatus } from './fossilBase';
+import { FossilBranch, IRepoStatus } from './fossilBase';
 import { anyEvent, dispose } from './util';
 import { AutoInOutStatuses, AutoInOutState } from './autoinout';
 import * as nls from 'vscode-nls';
@@ -19,7 +19,7 @@ const enum SyncStatus {
 }
 
 interface CurrentRef {
-    ref: Ref | undefined;
+    ref: FossilBranch | undefined;
     icon: string;
 }
 
@@ -39,7 +39,7 @@ class ScopeStatusBar {
     }
 
     chooseCurrentRef(
-        currentBranch: Ref | undefined,
+        currentBranch: FossilBranch | undefined,
         repoStatus: IRepoStatus | undefined
     ): CurrentRef {
         const mergeIcon =
@@ -58,7 +58,7 @@ class ScopeStatusBar {
             return undefined;
         }
 
-        const label = (currentRef.ref.name || currentRef.ref.commit)!;
+        const label = currentRef.ref!;
         const title =
             currentRef.icon +
             ' ' +
@@ -86,7 +86,7 @@ interface SyncStatusBarState {
     syncStatus: SyncStatus;
     nextCheckTime: Date;
     hasPaths: boolean;
-    branch: Ref | undefined;
+    branch: FossilBranch | undefined;
 }
 
 class SyncStatusBar {
