@@ -348,12 +348,6 @@ export class Repository implements IDisposable {
         );
     }
 
-    // ToDo: remove. nobody uses `lastPushPath`
-    private _lastPushPath: string | undefined;
-    get lastPushPath(): string | undefined {
-        return this._lastPushPath;
-    }
-
     private _groups: IStatusGroups;
     get mergeGroup(): FossilResourceGroup {
         return this._groups.merge;
@@ -927,10 +921,9 @@ export class Repository implements IDisposable {
     }
 
     @throttle
-    async push(path: string | undefined): Promise<void> {
+    async push(_path: string | undefined): Promise<void> {
         return await this.run(Operation.Push, async () => {
             try {
-                this._lastPushPath = path;
                 await this.repository.push();
             } catch (e) {
                 if (
