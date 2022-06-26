@@ -842,10 +842,10 @@ export class Repository {
         await this.exec(args);
     }
 
-    async getSummary(): Promise<IRepoStatus> {
+    getSummary(): IRepoStatus {
         const summary = this.status_msg;
         const parent = this.parseParentLines(summary);
-        const isMerge = /\bMERGED WITH\b/.test(summary);
+        const isMerge = /\bMERGED_WITH\b/.test(summary);
         return { isMerge, parent };
     }
 

@@ -753,8 +753,7 @@ export class CommandCenter {
             repository.workingGroup.resourceStates.length;
         const numStagingResources =
             repository.stagingGroup.resourceStates.length;
-        const isMergeCommit =
-            repository.repoStatus && repository.repoStatus.isMerge;
+        const isMergeCommit = repository.repoStatus?.isMerge;
 
         if (isMergeCommit) {
             opts = { scope: CommitScope.ALL };

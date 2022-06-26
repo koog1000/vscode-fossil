@@ -525,7 +525,7 @@ export class Repository implements IDisposable {
 
     @throttle
     async status(): Promise<void> {
-        await this.run(Operation.Status);
+        await this.run(Operation.Status, () => this.repository.getStatus());
     }
 
     private onFSChange(_uri: Uri): void {
@@ -1160,9 +1160,12 @@ export class Repository implements IDisposable {
         return this.repository.getLogEntries(opts);
     }
 
+    /**
+     * `UpdateModelState` is called after every non read only operation run
+     */
     @throttle
     private async updateModelState(): Promise<void> {
-        this._repoStatus = await this.repository.getSummary();
+        this._repoStatus = this.repository.getSummary();
 
         const currentRefPromise: Promise<FossilBranch | undefined> =
             this.repository.getCurrentBranch();
