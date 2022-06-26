@@ -23,14 +23,15 @@ export interface AutoInOutState {
 }
 
 const STARTUP_DELAY = 3 * 1000; /* three seconds */
-const OPS_AFFECTING_IN_OUT =
-    Operation.Commit |
-    Operation.RevertFiles |
-    Operation.Update |
-    Operation.Push |
-    Operation.Pull;
+const OPS_AFFECTING_IN_OUT = [
+    Operation.Commit,
+    Operation.RevertFiles,
+    Operation.Update,
+    Operation.Push,
+    Operation.Pull,
+];
 const opAffectsInOut = (op: Operation): boolean =>
-    (OPS_AFFECTING_IN_OUT & op) > 0;
+    OPS_AFFECTING_IN_OUT.includes(op);
 
 export class AutoIncomingOutgoing {
     private disposables: Disposable[] = [];
