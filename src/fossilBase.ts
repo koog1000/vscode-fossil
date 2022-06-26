@@ -897,6 +897,7 @@ export class Repository {
             const [_, rawStatus, fileUri] = match;
             switch (rawStatus) {
                 case 'EDITED':
+                case 'EXECUTABLE':
                 case 'UPDATED_BY_INTEGRATE':
                 case 'UPDATED_BY_MERGE':
                     result.push({ status: 'M', path: fileUri });
