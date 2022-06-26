@@ -179,16 +179,6 @@
                 }
             },
             {
-                "command": "fossil.mergeHeads",
-                "title": "%command.mergeHeads%",
-                "category": "Fossil"
-            },
-            {
-                "command": "fossil.mergeWithLocal",
-                "title": "%command.mergeWithLocal%",
-                "category": "Fossil"
-            },
-            {
                 "command": "fossil.openChange",
                 "title": "%command.openChange%",
                 "category": "Fossil",
@@ -333,6 +323,11 @@
                 }
             },
             {
+                "command": "fossil.merge",
+                "title": "%command.merge%",
+                "category": "Fossil"
+            },
+            {
                 "command": "fossil.patchCreate",
                 "title": "Create Patch",
                 "category": "Fossil"
@@ -442,11 +437,7 @@
                     "when": "config.fossil.enabled && fossilOpenRepositoryCount != 0"
                 },
                 {
-                    "command": "fossil.mergeHeads",
-                    "when": "config.fossil.enabled && fossilOpenRepositoryCount != 0"
-                },
-                {
-                    "command": "fossil.mergeWithLocal",
+                    "command": "fossil.merge",
                     "when": "config.fossil.enabled && fossilOpenRepositoryCount != 0"
                 },
                 {
@@ -546,23 +537,26 @@
                     "when": "config.fossil.enabled && scmProvider == fossil"
                 },
                 {
-                    "command": "fossil.mergeHeads",
-                    "group": "5_merge",
-                    "when": "config.fossil.enabled && scmProvider == fossil"
+                    "submenu": "fossil.merge",
+                    "when": "scmProvider == fossil",
+                    "group": "5_groups"
                 },
                 {
-                    "command": "fossil.mergeWithLocal",
-                    "group": "5_merge",
-                    "when": "config.fossil.enabled && scmProvider == fossil"
+                    "submenu": "fossil.patch",
+                    "when": "scmProvider == fossil",
+                    "group": "5_groups"
                 },
                 {
                     "command": "fossil.showOutput",
                     "group": "6_output",
                     "when": "config.fossil.enabled && scmProvider == fossil"
-                },
+                }
+            ],
+            "fossil.merge": [
                 {
-                    "submenu": "fossil.patch",
-                    "when": "scmProvider == fossil"
+                    "command": "fossil.merge",
+                    "when": "scmProvider == fossil",
+                    "group": "merge@0"
                 }
             ],
             "fossil.patch": [
@@ -794,6 +788,10 @@
             ]
         },
         "submenus": [
+            {
+                "id": "fossil.merge",
+                "label": "%submenu.merge%"
+            },
             {
                 "id": "fossil.patch",
                 "label": "%submenu.patch%"

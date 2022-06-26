@@ -981,8 +981,8 @@ export class CommandCenter {
         await repository.pull(pullOptions);
     }
 
-    @command('fossil.mergeWithLocal', { repository: true })
-    async mergeWithLocal(repository: Repository): Promise<void> {
+    @command('fossil.merge', { repository: true })
+    async merge(repository: Repository): Promise<void> {
         if (
             (await interaction.checkThenWarnOutstandingMerge(repository)) ||
             (await interaction.checkThenErrorUnclean(
@@ -1002,37 +1002,6 @@ export class CommandCenter {
         const branch = await interaction.pickHead(otherHeads, placeholder);
         if (branch) {
             return await this.doMerge(repository, branch, branch);
-        }
-    }
-
-    @command('fossil.mergeHeads', { repository: true })
-    async mergeHeads(repository: Repository): Promise<void> {
-        if (
-            (await interaction.checkThenWarnOutstandingMerge(repository)) ||
-            (await interaction.checkThenErrorUnclean(
-                repository,
-                WarnScenario.Merge
-            ))
-        ) {
-            this.focusScm();
-            return;
-        }
-
-        const otherHeads = await repository.getBranches();
-        if (otherHeads.length === 0) {
-            // 1 head
-            interaction.warnMergeOnlyOneHead();
-            return;
-        } else {
-            // 2+ heads
-            const placeHolder = localize(
-                'choose branch',
-                'Choose branch to merge with:'
-            );
-            const head = await interaction.pickHead(otherHeads, placeHolder);
-            if (head) {
-                return await this.doMerge(repository, head);
-            }
         }
     }
 
