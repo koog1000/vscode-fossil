@@ -438,6 +438,7 @@ export class Repository implements IDisposable {
     }
 
     private disposables: Disposable[] = [];
+    public statusPromise: Promise<string>;
 
     constructor(private readonly repository: BaseRepository) {
         this.updateRepositoryPaths();
@@ -485,8 +486,6 @@ export class Repository implements IDisposable {
 
         const groups = createEmptyStatusGroups(this._sourceControl);
 
-        this.disposables.push(new AutoIncomingOutgoing(this));
-
         this._groups = groups;
         this.disposables.push(
             ...Object.values(groups).map(
@@ -505,7 +504,9 @@ export class Repository implements IDisposable {
         );
         this._sourceControl.statusBarCommands = statusBar.commands;
 
-        this.status();
+        this.statusPromise = this.status();
+
+        this.disposables.push(new AutoIncomingOutgoing(this));
     }
 
     provideOriginalResource(uri: Uri): Uri | undefined {
@@ -516,10 +517,10 @@ export class Repository implements IDisposable {
     }
 
     @throttle
-    async status(): Promise<void> {
-        await this.runWithProgress(Operation.Status, () =>
-            this.repository.getStatus()
-        );
+    async status(): Promise<string> {
+        const statusPromise = this.repository.getStatus();
+        await this.runWithProgress(Operation.Status, () => statusPromise);
+        return statusPromise;
     }
 
     private onFSChange(_uri: Uri): void {
@@ -1114,8 +1115,8 @@ export class Repository implements IDisposable {
     }
 
     @throttle
-    public getParents(): Promise<string> {
-        return this.repository.getParents();
+    public getParents(status_msg: string): string {
+        return this.repository.getParents(status_msg);
     }
 
     @throttle
@@ -1130,7 +1131,7 @@ export class Repository implements IDisposable {
             limit: 1,
         });
         const fileStatusesPromise = await this.repository.getStatus();
-        const parentsPromise = await this.getParents();
+        const parentsPromise = await this.getParents(fileStatusesPromise);
 
         const [[commit], fileStatuses] = await Promise.all([
             commitPromise,
@@ -1164,13 +1165,14 @@ export class Repository implements IDisposable {
      */
     @throttle
     private async updateModelState(): Promise<void> {
-        this._repoStatus = this.repository.getSummary();
+        const status: string = await this.repository.getStatus();
+        this._repoStatus = this.repository.getSummary(status);
 
         const currentRefPromise: Promise<FossilBranch | undefined> =
             this.repository.getCurrentBranch();
 
         const fileStat = this.repository
-            .parseStatusLines(await this.repository.getStatus())
+            .parseStatusLines(status)
             .concat(
                 this.repository.parseExtrasLines(
                     await this.repository.getExtras()

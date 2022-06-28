@@ -11,6 +11,7 @@ import { appendFileSync, existsSync, writeFileSync } from 'fs';
 import { groupBy, IDisposable, toDisposable, dispose } from './util';
 import { EventEmitter, Event, workspace, window, OutputChannel } from 'vscode';
 import { interaction } from './interaction';
+import { throttle } from './decorators';
 
 type Distinct<T, DistinctName> = T & { __TYPE__: DistinctName };
 /** path to .fossil */
@@ -348,7 +349,8 @@ export class Fossil {
     async getRepositoryRoot(anypath: string): Promise<FossilRoot> {
         const isFile = (await fs.stat(anypath)).isFile();
         const cwd = (isFile ? path.dirname(anypath) : anypath) as FossilCWD;
-        const result = await this.exec(cwd, ['stat']);
+        this.log(`getting root for '${anypath}'\n`);
+        const result = await this.exec(cwd, ['status']);
         const root = result.stdout.match(/local-root:\s*(.+)\/\s/);
         if (root) return root[1] as FossilRoot;
         return '' as FossilRoot;
@@ -476,8 +478,6 @@ export interface CommitDetails extends Commit {
 }
 
 export class Repository {
-    private status_msg = '';
-
     constructor(private _fossil: Fossil, private repositoryRoot: FossilRoot) {}
 
     get fossil(): Fossil {
@@ -727,20 +727,6 @@ export class Repository {
         }
     }
 
-    async tryGetLastCommitDetails(): Promise<ICommitDetails> {
-        try {
-            return {
-                message: await this.getLastCommitMessage(),
-                affectedFiles: this.parseStatusLines(this.status_msg),
-            };
-        } catch (e) {
-            return {
-                message: '',
-                affectedFiles: [],
-            };
-        }
-    }
-
     async revertFiles(treeish: string, paths: string[]): Promise<void> {
         const args: string[] = ['revert'];
 
@@ -842,8 +828,7 @@ export class Repository {
         await this.exec(args);
     }
 
-    getSummary(): IRepoStatus {
-        const summary = this.status_msg;
+    getSummary(summary: string): IRepoStatus {
         const parent = this.parseParentLines(summary);
         const isMerge = /\bMERGED_WITH\b/.test(summary);
         return { isMerge, parent };
@@ -857,31 +842,10 @@ export class Repository {
         return undefined;
     }
 
-    async getLastCommitMessage(): Promise<string> {
-        const message = this.status_msg;
-        const comment = message.match(/comment:\s+(.*)\(/);
-        if (comment) return comment[1];
-        return '';
-    }
-
-    async getLastCommitAuthor(): Promise<string> {
-        const message = this.status_msg;
-        const comment = message.match(/user:\s+(.*)\n/);
-        if (comment) return comment[1];
-        return '';
-    }
-
-    async getLastCommitDate(): Promise<string> {
-        const message = this.status_msg;
-        const comment = message.match(/checkout:\s+(.*)\s(.*)\n/);
-        if (comment) return comment[2];
-        return '';
-    }
-
+    @throttle
     async getStatus(): Promise<string> {
         const args = ['status'];
         const executionResult = await this.exec(args); // quiet, include renames/copies
-        this.status_msg = executionResult.stdout;
         return executionResult.stdout;
     }
 
@@ -985,8 +949,8 @@ export class Repository {
         return logEntries;
     }
 
-    async getParents(): Promise<string> {
-        const comment = this.status_msg.match(/parent:\s+(.*)\s(.*)\n/);
+    getParents(status_msg: string): string {
+        const comment = status_msg.match(/parent:\s+(.*)\s(.*)\n/);
         if (comment) return comment[1];
         return '';
     }
