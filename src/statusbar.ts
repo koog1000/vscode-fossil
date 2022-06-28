@@ -85,7 +85,6 @@ interface SyncStatusBarState {
     autoInOut: AutoInOutState;
     syncStatus: SyncStatus;
     nextCheckTime: Date;
-    hasPaths: boolean;
     branch: FossilBranch | undefined;
 }
 
@@ -97,7 +96,6 @@ class SyncStatusBar {
         },
         nextCheckTime: new Date(),
         syncStatus: SyncStatus.None,
-        hasPaths: false,
         branch: undefined,
     };
 
@@ -149,7 +147,6 @@ class SyncStatusBar {
     private onModelChange(): void {
         this.state = {
             ...this.state,
-            hasPaths: this.repository.path.url != '',
             branch: this.repository.currentBranch,
             autoInOut: this.repository.autoInOutState,
         };
@@ -206,10 +203,6 @@ class SyncStatusBar {
     }
 
     get command(): Command | undefined {
-        if (!this.state.hasPaths) {
-            return undefined;
-        }
-
         const autoInOut = this.describeAutoInOutStatus();
         let icon = autoInOut.icon;
         let text = '';

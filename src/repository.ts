@@ -374,11 +374,6 @@ export class Repository implements IDisposable {
         return this._repoStatus;
     }
 
-    private _path!: Path;
-    get path(): Path {
-        return this._path;
-    }
-
     private _operations = new Set<Operation>();
     get operations(): Set<Operation> {
         return this._operations;
@@ -442,8 +437,6 @@ export class Repository implements IDisposable {
     public statusPromise: Promise<StatusString>;
 
     constructor(private readonly repository: BaseRepository) {
-        this.updateRepositoryPaths();
-
         const fsWatcher = workspace.createFileSystemWatcher('**');
         this.disposables.push(fsWatcher);
 
@@ -1082,19 +1075,11 @@ export class Repository implements IDisposable {
         );
     }
 
-    private async updateRepositoryPaths() {
-        try {
-            this._path = await this.repository.getPaths();
-        } catch (e) {
-            // noop
-        }
-    }
-
     @throttle
     public async getPath(): Promise<Path> {
         try {
-            this._path = await this.repository.getPaths();
-            return this._path;
+            const path = await this.repository.getPaths();
+            return path;
         } catch (e) {
             // noop
         }
