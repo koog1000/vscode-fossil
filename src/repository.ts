@@ -261,7 +261,6 @@ export const enum Operation {
     Init,
     Show,
     Stage,
-    GetCommitTemplate,
     Revert,
     Resolve,
     Unresolve,
@@ -277,7 +276,6 @@ export const enum Operation {
 function isReadOnly(operation: Operation): boolean {
     switch (operation) {
         case Operation.Show:
-        case Operation.GetCommitTemplate:
             return true;
         default:
             return false;
