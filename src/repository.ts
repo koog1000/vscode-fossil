@@ -29,6 +29,7 @@ import {
     FossilCheckin,
     FossilBranch,
     FossilTag,
+    StatusString,
 } from './fossilBase';
 import {
     anyEvent,
@@ -438,7 +439,7 @@ export class Repository implements IDisposable {
     }
 
     private disposables: Disposable[] = [];
-    public statusPromise: Promise<string>;
+    public statusPromise: Promise<StatusString>;
 
     constructor(private readonly repository: BaseRepository) {
         this.updateRepositoryPaths();
@@ -517,7 +518,7 @@ export class Repository implements IDisposable {
     }
 
     @throttle
-    async status(): Promise<string> {
+    async status(): Promise<StatusString> {
         const statusPromise = this.repository.getStatus();
         await this.runWithProgress(Operation.Status, () => statusPromise);
         return statusPromise;
@@ -1115,7 +1116,7 @@ export class Repository implements IDisposable {
     }
 
     @throttle
-    public getParents(status_msg: string): string {
+    public getParents(status_msg: StatusString): string {
         return this.repository.getParents(status_msg);
     }
 
@@ -1165,14 +1166,14 @@ export class Repository implements IDisposable {
      */
     @throttle
     private async updateModelState(): Promise<void> {
-        const status: string = await this.repository.getStatus();
-        this._repoStatus = this.repository.getSummary(status);
+        const statusString = await this.repository.getStatus();
+        this._repoStatus = this.repository.getSummary(statusString);
 
         const currentRefPromise: Promise<FossilBranch | undefined> =
             this.repository.getCurrentBranch();
 
         const fileStat = this.repository
-            .parseStatusLines(status)
+            .parseStatusLines(statusString)
             .concat(
                 this.repository.parseExtrasLines(
                     await this.repository.getExtras()

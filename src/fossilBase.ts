@@ -32,6 +32,7 @@ export type FossilBranch = Distinct<string, 'Fossil Branch Name'>;
 export type FossilTag = Distinct<string, 'Fossil Tag Name'>;
 export type FossilHash = Distinct<string, 'Fossil SHA Hash'>;
 export type FossilCheckin = FossilBranch | FossilTag | FossilHash;
+export type StatusString = Distinct<string, 'fossil status stdout'>;
 
 export interface IFossil {
     path: string;
@@ -843,13 +844,13 @@ export class Repository {
     }
 
     @throttle
-    async getStatus(): Promise<string> {
+    async getStatus(): Promise<StatusString> {
         const args = ['status'];
         const executionResult = await this.exec(args); // quiet, include renames/copies
-        return executionResult.stdout;
+        return executionResult.stdout as StatusString;
     }
 
-    parseStatusLines(status: string): IFileStatus[] {
+    parseStatusLines(status: StatusString): IFileStatus[] {
         const result: IFileStatus[] = [];
         const lines = status.split('\n');
 
@@ -898,9 +899,9 @@ export class Repository {
         return executionResult.stdout;
     }
 
-    parseExtrasLines(status: string): IFileStatus[] {
+    parseExtrasLines(extraString: string): IFileStatus[] {
         const result: IFileStatus[] = [];
-        const lines = status.split('\n');
+        const lines = extraString.split('\n');
         lines.forEach(line => {
             if (line.length > 0) {
                 const fileUri: string = line.trim();
@@ -949,7 +950,7 @@ export class Repository {
         return logEntries;
     }
 
-    getParents(status_msg: string): string {
+    getParents(status_msg: StatusString): string {
         const comment = status_msg.match(/parent:\s+(.*)\s(.*)\n/);
         if (comment) return comment[1];
         return '';
