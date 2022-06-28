@@ -519,7 +519,9 @@ export class Repository implements IDisposable {
 
     @throttle
     async status(): Promise<void> {
-        await this.run(Operation.Status, () => this.repository.getStatus());
+        await this.runWithProgress(Operation.Status, () =>
+            this.repository.getStatus()
+        );
     }
 
     private onFSChange(_uri: Uri): void {
@@ -577,7 +579,9 @@ export class Repository implements IDisposable {
         const relativePaths: string[] = resources.map(r =>
             this.mapResourceToRepoRelativePath(r)
         );
-        await this.run(Operation.Add, () => this.repository.add(relativePaths));
+        await this.runWithProgress(Operation.Add, () =>
+            this.repository.add(relativePaths)
+        );
     }
     async ls(...uris: Uri[]): Promise<Uri[]> {
         const lsResult = await this.repository.ls(uris.map(url => url.fsPath));
@@ -596,7 +600,7 @@ export class Repository implements IDisposable {
         const relativePaths: string[] = resources.map(r =>
             this.mapResourceToRepoRelativePath(r)
         );
-        await this.run(Operation.Remove, () =>
+        await this.runWithProgress(Operation.Remove, () =>
             this.repository.remove(relativePaths)
         );
     }
@@ -612,7 +616,7 @@ export class Repository implements IDisposable {
         const relativePaths: string[] = resources.map(r =>
             this.mapResourceToRepoRelativePath(r)
         );
-        await this.run(Operation.Ignore, () =>
+        await this.runWithProgress(Operation.Ignore, () =>
             this.repository.ignore(relativePaths)
         );
     }
@@ -636,7 +640,7 @@ export class Repository implements IDisposable {
 
     @throttle
     async stage(...resourceUris: Uri[]): Promise<void> {
-        await this.run(Operation.Stage, async () => {
+        await this.runWithProgress(Operation.Stage, async () => {
             let resources = this.mapResources(resourceUris);
 
             if (resources.length === 0) {
@@ -652,7 +656,7 @@ export class Repository implements IDisposable {
                 const relativePaths: string[] = missingResources[0].map(r =>
                     this.mapResourceToRepoRelativePath(r)
                 );
-                await this.run(Operation.Remove, () =>
+                await this.runWithProgress(Operation.Remove, () =>
                     this.repository.remove(relativePaths)
                 );
             }
@@ -666,7 +670,7 @@ export class Repository implements IDisposable {
                 const relativePaths: string[] = untrackedResources[0].map(r =>
                     this.mapResourceToRepoRelativePath(r)
                 );
-                await this.run(Operation.Remove, () =>
+                await this.runWithProgress(Operation.Remove, () =>
                     this.repository.add(relativePaths)
                 );
             }
@@ -742,7 +746,7 @@ export class Repository implements IDisposable {
         message: string,
         opts: CommitOptions = Object.create(null)
     ): Promise<void> {
-        await this.run(Operation.Commit, async () => {
+        await this.runWithProgress(Operation.Commit, async () => {
             let fileList: string[] = [];
             if (opts.scope === CommitScope.STAGED_CHANGES) {
                 fileList = this.stagingGroup.resourceStates.map(r =>
@@ -811,7 +815,7 @@ export class Repository implements IDisposable {
     @throttle
     async revert(...uris: Uri[]): Promise<void> {
         const resources = this.mapResources(uris);
-        await this.run(Operation.Revert, async () => {
+        await this.runWithProgress(Operation.Revert, async () => {
             const toRevert: string[] = [];
 
             for (const r of resources) {
@@ -837,14 +841,16 @@ export class Repository implements IDisposable {
 
     @throttle
     async clean(): Promise<void> {
-        await this.run(Operation.Clean, async () => {
+        await this.runWithProgress(Operation.Clean, async () => {
             this.repository.clean();
         });
     }
 
     @throttle
     async newBranch(name: FossilBranch): Promise<void> {
-        await this.run(Operation.Branch, () => this.repository.newBranch(name));
+        await this.runWithProgress(Operation.Branch, () =>
+            this.repository.newBranch(name)
+        );
     }
 
     @throttle
@@ -852,14 +858,14 @@ export class Repository implements IDisposable {
         treeish: FossilCheckin,
         opts?: { discard: boolean }
     ): Promise<void> {
-        await this.run(Operation.Update, () =>
+        await this.runWithProgress(Operation.Update, () =>
             this.repository.update(treeish, opts)
         );
     }
 
     @throttle
     async close(): Promise<boolean> {
-        const msg = await this.run(Operation.Close, () =>
+        const msg = await this.runWithProgress(Operation.Close, () =>
             this.repository.close()
         );
         if (msg) {
@@ -873,7 +879,9 @@ export class Repository implements IDisposable {
     async undo(dryRun: boolean): Promise<FossilUndoDetails> {
         const op = dryRun ? Operation.UndoDryRun : Operation.Undo;
         console.log('Running undo with dryrun ' + dryRun);
-        const undo = await this.run(op, () => this.repository.undo(dryRun));
+        const undo = await this.runWithProgress(op, () =>
+            this.repository.undo(dryRun)
+        );
 
         return undo;
     }
@@ -915,14 +923,14 @@ export class Repository implements IDisposable {
 
     @throttle
     async pull(options?: PullOptions): Promise<void> {
-        await this.run(Operation.Pull, async () => {
+        await this.runWithProgress(Operation.Pull, async () => {
             await this.repository.pull(options);
         });
     }
 
     @throttle
     async push(_path: string | undefined): Promise<void> {
-        return await this.run(Operation.Push, async () => {
+        return await this.runWithProgress(Operation.Push, async () => {
             try {
                 await this.repository.push();
             } catch (e) {
@@ -945,7 +953,7 @@ export class Repository implements IDisposable {
 
     @throttle
     merge(revQuery: string): Promise<IMergeResult> {
-        return this.run(Operation.Merge, async () => {
+        return this.runWithProgress(Operation.Merge, async () => {
             try {
                 return await this.repository.merge(revQuery);
             } catch (e) {
@@ -970,7 +978,7 @@ export class Repository implements IDisposable {
         // TODO@Joao: should we make this a general concept?
         await this.whenIdleAndFocused();
 
-        return await this.run(Operation.Show, async () => {
+        return await this.runWithProgress(Operation.Show, async () => {
             const relativePath = path
                 .relative(this.repository.root, params.path)
                 .replace(/\\/g, '/');
@@ -1005,18 +1013,18 @@ export class Repository implements IDisposable {
     }
 
     async patchCreate(path: string): Promise<void> {
-        return this.run(Operation.PatchCreate, async () =>
+        return this.runWithProgress(Operation.PatchCreate, async () =>
             this.repository.patchCreate(path)
         );
     }
 
     async patchApply(path: string): Promise<void> {
-        return this.run(Operation.PatchApply, async () =>
+        return this.runWithProgress(Operation.PatchApply, async () =>
             this.repository.patchApply(path)
         );
     }
 
-    private async run<T>(
+    private async runWithProgress<T>(
         operation: Operation,
         runOperation: () => Promise<T> = () => Promise.resolve<any>(null)
     ): Promise<T> {
