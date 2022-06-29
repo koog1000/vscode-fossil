@@ -81,7 +81,6 @@ suite('Fossil', () => {
             throw new Error('Expected opened workspace. Probably setup issue.');
         }
         const roorPath = vscode.workspace.workspaceFolders[0].uri;
-        vscode.window.showInformationMessage(`Ensure '${roorPath}' is empty`);
         const entities = fs.readdirSync(roorPath.fsPath);
         entities.forEach(name =>
             fs.unlinkSync(Uri.joinPath(roorPath, name).fsPath)
