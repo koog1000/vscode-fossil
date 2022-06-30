@@ -10,7 +10,7 @@ import { Repository, Status } from '../../repository';
 import { FossilResourceGroup } from '../../resourceGroups';
 import * as assert from 'assert/strict';
 
-function assertGroups(
+export function assertGroups(
     repository: Repository,
     working: Map<string, Status>,
     staging: Map<string, Status>

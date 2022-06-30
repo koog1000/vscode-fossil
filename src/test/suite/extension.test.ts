@@ -10,7 +10,7 @@ import {
     status_missing_is_visible_in_source_control_panel,
     status_rename_is_visible_in_source_control_panel,
 } from './test_status';
-import { fossil_close } from './test_commands';
+import { fossil_close, fossil_merge } from './test_commands';
 import { fossilInit, fossilOpen } from './common';
 
 async function createFossil(): Promise<Fossil> {
@@ -56,6 +56,8 @@ suite('Fossil', () => {
         await fossilInit(sandbox);
         await fossilOpen(sandbox, fossil);
     });
+
+    test('fossil.merge', () => fossil_merge(sandbox, fossil)).timeout(14000);
 
     test('fossil.close', () => fossil_close(sandbox, fossil));
 
