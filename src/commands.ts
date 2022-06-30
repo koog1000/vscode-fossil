@@ -1001,14 +1001,13 @@ export class CommandCenter {
         );
         const branch = await interaction.pickHead(otherHeads, placeholder);
         if (branch) {
-            return await this.doMerge(repository, branch, branch);
+            return await this.doMerge(repository, branch);
         }
     }
 
     private async doMerge(
         repository: Repository,
-        otherRevision: FossilCheckin,
-        otherBranchName?: FossilCheckin
+        otherRevision: FossilCheckin
     ) {
         try {
             const result = await repository.merge(otherRevision);
@@ -1017,9 +1016,9 @@ export class CommandCenter {
             if (result.unresolvedCount > 0) {
                 interaction.warnUnresolvedFiles(result.unresolvedCount);
             } else if (currentBranch) {
-                const defaultMergeMessage = await humanise.describeMerge(
+                const defaultMergeMessage = humanise.describeMerge(
                     currentBranch,
-                    otherBranchName
+                    otherRevision
                 );
                 const didCommit = await this.smartCommit(
                     repository,
