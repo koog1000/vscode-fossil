@@ -58,7 +58,7 @@ class ScopeStatusBar {
             return undefined;
         }
 
-        const label = currentRef.ref!;
+        const label = currentRef.ref;
         const title =
             currentRef.icon +
             ' ' +
