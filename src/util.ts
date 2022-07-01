@@ -19,7 +19,7 @@ export function toDisposable(dispose: () => void): IDisposable {
     return { dispose };
 }
 
-export function combinedDisposable(disposables: IDisposable[]): IDisposable {
+function combinedDisposable(disposables: IDisposable[]): IDisposable {
     return toDisposable(() => dispose(disposables));
 }
 
