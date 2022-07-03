@@ -85,7 +85,6 @@ interface SyncStatusBarState {
     autoInOut: AutoInOutState;
     syncStatus: SyncStatus;
     nextCheckTime: Date;
-    branch: FossilBranch | undefined;
 }
 
 class SyncStatusBar {
@@ -96,7 +95,6 @@ class SyncStatusBar {
         },
         nextCheckTime: new Date(),
         syncStatus: SyncStatus.None,
-        branch: undefined,
     };
 
     private _onDidChange = new EventEmitter<void>();
@@ -147,7 +145,6 @@ class SyncStatusBar {
     private onModelChange(): void {
         this.state = {
             ...this.state,
-            branch: this.repository.currentBranch,
             autoInOut: this.repository.autoInOutState,
         };
     }
