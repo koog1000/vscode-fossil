@@ -1154,8 +1154,7 @@ export class Repository implements IDisposable {
         const statusString = await this.repository.getStatus();
         this._repoStatus = this.repository.getSummary(statusString);
 
-        const currentRefPromise: Promise<FossilBranch | undefined> =
-            this.repository.getCurrentBranch();
+        const currentRefPromise = this.repository.getCurrentBranch();
 
         const fileStat = this.repository
             .parseStatusLines(statusString)
@@ -1165,10 +1164,7 @@ export class Repository implements IDisposable {
                 )
             );
 
-        const [currentRef, _resolveStatuses] = await Promise.all([
-            currentRefPromise,
-            Promise.resolve(undefined),
-        ]);
+        const currentRef = await currentRefPromise;
 
         this._currentBranch = currentRef;
 
