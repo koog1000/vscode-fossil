@@ -32,6 +32,7 @@ import {
     FossilRoot,
     FossilURI,
     FossilCheckin,
+    MergeAction,
 } from './fossilBase';
 import { Model } from './model';
 import {
@@ -981,8 +982,7 @@ export class CommandCenter {
         await repository.pull(pullOptions);
     }
 
-    @command('fossil.merge', { repository: true })
-    async merge(repository: Repository): Promise<void> {
+    private async isItOkayToMerge(repository: Repository): Promise<boolean> {
         if (
             (await interaction.checkThenWarnOutstandingMerge(repository)) ||
             (await interaction.checkThenErrorUnclean(
@@ -991,26 +991,52 @@ export class CommandCenter {
             ))
         ) {
             this.focusScm();
+            return false;
+        }
+        return true;
+    }
+
+    private async mergeCommon(
+        repository: Repository,
+        mergeAction: MergeAction,
+        placeholder: string
+    ): Promise<void> {
+        if (!(await this.isItOkayToMerge(repository))) {
             return;
         }
 
-        const otherHeads = await repository.getBranches();
+        const openedBranches = await repository.getBranches();
+        const branch = await interaction.pickHead(openedBranches, placeholder);
+        if (branch) {
+            return await this.doMerge(repository, branch, mergeAction);
+        }
+    }
+
+    @command('fossil.merge', { repository: true })
+    async merge(repository: Repository): Promise<void> {
         const placeholder = localize(
             'choose branch',
             'Choose branch to merge into working directory:'
         );
-        const branch = await interaction.pickHead(otherHeads, placeholder);
-        if (branch) {
-            return await this.doMerge(repository, branch);
-        }
+        return this.mergeCommon(repository, MergeAction.Merge, placeholder);
+    }
+
+    @command('fossil.integrate', { repository: true })
+    async integrate(repository: Repository): Promise<void> {
+        const placeholder = localize(
+            'choose branch integrate',
+            'Choose branch to integrate into working directory:'
+        );
+        return this.mergeCommon(repository, MergeAction.Integrate, placeholder);
     }
 
     private async doMerge(
         repository: Repository,
-        otherRevision: FossilCheckin
+        otherRevision: FossilCheckin,
+        mergeAction: MergeAction
     ) {
         try {
-            const result = await repository.merge(otherRevision);
+            const result = await repository.merge(otherRevision, mergeAction);
             const { currentBranch } = repository;
 
             if (result.unresolvedCount > 0) {

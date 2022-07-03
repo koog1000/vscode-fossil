@@ -39,6 +39,7 @@
     "command.logBranch": "Log – current branch",
     "command.logRepo": "Log – entire repository",
     "command.merge": "Merge into working directory...",
+    "command.integrate": "Integrate into working directory...",
     "config.enabled": "Whether Fossil is enabled",
     "config.path": "Path to the 'fossil' executable (only required if auto-detection fails)",
     "config.username": "The username associated with each commit (only required if different from user that originally cloned repo).",

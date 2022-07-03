@@ -30,6 +30,7 @@ import {
     FossilBranch,
     FossilTag,
     StatusString,
+    MergeAction,
 } from './fossilBase';
 import {
     anyEvent,
@@ -945,10 +946,13 @@ export class Repository implements IDisposable {
     }
 
     @throttle
-    merge(revQuery: string): Promise<IMergeResult> {
+    merge(
+        revQuery: FossilCheckin,
+        mergeAction: MergeAction
+    ): Promise<IMergeResult> {
         return this.runWithProgress(Operation.Merge, async () => {
             try {
-                return await this.repository.merge(revQuery);
+                return await this.repository.merge(revQuery, mergeAction);
             } catch (e) {
                 if (
                     e instanceof FossilError &&

@@ -33,6 +33,11 @@ export type FossilTag = Distinct<string, 'Fossil Tag Name'>;
 export type FossilHash = Distinct<string, 'Fossil SHA Hash'>;
 export type FossilCheckin = FossilBranch | FossilTag | FossilHash;
 export type StatusString = Distinct<string, 'fossil status stdout'>;
+export const enum MergeAction {
+    Merge,
+    Integrate,
+    Cherrypick,
+}
 
 export interface IFossil {
     path: string;
@@ -790,9 +795,23 @@ export class Repository {
         return files;
     }
 
-    async merge(revQuery: string): Promise<IMergeResult> {
+    async merge(
+        revQuery: FossilCheckin,
+        integrate: MergeAction
+    ): Promise<IMergeResult> {
         try {
-            await this.exec(['merge', revQuery]);
+            const extraArgs = (() => {
+                switch (integrate) {
+                    case MergeAction.Cherrypick:
+                        return ['--cherrypick'];
+                    case MergeAction.Integrate:
+                        return ['--integrate'];
+                    default:
+                        return [];
+                }
+            })();
+            const args = ['merge', revQuery, ...extraArgs];
+            await this.exec(args);
             return {
                 unresolvedCount: 0,
             };

@@ -328,6 +328,11 @@
                 "category": "Fossil"
             },
             {
+                "command": "fossil.integrate",
+                "title": "%command.integrate%",
+                "category": "Fossil"
+            },
+            {
                 "command": "fossil.patchCreate",
                 "title": "Create Patch",
                 "category": "Fossil"
@@ -438,6 +443,10 @@
                 },
                 {
                     "command": "fossil.merge",
+                    "when": "config.fossil.enabled && fossilOpenRepositoryCount != 0"
+                },
+                {
+                    "command": "fossil.integrate",
                     "when": "config.fossil.enabled && fossilOpenRepositoryCount != 0"
                 },
                 {
@@ -557,6 +566,11 @@
                     "command": "fossil.merge",
                     "when": "scmProvider == fossil",
                     "group": "merge@0"
+                },
+                {
+                    "command": "fossil.integrate",
+                    "when": "scmProvider == fossil",
+                    "group": "merge@1"
                 }
             ],
             "fossil.patch": [
@@ -791,6 +805,10 @@
             {
                 "id": "fossil.merge",
                 "label": "%submenu.merge%"
+            },
+            {
+                "id": "fossil.integrate",
+                "label": "%submenu.integrate%"
             },
             {
                 "id": "fossil.patch",
