@@ -1,7 +1,5 @@
 import { workspace } from 'vscode';
 
-export type PushPullScopeOptions = 'default' | 'current' | 'all' | undefined;
-
 const DEFAULT_AUTO_IN_OUT_INTERVAL_SECONDS = 3 * 60; /* three minutes */
 
 class Config {
