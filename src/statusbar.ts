@@ -42,9 +42,10 @@ class ScopeStatusBar {
         currentBranch: FossilBranch | undefined,
         repoStatus: IRepoStatus | undefined
     ): CurrentRef {
-        const mergeIcon =
-            repoStatus && repoStatus.isMerge ? '$(git-merge)' : '';
-        return { ref: currentBranch, icon: mergeIcon || '$(git-branch)' };
+        const mergeIcon = repoStatus?.isMerge
+            ? '$(git-merge)'
+            : '$(git-branch)';
+        return { ref: currentBranch, icon: mergeIcon };
     }
 
     get command(): Command | undefined {
