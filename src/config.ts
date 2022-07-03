@@ -10,15 +10,7 @@ class Config {
     }
 
     private get<T>(name: keyof Config, defaultValue: T): T {
-        const value = this.config.get<T>(name);
-        if (value === undefined) {
-            return defaultValue;
-        }
-        return value;
-    }
-
-    private update<T>(name: keyof Config, value: T) {
-        return this.config.update(name, value);
+        return this.config.get<T>(name, defaultValue);
     }
 
     get enabled(): boolean {
