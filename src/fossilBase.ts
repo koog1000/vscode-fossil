@@ -392,11 +392,17 @@ export class Fossil {
         options: FossilSpawnOptions
     ): Promise<IExecutionResult> {
         const startTimeHR = process.hrtime();
+        const logTimeout = setTimeout(
+            () => this.log(`fossil ${args.join(' ')}: still running\n`),
+            500
+        );
+
         const child = this.spawn(args, options);
         const result: IExecutionResult = await exec(
             child,
             args.includes('cat')
         );
+        clearTimeout(logTimeout);
 
         const durationHR = process.hrtime(startTimeHR);
         this.log(
