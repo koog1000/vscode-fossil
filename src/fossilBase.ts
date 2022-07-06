@@ -474,11 +474,11 @@ export class Fossil {
 }
 
 export interface Revision {
-    hash: FossilCheckin;
+    hash: FossilHash;
 }
 
 export interface Commit extends Revision {
-    branch: string;
+    branch: FossilBranch;
     message: string;
     author: string;
     date: Date;
@@ -949,7 +949,6 @@ export class Repository {
         if (limit) {
             args.push('-n', `${limit}`);
         }
-
         if (filePath) {
             args.push('-p', filePath);
         }
@@ -958,20 +957,19 @@ export class Repository {
 
         const result = await this.exec(args);
         const logEntries = result.stdout
-            .trim()
             .split('\n')
-            .filter(line => !!line && !line.startsWith('+++'))
-            .map((line: string): Commit => {
-                const parts = line.split('+++', 5);
+            .map(line => line.split('+++', 5))
+            .filter(line => line.length == 5)
+            .map((parts: readonly string[]): Commit => {
                 const [hash, date, branch, author, message] = parts;
                 return {
-                    hash: hash as FossilCheckin,
-                    branch: branch,
+                    hash: hash as FossilHash,
+                    branch: branch as FossilBranch,
                     message: message,
                     author: author,
                     date: new Date(date),
                 };
-            }) as Commit[];
+            });
         return logEntries;
     }
 
