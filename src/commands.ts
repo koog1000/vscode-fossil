@@ -1030,6 +1030,23 @@ export class CommandCenter {
         return this.mergeCommon(repository, MergeAction.Integrate, placeholder);
     }
 
+    @command('fossil.cherrypick', { repository: true })
+    async cherrypick(repository: Repository): Promise<void> {
+        if (!(await this.isItOkayToMerge(repository))) {
+            return;
+        }
+        const logEntries = await repository.getLogEntries();
+        const checkin = await interaction.pickCommitToCherrypick(logEntries);
+
+        if (checkin) {
+            return await this.doMerge(
+                repository,
+                checkin,
+                MergeAction.Cherrypick
+            );
+        }
+    }
+
     private async doMerge(
         repository: Repository,
         otherRevision: FossilCheckin,

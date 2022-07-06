@@ -29,6 +29,7 @@ import {
     BranchDetails,
     FossilTag,
     FossilCheckin,
+    FossilHash,
 } from './fossilBase';
 import { humanise } from './humanise';
 import { Repository, LogEntriesOptions } from './repository';
@@ -532,10 +533,10 @@ export namespace interaction {
     }
 
     export async function pickHead(
-        heads: BranchDetails[],
+        branches: BranchDetails[],
         placeHolder: string
     ): Promise<FossilCheckin | undefined> {
-        const headChoices = heads.map(head => new UpdateBranchItem(head));
+        const headChoices = branches.map(head => new UpdateBranchItem(head));
         const choice = await window.showQuickPick(headChoices, { placeHolder });
         return choice?.checkin;
     }
@@ -679,22 +680,37 @@ export namespace interaction {
         backItem?: RunnableQuickPickItem
     ): Promise<RunnableQuickPickItem | undefined> {
         const logEntryPickItems = logEntries.map(
-            entry => new LogEntryItem(entry, actionFactory(entry))
+            entry => new RunnableLogEntryItem(entry, actionFactory(entry))
         );
         const placeHolder = describeLogEntrySource(source);
         const pickItems = backItem
             ? [backItem, ...logEntryPickItems]
             : logEntryPickItems;
-        const choice = await window.showQuickPick<RunnableQuickPickItem>(
-            pickItems,
-            {
-                placeHolder,
-                matchOnDescription: true,
-                matchOnDetail: true,
-            }
-        );
+        const choice = await window.showQuickPick(pickItems, {
+            placeHolder,
+            matchOnDescription: true,
+            matchOnDetail: true,
+        });
 
         return choice;
+    }
+
+    export async function pickCommitToCherrypick(
+        logEntries: Commit[]
+    ): Promise<FossilHash | undefined> {
+        const logEntryPickItems = logEntries.map(
+            entry => new LogEntryItem(entry)
+        );
+        const placeHolder = localize(
+            'cherrypick commit',
+            'Commit to cherrypick'
+        );
+        const choice = await window.showQuickPick(logEntryPickItems, {
+            placeHolder,
+            matchOnDescription: true,
+            matchOnDetail: true,
+        });
+        return choice?.commit.hash;
     }
 
     export async function presentCommitDetails(
@@ -1026,18 +1042,21 @@ abstract class RunnableQuickPickItem implements QuickPickItem {
     abstract run(): RunnableReturnType;
 }
 
-class CommitItem implements RunnableQuickPickItem {
-    constructor(public readonly commit: Commit) {}
-    get shortHash() {
-        return (this.commit.hash || '').substr(0, SHORT_HASH_LENGTH);
+class LogEntryItem extends RunnableQuickPickItem {
+    constructor(public commit: Commit) {
+        super();
     }
-    get label() {
-        return this.commit.branch;
+    protected get age(): string {
+        return humanise.ageFromNow(this.commit.date);
     }
-    get detail() {
-        return `${this.commit.hash}(${this.shortHash}) `;
+    get label(): string {
+        const hash = this.commit.hash.slice(0, SHORT_HASH_LENGTH);
+        return `$(circle-outline) ${hash} ${BULLET} ${this.commit.branch}`;
     }
-    get description() {
+    get description(): string {
+        return `$(person)${this.commit.author} $(calendar) ${this.age}`;
+    }
+    get detail(): string {
         return this.commit.message;
     }
     run() {
@@ -1045,29 +1064,16 @@ class CommitItem implements RunnableQuickPickItem {
     }
 }
 
-class LogEntryItem extends CommitItem {
+class RunnableLogEntryItem extends LogEntryItem {
     constructor(commit: Commit, private action: RunnableAction) {
         super(commit);
-    }
-    protected get age(): string {
-        return humanise.ageFromNow(this.commit.date);
-    }
-    get description(): string {
-        const scope = '\u2014 ' + this.commit.branch;
-        return `${NBSP}${BULLET}${NBSP}${NBSP}#${this.commit.hash}${scope}`;
-    }
-    get label() {
-        return this.commit.message;
-    }
-    get detail() {
-        return `${NBSP}${NBSP}${NBSP}${this.commit.author}, ${this.age}`;
     }
     run() {
         return this.action();
     }
 }
 
-class UpdatingItem {
+abstract class UpdatingItem {
     constructor(public checkin: FossilCheckin) {}
 
     async run(repository: Repository): Promise<void> {
