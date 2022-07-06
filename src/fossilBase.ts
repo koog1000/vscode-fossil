@@ -856,7 +856,7 @@ export class Repository {
 
     getSummary(summary: string): IRepoStatus {
         const parent = this.parseParentLines(summary);
-        const isMerge = /\bMERGED_WITH\b/.test(summary);
+        const isMerge = /^(MERGED_WITH|CHERRYPICK)\b/m.test(summary);
         return { isMerge, parent };
     }
 
