@@ -1,7 +1,5 @@
 import { workspace } from 'vscode';
 
-export type PushPullScopeOptions = 'default' | 'current' | 'all' | undefined;
-
 const DEFAULT_AUTO_IN_OUT_INTERVAL_SECONDS = 3 * 60; /* three minutes */
 
 class Config {
@@ -10,15 +8,7 @@ class Config {
     }
 
     private get<T>(name: keyof Config, defaultValue: T): T {
-        const value = this.config.get<T>(name);
-        if (value === undefined) {
-            return defaultValue;
-        }
-        return value;
-    }
-
-    private update<T>(name: keyof Config, value: T) {
-        return this.config.update(name, value);
+        return this.config.get<T>(name, defaultValue);
     }
 
     get enabled(): boolean {

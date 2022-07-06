@@ -22,7 +22,6 @@ import { LineChange, revertChanges } from './revert';
 import * as nls from 'vscode-nls';
 import * as path from 'path';
 import {
-    Ref,
     Fossil,
     Commit,
     FossilError,
@@ -32,6 +31,8 @@ import {
     FossilPath,
     FossilRoot,
     FossilURI,
+    FossilCheckin,
+    MergeAction,
 } from './fossilBase';
 import { Model } from './model';
 import {
@@ -753,8 +754,7 @@ export class CommandCenter {
             repository.workingGroup.resourceStates.length;
         const numStagingResources =
             repository.stagingGroup.resourceStates.length;
-        const isMergeCommit =
-            repository.repoStatus && repository.repoStatus.isMerge;
+        const isMergeCommit = repository.repoStatus?.isMerge;
 
         if (isMergeCommit) {
             opts = { scope: CommitScope.ALL };
@@ -916,7 +916,7 @@ export class CommandCenter {
             this.focusScm();
             return;
         }
-        const refs: Ref[] = await repository.getRefs();
+        const refs = await repository.getBranchesAndTags();
 
         const choice = await interaction.pickUpdateRevision(refs, unclean);
 
@@ -935,7 +935,7 @@ export class CommandCenter {
             return;
         }
         await interaction.checkThenWarnUnclean(repository, WarnScenario.Update);
-        const refs: Ref[] = await repository.getRefs();
+        const refs = await repository.getBranchesAndTags();
 
         const choice = await interaction.pickUpdateRevision(refs, unclean);
 
@@ -946,27 +946,24 @@ export class CommandCenter {
 
     @command('fossil.branch', { repository: true })
     async branch(repository: Repository): Promise<void> {
-        const result = await interaction.inputBranchName();
-        if (!result) {
+        const fossilBranch = await interaction.inputNewBranchName();
+        if (!fossilBranch) {
             return;
         }
-
-        const name = result.replace(
-            /^\.|\/\.|\.\.|~|\^|:|\/$|\.lock$|\.lock\/|\\|\*|\s|^\s*$|\.$/g,
-            '-'
-        );
         try {
-            await repository.branch(name);
+            await repository.newBranch(fossilBranch);
         } catch (e) {
             if (
                 e instanceof FossilError &&
                 e.fossilErrorCode === FossilErrorCodes.BranchAlreadyExists
             ) {
-                const action = await interaction.warnBranchAlreadyExists(name);
+                const action = await interaction.warnBranchAlreadyExists(
+                    fossilBranch
+                );
                 if (action === BranchExistsAction.Reopen) {
-                    await repository.branch(name);
+                    await repository.newBranch(fossilBranch);
                 } else if (action === BranchExistsAction.UpdateTo) {
-                    await repository.update(name);
+                    await repository.update(fossilBranch);
                 }
             }
         }
@@ -985,8 +982,7 @@ export class CommandCenter {
         await repository.pull(pullOptions);
     }
 
-    @command('fossil.mergeWithLocal', { repository: true })
-    async mergeWithLocal(repository: Repository): Promise<void> {
+    private async isItOkayToMerge(repository: Repository): Promise<boolean> {
         if (
             (await interaction.checkThenWarnOutstandingMerge(repository)) ||
             (await interaction.checkThenErrorUnclean(
@@ -995,66 +991,77 @@ export class CommandCenter {
             ))
         ) {
             this.focusScm();
+            return false;
+        }
+        return true;
+    }
+
+    private async mergeCommon(
+        repository: Repository,
+        mergeAction: MergeAction,
+        placeholder: string
+    ): Promise<void> {
+        if (!(await this.isItOkayToMerge(repository))) {
             return;
         }
 
-        const otherHeads = await repository.getBranches();
+        const openedBranches = await repository.getBranches();
+        const branch = await interaction.pickHead(openedBranches, placeholder);
+        if (branch) {
+            return await this.doMerge(repository, branch, mergeAction);
+        }
+    }
+
+    @command('fossil.merge', { repository: true })
+    async merge(repository: Repository): Promise<void> {
         const placeholder = localize(
             'choose branch',
             'Choose branch to merge into working directory:'
         );
-        const branch = await interaction.pickHead(otherHeads, placeholder);
-        if (branch && branch.name) {
-            return await this.doMerge(repository, branch.name, branch.name);
-        }
+        return this.mergeCommon(repository, MergeAction.Merge, placeholder);
     }
 
-    @command('fossil.mergeHeads', { repository: true })
-    async mergeHeads(repository: Repository): Promise<void> {
-        if (
-            (await interaction.checkThenWarnOutstandingMerge(repository)) ||
-            (await interaction.checkThenErrorUnclean(
-                repository,
-                WarnScenario.Merge
-            ))
-        ) {
-            this.focusScm();
+    @command('fossil.integrate', { repository: true })
+    async integrate(repository: Repository): Promise<void> {
+        const placeholder = localize(
+            'choose branch integrate',
+            'Choose branch to integrate into working directory:'
+        );
+        return this.mergeCommon(repository, MergeAction.Integrate, placeholder);
+    }
+
+    @command('fossil.cherrypick', { repository: true })
+    async cherrypick(repository: Repository): Promise<void> {
+        if (!(await this.isItOkayToMerge(repository))) {
             return;
         }
+        const logEntries = await repository.getLogEntries();
+        const checkin = await interaction.pickCommitToCherrypick(logEntries);
 
-        const otherHeads = await repository.getBranches();
-        if (otherHeads.length === 0) {
-            // 1 head
-            interaction.warnMergeOnlyOneHead();
-            return;
-        } else {
-            // 2+ heads
-            const placeHolder = localize(
-                'choose branch',
-                'Choose branch to merge with:'
+        if (checkin) {
+            return await this.doMerge(
+                repository,
+                checkin,
+                MergeAction.Cherrypick
             );
-            const head = await interaction.pickHead(otherHeads, placeHolder);
-            if (head && head.name) {
-                return await this.doMerge(repository, head.name);
-            }
         }
     }
 
     private async doMerge(
         repository: Repository,
-        otherRevision: string,
-        otherBranchName?: string
+        otherRevision: FossilCheckin,
+        mergeAction: MergeAction
     ) {
         try {
-            const result = await repository.merge(otherRevision);
+            const result = await repository.merge(otherRevision, mergeAction);
             const { currentBranch } = repository;
 
             if (result.unresolvedCount > 0) {
                 interaction.warnUnresolvedFiles(result.unresolvedCount);
             } else if (currentBranch) {
-                const defaultMergeMessage = await humanise.describeMerge(
-                    currentBranch.name!,
-                    otherBranchName
+                const defaultMergeMessage = humanise.describeMerge(
+                    currentBranch,
+                    otherRevision
                 );
                 const didCommit = await this.smartCommit(
                     repository,
@@ -1107,8 +1114,7 @@ export class CommandCenter {
     createLogMenuAPI(repository: Repository): LogMenuAPI {
         return {
             getRepoName: () => repository.repoName,
-            getBranchName: () =>
-                repository.currentBranch && repository.currentBranch.name,
+            getBranchName: () => repository.currentBranch,
             getCommitDetails: (revision: string) =>
                 repository.getCommitDetails(revision),
             getLogEntries: (options: LogEntriesOptions) =>

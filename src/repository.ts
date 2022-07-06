@@ -15,7 +15,6 @@ import {
 } from 'vscode';
 import {
     Repository as BaseRepository,
-    Ref,
     Commit,
     FossilError,
     IRepoStatus,
@@ -26,6 +25,12 @@ import {
     LogEntryRepositoryOptions,
     FossilUndoDetails,
     FossilRoot,
+    BranchDetails,
+    FossilCheckin,
+    FossilBranch,
+    FossilTag,
+    StatusString,
+    MergeAction,
 } from './fossilBase';
 import {
     anyEvent,
@@ -258,7 +263,6 @@ export const enum Operation {
     Init,
     Show,
     Stage,
-    GetCommitTemplate,
     Revert,
     Resolve,
     Unresolve,
@@ -274,7 +278,6 @@ export const enum Operation {
 function isReadOnly(operation: Operation): boolean {
     switch (operation) {
         case Operation.Show:
-        case Operation.GetCommitTemplate:
             return true;
         default:
             return false;
@@ -345,12 +348,6 @@ export class Repository implements IDisposable {
         );
     }
 
-    // ToDo: remove. nobody uses `lastPushPath`
-    private _lastPushPath: string | undefined;
-    get lastPushPath(): string | undefined {
-        return this._lastPushPath;
-    }
-
     private _groups: IStatusGroups;
     get mergeGroup(): FossilResourceGroup {
         return this._groups.merge;
@@ -368,24 +365,14 @@ export class Repository implements IDisposable {
         return this._groups.untracked;
     }
 
-    private _currentBranch: Ref | undefined;
-    get currentBranch(): Ref | undefined {
+    private _currentBranch: FossilBranch | undefined;
+    get currentBranch(): FossilBranch | undefined {
         return this._currentBranch;
     }
 
     private _repoStatus: IRepoStatus | undefined;
     get repoStatus(): IRepoStatus | undefined {
         return this._repoStatus;
-    }
-
-    private _refs: Ref[] = [];
-    get refs(): Ref[] {
-        return this._refs;
-    }
-
-    private _path!: Path;
-    get path(): Path {
-        return this._path;
     }
 
     private _operations = new Set<Operation>();
@@ -435,7 +422,6 @@ export class Repository implements IDisposable {
         this._onDidChangeState.fire(state);
 
         this._currentBranch = undefined;
-        this._refs = [];
         this._groups.conflict.updateResources([]);
         this._groups.merge.updateResources([]);
         this._groups.staging.updateResources([]);
@@ -449,10 +435,9 @@ export class Repository implements IDisposable {
     }
 
     private disposables: Disposable[] = [];
+    public statusPromise: Promise<StatusString>;
 
     constructor(private readonly repository: BaseRepository) {
-        this.updateRepositoryPaths();
-
         const fsWatcher = workspace.createFileSystemWatcher('**');
         this.disposables.push(fsWatcher);
 
@@ -496,8 +481,6 @@ export class Repository implements IDisposable {
 
         const groups = createEmptyStatusGroups(this._sourceControl);
 
-        this.disposables.push(new AutoIncomingOutgoing(this));
-
         this._groups = groups;
         this.disposables.push(
             ...Object.values(groups).map(
@@ -516,7 +499,9 @@ export class Repository implements IDisposable {
         );
         this._sourceControl.statusBarCommands = statusBar.commands;
 
-        this.status();
+        this.statusPromise = this.status();
+
+        this.disposables.push(new AutoIncomingOutgoing(this));
     }
 
     provideOriginalResource(uri: Uri): Uri | undefined {
@@ -527,8 +512,10 @@ export class Repository implements IDisposable {
     }
 
     @throttle
-    async status(): Promise<void> {
-        await this.run(Operation.Status);
+    async status(): Promise<StatusString> {
+        const statusPromise = this.repository.getStatus();
+        await this.runWithProgress(Operation.Status, () => statusPromise);
+        return statusPromise;
     }
 
     private onFSChange(_uri: Uri): void {
@@ -586,7 +573,9 @@ export class Repository implements IDisposable {
         const relativePaths: string[] = resources.map(r =>
             this.mapResourceToRepoRelativePath(r)
         );
-        await this.run(Operation.Add, () => this.repository.add(relativePaths));
+        await this.runWithProgress(Operation.Add, () =>
+            this.repository.add(relativePaths)
+        );
     }
     async ls(...uris: Uri[]): Promise<Uri[]> {
         const lsResult = await this.repository.ls(uris.map(url => url.fsPath));
@@ -605,7 +594,7 @@ export class Repository implements IDisposable {
         const relativePaths: string[] = resources.map(r =>
             this.mapResourceToRepoRelativePath(r)
         );
-        await this.run(Operation.Remove, () =>
+        await this.runWithProgress(Operation.Remove, () =>
             this.repository.remove(relativePaths)
         );
     }
@@ -621,7 +610,7 @@ export class Repository implements IDisposable {
         const relativePaths: string[] = resources.map(r =>
             this.mapResourceToRepoRelativePath(r)
         );
-        await this.run(Operation.Ignore, () =>
+        await this.runWithProgress(Operation.Ignore, () =>
             this.repository.ignore(relativePaths)
         );
     }
@@ -645,7 +634,7 @@ export class Repository implements IDisposable {
 
     @throttle
     async stage(...resourceUris: Uri[]): Promise<void> {
-        await this.run(Operation.Stage, async () => {
+        await this.runWithProgress(Operation.Stage, async () => {
             let resources = this.mapResources(resourceUris);
 
             if (resources.length === 0) {
@@ -661,7 +650,7 @@ export class Repository implements IDisposable {
                 const relativePaths: string[] = missingResources[0].map(r =>
                     this.mapResourceToRepoRelativePath(r)
                 );
-                await this.run(Operation.Remove, () =>
+                await this.runWithProgress(Operation.Remove, () =>
                     this.repository.remove(relativePaths)
                 );
             }
@@ -675,7 +664,7 @@ export class Repository implements IDisposable {
                 const relativePaths: string[] = untrackedResources[0].map(r =>
                     this.mapResourceToRepoRelativePath(r)
                 );
-                await this.run(Operation.Remove, () =>
+                await this.runWithProgress(Operation.Remove, () =>
                     this.repository.add(relativePaths)
                 );
             }
@@ -751,7 +740,7 @@ export class Repository implements IDisposable {
         message: string,
         opts: CommitOptions = Object.create(null)
     ): Promise<void> {
-        await this.run(Operation.Commit, async () => {
+        await this.runWithProgress(Operation.Commit, async () => {
             let fileList: string[] = [];
             if (opts.scope === CommitScope.STAGED_CHANGES) {
                 fileList = this.stagingGroup.resourceStates.map(r =>
@@ -820,7 +809,7 @@ export class Repository implements IDisposable {
     @throttle
     async revert(...uris: Uri[]): Promise<void> {
         const resources = this.mapResources(uris);
-        await this.run(Operation.Revert, async () => {
+        await this.runWithProgress(Operation.Revert, async () => {
             const toRevert: string[] = [];
 
             for (const r of resources) {
@@ -846,26 +835,31 @@ export class Repository implements IDisposable {
 
     @throttle
     async clean(): Promise<void> {
-        await this.run(Operation.Clean, async () => {
+        await this.runWithProgress(Operation.Clean, async () => {
             this.repository.clean();
         });
     }
 
     @throttle
-    async branch(name: string): Promise<void> {
-        await this.run(Operation.Branch, () => this.repository.branch(name));
+    async newBranch(name: FossilBranch): Promise<void> {
+        await this.runWithProgress(Operation.Branch, () =>
+            this.repository.newBranch(name)
+        );
     }
 
     @throttle
-    async update(treeish: string, opts?: { discard: boolean }): Promise<void> {
-        await this.run(Operation.Update, () =>
+    async update(
+        treeish: FossilCheckin,
+        opts?: { discard: boolean }
+    ): Promise<void> {
+        await this.runWithProgress(Operation.Update, () =>
             this.repository.update(treeish, opts)
         );
     }
 
     @throttle
     async close(): Promise<boolean> {
-        const msg = await this.run(Operation.Close, () =>
+        const msg = await this.runWithProgress(Operation.Close, () =>
             this.repository.close()
         );
         if (msg) {
@@ -879,7 +873,9 @@ export class Repository implements IDisposable {
     async undo(dryRun: boolean): Promise<FossilUndoDetails> {
         const op = dryRun ? Operation.UndoDryRun : Operation.Undo;
         console.log('Running undo with dryrun ' + dryRun);
-        const undo = await this.run(op, () => this.repository.undo(dryRun));
+        const undo = await this.runWithProgress(op, () =>
+            this.repository.undo(dryRun)
+        );
 
         return undo;
     }
@@ -921,16 +917,15 @@ export class Repository implements IDisposable {
 
     @throttle
     async pull(options?: PullOptions): Promise<void> {
-        await this.run(Operation.Pull, async () => {
+        await this.runWithProgress(Operation.Pull, async () => {
             await this.repository.pull(options);
         });
     }
 
     @throttle
-    async push(path: string | undefined): Promise<void> {
-        return await this.run(Operation.Push, async () => {
+    async push(_path: string | undefined): Promise<void> {
+        return await this.runWithProgress(Operation.Push, async () => {
             try {
-                this._lastPushPath = path;
                 await this.repository.push();
             } catch (e) {
                 if (
@@ -951,10 +946,13 @@ export class Repository implements IDisposable {
     }
 
     @throttle
-    merge(revQuery: string): Promise<IMergeResult> {
-        return this.run(Operation.Merge, async () => {
+    merge(
+        revQuery: FossilCheckin,
+        mergeAction: MergeAction
+    ): Promise<IMergeResult> {
+        return this.runWithProgress(Operation.Merge, async () => {
             try {
-                return await this.repository.merge(revQuery);
+                return await this.repository.merge(revQuery, mergeAction);
             } catch (e) {
                 if (
                     e instanceof FossilError &&
@@ -977,7 +975,7 @@ export class Repository implements IDisposable {
         // TODO@Joao: should we make this a general concept?
         await this.whenIdleAndFocused();
 
-        return await this.run(Operation.Show, async () => {
+        return await this.runWithProgress(Operation.Show, async () => {
             const relativePath = path
                 .relative(this.repository.root, params.path)
                 .replace(/\\/g, '/');
@@ -1012,18 +1010,18 @@ export class Repository implements IDisposable {
     }
 
     async patchCreate(path: string): Promise<void> {
-        return this.run(Operation.PatchCreate, async () =>
+        return this.runWithProgress(Operation.PatchCreate, async () =>
             this.repository.patchCreate(path)
         );
     }
 
     async patchApply(path: string): Promise<void> {
-        return this.run(Operation.PatchApply, async () =>
+        return this.runWithProgress(Operation.PatchApply, async () =>
             this.repository.patchApply(path)
         );
     }
 
-    private async run<T>(
+    private async runWithProgress<T>(
         operation: Operation,
         runOperation: () => Promise<T> = () => Promise.resolve<any>(null)
     ): Promise<T> {
@@ -1081,19 +1079,11 @@ export class Repository implements IDisposable {
         );
     }
 
-    private async updateRepositoryPaths() {
-        try {
-            this._path = await this.repository.getPaths();
-        } catch (e) {
-            // noop
-        }
-    }
-
     @throttle
     public async getPath(): Promise<Path> {
         try {
-            this._path = await this.repository.getPaths();
-            return this._path;
+            const path = await this.repository.getPaths();
+            return path;
         } catch (e) {
             // noop
         }
@@ -1102,21 +1092,25 @@ export class Repository implements IDisposable {
     }
 
     @throttle
-    public async getRefs(): Promise<Ref[]> {
+    public async getBranchesAndTags(): Promise<[BranchDetails[], FossilTag[]]> {
         const [branches, tags] = await Promise.all([
             this.repository.getBranches(),
             this.repository.getTags(),
         ]);
-        return [...branches, ...tags];
+        const branchesSet = new Set<FossilCheckin>(
+            branches.map(info => info.name)
+        );
+        // Exclude tags that are branches
+        return [branches, tags.filter(tag => !branchesSet.has(tag))];
     }
 
     @throttle
-    public getParents(): Promise<string> {
-        return this.repository.getParents();
+    public getParents(status_msg: StatusString): string {
+        return this.repository.getParents(status_msg);
     }
 
     @throttle
-    public getBranches(): Promise<Ref[]> {
+    public getBranches(): Promise<BranchDetails[]> {
         return this.repository.getBranches();
     }
 
@@ -1127,7 +1121,7 @@ export class Repository implements IDisposable {
             limit: 1,
         });
         const fileStatusesPromise = await this.repository.getStatus();
-        const parentsPromise = await this.getParents();
+        const parentsPromise = await this.getParents(fileStatusesPromise);
 
         const [[commit], fileStatuses] = await Promise.all([
             commitPromise,
@@ -1156,25 +1150,25 @@ export class Repository implements IDisposable {
         return this.repository.getLogEntries(opts);
     }
 
+    /**
+     * `UpdateModelState` is called after every non read only operation run
+     */
     @throttle
     private async updateModelState(): Promise<void> {
-        this._repoStatus = await this.repository.getSummary();
+        const statusString = await this.repository.getStatus();
+        this._repoStatus = this.repository.getSummary(statusString);
 
-        const currentRefPromise: Promise<Ref | undefined> =
-            this.repository.getCurrentBranch();
+        const currentRefPromise = this.repository.getCurrentBranch();
 
         const fileStat = this.repository
-            .parseStatusLines(await this.repository.getStatus())
+            .parseStatusLines(statusString)
             .concat(
                 this.repository.parseExtrasLines(
                     await this.repository.getExtras()
                 )
             );
 
-        const [currentRef, _resolveStatuses] = await Promise.all([
-            currentRefPromise,
-            Promise.resolve(undefined),
-        ]);
+        const currentRef = await currentRefPromise;
 
         this._currentBranch = currentRef;
 

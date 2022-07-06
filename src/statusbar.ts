@@ -5,7 +5,7 @@
  *--------------------------------------------------------------------------------------------*/
 
 import { Disposable, Command, EventEmitter, Event } from 'vscode';
-import { Ref, IRepoStatus } from './fossilBase';
+import { FossilBranch, IRepoStatus } from './fossilBase';
 import { anyEvent, dispose } from './util';
 import { AutoInOutStatuses, AutoInOutState } from './autoinout';
 import * as nls from 'vscode-nls';
@@ -19,7 +19,7 @@ const enum SyncStatus {
 }
 
 interface CurrentRef {
-    ref: Ref | undefined;
+    ref: FossilBranch | undefined;
     icon: string;
 }
 
@@ -39,12 +39,13 @@ class ScopeStatusBar {
     }
 
     chooseCurrentRef(
-        currentBranch: Ref | undefined,
+        currentBranch: FossilBranch | undefined,
         repoStatus: IRepoStatus | undefined
     ): CurrentRef {
-        const mergeIcon =
-            repoStatus && repoStatus.isMerge ? '$(git-merge)' : '';
-        return { ref: currentBranch, icon: mergeIcon || '$(git-branch)' };
+        const mergeIcon = repoStatus?.isMerge
+            ? '$(git-merge)'
+            : '$(git-branch)';
+        return { ref: currentBranch, icon: mergeIcon };
     }
 
     get command(): Command | undefined {
@@ -58,7 +59,7 @@ class ScopeStatusBar {
             return undefined;
         }
 
-        const label = (currentRef.ref.name || currentRef.ref.commit)!;
+        const label = currentRef.ref;
         const title =
             currentRef.icon +
             ' ' +
@@ -85,8 +86,6 @@ interface SyncStatusBarState {
     autoInOut: AutoInOutState;
     syncStatus: SyncStatus;
     nextCheckTime: Date;
-    hasPaths: boolean;
-    branch: Ref | undefined;
 }
 
 class SyncStatusBar {
@@ -97,8 +96,6 @@ class SyncStatusBar {
         },
         nextCheckTime: new Date(),
         syncStatus: SyncStatus.None,
-        hasPaths: false,
-        branch: undefined,
     };
 
     private _onDidChange = new EventEmitter<void>();
@@ -149,8 +146,6 @@ class SyncStatusBar {
     private onModelChange(): void {
         this.state = {
             ...this.state,
-            hasPaths: this.repository.path.url != '',
-            branch: this.repository.currentBranch,
             autoInOut: this.repository.autoInOutState,
         };
     }
@@ -206,10 +201,6 @@ class SyncStatusBar {
     }
 
     get command(): Command | undefined {
-        if (!this.state.hasPaths) {
-            return undefined;
-        }
-
         const autoInOut = this.describeAutoInOutStatus();
         let icon = autoInOut.icon;
         let text = '';

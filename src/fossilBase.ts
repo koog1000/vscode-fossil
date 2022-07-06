@@ -11,6 +11,7 @@ import { appendFileSync, existsSync, writeFileSync } from 'fs';
 import { groupBy, IDisposable, toDisposable, dispose } from './util';
 import { EventEmitter, Event, workspace, window, OutputChannel } from 'vscode';
 import { interaction } from './interaction';
+import { throttle } from './decorators';
 
 type Distinct<T, DistinctName> = T & { __TYPE__: DistinctName };
 /** path to .fossil */
@@ -27,7 +28,16 @@ export type FossilRoot = Distinct<FossilCWD, 'local root'>;
  */
 export type FossilURI = Distinct<string, 'Fossil URI'>;
 /** https://fossil-scm.org/home/doc/trunk/www/checkin_names.wiki */
-export type FossilCheckin = Distinct<string, 'Fossil Check-in Name'>;
+export type FossilBranch = Distinct<string, 'Fossil Branch Name'>;
+export type FossilTag = Distinct<string, 'Fossil Tag Name'>;
+export type FossilHash = Distinct<string, 'Fossil SHA Hash'>;
+export type FossilCheckin = FossilBranch | FossilTag | FossilHash;
+export type StatusString = Distinct<string, 'fossil status stdout'>;
+export const enum MergeAction {
+    Merge,
+    Integrate,
+    Cherrypick,
+}
 
 export interface IFossil {
     path: string;
@@ -55,7 +65,7 @@ export interface IMergeResult {
 
 export interface IRepoStatus {
     isMerge: boolean;
-    parents: Ref[];
+    parent?: FossilHash;
 }
 
 export interface IFileStatus {
@@ -69,16 +79,10 @@ export interface ICommitDetails {
     affectedFiles: IFileStatus[];
 }
 
-export enum RefType {
-    Branch,
-    Tag,
-    Commit,
-}
-
-export interface Ref {
-    type: RefType;
-    name?: string;
-    commit?: string;
+export interface BranchDetails {
+    name: FossilBranch;
+    isCurrent: boolean;
+    isPrivate: boolean;
 }
 
 export interface Path {
@@ -351,7 +355,8 @@ export class Fossil {
     async getRepositoryRoot(anypath: string): Promise<FossilRoot> {
         const isFile = (await fs.stat(anypath)).isFile();
         const cwd = (isFile ? path.dirname(anypath) : anypath) as FossilCWD;
-        const result = await this.exec(cwd, ['stat']);
+        this.log(`getting root for '${anypath}'\n`);
+        const result = await this.exec(cwd, ['status']);
         const root = result.stdout.match(/local-root:\s*(.+)\/\s/);
         if (root) return root[1] as FossilRoot;
         return '' as FossilRoot;
@@ -387,11 +392,17 @@ export class Fossil {
         options: FossilSpawnOptions
     ): Promise<IExecutionResult> {
         const startTimeHR = process.hrtime();
+        const logTimeout = setTimeout(
+            () => this.log(`fossil ${args.join(' ')}: still running\n`),
+            500
+        );
+
         const child = this.spawn(args, options);
         const result: IExecutionResult = await exec(
             child,
             args.includes('cat')
         );
+        clearTimeout(logTimeout);
 
         const durationHR = process.hrtime(startTimeHR);
         this.log(
@@ -463,11 +474,11 @@ export class Fossil {
 }
 
 export interface Revision {
-    hash: FossilCheckin;
+    hash: FossilHash;
 }
 
 export interface Commit extends Revision {
-    branch: string;
+    branch: FossilBranch;
     message: string;
     author: string;
     date: Date;
@@ -479,8 +490,6 @@ export interface CommitDetails extends Commit {
 }
 
 export class Repository {
-    private status_msg = '';
-
     constructor(private _fossil: Fossil, private repositoryRoot: FossilRoot) {}
 
     get fossil(): Fossil {
@@ -561,7 +570,10 @@ export class Repository {
         }
     }
 
-    async update(treeish: string, opts?: { discard: boolean }): Promise<void> {
+    async update(
+        treeish: FossilCheckin,
+        opts?: { discard: boolean }
+    ): Promise<void> {
         const args = ['update'];
 
         if (opts?.discard) {
@@ -613,11 +625,17 @@ export class Repository {
         }
     }
 
-    async branch(name: string): Promise<void> {
+    async getCurrentBranch(): Promise<FossilBranch | undefined> {
+        const branches = await this.getBranches();
+        const currBranch = branches.find(branch => branch.isCurrent)?.name;
+        return currBranch;
+    }
+
+    async newBranch(name: FossilBranch): Promise<void> {
         const args = ['branch', 'new', name];
         const currBranch = await this.getCurrentBranch();
-        if (currBranch && currBranch.name) {
-            args.push(currBranch.name);
+        if (currBranch) {
+            args.push(currBranch);
         }
 
         try {
@@ -721,20 +739,6 @@ export class Repository {
         }
     }
 
-    async tryGetLastCommitDetails(): Promise<ICommitDetails> {
-        try {
-            return {
-                message: await this.getLastCommitMessage(),
-                affectedFiles: this.parseStatusLines(this.status_msg),
-            };
-        } catch (e) {
-            return {
-                message: '',
-                affectedFiles: [],
-            };
-        }
-    }
-
     async revertFiles(treeish: string, paths: string[]): Promise<void> {
         const args: string[] = ['revert'];
 
@@ -797,9 +801,23 @@ export class Repository {
         return files;
     }
 
-    async merge(revQuery: string): Promise<IMergeResult> {
+    async merge(
+        revQuery: FossilCheckin,
+        integrate: MergeAction
+    ): Promise<IMergeResult> {
         try {
-            await this.exec(['merge', revQuery]);
+            const extraArgs = (() => {
+                switch (integrate) {
+                    case MergeAction.Cherrypick:
+                        return ['--cherrypick'];
+                    case MergeAction.Integrate:
+                        return ['--integrate'];
+                    default:
+                        return [];
+                }
+            })();
+            const args = ['merge', revQuery, ...extraArgs];
+            await this.exec(args);
             return {
                 unresolvedCount: 0,
             };
@@ -836,55 +854,28 @@ export class Repository {
         await this.exec(args);
     }
 
-    async getSummary(): Promise<IRepoStatus> {
-        const summary = this.status_msg;
-        const parents = this.parseParentLines(summary);
-        const isMerge = /\bMERGED WITH\b/.test(summary);
-        return { isMerge, parents };
+    getSummary(summary: string): IRepoStatus {
+        const parent = this.parseParentLines(summary);
+        const isMerge = /^(MERGED_WITH|CHERRYPICK)\b/m.test(summary);
+        return { isMerge, parent };
     }
 
-    parseParentLines(parentLines: string): Ref[] {
-        const refs: Ref[] = [];
+    private parseParentLines(parentLines: string): FossilHash | undefined {
         const match = parentLines.match(/parent:\s+([a-f0-9]+)/);
         if (match) {
-            const [_, hash] = match;
-            refs.push({
-                type: RefType.Commit,
-                commit: hash,
-            });
+            return match[1] as FossilHash;
         }
-        return refs;
+        return undefined;
     }
 
-    async getLastCommitMessage(): Promise<string> {
-        const message = this.status_msg;
-        const comment = message.match(/comment:\s+(.*)\(/);
-        if (comment) return comment[1];
-        return '';
-    }
-
-    async getLastCommitAuthor(): Promise<string> {
-        const message = this.status_msg;
-        const comment = message.match(/user:\s+(.*)\n/);
-        if (comment) return comment[1];
-        return '';
-    }
-
-    async getLastCommitDate(): Promise<string> {
-        const message = this.status_msg;
-        const comment = message.match(/checkout:\s+(.*)\s(.*)\n/);
-        if (comment) return comment[2];
-        return '';
-    }
-
-    async getStatus(): Promise<string> {
+    @throttle
+    async getStatus(): Promise<StatusString> {
         const args = ['status'];
         const executionResult = await this.exec(args); // quiet, include renames/copies
-        this.status_msg = executionResult.stdout;
-        return executionResult.stdout;
+        return executionResult.stdout as StatusString;
     }
 
-    parseStatusLines(status: string): IFileStatus[] {
+    parseStatusLines(status: StatusString): IFileStatus[] {
         const result: IFileStatus[] = [];
         const lines = status.split('\n');
 
@@ -896,6 +887,7 @@ export class Repository {
             const [_, rawStatus, fileUri] = match;
             switch (rawStatus) {
                 case 'EDITED':
+                case 'EXECUTABLE':
                 case 'UPDATED_BY_INTEGRATE':
                 case 'UPDATED_BY_MERGE':
                     result.push({ status: 'M', path: fileUri });
@@ -932,9 +924,9 @@ export class Repository {
         return executionResult.stdout;
     }
 
-    parseExtrasLines(status: string): IFileStatus[] {
+    parseExtrasLines(extraString: string): IFileStatus[] {
         const result: IFileStatus[] = [];
-        const lines = status.split('\n');
+        const lines = extraString.split('\n');
         lines.forEach(line => {
             if (line.length > 0) {
                 const fileUri: string = line.trim();
@@ -942,20 +934,6 @@ export class Repository {
             }
         });
         return result;
-    }
-
-    async getCurrentBranch(): Promise<Ref> {
-        const message = this.status_msg;
-        const branch = message.match(/tags:\s+(.*)\b(.*)\n/);
-        const comment = message.match(/comment:\s+(.*)\(/);
-        if (branch && comment) {
-            return {
-                name: branch[1],
-                commit: comment[1],
-                type: RefType.Branch,
-            };
-        }
-        return { name: '', commit: '', type: RefType.Branch };
     }
 
     async getLogEntries({
@@ -971,7 +949,6 @@ export class Repository {
         if (limit) {
             args.push('-n', `${limit}`);
         }
-
         if (filePath) {
             args.push('-p', filePath);
         }
@@ -980,63 +957,54 @@ export class Repository {
 
         const result = await this.exec(args);
         const logEntries = result.stdout
-            .trim()
             .split('\n')
-            .filter(line => !!line && !line.startsWith('+++'))
-            .map((line: string): Commit => {
-                const parts = line.split('+++', 5);
+            .map(line => line.split('+++', 5))
+            .filter(line => line.length == 5)
+            .map((parts: readonly string[]): Commit => {
                 const [hash, date, branch, author, message] = parts;
                 return {
-                    hash: hash as FossilCheckin,
-                    branch: branch,
+                    hash: hash as FossilHash,
+                    branch: branch as FossilBranch,
                     message: message,
                     author: author,
                     date: new Date(date),
                 };
-            }) as Commit[];
+            });
         return logEntries;
     }
 
-    async getParents(): Promise<string> {
-        const comment = this.status_msg.match(/parent:\s+(.*)\s(.*)\n/);
+    getParents(status_msg: StatusString): string {
+        const comment = status_msg.match(/parent:\s+(.*)\s(.*)\n/);
         if (comment) return comment[1];
         return '';
     }
 
-    async getTags(): Promise<Ref[]> {
+    async getTags(): Promise<FossilTag[]> {
         const tagsResult = await this.exec(['tag', 'list']);
-        const tagRefs = tagsResult.stdout
-            .trim()
-            .split('\n')
-            .filter(line => !!line)
-            .map((line: string): Ref | null => {
-                return { name: line, commit: line, type: RefType.Tag };
-            })
-            .filter(ref => !!ref) as Ref[];
-
-        return tagRefs;
+        // see comment from `getBranches`
+        const tags = tagsResult.stdout.match(/^(.+)$/gm) as FossilTag[];
+        return tags;
     }
 
-    async getBranches(): Promise<Ref[]> {
-        const branchesResult = await this.exec(['branch']);
-        const branchRefs = branchesResult.stdout
-            .trim()
-            .split('\n')
-            .filter(line => !!line)
-            .map((line: string): Ref | null => {
-                const match = line.match(/\b(.+)$/);
-                if (match) {
-                    return {
-                        name: match[1],
-                        commit: match[1],
-                        type: RefType.Branch,
-                    };
-                }
-                return null;
-            })
-            .filter(ref => !!ref) as Ref[];
-
-        return branchRefs;
+    async getBranches(): Promise<BranchDetails[]> {
+        const branchesResult = await this.exec(['branch', 'ls', '-t']);
+        const branches = Array.from(
+            branchesResult.stdout.matchAll(
+                // Fossil branch names can have spaces and all other characters.
+                // Technically, it's easy to create a branch/tag
+                // with a new line and mess everything here, the only hope
+                // is that we are all adults here
+                /^(?<isPrivate>[# ])(?<isCurrent>[* ])\s(?<name>.+)$/gm
+            )
+        ).map(match => {
+            const groups = match.groups!;
+            return {
+                name: groups.name as FossilBranch,
+                isCurrent: groups.isCurrent == '*',
+                isPrivate: groups.isPrivate == '#',
+            };
+        });
+        return branches;
     }
 
     async getPaths(): Promise<Path> {
