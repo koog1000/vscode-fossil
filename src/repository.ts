@@ -757,55 +757,6 @@ export class Repository implements IDisposable {
         });
     }
 
-    // async cleanOrUpdate(...resources: Uri[]) {
-    //     const parents = await this.getParents();
-    //     if (parents.length > 1) {
-    //         return this.update('', { discard: true });
-    //     }
-
-    //     return this.clean(...resources);
-    // }
-
-    // @throttle
-    // async clean(...uris: Uri[]): Promise<void> {
-    //     let resources = this.mapResources(uris);
-    //     await this.run(Operation.Clean, async () => {
-    //         const toRevert: string[] = [];
-    //         const toForget: string[] = [];
-
-    //         for (let r of resources) {
-    //             switch (r.status) {
-    //                 case Status.UNTRACKED:
-    //                 case Status.IGNORED:
-    //                     break;
-
-    //                 case Status.ADDED:
-    //                     toForget.push(this.mapResourceToRepoRelativePath(r));
-    //                     break;
-
-    //                 case Status.DELETED:
-    //                 case Status.MISSING:
-    //                 case Status.MODIFIED:
-    //                 default:
-    //                     toRevert.push(this.mapResourceToRepoRelativePath(r));
-    //                     break;
-    //             }
-    //         }
-
-    //         const promises: Promise<void>[] = [];
-
-    //         if (toRevert.length > 0) {
-    //             promises.push(this.repository.revert(toRevert));
-    //         }
-
-    //         if (toForget.length > 0) {
-    //             promises.push(this.repository.remove(toForget));
-    //         }
-
-    //         await Promise.all(promises);
-    //     });
-    // }
-
     @throttle
     async revert(...uris: Uri[]): Promise<void> {
         const resources = this.mapResources(uris);
