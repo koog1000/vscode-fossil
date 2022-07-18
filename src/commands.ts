@@ -1115,13 +1115,13 @@ export class CommandCenter {
         return {
             getRepoName: () => repository.repoName,
             getBranchName: () => repository.currentBranch,
-            getCommitDetails: (revision: string) =>
+            getCommitDetails: (revision: FossilHash) =>
                 repository.getCommitDetails(revision),
             getLogEntries: (options: LogEntriesOptions) =>
                 repository.getLogEntries(options),
             // diffToLocal: (_file: IFileStatus, _commit: CommitDetails) => { },
             diffToParent: (file: IFileStatus, commit: CommitDetails) =>
-                this.diffFile(repository, commit.parent1, commit.hash, file),
+                this.diffFile(repository, commit.hash, file),
         };
     }
 
@@ -1217,17 +1217,21 @@ export class CommandCenter {
         ];
     }
 
+    /** When user selects one of the modified files using 'fossil.log' command */
     private async diffFile(
         repository: Repository,
-        rev1: string,
-        rev2: string,
+        checkin: FossilCheckin,
         file: IFileStatus
     ): Promise<void> {
         const uri = repository.toUri(file.path);
-        const left = uri.with({ scheme: 'fossil', query: rev1 });
-        const right = uri.with({ scheme: 'fossil', query: rev2 });
+        const parent: FossilCheckin = await repository.getParent(checkin);
+        const left = toFossilUri(uri, parent);
+        const right = toFossilUri(uri, checkin);
         const baseName = path.basename(uri.fsPath);
-        const title = `${baseName} (#${rev1} vs. ${rev2})`;
+        const title = `${baseName} (${parent.slice(0, 12)} vs. ${checkin.slice(
+            0,
+            12
+        )})`;
 
         if (left && right) {
             return await commands.executeCommand<void>(

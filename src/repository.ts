@@ -22,7 +22,7 @@ import {
     FossilErrorCodes,
     IMergeResult,
     CommitDetails,
-    LogEntryRepositoryOptions,
+    TimelineOptions,
     FossilUndoDetails,
     FossilRoot,
     BranchDetails,
@@ -31,6 +31,7 @@ import {
     FossilTag,
     StatusString,
     MergeAction,
+    FossilHash,
 } from './fossilBase';
 import {
     anyEvent,
@@ -72,10 +73,8 @@ function getIconUri(iconName: string, theme: string): Uri {
     return Uri.file(path.join(iconsRootPath, theme, `${iconName}.svg`));
 }
 
-export interface LogEntriesOptions {
-    revQuery?: string;
-    file?: Uri;
-    limit?: number;
+export interface LogEntriesOptions extends Omit<TimelineOptions, 'filePath'> {
+    fileUri?: Uri;
 }
 
 export enum RepositoryState {
@@ -1055,9 +1054,8 @@ export class Repository implements IDisposable {
         return [branches, tags.filter(tag => !branchesSet.has(tag))];
     }
 
-    @throttle
-    public getParents(status_msg: StatusString): string {
-        return this.repository.getParents(status_msg);
+    public async getParent(checkin: FossilCheckin): Promise<FossilHash> {
+        return this.repository.getParent(checkin);
     }
 
     @throttle
@@ -1066,38 +1064,28 @@ export class Repository implements IDisposable {
     }
 
     @throttle
-    public async getCommitDetails(revision: string): Promise<CommitDetails> {
-        const commitPromise = this.getLogEntries({
+    public async getCommitDetails(
+        revision: FossilHash
+    ): Promise<CommitDetails> {
+        const commits = (await this.getLogEntries({
             revQuery: revision,
             limit: 1,
-        });
-        const fileStatusesPromise = await this.repository.getStatus();
-        const parentsPromise = await this.getParents(fileStatusesPromise);
-
-        const [[commit], fileStatuses] = await Promise.all([
-            commitPromise,
-            this.repository.parseStatusLines(fileStatusesPromise),
-        ]);
-
-        return {
-            ...commit,
-            parent1: parentsPromise,
-            files: fileStatuses,
-        };
+            verbose: true,
+        })) as CommitDetails[];
+        return commits[0];
     }
 
     @throttle
     public getLogEntries(options: LogEntriesOptions = {}): Promise<Commit[]> {
         let filePath: string | undefined = undefined;
-        if (options.file) {
-            filePath = this.mapFileUriToRepoRelativePath(options.file);
+        if (options.fileUri) {
+            filePath = this.mapFileUriToRepoRelativePath(options.fileUri);
         }
 
-        const opts: LogEntryRepositoryOptions = {
-            revQuery: options.revQuery || '',
+        const opts: TimelineOptions = {
+            ...options,
             filePath: filePath,
-            limit: options.limit || 200,
-        };
+        } as const;
         return this.repository.getLogEntries(opts);
     }
 
