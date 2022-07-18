@@ -713,6 +713,9 @@ export namespace interaction {
         return choice?.commit.hash;
     }
 
+    /**
+     * use selected commit in 'fossil.log' command
+     */
     export async function presentCommitDetails(
         details: CommitDetails,
         back: RunnableQuickPickItem,
