@@ -7,7 +7,7 @@
 'use strict';
 
 import { Uri } from 'vscode';
-import { FossilBranch, FossilCheckin } from './fossilBase';
+import { FossilCheckin } from './fossilBase';
 
 export interface FossilUriParams {
     // full filesystem path
@@ -19,10 +19,7 @@ export function fromFossilUri(uri: Uri): FossilUriParams {
     return JSON.parse(uri.query);
 }
 
-export function toFossilUri(
-    uri: Uri,
-    checkin: FossilCheckin = 'current' as FossilBranch
-): Uri {
+export function toFossilUri(uri: Uri, checkin: FossilCheckin = 'current'): Uri {
     const params: FossilUriParams = {
         path: uri.fsPath,
         checkin: checkin,

@@ -100,7 +100,7 @@ export async function delay(millis: number): Promise<any> {
     return new Promise((c, _e) => setTimeout(c, millis));
 }
 
-export const isInArray = <T, A extends T>(
-    item: T,
-    array: ReadonlyArray<A>
-): item is A => array.includes(item as A);
+// export const isInArray = <T, A extends T>(
+//     item: T,
+//     array: ReadonlyArray<A>
+// ): item is A => array.includes(item as A);

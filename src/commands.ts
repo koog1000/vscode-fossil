@@ -33,6 +33,8 @@ import {
     FossilURI,
     FossilCheckin,
     MergeAction,
+    FossilHash,
+    FossilSpecialTags,
 } from './fossilBase';
 import { Model } from './model';
 import {
@@ -1162,13 +1164,10 @@ export class CommandCenter {
     @command('fossil.fileLog')
     async fileLog(uri?: Uri): Promise<void> {
         if (!uri) {
-            if (window.activeTextEditor) {
-                uri = window.activeTextEditor.document.uri;
-            }
-
-            if (!uri || uri.scheme !== 'file') {
-                return;
-            }
+            uri = window.activeTextEditor?.document.uri;
+        }
+        if (!uri || uri.scheme !== 'file') {
+            return;
         }
 
         const repository = this.model.getRepository(uri);
@@ -1176,19 +1175,25 @@ export class CommandCenter {
             return;
         }
 
-        const logEntries = await repository.getLogEntries({ file: uri });
+        const onCommitPicked = (firstCommit: Commit) => async () => {
+            await interaction.pickDiffAction(
+                logEntries,
+                (to: FossilHash | FossilSpecialTags | undefined) =>
+                    (): Promise<void> =>
+                        this.diff(repository, firstCommit.hash, to, uri!),
+                this.fileLog
+            );
+        };
+
+        const logEntries = await repository.getLogEntries({ fileUri: uri });
         const choice = await interaction.pickCommit(
             CommitSources.File,
             logEntries,
-            commit => () => {
-                if (uri) {
-                    this.diff(commit, uri);
-                }
-            }
+            onCommitPicked
         );
 
         if (choice) {
-            choice.run();
+            await choice.run();
         }
     }
 
@@ -1224,7 +1229,10 @@ export class CommandCenter {
         file: IFileStatus
     ): Promise<void> {
         const uri = repository.toUri(file.path);
-        const parent: FossilCheckin = await repository.getParent(checkin);
+        const parent: FossilCheckin = await repository.getInfo(
+            checkin,
+            'parent'
+        );
         const left = toFossilUri(uri, parent);
         const right = toFossilUri(uri, checkin);
         const baseName = path.basename(uri.fsPath);
@@ -1243,20 +1251,30 @@ export class CommandCenter {
         }
     }
 
-    private async diff(commit: Commit, uri: Uri) {
-        const left = toFossilUri(uri, commit.hash);
-        const right = uri;
-        const baseName = path.basename(uri.fsPath);
-        const title = `${baseName} (${commit.hash} vs. local)`;
-
-        if (left && right) {
-            return await commands.executeCommand<void>(
-                'vscode.diff',
-                left,
-                right,
-                title
-            );
+    private async diff(
+        repository: Repository,
+        source: FossilCheckin,
+        target: FossilHash | FossilSpecialTags | undefined,
+        uri: Uri
+    ) {
+        const fromUri = toFossilUri(uri, source);
+        switch (target) {
+            case 'parent':
+                target = await repository.getInfo(source, 'parent');
+                break;
         }
+        const toUri = toFossilUri(uri, target);
+        const fromName = source.slice(0, 12);
+        const toName = (target || 'local').slice(0, 12);
+        const relativePath = repository.mapFileUriToWorkspaceRelativePath(uri);
+        const title = `${relativePath} (${fromName}} vs. ${toName})`;
+
+        return await commands.executeCommand<void>(
+            'vscode.diff',
+            fromUri,
+            toUri,
+            title
+        );
     }
 
     private createCommand(

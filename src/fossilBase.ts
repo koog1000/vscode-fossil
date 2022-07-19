@@ -29,9 +29,16 @@ export type FossilRoot = Distinct<FossilCWD, 'local root'>;
 export type FossilURI = Distinct<string, 'Fossil URI'>;
 /** https://fossil-scm.org/home/doc/trunk/www/checkin_names.wiki */
 export type FossilBranch = Distinct<string, 'Fossil Branch Name'>;
+/** https://fossil-scm.org/home/doc/trunk/www/checkin_names.wiki#special */
+export const FossilSpecialTagsList = ['current', 'parent', 'tip'] as const;
+export type FossilSpecialTags = typeof FossilSpecialTagsList[number];
 export type FossilTag = Distinct<string, 'Fossil Tag Name'>;
 export type FossilHash = Distinct<string, 'Fossil SHA Hash'>;
-export type FossilCheckin = FossilBranch | FossilTag | FossilHash;
+export type FossilCheckin =
+    | FossilBranch
+    | FossilTag
+    | FossilHash
+    | FossilSpecialTags;
 export type StatusString = Distinct<string, 'fossil status stdout'>;
 export const enum MergeAction {
     Merge,
@@ -875,10 +882,12 @@ export class Repository {
         return undefined;
     }
 
+    /** Report the change status of files in the current checkout */
     @throttle
     async getStatus(): Promise<StatusString> {
         const args = ['status'];
-        const executionResult = await this.exec(args); // quiet, include renames/copies
+        // quiet, include renames/copies of current checkout
+        const executionResult = await this.exec(args);
         return executionResult.stdout as StatusString;
     }
     /**
@@ -1016,11 +1025,18 @@ export class Repository {
         return logEntries;
     }
 
-    async getParent(checkin: FossilCheckin): Promise<FossilHash> {
+    async getInfo(
+        checkin: FossilCheckin,
+        field: 'parent' | 'hash'
+    ): Promise<FossilHash> {
         const info = await this.exec(['info', checkin]);
-        const parent = info.stdout.match(/^parent:\s+(\w+)/m);
-        if (parent) return parent[1] as FossilHash;
-        throw new Error(`fossil checkin '${checkin}' has no parent`);
+        const parent = info.stdout.match(
+            new RegExp(`^${field}:\\s+(\\w+)`, 'm')
+        );
+        if (parent) {
+            return parent[1] as FossilHash;
+        }
+        throw new Error(`fossil checkin '${checkin}' has no ${field}`);
     }
 
     async getTags(): Promise<FossilTag[]> {

@@ -1054,8 +1054,11 @@ export class Repository implements IDisposable {
         return [branches, tags.filter(tag => !branchesSet.has(tag))];
     }
 
-    public async getParent(checkin: FossilCheckin): Promise<FossilHash> {
-        return this.repository.getParent(checkin);
+    public async getInfo(
+        checkin: FossilCheckin,
+        field: 'parent' | 'hash'
+    ): Promise<FossilHash> {
+        return this.repository.getInfo(checkin, field);
     }
 
     @throttle
