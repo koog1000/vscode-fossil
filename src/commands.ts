@@ -1115,7 +1115,6 @@ export class CommandCenter {
 
     createLogMenuAPI(repository: Repository): LogMenuAPI {
         return {
-            getRepoName: () => repository.repoName,
             getBranchName: () => repository.currentBranch,
             getCommitDetails: (revision: FossilHash) =>
                 repository.getCommitDetails(revision),

@@ -607,9 +607,8 @@ export namespace interaction {
     export async function presentLogSourcesMenu(
         commands: LogMenuAPI
     ): Promise<void> {
-        const repoName = commands.getRepoName();
         const branchName = commands.getBranchName();
-        const source = await interaction.pickLogSource(repoName, branchName);
+        const source = await interaction.pickLogSource(branchName);
         if (source) {
             const historyScope = localize('history scope', 'history scope');
             const back = asBackItem(historyScope, () =>
@@ -826,7 +825,6 @@ export namespace interaction {
     }
 
     export async function pickLogSource(
-        repoName: string,
         branchName: string | undefined
     ): Promise<LogSourcePickItem | undefined> {
         const branchLabel = '$(git-branch)'; //localize('branch', 'branch');
@@ -1240,8 +1238,7 @@ export class LiteralRunnableQuickPickItem extends RunnableQuickPickItem {
 type RunnableReturnType = Promise<any> | void;
 export type RunnableAction = () => RunnableReturnType;
 export interface LogMenuAPI {
-    getRepoName: () => string;
-    getBranchName: () => string | undefined;
+    getBranchName: () => FossilBranch | undefined;
     getCommitDetails: (revision: FossilHash) => Promise<CommitDetails>;
     getLogEntries(options: LogEntriesOptions): Promise<Commit[]>;
     diffToParent: (file: IFileStatus, commit: CommitDetails) => any;
