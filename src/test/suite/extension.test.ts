@@ -11,6 +11,7 @@ import {
     status_rename_is_visible_in_source_control_panel,
 } from './test_status';
 import { fossil_close, fossil_merge } from './test_commands';
+import { fossil_file_log_can_diff_files } from './test_log';
 import { fossilInit, fossilOpen } from './common';
 
 async function createFossil(): Promise<Fossil> {
@@ -78,4 +79,6 @@ suite('Fossil', () => {
             sandbox,
             fossil
         )).timeout(10000);
+    test('fossil file log can differ files', () =>
+        fossil_file_log_can_diff_files(sandbox, fossil)).timeout(10000);
 });
