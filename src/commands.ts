@@ -23,7 +23,6 @@ import * as nls from 'vscode-nls';
 import * as path from 'path';
 import {
     Fossil,
-    Commit,
     FossilError,
     FossilErrorCodes,
     IFileStatus,
