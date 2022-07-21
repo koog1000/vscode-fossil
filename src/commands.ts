@@ -1266,7 +1266,7 @@ export class CommandCenter {
         const fromName = source.slice(0, 12);
         const toName = (target || 'local').slice(0, 12);
         const relativePath = repository.mapFileUriToWorkspaceRelativePath(uri);
-        const title = `${relativePath} (${fromName}} vs. ${toName})`;
+        const title = `${relativePath} (${fromName} vs. ${toName})`;
 
         return await commands.executeCommand<void>(
             'vscode.diff',
