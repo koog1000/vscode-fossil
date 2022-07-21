@@ -827,23 +827,18 @@ export namespace interaction {
     export async function pickLogSource(
         branchName: string | undefined
     ): Promise<LogSourcePickItem | undefined> {
-        const branchLabel = '$(git-branch)'; //localize('branch', 'branch');
-        const repoLabel = `$(repo)`; // ${localize('repo', 'repo')}`;
         const branch: LogSourcePickItem = {
-            description: branchLabel,
-            label: branchName || '???',
+            label: `$(git-branch) ${branchName || '???'}`,
             source: CommitSources.Branch,
             options: {},
         };
         const default_: LogSourcePickItem = {
-            description: branchLabel,
-            label: 'default',
+            label: '$(git-branch) default',
             source: CommitSources.Branch,
             options: {},
         };
         const repo: LogSourcePickItem = {
-            description: repoLabel,
-            label: 'entire repo',
+            label: '$(repo) entire repo',
             source: CommitSources.Repo,
             options: {},
         };
