@@ -32,6 +32,7 @@ import {
     StatusString,
     MergeAction,
     FossilHash,
+    Path,
 } from './fossilBase';
 import {
     anyEvent,
@@ -55,7 +56,6 @@ import {
     groupStatuses,
     IGroupStatusesParams,
 } from './resourceGroups';
-import { Path } from './fossilBase';
 import {
     AutoInOutState,
     AutoInOutStatuses,
