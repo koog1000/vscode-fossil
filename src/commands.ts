@@ -1116,8 +1116,8 @@ export class CommandCenter {
     createLogMenuAPI(repository: Repository): LogMenuAPI {
         return {
             getBranchName: () => repository.currentBranch,
-            getCommitDetails: (revision: FossilHash) =>
-                repository.getCommitDetails(revision),
+            getCommitDetails: (checkin: FossilCheckin) =>
+                repository.getCommitDetails(checkin),
             getLogEntries: (options: LogEntriesOptions) =>
                 repository.getLogEntries(options),
             // diffToLocal: (_file: IFileStatus, _commit: CommitDetails) => { },
@@ -1174,12 +1174,12 @@ export class CommandCenter {
             return;
         }
 
-        const onCommitPicked = (firstCommit: Commit) => async () => {
+        const onCommitPicked = (checkin: FossilCheckin) => async () => {
             await interaction.pickDiffAction(
                 logEntries,
                 (to: FossilHash | FossilSpecialTags | undefined) =>
                     (): Promise<void> =>
-                        this.diff(repository, firstCommit.hash, to, uri!),
+                        this.diff(repository, checkin, to, uri!),
                 this.fileLog
             );
         };

@@ -1068,10 +1068,10 @@ export class Repository implements IDisposable {
 
     @throttle
     public async getCommitDetails(
-        revision: FossilHash
+        checkin: FossilCheckin
     ): Promise<CommitDetails> {
         const commits = (await this.getLogEntries({
-            revQuery: revision,
+            checkin: checkin,
             limit: 1,
             verbose: true,
         })) as CommitDetails[];

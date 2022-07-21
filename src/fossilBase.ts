@@ -65,7 +65,7 @@ export interface TimelineOptions extends LogEntryOptions {
 }
 
 export interface LogEntryOptions {
-    revQuery?: FossilCheckin;
+    checkin?: FossilCheckin;
 }
 
 export interface PullOptions {
@@ -967,15 +967,15 @@ export class Repository {
     }
 
     async getLogEntries({
-        revQuery,
+        checkin,
         filePath,
         limit,
         verbose,
     }: TimelineOptions): Promise<Commit[] | CommitDetails[]> {
         const args = ['timeline'];
 
-        if (revQuery) {
-            args.push('before', revQuery);
+        if (checkin) {
+            args.push('before', checkin);
         }
         if (limit) {
             args.push('-n', `${limit}`);

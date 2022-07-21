@@ -657,14 +657,15 @@ export namespace interaction {
                     back
                 )
         );
-        const commitPickedActionFactory = (commit: Commit) => async () => {
-            const details = await commands.getCommitDetails(commit.hash);
-            return interaction.presentCommitDetails(
-                details,
-                backhere,
-                commands
-            );
-        };
+        const commitPickedActionFactory =
+            (checkin: FossilCheckin) => async () => {
+                const details = await commands.getCommitDetails(checkin);
+                return interaction.presentCommitDetails(
+                    details,
+                    backhere,
+                    commands
+                );
+            };
 
         const choice = await pickCommit(
             source,
@@ -687,12 +688,19 @@ export namespace interaction {
     export async function pickCommit(
         source: CommitSources,
         commits: Commit[],
-        action: (commit: Commit) => RunnableAction,
+        action: (commit: FossilCheckin) => RunnableAction,
         backItem?: RunnableQuickPickItem
     ): Promise<RunnableQuickPickItem | undefined> {
-        const logEntryPickItems = commits.map(
-            commit => new RunnableTimelineEntryItem(commit, action(commit))
+        const logEntryPickItems: RunnableQuickPickItem[] = commits.map(
+            commit => new RunnableTimelineEntryItem(commit, action(commit.hash))
         );
+        const current = new LiteralRunnableQuickPickItem(
+            '$(tag) Current',
+            '',
+            'Current checkout',
+            action('current')
+        );
+        logEntryPickItems.unshift(current);
         const placeHolder = describeLogEntrySource(source);
         const pickItems = backItem
             ? [backItem, ...logEntryPickItems]
@@ -1234,7 +1242,7 @@ type RunnableReturnType = Promise<any> | void;
 export type RunnableAction = () => RunnableReturnType;
 export interface LogMenuAPI {
     getBranchName: () => FossilBranch | undefined;
-    getCommitDetails: (revision: FossilHash) => Promise<CommitDetails>;
+    getCommitDetails: (revision: FossilCheckin) => Promise<CommitDetails>;
     getLogEntries(options: LogEntriesOptions): Promise<Commit[]>;
     diffToParent: (file: IFileStatus, commit: CommitDetails) => any;
 }
