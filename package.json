@@ -155,21 +155,6 @@
                 "category": "Fossil"
             },
             {
-                "command": "fossil.logBranch",
-                "title": "%command.logBranch%",
-                "category": "Fossil"
-            },
-            {
-                "command": "fossil.logDefault",
-                "title": "%command.logDefault%",
-                "category": "Fossil"
-            },
-            {
-                "command": "fossil.logRepo",
-                "title": "%command.logRepo%",
-                "category": "Fossil"
-            },
-            {
                 "command": "fossil.markResolved",
                 "title": "%command.markResolved%",
                 "category": "Fossil",
@@ -468,18 +453,6 @@
                 },
                 {
                     "command": "fossil.log",
-                    "when": "config.fossil.enabled && fossilOpenRepositoryCount != 0"
-                },
-                {
-                    "command": "fossil.logBranch",
-                    "when": "config.fossil.enabled && fossilOpenRepositoryCount != 0"
-                },
-                {
-                    "command": "fossil.logDefault",
-                    "when": "config.fossil.enabled && fossilOpenRepositoryCount != 0"
-                },
-                {
-                    "command": "fossil.logRepo",
                     "when": "config.fossil.enabled && fossilOpenRepositoryCount != 0"
                 }
             ],

@@ -1132,33 +1132,6 @@ export class CommandCenter {
         );
     }
 
-    @command('fossil.logBranch', { repository: true })
-    async logBranch(repository: Repository): Promise<void> {
-        await interaction.presentLogMenu(
-            CommitSources.Branch,
-            {},
-            this.createLogMenuAPI(repository)
-        );
-    }
-
-    @command('fossil.logDefault', { repository: true })
-    async logDefault(repository: Repository): Promise<void> {
-        await interaction.presentLogMenu(
-            CommitSources.Branch,
-            {},
-            this.createLogMenuAPI(repository)
-        );
-    }
-
-    @command('fossil.logRepo', { repository: true })
-    async logRepo(repository: Repository): Promise<void> {
-        await interaction.presentLogMenu(
-            CommitSources.Repo,
-            {},
-            this.createLogMenuAPI(repository)
-        );
-    }
-
     @command('fossil.fileLog')
     async fileLog(uri?: Uri): Promise<void> {
         if (!uri) {
