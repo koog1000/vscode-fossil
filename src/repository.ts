@@ -22,7 +22,7 @@ import {
     FossilErrorCodes,
     IMergeResult,
     CommitDetails,
-    LogEntryRepositoryOptions,
+    TimelineOptions,
     FossilUndoDetails,
     FossilRoot,
     BranchDetails,
@@ -31,6 +31,8 @@ import {
     FossilTag,
     StatusString,
     MergeAction,
+    FossilHash,
+    Path,
 } from './fossilBase';
 import {
     anyEvent,
@@ -54,7 +56,6 @@ import {
     groupStatuses,
     IGroupStatusesParams,
 } from './resourceGroups';
-import { Path } from './fossilBase';
 import {
     AutoInOutState,
     AutoInOutStatuses,
@@ -72,10 +73,10 @@ function getIconUri(iconName: string, theme: string): Uri {
     return Uri.file(path.join(iconsRootPath, theme, `${iconName}.svg`));
 }
 
-export interface LogEntriesOptions {
-    revQuery?: string;
-    file?: Uri;
-    limit?: number;
+export interface LogEntriesOptions
+    extends Omit<TimelineOptions, 'filePath' | 'limit'> {
+    fileUri?: Uri;
+    limit?: TimelineOptions['limit'];
 }
 
 export enum RepositoryState {
@@ -757,55 +758,6 @@ export class Repository implements IDisposable {
         });
     }
 
-    // async cleanOrUpdate(...resources: Uri[]) {
-    //     const parents = await this.getParents();
-    //     if (parents.length > 1) {
-    //         return this.update('', { discard: true });
-    //     }
-
-    //     return this.clean(...resources);
-    // }
-
-    // @throttle
-    // async clean(...uris: Uri[]): Promise<void> {
-    //     let resources = this.mapResources(uris);
-    //     await this.run(Operation.Clean, async () => {
-    //         const toRevert: string[] = [];
-    //         const toForget: string[] = [];
-
-    //         for (let r of resources) {
-    //             switch (r.status) {
-    //                 case Status.UNTRACKED:
-    //                 case Status.IGNORED:
-    //                     break;
-
-    //                 case Status.ADDED:
-    //                     toForget.push(this.mapResourceToRepoRelativePath(r));
-    //                     break;
-
-    //                 case Status.DELETED:
-    //                 case Status.MISSING:
-    //                 case Status.MODIFIED:
-    //                 default:
-    //                     toRevert.push(this.mapResourceToRepoRelativePath(r));
-    //                     break;
-    //             }
-    //         }
-
-    //         const promises: Promise<void>[] = [];
-
-    //         if (toRevert.length > 0) {
-    //             promises.push(this.repository.revert(toRevert));
-    //         }
-
-    //         if (toForget.length > 0) {
-    //             promises.push(this.repository.remove(toForget));
-    //         }
-
-    //         await Promise.all(promises);
-    //     });
-    // }
-
     @throttle
     async revert(...uris: Uri[]): Promise<void> {
         const resources = this.mapResources(uris);
@@ -1104,9 +1056,11 @@ export class Repository implements IDisposable {
         return [branches, tags.filter(tag => !branchesSet.has(tag))];
     }
 
-    @throttle
-    public getParents(status_msg: StatusString): string {
-        return this.repository.getParents(status_msg);
+    public async getInfo(
+        checkin: FossilCheckin,
+        field: 'parent' | 'hash'
+    ): Promise<FossilHash> {
+        return this.repository.getInfo(checkin, field);
     }
 
     @throttle
@@ -1115,38 +1069,29 @@ export class Repository implements IDisposable {
     }
 
     @throttle
-    public async getCommitDetails(revision: string): Promise<CommitDetails> {
-        const commitPromise = this.getLogEntries({
-            revQuery: revision,
+    public async getCommitDetails(
+        checkin: FossilCheckin
+    ): Promise<CommitDetails> {
+        const commits = (await this.getLogEntries({
+            checkin: checkin,
             limit: 1,
-        });
-        const fileStatusesPromise = await this.repository.getStatus();
-        const parentsPromise = await this.getParents(fileStatusesPromise);
-
-        const [[commit], fileStatuses] = await Promise.all([
-            commitPromise,
-            this.repository.parseStatusLines(fileStatusesPromise),
-        ]);
-
-        return {
-            ...commit,
-            parent1: parentsPromise,
-            files: fileStatuses,
-        };
+            verbose: true,
+        })) as CommitDetails[];
+        return commits[0];
     }
 
     @throttle
     public getLogEntries(options: LogEntriesOptions = {}): Promise<Commit[]> {
         let filePath: string | undefined = undefined;
-        if (options.file) {
-            filePath = this.mapFileUriToRepoRelativePath(options.file);
+        if (options.fileUri) {
+            filePath = this.mapFileUriToRepoRelativePath(options.fileUri);
         }
 
-        const opts: LogEntryRepositoryOptions = {
-            revQuery: options.revQuery || '',
+        const opts: TimelineOptions = {
+            ...options,
             filePath: filePath,
-            limit: options.limit || 200,
-        };
+            limit: options.limit || 512,
+        } as const;
         return this.repository.getLogEntries(opts);
     }
 

@@ -35,12 +35,9 @@
     "command.showOutput": "Show fossil output",
     "command.fileLog": "Show file history...",
     "command.log": "Log...",
-    "command.logDefault": "Log – default branch",
-    "command.logBranch": "Log – current branch",
-    "command.logRepo": "Log – entire repository",
     "command.merge": "Merge into working directory...",
     "command.integrate": "Integrate into working directory...",
-    "command.cherrypick": "Cherrypick into working directory...",
+    "command.cherrypick": "Cherry-pick into working directory...",
     "config.enabled": "Whether Fossil is enabled",
     "config.path": "Path to the 'fossil' executable (only required if auto-detection fails)",
     "config.username": "The username associated with each commit (only required if different from user that originally cloned repo).",
@@ -50,5 +47,6 @@
     "config.autoUpdate": "Update to latest head after a pull (when there are incoming changesets)",
     "config.enableLongCommitWarning": "Whether long commit messages should be warned about",
     "submenu.merge": "Merge",
-    "submenu.patch": "Patch"
+    "submenu.patch": "Patch",
+    "submenu.timeline": "Timeline"
 }

@@ -29,9 +29,16 @@ export type FossilRoot = Distinct<FossilCWD, 'local root'>;
 export type FossilURI = Distinct<string, 'Fossil URI'>;
 /** https://fossil-scm.org/home/doc/trunk/www/checkin_names.wiki */
 export type FossilBranch = Distinct<string, 'Fossil Branch Name'>;
+/** https://fossil-scm.org/home/doc/trunk/www/checkin_names.wiki#special */
+export const FossilSpecialTagsList = ['current', 'parent', 'tip'] as const;
+export type FossilSpecialTags = typeof FossilSpecialTagsList[number];
 export type FossilTag = Distinct<string, 'Fossil Tag Name'>;
 export type FossilHash = Distinct<string, 'Fossil SHA Hash'>;
-export type FossilCheckin = FossilBranch | FossilTag | FossilHash;
+export type FossilCheckin =
+    | FossilBranch
+    | FossilTag
+    | FossilHash
+    | FossilSpecialTags;
 export type StatusString = Distinct<string, 'fossil status stdout'>;
 export const enum MergeAction {
     Merge,
@@ -44,13 +51,21 @@ export interface IFossil {
     version: string;
 }
 
-export interface LogEntryRepositoryOptions extends LogEntryOptions {
+export interface TimelineOptions extends LogEntryOptions {
+    /** Output items affecting filePath only */
     filePath?: string;
-    limit?: number;
+    /**
+     * If `limit` is positive, output the first N entries. If
+     * N is negative, output the first -N lines. If `limit` is
+     * zero, no limit.  Default is -20 meaning 20 lines.
+     */
+    limit: number;
+    /** Output the list of files changed by each commit */
+    verbose?: boolean;
 }
 
 export interface LogEntryOptions {
-    revQuery?: string;
+    checkin?: FossilCheckin;
 }
 
 export interface PullOptions {
@@ -303,8 +318,8 @@ export const FossilErrorCodes = {
 };
 
 export class Fossil {
-    private fossilPath: string;
-    private outputChannel: OutputChannel;
+    private readonly fossilPath: string;
+    private readonly outputChannel: OutputChannel;
     private openRepository: Repository | undefined;
 
     private _onOutput = new EventEmitter<string>();
@@ -486,7 +501,6 @@ export interface Commit extends Revision {
 
 export interface CommitDetails extends Commit {
     files: IFileStatus[];
-    parent1: string;
 }
 
 export class Repository {
@@ -868,52 +882,68 @@ export class Repository {
         return undefined;
     }
 
+    /** Report the change status of files in the current checkout */
     @throttle
     async getStatus(): Promise<StatusString> {
         const args = ['status'];
-        const executionResult = await this.exec(args); // quiet, include renames/copies
+        // quiet, include renames/copies of current checkout
+        const executionResult = await this.exec(args);
         return executionResult.stdout as StatusString;
+    }
+    /**
+     * @param line: line from `fossil status` of `fossil timeline --verbose`
+     */
+    parseStatusLine(line: string): IFileStatus | undefined {
+        // regexp:
+        // 1) (?:\s{3})? at the start of the line there are 0 or 3 spaces
+        // 2) ([A-Z_]+) single uppercase word
+        // 3) (?<=[^:]) not ending with ':' (see `fossil status` for idea)
+        // 4) \s+(.+)$ everything to the end of the line
+        const match = line.match(/^(?:\s{3})?([A-Z_]+)(?<=[^:])\s+(.+)$/);
+        if (!match) {
+            return undefined;
+        }
+        const [_, rawStatus, path] = match;
+        switch (rawStatus) {
+            case 'EDITED':
+            case 'EXECUTABLE':
+            case 'UPDATED_BY_INTEGRATE':
+            case 'UPDATED_BY_MERGE':
+                return { status: 'M', path };
+                break;
+            case 'ADDED_BY_INTEGRATE':
+            case 'ADDED_BY_MERGE':
+            case 'ADDED':
+                return { status: 'A', path };
+                break;
+            case 'DELETED':
+                return { status: 'R', path };
+                break;
+            case 'MISSING':
+                return { status: '!', path };
+                break;
+            case 'CONFLICT':
+                return { status: 'C', path };
+                break;
+            case 'RENAMED':
+                return {
+                    status: 'A',
+                    path: path,
+                    rename: path,
+                };
+        }
+        return undefined;
     }
 
     parseStatusLines(status: StatusString): IFileStatus[] {
         const result: IFileStatus[] = [];
-        const lines = status.split('\n');
 
-        lines.forEach(line => {
-            const match = line.match(/(\S+)\s+(.+?)\s*$/);
+        status.split('\n').forEach(line => {
+            const match = this.parseStatusLine(line);
             if (!match) {
                 return;
             }
-            const [_, rawStatus, fileUri] = match;
-            switch (rawStatus) {
-                case 'EDITED':
-                case 'EXECUTABLE':
-                case 'UPDATED_BY_INTEGRATE':
-                case 'UPDATED_BY_MERGE':
-                    result.push({ status: 'M', path: fileUri });
-                    break;
-                case 'ADDED_BY_INTEGRATE':
-                case 'ADDED_BY_MERGE':
-                case 'ADDED':
-                    result.push({ status: 'A', path: fileUri });
-                    break;
-                case 'DELETED':
-                    result.push({ status: 'R', path: fileUri });
-                    break;
-                case 'MISSING':
-                    result.push({ status: '!', path: fileUri });
-                    break;
-                case 'CONFLICT':
-                    result.push({ status: 'C', path: fileUri });
-                    break;
-                case 'RENAMED':
-                    result.push({
-                        status: 'A',
-                        path: fileUri,
-                        rename: fileUri,
-                    });
-                    break;
-            }
+            result.push(match);
         });
         return result;
     }
@@ -937,14 +967,15 @@ export class Repository {
     }
 
     async getLogEntries({
-        revQuery,
+        checkin,
         filePath,
         limit,
-    }: LogEntryRepositoryOptions = {}): Promise<Commit[]> {
+        verbose,
+    }: TimelineOptions): Promise<Commit[] | CommitDetails[]> {
         const args = ['timeline'];
 
-        if (revQuery) {
-            args.push('before', revQuery);
+        if (checkin) {
+            args.push('before', checkin);
         }
         if (limit) {
             args.push('-n', `${limit}`);
@@ -952,31 +983,60 @@ export class Repository {
         if (filePath) {
             args.push('-p', filePath);
         }
+        if (verbose) {
+            args.push('--verbose');
+        }
         args.push('--type', 'ci');
         args.push('--format', '%H+++%d+++%b+++%a+++%c');
 
         const result = await this.exec(args);
-        const logEntries = result.stdout
-            .split('\n')
-            .map(line => line.split('+++', 5))
-            .filter(line => line.length == 5)
-            .map((parts: readonly string[]): Commit => {
-                const [hash, date, branch, author, message] = parts;
-                return {
-                    hash: hash as FossilHash,
-                    branch: branch as FossilBranch,
-                    message: message,
-                    author: author,
+
+        const logEntries: Commit[] | CommitDetails[] = [];
+        let lastFiles: CommitDetails['files'] = [];
+        for (const line of result.stdout.split('\n')) {
+            if (verbose && line.startsWith('   ')) {
+                const status = this.parseStatusLine(line);
+                if (status) {
+                    lastFiles.push(status);
+                }
+            }
+            const parts = line.split('+++', 5);
+            if (parts.length == 5) {
+                const [hash, date, branch, author, message] = parts as [
+                    FossilHash,
+                    string,
+                    FossilBranch,
+                    string,
+                    string
+                ];
+                const commit = {
+                    hash,
+                    branch,
+                    message,
+                    author,
                     date: new Date(date),
-                };
-            });
+                } as CommitDetails;
+                if (verbose) {
+                    lastFiles = commit.files = [];
+                }
+                logEntries.push(commit);
+            }
+        }
         return logEntries;
     }
 
-    getParents(status_msg: StatusString): string {
-        const comment = status_msg.match(/parent:\s+(.*)\s(.*)\n/);
-        if (comment) return comment[1];
-        return '';
+    async getInfo(
+        checkin: FossilCheckin,
+        field: 'parent' | 'hash'
+    ): Promise<FossilHash> {
+        const info = await this.exec(['info', checkin]);
+        const parent = info.stdout.match(
+            new RegExp(`^${field}:\\s+(\\w+)`, 'm')
+        );
+        if (parent) {
+            return parent[1] as FossilHash;
+        }
+        throw new Error(`fossil checkin '${checkin}' has no ${field}`);
     }
 
     async getTags(): Promise<FossilTag[]> {

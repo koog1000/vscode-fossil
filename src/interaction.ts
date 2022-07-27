@@ -14,6 +14,7 @@ import {
     ViewColumn,
     Uri,
     Disposable,
+    QuickPickItemKind,
 } from 'vscode';
 import {
     FossilUndoDetails,
@@ -30,6 +31,7 @@ import {
     FossilTag,
     FossilCheckin,
     FossilHash,
+    FossilSpecialTags,
 } from './fossilBase';
 import { humanise } from './humanise';
 import { Repository, LogEntriesOptions } from './repository';
@@ -585,7 +587,7 @@ export namespace interaction {
         description = '',
         action: RunnableAction
     ): RunnableQuickPickItem {
-        return new LiteralRunnableQuickPickItem(label, description, action);
+        return new LiteralRunnableQuickPickItem(label, description, '', action);
     }
 
     function asBackItem(
@@ -597,6 +599,7 @@ export namespace interaction {
         return new LiteralRunnableQuickPickItem(
             `$(arrow-left)${NBSP}${NBSP}${goBack}`,
             `${to} ${description}`,
+            '',
             action
         );
     }
@@ -604,9 +607,8 @@ export namespace interaction {
     export async function presentLogSourcesMenu(
         commands: LogMenuAPI
     ): Promise<void> {
-        const repoName = commands.getRepoName();
         const branchName = commands.getBranchName();
-        const source = await interaction.pickLogSource(repoName, branchName);
+        const source = await interaction.pickLogSource(branchName);
         if (source) {
             const historyScope = localize('history scope', 'history scope');
             const back = asBackItem(historyScope, () =>
@@ -655,14 +657,15 @@ export namespace interaction {
                     back
                 )
         );
-        const commitPickedActionFactory = (commit: Commit) => async () => {
-            const details = await commands.getCommitDetails(commit.hash);
-            return interaction.presentCommitDetails(
-                details,
-                backhere,
-                commands
-            );
-        };
+        const commitPickedActionFactory =
+            (checkin: FossilCheckin) => async () => {
+                const details = await commands.getCommitDetails(checkin);
+                return interaction.presentCommitDetails(
+                    details,
+                    backhere,
+                    commands
+                );
+            };
 
         const choice = await pickCommit(
             source,
@@ -673,15 +676,31 @@ export namespace interaction {
         return choice;
     }
 
+    /**
+     * Present user with a list of Commit[]s
+     *
+     * @param source represent commit source
+     * @param commits the commits
+     * @param action what to do when commit is selected
+     * @param backItem optional "back" action
+     * @returns
+     */
     export async function pickCommit(
         source: CommitSources,
-        logEntries: Commit[],
-        actionFactory: (commit: Commit) => RunnableAction,
+        commits: Commit[],
+        action: (commit: FossilCheckin) => RunnableAction,
         backItem?: RunnableQuickPickItem
     ): Promise<RunnableQuickPickItem | undefined> {
-        const logEntryPickItems = logEntries.map(
-            entry => new RunnableLogEntryItem(entry, actionFactory(entry))
+        const logEntryPickItems: RunnableQuickPickItem[] = commits.map(
+            commit => new RunnableTimelineEntryItem(commit, action(commit.hash))
         );
+        const current = new LiteralRunnableQuickPickItem(
+            '$(tag) Current',
+            '',
+            'Current checkout',
+            action('current')
+        );
+        logEntryPickItems.unshift(current);
         const placeHolder = describeLogEntrySource(source);
         const pickItems = backItem
             ? [backItem, ...logEntryPickItems]
@@ -699,7 +718,7 @@ export namespace interaction {
         logEntries: Commit[]
     ): Promise<FossilHash | undefined> {
         const logEntryPickItems = logEntries.map(
-            entry => new LogEntryItem(entry)
+            entry => new TimelineEntryItem(entry)
         );
         const placeHolder = localize(
             'cherrypick commit',
@@ -713,6 +732,9 @@ export namespace interaction {
         return choice?.commit.hash;
     }
 
+    /**
+     * use selected commit in 'fossil.log' command
+     */
     export async function presentCommitDetails(
         details: CommitDetails,
         back: RunnableQuickPickItem,
@@ -745,27 +767,86 @@ export namespace interaction {
         return choice;
     }
 
+    export async function pickDiffAction(
+        commits: Commit[],
+        diffAction: (
+            to: FossilHash | FossilSpecialTags | undefined
+        ) => RunnableAction,
+        backAction: RunnableAction
+    ): Promise<void> {
+        const items = [
+            new LiteralRunnableQuickPickItem(
+                '$(circle-outline) Parent',
+                '',
+                'Show what this commit changed',
+                diffAction('parent')
+            ),
+            new LiteralRunnableQuickPickItem(
+                '$(tag) Current',
+                'special fossil tag',
+                'Show difference with the current checked-out version ',
+                diffAction('current')
+            ),
+            new LiteralRunnableQuickPickItem(
+                '$(tag) Tip',
+                'special fossil tag',
+                'Show difference with the most recent check-in',
+                diffAction('tip')
+            ),
+            new LiteralRunnableQuickPickItem(
+                '$(circle-outline) Checkout',
+                '',
+                'Show differences with checkout',
+                diffAction(undefined)
+            ),
+            new LiteralRunnableQuickPickItem(
+                `$(arrow-left)${NBSP}${NBSP}Go back`,
+                '',
+                'Selct first commit',
+                backAction
+            ),
+            {
+                kind: QuickPickItemKind.Separator,
+                label: '',
+                run: () => {
+                    /* separator acrion */
+                },
+                description: '',
+            } as RunnableQuickPickItem,
+            ...commits.map(
+                commit =>
+                    new RunnableTimelineEntryItem(
+                        commit,
+                        diffAction(commit.hash)
+                    )
+            ),
+        ];
+        const placeHolder = localize('compare with', 'Compare with');
+        const choice = await window.showQuickPick(items, {
+            placeHolder,
+            matchOnDescription: true,
+            matchOnDetail: true,
+        });
+        if (choice) {
+            await choice.run();
+        }
+    }
+
     export async function pickLogSource(
-        repoName: string,
         branchName: string | undefined
     ): Promise<LogSourcePickItem | undefined> {
-        const branchLabel = '$(git-branch)'; //localize('branch', 'branch');
-        const repoLabel = `$(repo)`; // ${localize('repo', 'repo')}`;
         const branch: LogSourcePickItem = {
-            description: branchLabel,
-            label: branchName || '???',
+            label: `$(git-branch) ${branchName || '???'}`,
             source: CommitSources.Branch,
             options: {},
         };
         const default_: LogSourcePickItem = {
-            description: branchLabel,
-            label: 'default',
+            label: '$(git-branch) default',
             source: CommitSources.Branch,
             options: {},
         };
         const repo: LogSourcePickItem = {
-            description: repoLabel,
-            label: 'entire repo',
+            label: '$(repo) entire repo',
             source: CommitSources.Repo,
             options: {},
         };
@@ -1042,7 +1123,7 @@ abstract class RunnableQuickPickItem implements QuickPickItem {
     abstract run(): RunnableReturnType;
 }
 
-class LogEntryItem extends RunnableQuickPickItem {
+class TimelineEntryItem extends RunnableQuickPickItem {
     constructor(public commit: Commit) {
         super();
     }
@@ -1064,7 +1145,7 @@ class LogEntryItem extends RunnableQuickPickItem {
     }
 }
 
-class RunnableLogEntryItem extends LogEntryItem {
+class RunnableTimelineEntryItem extends TimelineEntryItem {
     constructor(commit: Commit, private action: RunnableAction) {
         super(commit);
     }
@@ -1139,20 +1220,17 @@ interface LogSourcePickItem extends QuickPickItem {
     source: CommitSources;
 }
 
-class LiteralRunnableQuickPickItem extends RunnableQuickPickItem {
+/**
+ * Simples possible `RunnableQuickPickItem`
+ */
+export class LiteralRunnableQuickPickItem extends RunnableQuickPickItem {
     constructor(
-        private _label: string,
-        private _description: string,
+        public readonly label: string,
+        public readonly description: string,
+        public readonly detail: string,
         private _action: RunnableAction
     ) {
         super();
-    }
-
-    get label() {
-        return this._label;
-    }
-    get description() {
-        return this._description;
     }
 
     run(): RunnableReturnType {
@@ -1160,17 +1238,11 @@ class LiteralRunnableQuickPickItem extends RunnableQuickPickItem {
     }
 }
 
-type RunnableReturnType = Promise<any> | any;
+type RunnableReturnType = Promise<any> | void;
 export type RunnableAction = () => RunnableReturnType;
-export type DescribedBackAction = {
-    description: string;
-    action: RunnableAction;
-};
 export interface LogMenuAPI {
-    getRepoName: () => string;
-    getBranchName: () => string | undefined;
-    getCommitDetails: (revision: string) => Promise<CommitDetails>;
+    getBranchName: () => FossilBranch | undefined;
+    getCommitDetails: (revision: FossilCheckin) => Promise<CommitDetails>;
     getLogEntries(options: LogEntriesOptions): Promise<Commit[]>;
-    // diffToLocal: (file: IFileStatus, commit: CommitDetails) => any,
     diffToParent: (file: IFileStatus, commit: CommitDetails) => any;
 }
