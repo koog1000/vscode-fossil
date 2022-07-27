@@ -47,5 +47,6 @@
     "config.autoUpdate": "Update to latest head after a pull (when there are incoming changesets)",
     "config.enableLongCommitWarning": "Whether long commit messages should be warned about",
     "submenu.merge": "Merge",
-    "submenu.patch": "Patch"
+    "submenu.patch": "Patch",
+    "submenu.timeline": "Timeline"
 }

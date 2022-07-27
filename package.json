@@ -530,12 +530,17 @@
                 {
                     "submenu": "fossil.merge",
                     "when": "scmProvider == fossil",
-                    "group": "5_groups"
+                    "group": "5_groups@0"
+                },
+                {
+                    "submenu": "fossil.timeline",
+                    "when": "scmProvider == fossil",
+                    "group": "5_groups@1"
                 },
                 {
                     "submenu": "fossil.patch",
                     "when": "scmProvider == fossil",
-                    "group": "5_groups"
+                    "group": "5_groups@2"
                 },
                 {
                     "command": "fossil.showOutput",
@@ -558,6 +563,18 @@
                     "command": "fossil.cherrypick",
                     "when": "scmProvider == fossil",
                     "group": "merge@2"
+                }
+            ],
+            "fossil.timeline": [
+                {
+                    "command": "fossil.log",
+                    "when": "scmProvider == fossil",
+                    "group": "log@0"
+                },
+                {
+                    "command": "fossil.fileLog",
+                    "when": "scmProvider == fossil",
+                    "group": "log@1"
                 }
             ],
             "fossil.patch": [
@@ -794,8 +811,8 @@
                 "label": "%submenu.merge%"
             },
             {
-                "id": "fossil.integrate",
-                "label": "%submenu.integrate%"
+                "id": "fossil.timeline",
+                "label": "%submenu.timeline%"
             },
             {
                 "id": "fossil.patch",
