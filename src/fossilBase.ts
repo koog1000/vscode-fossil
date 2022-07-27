@@ -59,7 +59,7 @@ export interface TimelineOptions extends LogEntryOptions {
      * N is negative, output the first -N lines. If `limit` is
      * zero, no limit.  Default is -20 meaning 20 lines.
      */
-    limit?: number;
+    limit: number;
     /** Output the list of files changed by each commit */
     verbose?: boolean;
 }

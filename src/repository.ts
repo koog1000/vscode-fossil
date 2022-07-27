@@ -73,8 +73,10 @@ function getIconUri(iconName: string, theme: string): Uri {
     return Uri.file(path.join(iconsRootPath, theme, `${iconName}.svg`));
 }
 
-export interface LogEntriesOptions extends Omit<TimelineOptions, 'filePath'> {
+export interface LogEntriesOptions
+    extends Omit<TimelineOptions, 'filePath' | 'limit'> {
     fileUri?: Uri;
+    limit?: TimelineOptions['limit'];
 }
 
 export enum RepositoryState {
@@ -1088,6 +1090,7 @@ export class Repository implements IDisposable {
         const opts: TimelineOptions = {
             ...options,
             filePath: filePath,
+            limit: options.limit || 512,
         } as const;
         return this.repository.getLogEntries(opts);
     }
