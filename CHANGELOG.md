@@ -1,5 +1,15 @@
 # Changelog
 
+# v0.1.5
+
+### What's New
+- 'Merge' and 'Timeline` submenus in Source Control panel
+- 'Merge', 'Integrate' and 'Cherry-pick' from 'Merge' menu
+
+### Bug Fixes
+- Timeline (Log) actions didn't show expected result. It should
+  now be possible to show file diff from these menus.
+
 # v0.1.4
 
 ### What's New
