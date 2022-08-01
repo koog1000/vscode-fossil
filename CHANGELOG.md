@@ -9,7 +9,7 @@
 
 ### What's New
 - 'Merge' and 'Timeline` submenus in Source Control panel
-- 'Merge', 'Integrate' and 'Cherry-pick' from 'Merge' menu
+- 'Merge', 'Integrate' and 'Cherry-pick' from 'Merge' submenu
 
 ### Bug Fixes
 - Timeline (Log) actions didn't show expected result. It should
