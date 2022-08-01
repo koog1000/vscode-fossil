@@ -219,19 +219,13 @@
                 "command": "fossil.refresh",
                 "title": "%command.refresh%",
                 "category": "Fossil",
-                "icon": {
-                    "light": "resources/icons/light/refresh.svg",
-                    "dark": "resources/icons/dark/refresh.svg"
-                }
+                "icon": "$(refresh)"
             },
             {
                 "command": "fossil.resolveAgain",
                 "title": "%command.resolveAgain%",
                 "category": "Fossil",
-                "icon": {
-                    "light": "resources/icons/light/refresh.svg",
-                    "dark": "resources/icons/dark/refresh.svg"
-                }
+                "icon": "$(refresh)"
             },
             {
                 "command": "fossil.showOutput",
