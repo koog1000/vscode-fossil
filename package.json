@@ -87,10 +87,7 @@
                 "command": "fossil.commit",
                 "title": "%command.commit%",
                 "category": "Fossil",
-                "icon": {
-                    "light": "resources/icons/light/check.svg",
-                    "dark": "resources/icons/dark/check.svg"
-                }
+                "icon": "$(check)"
             },
             {
                 "command": "fossil.deleteFiles",
@@ -161,10 +158,7 @@
                 "command": "fossil.markResolved",
                 "title": "%command.markResolved%",
                 "category": "Fossil",
-                "icon": {
-                    "light": "resources/icons/light/check.svg",
-                    "dark": "resources/icons/dark/check.svg"
-                }
+                "icon": "$(check)"
             },
             {
                 "command": "fossil.openChange",
