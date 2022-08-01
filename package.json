@@ -59,10 +59,7 @@
                 "command": "fossil.ignore",
                 "title": "%command.ignore%",
                 "category": "Fossil",
-                "icon": {
-                    "light": "resources/icons/light/discard.svg",
-                    "dark": "resources/icons/dark/discard.svg"
-                }
+                "icon": "$(discard)"
             },
             {
                 "command": "fossil.branch",
@@ -78,19 +75,13 @@
                 "command": "fossil.revert",
                 "title": "%command.revert%",
                 "category": "Fossil",
-                "icon": {
-                    "light": "resources/icons/light/discard.svg",
-                    "dark": "resources/icons/dark/discard.svg"
-                }
+                "icon": "$(discard)"
             },
             {
                 "command": "fossil.revertAll",
                 "title": "%command.revertAll%",
                 "category": "Fossil",
-                "icon": {
-                    "light": "resources/icons/light/discard.svg",
-                    "dark": "resources/icons/dark/discard.svg"
-                }
+                "icon": "$(discard)"
             },
             {
                 "command": "fossil.commit",
@@ -314,10 +305,7 @@
                 "command": "fossil.revertChange",
                 "title": "Revert Change",
                 "category": "Fossil",
-                "icon": {
-                    "light": "resources/icons/light/discard.svg",
-                    "dark": "resources/icons/dark/discard.svg"
-                }
+                "icon": "$(discard)"
             },
             {
                 "command": "fossil.merge",
