@@ -875,7 +875,7 @@ export class Repository implements IDisposable {
     }
 
     @throttle
-    async pull(options?: PullOptions): Promise<void> {
+    async pull(options: PullOptions): Promise<void> {
         await this.runWithProgress(Operation.Pull, async () => {
             await this.repository.pull(options);
         });

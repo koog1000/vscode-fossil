@@ -786,7 +786,7 @@ export class Repository {
         }
     }
 
-    async pull(options?: PullOptions): Promise<void> {
+    async pull(options: PullOptions): Promise<void> {
         let args = ['pull'];
 
         if (options?.autoUpdate) {
