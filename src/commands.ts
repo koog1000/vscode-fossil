@@ -1136,7 +1136,7 @@ export class CommandCenter {
         repository.push(path.url);
     }
 
-    @command('fossil.showOutput', { repository: true })
+    @command('fossil.showOutput')
     showOutput(): void {
         this.outputChannel.show();
     }
