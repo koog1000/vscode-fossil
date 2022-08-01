@@ -41,19 +41,13 @@
                 "command": "fossil.add",
                 "title": "%command.add%",
                 "category": "Fossil",
-                "icon": {
-                    "light": "resources/icons/light/add.svg",
-                    "dark": "resources/icons/dark/add.svg"
-                }
+                "icon": "$(plus)"
             },
             {
                 "command": "fossil.addAll",
                 "title": "%command.addAll%",
                 "category": "Fossil",
-                "icon": {
-                    "light": "resources/icons/light/add.svg",
-                    "dark": "resources/icons/dark/add.svg"
-                }
+                "icon": "$(plus)"
             },
             {
                 "command": "fossil.ignore",
@@ -248,19 +242,13 @@
                 "command": "fossil.stage",
                 "title": "%command.stage%",
                 "category": "Fossil",
-                "icon": {
-                    "light": "resources/icons/light/add.svg",
-                    "dark": "resources/icons/dark/add.svg"
-                }
+                "icon": "$(plus)"
             },
             {
                 "command": "fossil.stageAll",
                 "title": "%command.stageAll%",
                 "category": "Fossil",
-                "icon": {
-                    "light": "resources/icons/light/add.svg",
-                    "dark": "resources/icons/dark/add.svg"
-                }
+                "icon": "$(plus)"
             },
             {
                 "command": "fossil.undo",
