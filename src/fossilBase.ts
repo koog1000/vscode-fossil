@@ -27,6 +27,7 @@ export type FossilRoot = Distinct<FossilCWD, 'local root'>;
  * * [file://]path/to/repo.fossil
  */
 export type FossilURI = Distinct<string, 'Fossil URI'>;
+export type FossilRemoteName = Distinct<string, 'Fossil Remote Name'>;
 /** https://fossil-scm.org/home/doc/trunk/www/checkin_names.wiki */
 export type FossilBranch = Distinct<string, 'Fossil Branch Name'>;
 /** https://fossil-scm.org/home/doc/trunk/www/checkin_names.wiki#special */
@@ -100,9 +101,9 @@ export interface BranchDetails {
     isPrivate: boolean;
 }
 
-export interface Path {
-    name: string;
-    url: string;
+export interface FossilRemote {
+    name: FossilRemoteName;
+    url: FossilURI;
 }
 
 export interface FossilFindAttemptLogger {
@@ -1077,9 +1078,12 @@ export class Repository {
         return branches;
     }
 
-    async getPaths(): Promise<Path> {
+    async getRemotes(): Promise<FossilRemote> {
         const pathsResult = await this.exec(['remote-url']);
-        return { name: 'path', url: pathsResult.stdout.trim() };
+        return {
+            name: 'path' as FossilRemoteName,
+            url: pathsResult.stdout.trim() as FossilURI,
+        };
     }
 }
 

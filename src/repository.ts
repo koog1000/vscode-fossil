@@ -32,7 +32,9 @@ import {
     StatusString,
     MergeAction,
     FossilHash,
-    Path,
+    FossilRemote,
+    FossilRemoteName,
+    FossilURI,
 } from './fossilBase';
 import {
     anyEvent,
@@ -1039,15 +1041,15 @@ export class Repository implements IDisposable {
     }
 
     @throttle
-    public async getPath(): Promise<Path> {
+    public async getPath(): Promise<FossilRemote> {
         try {
-            const path = await this.repository.getPaths();
+            const path = await this.repository.getRemotes();
             return path;
         } catch (e) {
             // noop
         }
 
-        return { name: '', url: '' };
+        return { name: '' as FossilRemoteName, url: '' as FossilURI };
     }
 
     @throttle
