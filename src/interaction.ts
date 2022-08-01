@@ -977,6 +977,36 @@ export namespace interaction {
         return choice === discard;
     }
 
+    export async function confirmDeleteResources(
+        this: void,
+        paths: string[]
+    ): Promise<boolean> {
+        let message: string;
+        let yes: string;
+        if (paths.length == 1) {
+            message = localize(
+                'confirm delete',
+                'Are you sure you want to DELETE {0}?\nThis is IRREVERSIBLE!\nThis file will be FOREVER LOST if you proceed.',
+                path.basename(paths[0])
+            );
+            yes = localize('delete file', 'Delete file');
+        } else {
+            message = localize(
+                'confirm delete multiple',
+                'Are you sure you want to DELETE {0} files?\nThis is IRREVERSIBLE!\nThese files will be FOREVER LOST if you proceed.',
+                paths.length
+            );
+            yes = localize('delete files', 'Delete Files');
+        }
+
+        const choice = await window.showWarningMessage(
+            message,
+            { modal: true },
+            yes
+        );
+        return choice === yes;
+    }
+
     export async function confirmDiscardChanges(
         discardFilesnames: string[],
         addedFilenames: string[]

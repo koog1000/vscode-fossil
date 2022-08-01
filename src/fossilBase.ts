@@ -692,7 +692,17 @@ export class Repository {
         }
     }
 
-    async clean(): Promise<void> {
+    async clean(paths: string[]): Promise<void> {
+        if (paths) {
+            this.exec(['clean', ...paths]);
+        }
+    }
+
+    /**
+     * make this method differ from `clean` because cleaning empty
+     * paths[] will cause damage
+     */
+    async cleanAll(): Promise<void> {
         this.exec(['clean']);
     }
 
