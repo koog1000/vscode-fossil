@@ -1006,8 +1006,7 @@ export class CommandCenter {
         const paths = await repository.getPath();
 
         if (paths.url == '') {
-            await interaction.warnNoPaths('pull');
-            return;
+            return interaction.warnNoPaths('pull');
         }
 
         const pullOptions = await repository.createPullOptions();
@@ -1132,8 +1131,7 @@ export class CommandCenter {
         const path = await repository.getPath();
 
         if (path.url == '') {
-            await interaction.warnNoPaths('push');
-            return;
+            return interaction.warnNoPaths('push');
         }
         repository.push(path.url);
     }

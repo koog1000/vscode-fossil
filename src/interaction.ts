@@ -299,10 +299,8 @@ export namespace interaction {
         );
     }
 
-    export async function warnNoPaths(
-        type: string
-    ): Promise<string | undefined> {
-        return await window.showErrorMessage(
+    export async function warnNoPaths(type: 'pull' | 'push'): Promise<void> {
+        await window.showErrorMessage(
             localize(
                 `no paths to ${type}`,
                 `Your repository has no paths configured for ${type}ing.`
