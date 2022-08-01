@@ -786,9 +786,16 @@ export class Repository implements IDisposable {
     }
 
     @throttle
-    async clean(): Promise<void> {
+    async cleanAll(): Promise<void> {
         await this.runWithProgress(Operation.Clean, async () => {
-            this.repository.clean();
+            this.repository.cleanAll();
+        });
+    }
+
+    @throttle
+    async clean(paths: string[]): Promise<void> {
+        await this.runWithProgress(Operation.Clean, async () => {
+            this.repository.clean(paths);
         });
     }
 

@@ -1,5 +1,10 @@
 # Changelog
 
+# v0.1.6
+
+### What's New
+- Buttons to delete 'Untracked Files' and revert files in other groups
+
 # v0.1.5
 
 ### What's New

@@ -45,7 +45,7 @@ import {
     LogEntriesOptions,
     Repository,
 } from './repository';
-import { isResourceGroup } from './resourceGroups';
+import { FossilResourceGroup, isResourceGroup } from './resourceGroups';
 import {
     interaction,
     BranchExistsAction,
@@ -550,6 +550,37 @@ export class CommandCenter {
         // await this.runByRepository(resources, async (repository, uris) => repository.remove(...uris));
     }
 
+    private async deleteResources(
+        repository: Repository,
+        resources: SourceControlResourceState[]
+    ): Promise<void> {
+        const paths = resources
+            .filter(resource => resource.resourceUri.scheme === 'file')
+            .map(resource => resource.resourceUri.fsPath);
+        if (await interaction.confirmDeleteResources(paths)) {
+            await repository.clean(paths);
+        }
+    }
+
+    @command('fossil.deleteFile', { repository: true })
+    async deleteFile(
+        repository: Repository,
+        ...resourceStates: SourceControlResourceState[]
+    ): Promise<void> {
+        return this.deleteResources(repository, resourceStates);
+    }
+
+    @command('fossil.deleteFiles', { repository: true })
+    async deleteFiles(
+        repository: Repository,
+        ...resourceGroups: FossilResourceGroup[]
+    ): Promise<void> {
+        return this.deleteResources(
+            repository,
+            resourceGroups.map(group => group.resourceStates).flat()
+        );
+    }
+
     @command('fossil.stage') // run by repo
     async stage(
         ...resourceStates: SourceControlResourceState[]
@@ -687,7 +718,7 @@ export class CommandCenter {
     @command('fossil.clean', { repository: true })
     async clean(repository: Repository): Promise<void> {
         if (await interaction.confirmDeleteExtras()) {
-            await repository.clean();
+            await repository.cleanAll();
         }
     }
 

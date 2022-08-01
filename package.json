@@ -102,6 +102,18 @@
                 }
             },
             {
+                "command": "fossil.deleteFiles",
+                "title": "Delete All Untracked Files",
+                "category": "Fossil",
+                "icon": "$(trash)"
+            },
+            {
+                "command": "fossil.deleteFile",
+                "title": "Delete Untracked File",
+                "category": "Fossil",
+                "icon": "$(trash)"
+            },
+            {
                 "command": "fossil.commitAll",
                 "title": "%command.commitAll%",
                 "category": "Fossil"
@@ -644,9 +656,14 @@
                     "group": "1_modification"
                 },
                 {
+                    "command": "fossil.deleteFiles",
+                    "when": "config.fossil.enabled && scmProvider == fossil && scmResourceGroup == untracked",
+                    "group": "inline@0"
+                },
+                {
                     "command": "fossil.addAll",
                     "when": "config.fossil.enabled && scmProvider == fossil && scmResourceGroup == untracked",
-                    "group": "inline"
+                    "group": "inline@1"
                 },
                 {
                     "command": "fossil.openFiles",
@@ -692,13 +709,13 @@
                 },
                 {
                     "command": "fossil.revert",
-                    "when": "config.fossil.enabled && scmProvider == fossil && scmResourceGroup == working",
+                    "when": "config.fossil.enabled && scmProvider == fossil && scmResourceGroup != untracked",
                     "group": "1_modification"
                 },
                 {
                     "command": "fossil.revert",
-                    "when": "config.fossil.enabled && scmProvider == fossil && scmResourceGroup == working",
-                    "group": "inline"
+                    "when": "config.fossil.enabled && scmProvider == fossil && scmResourceGroup != untracked",
+                    "group": "inline@0"
                 },
                 {
                     "command": "fossil.stage",
@@ -706,9 +723,14 @@
                     "group": "inline"
                 },
                 {
+                    "command": "fossil.deleteFile",
+                    "when": "config.fossil.enabled && scmProvider == fossil && scmResourceGroup == untracked",
+                    "group": "inline@0"
+                },
+                {
                     "command": "fossil.add",
                     "when": "config.fossil.enabled && scmProvider == fossil && scmResourceGroup == untracked",
-                    "group": "inline"
+                    "group": "inline@1"
                 },
                 {
                     "command": "fossil.stage",
