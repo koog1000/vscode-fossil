@@ -284,8 +284,6 @@ export class FossilError implements IFossilErrorData {
 export interface IFossilOptions {
     fossilPath: string;
     version: string;
-    // env?: any;
-    enableInstrumentation: boolean; // ToDo: remove unused property
     outputChannel: OutputChannel;
 }
 
