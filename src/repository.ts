@@ -915,9 +915,9 @@ export class Repository implements IDisposable {
                 if (
                     e instanceof FossilError &&
                     e.fossilErrorCode === 'UntrackedFilesDiffer' &&
-                    e.hgFilenames
+                    e.untrackedFilenames
                 ) {
-                    e.hgFilenames = e.hgFilenames.map(filename =>
+                    e.untrackedFilenames = e.untrackedFilenames.map(filename =>
                         this.mapRepositoryRelativePathToWorkspaceRelativePath(
                             filename
                         )

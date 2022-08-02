@@ -250,8 +250,7 @@ export class FossilError implements IFossilErrorData {
     exitCode?: number;
     fossilErrorCode: FossilErrorCode;
     fossilCommand: string;
-    hgBranches?: string; // ToDo: fossil?
-    hgFilenames?: string[]; // ToDo: fossil?
+    untrackedFilenames?: string[];
 
     constructor(data: IFossilErrorData) {
         this.message = data.message || 'Fossil error';
@@ -838,7 +837,7 @@ export class Repository {
                 e.stderr.match(/untracked files in working directory differ/)
             ) {
                 e.fossilErrorCode = 'UntrackedFilesDiffer';
-                e.hgFilenames = this.parseUntrackedFilenames(e.stderr);
+                e.untrackedFilenames = this.parseUntrackedFilenames(e.stderr);
             }
 
             if (e instanceof FossilError && e.exitCode === 1) {

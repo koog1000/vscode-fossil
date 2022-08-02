@@ -1109,9 +1109,9 @@ export class CommandCenter {
             if (
                 e instanceof FossilError &&
                 e.fossilErrorCode === 'UntrackedFilesDiffer' &&
-                e.hgFilenames
+                e.untrackedFilenames
             ) {
-                interaction.errorUntrackedFilesDiffer(e.hgFilenames);
+                interaction.errorUntrackedFilesDiffer(e.untrackedFilenames);
                 return;
             }
 
