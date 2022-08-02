@@ -5,7 +5,7 @@
  *--------------------------------------------------------------------------------------------*/
 
 import { workspace, Disposable } from 'vscode';
-import { FossilErrorCodes, FossilError } from './fossilBase';
+import { FossilError } from './fossilBase';
 import { throttle } from './decorators';
 import typedConfig from './config';
 import { Repository, Operation } from './repository';
@@ -100,10 +100,8 @@ export class AutoIncomingOutgoing {
         } catch (err) {
             if (
                 err instanceof FossilError &&
-                (err.fossilErrorCode ===
-                    FossilErrorCodes.AuthenticationFailed ||
-                    err.fossilErrorCode ===
-                        FossilErrorCodes.NotAFossilRepository)
+                (err.fossilErrorCode === 'AuthenticationFailed' ||
+                    err.fossilErrorCode === 'NotAFossilRepository')
             ) {
                 this.disable();
             }

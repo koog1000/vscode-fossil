@@ -41,28 +41,19 @@
                 "command": "fossil.add",
                 "title": "%command.add%",
                 "category": "Fossil",
-                "icon": {
-                    "light": "resources/icons/light/add.svg",
-                    "dark": "resources/icons/dark/add.svg"
-                }
+                "icon": "$(plus)"
             },
             {
                 "command": "fossil.addAll",
                 "title": "%command.addAll%",
                 "category": "Fossil",
-                "icon": {
-                    "light": "resources/icons/light/add.svg",
-                    "dark": "resources/icons/dark/add.svg"
-                }
+                "icon": "$(plus)"
             },
             {
                 "command": "fossil.ignore",
                 "title": "%command.ignore%",
                 "category": "Fossil",
-                "icon": {
-                    "light": "resources/icons/light/discard.svg",
-                    "dark": "resources/icons/dark/discard.svg"
-                }
+                "icon": "$(discard)"
             },
             {
                 "command": "fossil.branch",
@@ -78,28 +69,19 @@
                 "command": "fossil.revert",
                 "title": "%command.revert%",
                 "category": "Fossil",
-                "icon": {
-                    "light": "resources/icons/light/discard.svg",
-                    "dark": "resources/icons/dark/discard.svg"
-                }
+                "icon": "$(discard)"
             },
             {
                 "command": "fossil.revertAll",
                 "title": "%command.revertAll%",
                 "category": "Fossil",
-                "icon": {
-                    "light": "resources/icons/light/discard.svg",
-                    "dark": "resources/icons/dark/discard.svg"
-                }
+                "icon": "$(discard)"
             },
             {
                 "command": "fossil.commit",
                 "title": "%command.commit%",
                 "category": "Fossil",
-                "icon": {
-                    "light": "resources/icons/light/check.svg",
-                    "dark": "resources/icons/dark/check.svg"
-                }
+                "icon": "$(check)"
             },
             {
                 "command": "fossil.deleteFiles",
@@ -170,10 +152,7 @@
                 "command": "fossil.markResolved",
                 "title": "%command.markResolved%",
                 "category": "Fossil",
-                "icon": {
-                    "light": "resources/icons/light/check.svg",
-                    "dark": "resources/icons/dark/check.svg"
-                }
+                "icon": "$(check)"
             },
             {
                 "command": "fossil.openChange",
@@ -240,19 +219,13 @@
                 "command": "fossil.refresh",
                 "title": "%command.refresh%",
                 "category": "Fossil",
-                "icon": {
-                    "light": "resources/icons/light/refresh.svg",
-                    "dark": "resources/icons/dark/refresh.svg"
-                }
+                "icon": "$(refresh)"
             },
             {
                 "command": "fossil.resolveAgain",
                 "title": "%command.resolveAgain%",
                 "category": "Fossil",
-                "icon": {
-                    "light": "resources/icons/light/refresh.svg",
-                    "dark": "resources/icons/dark/refresh.svg"
-                }
+                "icon": "$(refresh)"
             },
             {
                 "command": "fossil.showOutput",
@@ -263,19 +236,13 @@
                 "command": "fossil.stage",
                 "title": "%command.stage%",
                 "category": "Fossil",
-                "icon": {
-                    "light": "resources/icons/light/add.svg",
-                    "dark": "resources/icons/dark/add.svg"
-                }
+                "icon": "$(plus)"
             },
             {
                 "command": "fossil.stageAll",
                 "title": "%command.stageAll%",
                 "category": "Fossil",
-                "icon": {
-                    "light": "resources/icons/light/add.svg",
-                    "dark": "resources/icons/dark/add.svg"
-                }
+                "icon": "$(plus)"
             },
             {
                 "command": "fossil.undo",
@@ -314,10 +281,7 @@
                 "command": "fossil.revertChange",
                 "title": "Revert Change",
                 "category": "Fossil",
-                "icon": {
-                    "light": "resources/icons/light/discard.svg",
-                    "dark": "resources/icons/dark/discard.svg"
-                }
+                "icon": "$(discard)"
             },
             {
                 "command": "fossil.merge",

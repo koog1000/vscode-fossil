@@ -37,7 +37,6 @@ async function init(
     const fossil = new Fossil({
         fossilPath: info.path,
         version: info.version,
-        enableInstrumentation: enabled,
         outputChannel: outputChannel,
     });
     const model = new Model(fossil);

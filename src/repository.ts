@@ -19,7 +19,6 @@ import {
     FossilError,
     IRepoStatus,
     PullOptions,
-    FossilErrorCodes,
     IMergeResult,
     CommitDetails,
     TimelineOptions,
@@ -32,7 +31,9 @@ import {
     StatusString,
     MergeAction,
     FossilHash,
-    Path,
+    FossilRemote,
+    FossilRemoteName,
+    FossilURI,
 } from './fossilBase';
 import {
     anyEvent,
@@ -732,7 +733,6 @@ export class Repository implements IDisposable {
 
         this._groups.staging.except(resources);
         this._groups.working.intersect(resources);
-        // todo: remove useless event
         this._onDidChangeResources.fire();
     }
 
@@ -875,7 +875,7 @@ export class Repository implements IDisposable {
     }
 
     @throttle
-    async pull(options?: PullOptions): Promise<void> {
+    async pull(options: PullOptions): Promise<void> {
         await this.runWithProgress(Operation.Pull, async () => {
             await this.repository.pull(options);
         });
@@ -889,8 +889,7 @@ export class Repository implements IDisposable {
             } catch (e) {
                 if (
                     e instanceof FossilError &&
-                    e.fossilErrorCode ===
-                        FossilErrorCodes.PushCreatesNewRemoteHead
+                    e.fossilErrorCode === 'PushCreatesNewRemoteHead'
                 ) {
                     const action = await interaction.warnPushCreatesNewHead();
                     if (action === PushCreatesNewHeadAction.Pull) {
@@ -915,11 +914,10 @@ export class Repository implements IDisposable {
             } catch (e) {
                 if (
                     e instanceof FossilError &&
-                    e.fossilErrorCode ===
-                        FossilErrorCodes.UntrackedFilesDiffer &&
-                    e.hgFilenames
+                    e.fossilErrorCode === 'UntrackedFilesDiffer' &&
+                    e.untrackedFilenames
                 ) {
-                    e.hgFilenames = e.hgFilenames.map(filename =>
+                    e.untrackedFilenames = e.untrackedFilenames.map(filename =>
                         this.mapRepositoryRelativePathToWorkspaceRelativePath(
                             filename
                         )
@@ -948,7 +946,7 @@ export class Repository implements IDisposable {
                 return await this.repository.cat(relativePath, params.checkin!);
             } catch (e) {
                 if (e instanceof FossilError) {
-                    if (e.fossilErrorCode === FossilErrorCodes.NoSuchFile) {
+                    if (e.fossilErrorCode === 'NoSuchFile') {
                         return '';
                     }
 
@@ -1007,8 +1005,7 @@ export class Repository implements IDisposable {
                             // expected to get here on executing `fossil close` operation
                             if (
                                 err instanceof FossilError &&
-                                err.fossilErrorCode ===
-                                    FossilErrorCodes.NotAFossilRepository
+                                err.fossilErrorCode === 'NotAFossilRepository'
                             ) {
                                 this.state = RepositoryState.Disposed;
                             } else {
@@ -1021,8 +1018,7 @@ export class Repository implements IDisposable {
                     // we might get in this catch() when user deleted all files
                     if (
                         err instanceof FossilError &&
-                        err.fossilErrorCode ===
-                            FossilErrorCodes.NotAFossilRepository
+                        err.fossilErrorCode === 'NotAFossilRepository'
                     ) {
                         this.state = RepositoryState.Disposed;
                     }
@@ -1039,15 +1035,15 @@ export class Repository implements IDisposable {
     }
 
     @throttle
-    public async getPath(): Promise<Path> {
+    public async getPath(): Promise<FossilRemote> {
         try {
-            const path = await this.repository.getPaths();
+            const path = await this.repository.getRemotes();
             return path;
         } catch (e) {
             // noop
         }
 
-        return { name: '', url: '' };
+        return { name: '' as FossilRemoteName, url: '' as FossilURI };
     }
 
     @throttle

@@ -24,7 +24,6 @@ import * as path from 'path';
 import {
     Fossil,
     FossilError,
-    FossilErrorCodes,
     IFileStatus,
     CommitDetails,
     FossilPath,
@@ -303,7 +302,7 @@ export class CommandCenter {
         } catch (err) {
             if (
                 err instanceof FossilError &&
-                err.fossilErrorCode === FossilErrorCodes.OperationMustBeforced
+                err.fossilErrorCode === 'OperationMustBeforced'
             ) {
                 const openNotEmpty = await interaction.confirmOpenNotEmpty(
                     parentPath
@@ -909,8 +908,7 @@ export class CommandCenter {
         } catch (e) {
             if (
                 e instanceof FossilError &&
-                e.fossilErrorCode ===
-                    FossilErrorCodes.NoUndoInformationAvailable
+                e.fossilErrorCode === 'NoUndoInformationAvailable'
             ) {
                 await interaction.warnNoUndo();
             }
@@ -987,7 +985,7 @@ export class CommandCenter {
         } catch (e) {
             if (
                 e instanceof FossilError &&
-                e.fossilErrorCode === FossilErrorCodes.BranchAlreadyExists
+                e.fossilErrorCode === 'BranchAlreadyExists'
             ) {
                 const action = await interaction.warnBranchAlreadyExists(
                     fossilBranch
@@ -1006,8 +1004,7 @@ export class CommandCenter {
         const paths = await repository.getPath();
 
         if (paths.url == '') {
-            await interaction.warnNoPaths('pull');
-            return;
+            return interaction.warnNoPaths('pull');
         }
 
         const pullOptions = await repository.createPullOptions();
@@ -1111,10 +1108,10 @@ export class CommandCenter {
         } catch (e) {
             if (
                 e instanceof FossilError &&
-                e.fossilErrorCode === FossilErrorCodes.UntrackedFilesDiffer &&
-                e.hgFilenames
+                e.fossilErrorCode === 'UntrackedFilesDiffer' &&
+                e.untrackedFilenames
             ) {
-                interaction.errorUntrackedFilesDiffer(e.hgFilenames);
+                interaction.errorUntrackedFilesDiffer(e.untrackedFilenames);
                 return;
             }
 
@@ -1132,13 +1129,12 @@ export class CommandCenter {
         const path = await repository.getPath();
 
         if (path.url == '') {
-            await interaction.warnNoPaths('push');
-            return;
+            return interaction.warnNoPaths('push');
         }
         repository.push(path.url);
     }
 
-    @command('fossil.showOutput', { repository: true })
+    @command('fossil.showOutput')
     showOutput(): void {
         this.outputChannel.show();
     }

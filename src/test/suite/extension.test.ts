@@ -20,7 +20,6 @@ async function createFossil(): Promise<Fossil> {
     const fossil = new Fossil({
         fossilPath: info.path,
         version: info.version,
-        enableInstrumentation: true,
         outputChannel: outputChannel,
     });
     return fossil;

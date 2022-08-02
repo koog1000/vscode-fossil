@@ -18,7 +18,6 @@ import {
 } from 'vscode';
 import {
     FossilUndoDetails,
-    Path,
     Commit,
     LogEntryOptions,
     CommitDetails,
@@ -299,10 +298,8 @@ export namespace interaction {
         );
     }
 
-    export async function warnNoPaths(
-        type: string
-    ): Promise<string | undefined> {
-        return await window.showErrorMessage(
+    export async function warnNoPaths(type: 'pull' | 'push'): Promise<void> {
+        await window.showErrorMessage(
             localize(
                 `no paths to ${type}`,
                 `Your repository has no paths configured for ${type}ing.`
@@ -866,25 +863,26 @@ export namespace interaction {
         return choice;
     }
 
-    export async function pickRemotePath(
-        paths: Path[]
-    ): Promise<string | undefined> {
-        const picks = paths.map(
-            p => ({ label: p.name, description: p.url } as QuickPickItem)
-        );
-        const placeHolder = localize(
-            'pick remote',
-            'Pick a remote to push to:'
-        );
-        const choice = await window.showQuickPick<QuickPickItem>(picks, {
-            placeHolder,
-        });
-        if (choice) {
-            return choice.label;
-        }
+    // this function is unused but should be
+    // export async function pickRemotePath(
+    //     paths: FossilRemote[]
+    // ): Promise<string | undefined> {
+    //     const picks = paths.map(
+    //         p => ({ label: p.name, description: p.url } as QuickPickItem)
+    //     );
+    //     const placeHolder = localize(
+    //         'pick remote',
+    //         'Pick a remote to push to:'
+    //     );
+    //     const choice = await window.showQuickPick<QuickPickItem>(picks, {
+    //         placeHolder,
+    //     });
+    //     if (choice) {
+    //         return choice.label;
+    //     }
 
-        return;
-    }
+    //     return;
+    // }
 
     export function warnUnresolvedFiles(unresolvedCount: number): void {
         const fileOrFiles =
