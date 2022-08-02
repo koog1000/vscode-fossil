@@ -230,12 +230,11 @@ export async function exec(
 }
 
 export interface IFossilErrorData {
-    error?: Error;
-    message?: string;
-    stdout?: string; // ToDo: remove '?'
-    stderr?: string; // ToDo: remove '?'
+    message: string;
+    stdout?: string;
+    stderr?: string;
     exitCode?: number;
-    fossilErrorCode?: string;
+    fossilErrorCode?: FossilErrorCode;
     fossilCommand?: string;
 }
 
@@ -244,36 +243,27 @@ export class FossilUndoDetails {
     kind!: string;
 }
 
-export class FossilError {
-    error?: Error;
+export class FossilError implements IFossilErrorData {
     message: string;
-    stdout?: string;
-    stderr?: string;
+    stdout: string;
+    stderr: string;
     exitCode?: number;
-    fossilErrorCode?: string;
-    fossilCommand?: string;
-    hgBranches?: string;
-    hgFilenames?: string[];
+    fossilErrorCode: FossilErrorCode;
+    fossilCommand: string;
+    hgBranches?: string; // ToDo: fossil?
+    hgFilenames?: string[]; // ToDo: fossil?
 
     constructor(data: IFossilErrorData) {
-        if (data.error) {
-            this.error = data.error;
-            this.message = data.error.message;
-        } else {
-            this.error = void 0;
-            this.message = '';
-        }
-
-        this.message = this.message || data.message || 'Fossil error';
-        this.stdout = data.stdout;
-        this.stderr = data.stderr;
+        this.message = data.message || 'Fossil error';
+        this.stdout = data.stdout || '';
+        this.stderr = data.stderr || '';
         this.exitCode = data.exitCode;
-        this.fossilErrorCode = data.fossilErrorCode;
-        this.fossilCommand = data.fossilCommand;
+        this.fossilErrorCode = data.fossilErrorCode || 'unknown';
+        this.fossilCommand = data.fossilCommand || '';
     }
 
     toString(): string {
-        let result =
+        const result =
             this.message +
             ' ' +
             JSON.stringify(
@@ -288,10 +278,6 @@ export class FossilError {
                 2
             );
 
-        if (this.error) {
-            result += (<any>this.error).stack;
-        }
-
         return result;
     }
 }
@@ -304,19 +290,18 @@ export interface IFossilOptions {
     outputChannel: OutputChannel;
 }
 
-// ToDo: make it enum
-export const FossilErrorCodes = {
-    AuthenticationFailed: 'AuthenticationFailed',
-    NotAFossilRepository: 'NotAFossilRepository',
-    UnmergedChanges: 'UnmergedChanges',
-    PushCreatesNewRemoteHead: 'PushCreatesNewRemoteHead',
-    NoSuchFile: 'NoSuchFile',
-    BranchAlreadyExists: 'BranchAlreadyExists',
-    NoUndoInformationAvailable: 'NoUndoInformationAvailable',
-    UntrackedFilesDiffer: 'UntrackedFilesDiffer',
-    DefaultRepositoryNotConfigured: 'DefaultRepositoryNotConfigured',
-    OperationMustBeforced: 'OperationMustBeforced',
-};
+export type FossilErrorCode =
+    | 'AuthenticationFailed'
+    | 'NotAFossilRepository'
+    | 'UnmergedChanges'
+    | 'PushCreatesNewRemoteHead'
+    | 'NoSuchFile'
+    | 'BranchAlreadyExists'
+    | 'NoUndoInformationAvailable'
+    | 'UntrackedFilesDiffer'
+    | 'DefaultRepositoryNotConfigured'
+    | 'OperationMustBeforced'
+    | 'unknown';
 
 export class Fossil {
     private readonly fossilPath: string;
@@ -390,9 +375,9 @@ export class Fossil {
         } catch (err) {
             if (
                 err instanceof FossilError &&
-                err.fossilErrorCode !== FossilErrorCodes.NoSuchFile &&
-                err.fossilErrorCode !== FossilErrorCodes.NotAFossilRepository &&
-                err.fossilErrorCode !== FossilErrorCodes.OperationMustBeforced
+                err.fossilErrorCode !== 'NoSuchFile' &&
+                err.fossilErrorCode !== 'NotAFossilRepository' &&
+                err.fossilErrorCode !== 'OperationMustBeforced'
             ) {
                 const openLog = await interaction.errorPromptOpenLog(err);
                 if (openLog) {
@@ -428,20 +413,21 @@ export class Fossil {
         );
 
         if (result.exitCode) {
-            let fossilErrorCode: string | undefined = void 0;
-
-            if (/Authentication failed/.test(result.stderr)) {
-                fossilErrorCode = FossilErrorCodes.AuthenticationFailed;
-            } else if (
-                /not within an open checkout/.test(result.stderr) ||
-                /specify the repository database/.test(result.stderr)
-            ) {
-                fossilErrorCode = FossilErrorCodes.NotAFossilRepository;
-            } else if (/no such file/.test(result.stderr)) {
-                fossilErrorCode = FossilErrorCodes.NoSuchFile;
-            } else if (/--force\b/.test(result.stderr)) {
-                fossilErrorCode = FossilErrorCodes.OperationMustBeforced;
-            }
+            const fossilErrorCode: FossilErrorCode = (() => {
+                if (/Authentication failed/.test(result.stderr)) {
+                    return 'AuthenticationFailed';
+                } else if (
+                    /not within an open checkout/.test(result.stderr) ||
+                    /specify the repository database/.test(result.stderr)
+                ) {
+                    return 'NotAFossilRepository';
+                } else if (/no such file/.test(result.stderr)) {
+                    return 'NoSuchFile';
+                } else if (/--force\b/.test(result.stderr)) {
+                    return 'OperationMustBeforced';
+                }
+                return 'unknown';
+            })();
 
             if (options.logErrors !== false && result.stderr) {
                 this.log(`${result.stderr}\n`);
@@ -630,7 +616,7 @@ export class Repository {
                 err instanceof FossilError &&
                 /partial commit of a merge/.test(err.stderr || '')
             ) {
-                err.fossilErrorCode = FossilErrorCodes.UnmergedChanges;
+                err.fossilErrorCode = 'UnmergedChanges';
                 throw err;
             }
 
@@ -662,7 +648,7 @@ export class Repository {
                     err.stderr || ''
                 )
             ) {
-                err.fossilErrorCode = FossilErrorCodes.BranchAlreadyExists;
+                err.fossilErrorCode = 'BranchAlreadyExists';
             }
 
             throw err;
@@ -757,8 +743,7 @@ export class Repository {
                 error instanceof FossilError &&
                 /nothing to undo/.test(error.stderr || '')
             ) {
-                error.fossilErrorCode =
-                    FossilErrorCodes.NoUndoInformationAvailable;
+                error.fossilErrorCode = 'NoUndoInformationAvailable';
             }
             throw error;
         }
@@ -807,7 +792,7 @@ export class Repository {
                 err instanceof FossilError &&
                 /would fork/.test(err.stderr || '')
             ) {
-                err.fossilErrorCode = FossilErrorCodes.PushCreatesNewRemoteHead;
+                err.fossilErrorCode = 'PushCreatesNewRemoteHead';
             }
 
             throw err;
@@ -852,7 +837,7 @@ export class Repository {
                 e.stderr &&
                 e.stderr.match(/untracked files in working directory differ/)
             ) {
-                e.fossilErrorCode = FossilErrorCodes.UntrackedFilesDiffer;
+                e.fossilErrorCode = 'UntrackedFilesDiffer';
                 e.hgFilenames = this.parseUntrackedFilenames(e.stderr);
             }
 

@@ -24,7 +24,6 @@ import * as path from 'path';
 import {
     Fossil,
     FossilError,
-    FossilErrorCodes,
     IFileStatus,
     CommitDetails,
     FossilPath,
@@ -303,7 +302,7 @@ export class CommandCenter {
         } catch (err) {
             if (
                 err instanceof FossilError &&
-                err.fossilErrorCode === FossilErrorCodes.OperationMustBeforced
+                err.fossilErrorCode === 'OperationMustBeforced'
             ) {
                 const openNotEmpty = await interaction.confirmOpenNotEmpty(
                     parentPath
@@ -909,8 +908,7 @@ export class CommandCenter {
         } catch (e) {
             if (
                 e instanceof FossilError &&
-                e.fossilErrorCode ===
-                    FossilErrorCodes.NoUndoInformationAvailable
+                e.fossilErrorCode === 'NoUndoInformationAvailable'
             ) {
                 await interaction.warnNoUndo();
             }
@@ -987,7 +985,7 @@ export class CommandCenter {
         } catch (e) {
             if (
                 e instanceof FossilError &&
-                e.fossilErrorCode === FossilErrorCodes.BranchAlreadyExists
+                e.fossilErrorCode === 'BranchAlreadyExists'
             ) {
                 const action = await interaction.warnBranchAlreadyExists(
                     fossilBranch
@@ -1110,7 +1108,7 @@ export class CommandCenter {
         } catch (e) {
             if (
                 e instanceof FossilError &&
-                e.fossilErrorCode === FossilErrorCodes.UntrackedFilesDiffer &&
+                e.fossilErrorCode === 'UntrackedFilesDiffer' &&
                 e.hgFilenames
             ) {
                 interaction.errorUntrackedFilesDiffer(e.hgFilenames);

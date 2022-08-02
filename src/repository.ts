@@ -19,7 +19,6 @@ import {
     FossilError,
     IRepoStatus,
     PullOptions,
-    FossilErrorCodes,
     IMergeResult,
     CommitDetails,
     TimelineOptions,
@@ -891,8 +890,7 @@ export class Repository implements IDisposable {
             } catch (e) {
                 if (
                     e instanceof FossilError &&
-                    e.fossilErrorCode ===
-                        FossilErrorCodes.PushCreatesNewRemoteHead
+                    e.fossilErrorCode === 'PushCreatesNewRemoteHead'
                 ) {
                     const action = await interaction.warnPushCreatesNewHead();
                     if (action === PushCreatesNewHeadAction.Pull) {
@@ -917,8 +915,7 @@ export class Repository implements IDisposable {
             } catch (e) {
                 if (
                     e instanceof FossilError &&
-                    e.fossilErrorCode ===
-                        FossilErrorCodes.UntrackedFilesDiffer &&
+                    e.fossilErrorCode === 'UntrackedFilesDiffer' &&
                     e.hgFilenames
                 ) {
                     e.hgFilenames = e.hgFilenames.map(filename =>
@@ -950,7 +947,7 @@ export class Repository implements IDisposable {
                 return await this.repository.cat(relativePath, params.checkin!);
             } catch (e) {
                 if (e instanceof FossilError) {
-                    if (e.fossilErrorCode === FossilErrorCodes.NoSuchFile) {
+                    if (e.fossilErrorCode === 'NoSuchFile') {
                         return '';
                     }
 
@@ -1009,8 +1006,7 @@ export class Repository implements IDisposable {
                             // expected to get here on executing `fossil close` operation
                             if (
                                 err instanceof FossilError &&
-                                err.fossilErrorCode ===
-                                    FossilErrorCodes.NotAFossilRepository
+                                err.fossilErrorCode === 'NotAFossilRepository'
                             ) {
                                 this.state = RepositoryState.Disposed;
                             } else {
@@ -1023,8 +1019,7 @@ export class Repository implements IDisposable {
                     // we might get in this catch() when user deleted all files
                     if (
                         err instanceof FossilError &&
-                        err.fossilErrorCode ===
-                            FossilErrorCodes.NotAFossilRepository
+                        err.fossilErrorCode === 'NotAFossilRepository'
                     ) {
                         this.state = RepositoryState.Disposed;
                     }

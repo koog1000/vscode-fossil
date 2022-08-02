@@ -16,7 +16,7 @@ import {
     TextEditor,
     QuickPickItem,
 } from 'vscode';
-import { Fossil, FossilError, FossilErrorCodes } from './fossilBase';
+import { Fossil, FossilError } from './fossilBase';
 import { anyEvent, filterEvent, dispose } from './util';
 import { memoize, debounce, sequentialize } from './decorators';
 import * as path from 'path';
@@ -272,7 +272,7 @@ export class Model implements Disposable {
         } catch (err) {
             if (
                 !(err instanceof FossilError) ||
-                err.fossilErrorCode !== FossilErrorCodes.NotAFossilRepository
+                err.fossilErrorCode !== 'NotAFossilRepository'
             ) {
                 console.error('Failed to find repository:', err);
             }
