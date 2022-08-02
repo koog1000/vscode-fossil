@@ -733,7 +733,6 @@ export class Repository implements IDisposable {
 
         this._groups.staging.except(resources);
         this._groups.working.intersect(resources);
-        // todo: remove useless event
         this._onDidChangeResources.fire();
     }
 
