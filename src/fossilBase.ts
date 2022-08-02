@@ -41,6 +41,8 @@ export type FossilCheckin =
     | FossilHash
     | FossilSpecialTags;
 export type StatusString = Distinct<string, 'fossil status stdout'>;
+export type FossilExecutablePath = Distinct<string, 'fossil executable path'>;
+export type FossilVersion = Distinct<number[], 'fossil version'>;
 export const enum MergeAction {
     Merge,
     Integrate,
@@ -48,8 +50,8 @@ export const enum MergeAction {
 }
 
 export interface IFossil {
-    path: string;
-    version: string;
+    path: FossilExecutablePath;
+    version: FossilVersion;
 }
 
 export interface TimelineOptions extends LogEntryOptions {
@@ -129,13 +131,12 @@ export class FossilFinder {
         return first.then(undefined, () => this.findSpecificFossil('fossil'));
     }
 
-    private parseVersion(raw: string): string {
+    private parseVersion(raw: string): FossilVersion {
         const match = raw.match(/version (.+)\[/);
         if (match) {
-            return match[1];
+            return match[1].split('.').map(s => parseInt(s)) as FossilVersion;
         }
-
-        return '?';
+        return [0] as FossilVersion;
     }
 
     private findSpecificFossil(path: string): Promise<IFossil> {
@@ -149,7 +150,7 @@ export class FossilFinder {
                 if (!code) {
                     const output = Buffer.concat(buffers).toString('utf8');
                     return c({
-                        path,
+                        path: path as FossilExecutablePath,
                         version: this.parseVersion(output),
                     });
                 }
@@ -282,8 +283,8 @@ export class FossilError implements IFossilErrorData {
 }
 
 export interface IFossilOptions {
-    fossilPath: string;
-    version: string;
+    fossilPath: FossilExecutablePath;
+    version: FossilVersion;
     outputChannel: OutputChannel;
 }
 
@@ -301,7 +302,7 @@ export type FossilErrorCode =
     | 'unknown';
 
 export class Fossil {
-    private readonly fossilPath: string;
+    private readonly fossilPath: FossilExecutablePath;
     private readonly outputChannel: OutputChannel;
     private openRepository: Repository | undefined;
 
