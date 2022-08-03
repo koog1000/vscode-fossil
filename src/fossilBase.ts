@@ -41,6 +41,8 @@ export type FossilCheckin =
     | FossilHash
     | FossilSpecialTags;
 export type StatusString = Distinct<string, 'fossil status stdout'>;
+export type FossilExecutablePath = Distinct<string, 'fossil executable path'>;
+export type FossilVersion = Distinct<number[], 'fossil version'>;
 export const enum MergeAction {
     Merge,
     Integrate,
@@ -48,8 +50,8 @@ export const enum MergeAction {
 }
 
 export interface IFossil {
-    path: string;
-    version: string;
+    path: FossilExecutablePath;
+    version: FossilVersion;
 }
 
 export interface TimelineOptions extends LogEntryOptions {
@@ -129,13 +131,12 @@ export class FossilFinder {
         return first.then(undefined, () => this.findSpecificFossil('fossil'));
     }
 
-    private parseVersion(raw: string): string {
+    private parseVersion(raw: string): FossilVersion {
         const match = raw.match(/version (.+)\[/);
         if (match) {
-            return match[1];
+            return match[1].split('.').map(s => parseInt(s)) as FossilVersion;
         }
-
-        return '?';
+        return [0] as FossilVersion;
     }
 
     private findSpecificFossil(path: string): Promise<IFossil> {
@@ -149,7 +150,7 @@ export class FossilFinder {
                 if (!code) {
                     const output = Buffer.concat(buffers).toString('utf8');
                     return c({
-                        path,
+                        path: path as FossilExecutablePath,
                         version: this.parseVersion(output),
                     });
                 }
@@ -282,8 +283,8 @@ export class FossilError implements IFossilErrorData {
 }
 
 export interface IFossilOptions {
-    fossilPath: string;
-    version: string;
+    fossilPath: FossilExecutablePath;
+    version: FossilVersion;
     outputChannel: OutputChannel;
 }
 
@@ -301,10 +302,10 @@ export type FossilErrorCode =
     | 'unknown';
 
 export class Fossil {
-    private readonly fossilPath: string;
+    private readonly fossilPath: FossilExecutablePath;
     private readonly outputChannel: OutputChannel;
+    public readonly version: FossilVersion;
     private openRepository: Repository | undefined;
-
     private _onOutput = new EventEmitter<string>();
     get onOutput(): Event<string> {
         return this._onOutput.event;
@@ -313,6 +314,7 @@ export class Fossil {
     constructor(options: IFossilOptions) {
         this.fossilPath = options.fossilPath;
         this.outputChannel = options.outputChannel;
+        this.version = options.version;
     }
 
     open(repository: FossilRoot): Repository {
@@ -320,8 +322,20 @@ export class Fossil {
         return this.openRepository;
     }
 
-    async init(repository: FossilRoot, repoName: FossilPath): Promise<void> {
-        await this.exec(repository, ['init', repoName]);
+    async init(
+        fossilRoot: FossilRoot,
+        fossilPath: FossilPath,
+        projectName: string, // since fossil 2.18
+        projectDesc: string // since fossil 2.18
+    ): Promise<void> {
+        const args = ['init', fossilPath];
+        if (projectName) {
+            args.push('--project-name', projectName);
+        }
+        if (projectDesc) {
+            args.push('--project-desc', projectDesc);
+        }
+        await this.exec(fossilRoot, args);
     }
 
     async clone(uri: FossilURI, fossilPath: FossilPath): Promise<FossilRoot> {

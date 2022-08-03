@@ -15,6 +15,7 @@ import {
     Uri,
     Disposable,
     QuickPickItemKind,
+    InputBoxOptions,
 } from 'vscode';
 import {
     FossilUndoDetails,
@@ -416,17 +417,42 @@ export namespace interaction {
         return resp;
     }
 
+    async function inputCommon(
+        this: void,
+        key: string,
+        message: string,
+        extra: InputBoxOptions = {}
+    ): Promise<string | undefined> {
+        return window.showInputBox({
+            prompt: localize(key, message),
+            ignoreFocusOut: true,
+            ...extra,
+        });
+    }
+
     export async function inputRepoName(
         this: void
     ): Promise<string | undefined> {
-        const name = await window.showInputBox({
-            prompt: localize(
-                'repourl',
-                "Repository Name (should end with '.fossil')"
-            ),
-            ignoreFocusOut: true,
+        return inputCommon(
+            'repourl',
+            "Repository Name (should end with '.fossil')"
+        );
+    }
+
+    export async function inputProjectName(
+        this: void
+    ): Promise<string | undefined> {
+        return inputCommon('project name', 'Project Name', {
+            placeHolder: 'Leave empty to not set Project Name',
         });
-        return name;
+    }
+
+    export async function inputProjectDescription(
+        this: void
+    ): Promise<string | undefined> {
+        return inputCommon('project description', 'Project Description', {
+            placeHolder: 'Leave empty to not set Project Description',
+        });
     }
 
     export async function inputPatchCreate(): Promise<string | undefined> {

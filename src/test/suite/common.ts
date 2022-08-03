@@ -5,7 +5,10 @@ import * as sinon from 'sinon';
 import * as fs from 'fs';
 import { Fossil, FossilCWD } from '../../fossilBase';
 
-export async function fossilInit(sandbox: sinon.SinonSandbox): Promise<void> {
+export async function fossilInit(
+    sandbox: sinon.SinonSandbox,
+    fossil: Fossil
+): Promise<void> {
     assert.ok(vscode.workspace.workspaceFolders);
     const fossilPath = Uri.joinPath(
         vscode.workspace.workspaceFolders![0].uri,
@@ -22,8 +25,14 @@ export async function fossilInit(sandbox: sinon.SinonSandbox): Promise<void> {
     const showInformationMessage = sandbox.stub(
         window,
         'showInformationMessage'
-    );
+    ); // this one asks to open created repository
     showInformationMessage.resolves(undefined);
+
+    const showInputBox = sandbox.stub(window, 'showInputBox');
+    if (fossil.version >= [2, 18]) {
+        showInputBox.onFirstCall().resolves('Test repo name');
+        showInputBox.onSecondCall().resolves('Test repo description');
+    }
 
     await vscode.commands.executeCommand('fossil.init');
     assert.ok(showSaveDialogstub.calledOnce);
@@ -32,6 +41,10 @@ export async function fossilInit(sandbox: sinon.SinonSandbox): Promise<void> {
         `Not a file: '${fossilPath.fsPath}'`
     );
     assert.ok(showInformationMessage.calledOnce);
+    if (fossil.version >= [2, 18]) {
+        assert.ok(showInputBox.calledTwice);
+    }
+    sandbox.restore();
 }
 
 export async function fossilOpen(

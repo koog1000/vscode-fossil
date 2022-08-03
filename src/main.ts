@@ -62,7 +62,7 @@ async function init(
         localize(
             'using fossil',
             'Using fossil {0} from {1}',
-            info.version,
+            info.version.join('.'),
             info.path
         )
     );
