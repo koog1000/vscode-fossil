@@ -12,7 +12,7 @@ export async function fossil_close(
     sandbox: sinon.SinonSandbox,
     fossil: Fossil
 ): Promise<void> {
-    await fossilInit(sandbox);
+    await fossilInit(sandbox, fossil);
     await fossilOpen(sandbox, fossil);
     const cwd = vscode.workspace.workspaceFolders![0].uri.fsPath as FossilCWD;
     const res = await fossil.exec(cwd, ['info']);
@@ -30,7 +30,7 @@ export async function fossil_merge(
     sandbox: sinon.SinonSandbox,
     fossil: Fossil
 ): Promise<void> {
-    await fossilInit(sandbox);
+    await fossilInit(sandbox, fossil);
     await fossilOpen(sandbox, fossil);
     const rootUri = vscode.workspace.workspaceFolders![0].uri;
     const fooPath = vscode.Uri.joinPath(rootUri, 'foo.txt').fsPath;

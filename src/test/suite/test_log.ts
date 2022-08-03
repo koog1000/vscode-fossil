@@ -26,7 +26,7 @@ export async function fossil_file_log_can_diff_files(
     sandbox: sinon.SinonSandbox,
     fossil: Fossil
 ): Promise<void> {
-    await fossilInit(sandbox);
+    await fossilInit(sandbox, fossil);
     await fossilOpen(sandbox, fossil);
     await add(fossil, 'file1.txt', 'line1\n', 'file1.txt: first');
     await add(fossil, 'file1.txt', 'line1\nline2\n', 'file1.txt: second');

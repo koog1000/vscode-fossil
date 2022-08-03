@@ -338,9 +338,29 @@ export class CommandCenter {
             return;
         }
         const fossilRoot = path.dirname(fossilPath) as FossilRoot;
+        let projectName = '';
+        let projectDesc = '';
+        if (this.fossil.version >= [2, 18]) {
+            const userProjectName = await interaction.inputProjectName();
+            if (userProjectName === undefined) {
+                return;
+            }
+            projectName = userProjectName;
+
+            const userProjectDesc = await interaction.inputProjectDescription();
+            if (userProjectDesc === undefined) {
+                return;
+            }
+            projectDesc = userProjectDesc;
+        }
 
         // run init in the file folder in case any artifacts appear
-        await this.fossil.init(fossilRoot, fossilPath);
+        await this.fossil.init(
+            fossilRoot,
+            fossilPath,
+            projectName,
+            projectDesc
+        );
         await this.askOpenRepository(fossilPath, fossilRoot);
     }
 

@@ -28,7 +28,7 @@ export async function status_missing_is_visible_in_source_control_panel(
     sandbox: sinon.SinonSandbox,
     fossil: Fossil
 ): Promise<void> {
-    await fossilInit(sandbox);
+    await fossilInit(sandbox, fossil);
     await fossilOpen(sandbox, fossil);
     const rootUri = vscode.workspace.workspaceFolders![0].uri;
     const cwd = rootUri.fsPath as FossilCWD;
@@ -49,7 +49,7 @@ export async function status_rename_is_visible_in_source_control_panel(
     sandbox: sinon.SinonSandbox,
     fossil: Fossil
 ): Promise<void> {
-    await fossilInit(sandbox);
+    await fossilInit(sandbox, fossil);
     await fossilOpen(sandbox, fossil);
     const rootUri = vscode.workspace.workspaceFolders![0].uri;
     const cwd = rootUri.fsPath as FossilCWD;
@@ -78,7 +78,7 @@ export async function status_merge_integrate_is_visible_in_source_control_panel(
     sandbox: sinon.SinonSandbox,
     fossil: Fossil
 ): Promise<void> {
-    await fossilInit(sandbox);
+    await fossilInit(sandbox, fossil);
     await fossilOpen(sandbox, fossil);
     const rootUri = vscode.workspace.workspaceFolders![0].uri;
     const cwd = rootUri.fsPath as FossilCWD;

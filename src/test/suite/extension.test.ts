@@ -49,11 +49,11 @@ suite('Fossil', () => {
     });
 
     test('fossil.init', async () => {
-        await fossilInit(sandbox);
+        await fossilInit(sandbox, fossil);
     });
 
     test('fossil.open', async () => {
-        await fossilInit(sandbox);
+        await fossilInit(sandbox, fossil);
         await fossilOpen(sandbox, fossil);
     });
 

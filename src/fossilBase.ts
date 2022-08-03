@@ -304,8 +304,8 @@ export type FossilErrorCode =
 export class Fossil {
     private readonly fossilPath: FossilExecutablePath;
     private readonly outputChannel: OutputChannel;
+    public readonly version: FossilVersion;
     private openRepository: Repository | undefined;
-
     private _onOutput = new EventEmitter<string>();
     get onOutput(): Event<string> {
         return this._onOutput.event;
@@ -314,6 +314,7 @@ export class Fossil {
     constructor(options: IFossilOptions) {
         this.fossilPath = options.fossilPath;
         this.outputChannel = options.outputChannel;
+        this.version = options.version;
     }
 
     open(repository: FossilRoot): Repository {
@@ -321,8 +322,20 @@ export class Fossil {
         return this.openRepository;
     }
 
-    async init(repository: FossilRoot, repoName: FossilPath): Promise<void> {
-        await this.exec(repository, ['init', repoName]);
+    async init(
+        fossilRoot: FossilRoot,
+        fossilPath: FossilPath,
+        projectName: string, // since fossil 2.18
+        projectDesc: string // since fossil 2.18
+    ): Promise<void> {
+        const args = ['init', fossilPath];
+        if (projectName) {
+            args.push('--project-name', projectName);
+        }
+        if (projectDesc) {
+            args.push('--project-desc', projectDesc);
+        }
+        await this.exec(fossilRoot, args);
     }
 
     async clone(uri: FossilURI, fossilPath: FossilPath): Promise<FossilRoot> {
