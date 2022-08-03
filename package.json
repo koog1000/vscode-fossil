@@ -258,19 +258,13 @@
                 "command": "fossil.unstage",
                 "title": "%command.unstage%",
                 "category": "Fossil",
-                "icon": {
-                    "light": "resources/icons/light/unstage.svg",
-                    "dark": "resources/icons/dark/unstage.svg"
-                }
+                "icon": "$(remove)"
             },
             {
                 "command": "fossil.unstageAll",
                 "title": "%command.unstageAll%",
                 "category": "Fossil",
-                "icon": {
-                    "light": "resources/icons/light/unstage.svg",
-                    "dark": "resources/icons/dark/unstage.svg"
-                }
+                "icon": "$(remove)"
             },
             {
                 "command": "fossil.update",
