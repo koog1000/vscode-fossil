@@ -616,9 +616,9 @@ export class Repository {
             args.push(...opts.fileList);
         }
 
-        if (message?.length) {
-            args.push('-m', message);
-        }
+        // always pass a message, otherwise fossil
+        // internal editor will spawn
+        args.push('-m', message);
 
         try {
             await this.exec(args);

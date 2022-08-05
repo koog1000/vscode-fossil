@@ -741,12 +741,9 @@ export class CommandCenter {
         }
     }
 
-    private async smartCommit(
-        repository: Repository,
-        getCommitMessage: () => Promise<string | undefined>,
-        opts?: CommitOptions
+    private async checkTrackedUnsavedFiles(
+        repository: Repository
     ): Promise<boolean> {
-        // Check tracked unsaved files
         const allUnsavedDocuments = workspace.textDocuments.filter(
             doc => !doc.isUntitled && doc.isDirty
         );
@@ -793,8 +790,12 @@ export class CommandCenter {
                 return false; // do not commit on cancel
             }
         }
-
-        // validate no conflicts
+        return true;
+    }
+    private async validateNoConflicts(
+        repository: Repository,
+        opts: CommitOptions
+    ): Promise<boolean> {
         const numConflictResources =
             repository.conflictGroup.resourceStates.length;
         if (numConflictResources > 0) {
@@ -808,21 +809,22 @@ export class CommandCenter {
         const isMergeCommit = repository.repoStatus?.isMerge;
 
         if (isMergeCommit) {
-            opts = { scope: CommitScope.ALL };
+            opts.scope = CommitScope.ALL;
         } else {
-            if (!opts || opts.scope === undefined) {
+            if (opts.scope === CommitScope.UNKNOWN) {
                 if (numWorkingResources > 0 && numStagingResources == 0) {
-                    const confirm =
+                    const useWorkingGroup =
                         await interaction.confirmCommitWorkingGroup();
-                    if (confirm) {
-                        opts = { scope: CommitScope.CHANGES };
-                    } else return false;
+                    if (!useWorkingGroup) {
+                        return false;
+                    }
+                    opts.scope = CommitScope.WORKING_GROUP;
                 } else {
-                    opts = { scope: CommitScope.STAGED_CHANGES };
+                    opts.scope = CommitScope.STAGING_GROUP;
                 }
             }
 
-            if (opts.scope === CommitScope.CHANGES) {
+            if (opts.scope === CommitScope.WORKING_GROUP) {
                 const missingResources =
                     repository.workingGroup.resourceStates.filter(
                         r => r.status === Status.MISSING
@@ -845,21 +847,34 @@ export class CommandCenter {
             if (
                 (numWorkingResources === 0 && numStagingResources === 0) || // no changes
                 (opts &&
-                    opts.scope === CommitScope.STAGED_CHANGES &&
+                    opts.scope === CommitScope.STAGING_GROUP &&
                     numStagingResources === 0) || // no staged changes
                 (opts &&
-                    opts.scope === CommitScope.CHANGES &&
+                    opts.scope === CommitScope.WORKING_GROUP &&
                     numWorkingResources === 0) // no working directory changes
             ) {
                 interaction.informNoChangesToCommit();
                 return false;
             }
         }
+        return true;
+    }
+
+    private async smartCommit(
+        repository: Repository,
+        getCommitMessage: () => Promise<string | undefined>,
+        opts: CommitOptions = { scope: CommitScope.UNKNOWN }
+    ): Promise<boolean> {
+        if (
+            !this.checkTrackedUnsavedFiles(repository) ||
+            !this.validateNoConflicts(repository, opts)
+        ) {
+            return false;
+        }
 
         const message = await getCommitMessage();
 
-        if (!message) {
-            // TODO@joao: show modal dialog to confirm empty message commit
+        if (message === undefined) {
             return false;
         }
 
@@ -870,7 +885,7 @@ export class CommandCenter {
 
     private async commitWithAnyInput(
         repository: Repository,
-        opts?: CommitOptions
+        opts: CommitOptions = { scope: CommitScope.UNKNOWN }
     ): Promise<void> {
         const inputBox = repository.sourceControl.inputBox;
         const message = inputBox.value;
@@ -905,7 +920,7 @@ export class CommandCenter {
     @command('fossil.commitStaged', { repository: true })
     async commitStaged(repository: Repository): Promise<void> {
         await this.commitWithAnyInput(repository, {
-            scope: CommitScope.STAGED_CHANGES,
+            scope: CommitScope.STAGING_GROUP,
         });
     }
 

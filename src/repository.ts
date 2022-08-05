@@ -287,9 +287,10 @@ function isReadOnly(operation: Operation): boolean {
 }
 
 export const enum CommitScope {
-    ALL,
-    STAGED_CHANGES,
-    CHANGES,
+    UNKNOWN, // try STAGING_GROUP, but if none, try WORKING_GROUP
+    ALL, // don't use file from any group, useful for merge commit
+    STAGING_GROUP,
+    WORKING_GROUP,
 }
 
 export interface CommitOptions {
@@ -743,11 +744,11 @@ export class Repository implements IDisposable {
     ): Promise<void> {
         await this.runWithProgress(Operation.Commit, async () => {
             let fileList: string[] = [];
-            if (opts.scope === CommitScope.STAGED_CHANGES) {
+            if (opts.scope === CommitScope.STAGING_GROUP) {
                 fileList = this.stagingGroup.resourceStates.map(r =>
                     this.mapResourceToRepoRelativePath(r)
                 );
-            } else if (opts.scope === CommitScope.CHANGES) {
+            } else if (opts.scope === CommitScope.WORKING_GROUP) {
                 fileList = this.workingGroup.resourceStates.map(r =>
                     this.mapResourceToRepoRelativePath(r)
                 );
