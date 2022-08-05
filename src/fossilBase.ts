@@ -601,9 +601,11 @@ export class Repository {
 
     async commit(
         message: string,
-        opts: { fileList: string[]; user?: string | undefined } = Object.create(
-            null
-        )
+        opts: {
+            fileList: string[];
+            user?: string | undefined;
+            branch: FossilBranch | undefined;
+        }
     ): Promise<void> {
         const disposables: IDisposable[] = [];
         const args = ['commit'];
@@ -612,13 +614,14 @@ export class Repository {
             args.push('--user-override', opts.user);
         }
 
-        if (opts.fileList.length) {
-            args.push(...opts.fileList);
+        args.push(...opts.fileList);
+        if (opts.branch !== undefined) {
+            args.push('--branch', opts.branch);
         }
 
-        if (message?.length) {
-            args.push('-m', message);
-        }
+        // always pass a message, otherwise fossil
+        // internal editor will spawn
+        args.push('-m', message);
 
         try {
             await this.exec(args);

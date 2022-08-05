@@ -960,7 +960,7 @@ export namespace interaction {
             return message;
         }
 
-        return await window.showInputBox({
+        return window.showInputBox({
             value: defaultMessage,
             placeHolder: localize('commit message', 'Commit message'),
             prompt: localize(
