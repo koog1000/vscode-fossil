@@ -33,6 +33,7 @@ import {
     MergeAction,
     FossilHash,
     FossilSpecialTags,
+    FossilBranch,
 } from './fossilBase';
 import { Model } from './model';
 import {
@@ -871,6 +872,9 @@ export class CommandCenter {
         ) {
             return false;
         }
+        const branch: FossilBranch | undefined =
+            (opts.useBranch || undefined) &&
+            (await interaction.inputNewBranchName());
 
         const message = await getCommitMessage();
 
@@ -878,7 +882,7 @@ export class CommandCenter {
             return false;
         }
 
-        await repository.commit(message, opts);
+        await repository.commit(message, opts.scope, branch);
 
         return true;
     }
@@ -927,6 +931,14 @@ export class CommandCenter {
     @command('fossil.commitAll', { repository: true })
     async commitAll(repository: Repository): Promise<void> {
         await this.commitWithAnyInput(repository, { scope: CommitScope.ALL });
+    }
+
+    @command('fossil.commitBranch', { repository: true })
+    async commitBranch(repository: Repository): Promise<void> {
+        await this.commitWithAnyInput(repository, {
+            scope: CommitScope.UNKNOWN,
+            useBranch: true,
+        });
     }
 
     private focusScm() {

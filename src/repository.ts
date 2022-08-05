@@ -295,6 +295,7 @@ export const enum CommitScope {
 
 export interface CommitOptions {
     scope: CommitScope;
+    useBranch?: boolean;
 }
 
 export class Repository implements IDisposable {
@@ -740,21 +741,22 @@ export class Repository implements IDisposable {
     @throttle
     async commit(
         message: string,
-        opts: CommitOptions = Object.create(null)
+        scope: CommitScope,
+        branch: FossilBranch | undefined
     ): Promise<void> {
         await this.runWithProgress(Operation.Commit, async () => {
             let fileList: string[] = [];
-            if (opts.scope === CommitScope.STAGING_GROUP) {
+            if (scope === CommitScope.STAGING_GROUP) {
                 fileList = this.stagingGroup.resourceStates.map(r =>
                     this.mapResourceToRepoRelativePath(r)
                 );
-            } else if (opts.scope === CommitScope.WORKING_GROUP) {
+            } else if (scope === CommitScope.WORKING_GROUP) {
                 fileList = this.workingGroup.resourceStates.map(r =>
                     this.mapResourceToRepoRelativePath(r)
                 );
             }
             const user = typedConfig.username;
-            await this.repository.commit(message, { fileList, user });
+            await this.repository.commit(message, { fileList, user, branch });
             return;
         });
     }
