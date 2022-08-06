@@ -4,6 +4,13 @@
 
 ### What's New
 - Buttons to delete 'Untracked Files' and revert files in other groups
+- Action to commit to a new branch
+- Commit actions are grouped in a submenu
+- Input project name and description on a new project initialization (2.18+)
+
+### Bug Fixes
+- Message 'Fossil: file _FILENAME_ does not exist in check-in current'
+  was popping up when openning an untracked file was opened
 
 # v0.1.5
 
