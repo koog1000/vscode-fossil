@@ -1186,6 +1186,19 @@ export class CommandCenter {
         this.outputChannel.show();
     }
 
+    @command('fossil.openui', { repository: true })
+    async openUi(repository: Repository): Promise<void> {
+        const terminal = window.createTerminal({
+            name: 'Fossil UI',
+            cwd: repository.root,
+        });
+        terminal.sendText('fossil ui', true);
+        //  await commands.executeCommand<void>(
+        //     'simpleBrowser.show',
+        //     'http://127.0.0.1:8000'
+        //     );
+    }
+
     createLogMenuAPI(repository: Repository): LogMenuAPI {
         return {
             getBranchName: () => repository.currentBranch,
