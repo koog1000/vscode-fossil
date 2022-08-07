@@ -743,9 +743,7 @@ export class Repository {
                     message: `Unexpected undo result: ${JSON.stringify(
                         result.stdout
                     )}`,
-                    stdout: result.stdout,
-                    stderr: result.stderr,
-                    exitCode: result.exitCode,
+                    ...result,
                     fossilCommand: 'undo',
                 });
             }
