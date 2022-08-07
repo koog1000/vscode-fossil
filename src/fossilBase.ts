@@ -432,7 +432,11 @@ export class Fossil {
                     /specify the repository database/.test(result.stderr)
                 ) {
                     return 'NotAFossilRepository';
-                } else if (/^(file .* does not exist in check-in|no such file:) /.test(result.stderr)) {
+                } else if (
+                    /^(file .* does not exist in check-in|no such file:) /.test(
+                        result.stderr
+                    )
+                ) {
                     return 'NoSuchFile';
                 } else if (/--force\b/.test(result.stderr)) {
                     return 'OperationMustBeforced';
