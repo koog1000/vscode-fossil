@@ -757,7 +757,8 @@ export class Repository {
         } catch (error) {
             if (
                 error instanceof FossilError &&
-                /nothing to undo/.test(error.stderr || '')
+                (/^nothing to undo/.test(error.stderr) || // non dry
+                    /^No undo or redo is available/.test(error.stdout)) // dry
             ) {
                 error.fossilErrorCode = 'NoUndoInformationAvailable';
             }
