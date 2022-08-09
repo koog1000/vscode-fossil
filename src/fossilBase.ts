@@ -43,6 +43,8 @@ export type FossilCheckin =
 export type StatusString = Distinct<string, 'fossil status stdout'>;
 export type FossilExecutablePath = Distinct<string, 'fossil executable path'>;
 export type FossilVersion = Distinct<number[], 'fossil version'>;
+/** Command returned by `fossil undo --dry-run` */
+export type FossilUndoCommand = Distinct<string, 'Undo Command'>;
 export const enum MergeAction {
     Merge,
     Integrate,
@@ -239,11 +241,6 @@ export interface IFossilErrorData {
     fossilCommand?: string;
 }
 
-export class FossilUndoDetails {
-    revision!: number;
-    kind!: string;
-}
-
 export class FossilError implements IFossilErrorData {
     message: string;
     stdout: string;
@@ -432,7 +429,11 @@ export class Fossil {
                     /specify the repository database/.test(result.stderr)
                 ) {
                     return 'NotAFossilRepository';
-                } else if (/^(file .* does not exist in check-in|no such file:) /.test(result.stderr)) {
+                } else if (
+                    /^(file .* does not exist in check-in|no such file:) /.test(
+                        result.stderr
+                    )
+                ) {
                     return 'NoSuchFile';
                 } else if (/--force\b/.test(result.stderr)) {
                     return 'OperationMustBeforced';
@@ -721,46 +722,48 @@ export class Repository {
         window.showTextDocument(document);
     }
 
-    async undo(dryRun?: boolean): Promise<FossilUndoDetails> {
-        const args = ['undo'];
+    async undoOrRedo<DRY extends boolean>(
+        command: 'undo' | 'redo',
+        dryRun: DRY
+    ): Promise<FossilUndoCommand | undefined>;
+    async undoOrRedo(
+        command: 'undo' | 'redo',
+        dryRun: boolean
+    ): Promise<FossilUndoCommand | undefined> {
+        const args: string[] = [command];
 
         if (dryRun) {
             args.push('--dry-run');
         }
 
-        try {
-            const result = await this.exec(args);
-            const match = /back to revision (\d+) \(undo (.*)\)/.exec(
+        const result = await this.exec(args);
+        if (result.exitCode == 0 && !dryRun) {
+            return;
+        }
+        const match =
+            /A(n un| re)do is available for the following command:\s+(.*)/.exec(
                 result.stdout
             );
 
-            if (!match) {
-                throw new FossilError({
-                    message: `Unexpected undo result: ${JSON.stringify(
-                        result.stdout
-                    )}`,
-                    stdout: result.stdout,
-                    stderr: result.stderr,
-                    exitCode: result.exitCode,
-                    fossilCommand: 'undo',
-                });
-            }
-
-            const [_, revision, kind] = match;
-
-            return {
-                revision: parseInt(revision),
-                kind,
-            };
-        } catch (error) {
+        if (!match) {
+            const error = new FossilError({
+                message: `Unexpected undo result: ${JSON.stringify(
+                    result.stdout
+                )}`,
+                ...result,
+                fossilCommand: command,
+            });
             if (
-                error instanceof FossilError &&
-                /nothing to undo/.test(error.stderr || '')
+                /^nothing to undo/.test(result.stderr) || // non dry
+                /^No undo or redo is available/.test(result.stdout) // dry
             ) {
                 error.fossilErrorCode = 'NoUndoInformationAvailable';
             }
+
             throw error;
         }
+
+        return match[2] as FossilUndoCommand;
     }
 
     async revertFiles(treeish: string, paths: string[]): Promise<void> {

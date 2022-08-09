@@ -18,7 +18,6 @@ import {
     InputBoxOptions,
 } from 'vscode';
 import {
-    FossilUndoDetails,
     Commit,
     LogEntryOptions,
     CommitDetails,
@@ -32,6 +31,7 @@ import {
     FossilCheckin,
     FossilHash,
     FossilSpecialTags,
+    FossilUndoCommand,
 } from './fossilBase';
 import { humanise } from './humanise';
 import { Repository, LogEntriesOptions } from './repository';
@@ -316,9 +316,12 @@ export namespace interaction {
         );
     }
 
-    export function warnNoUndo(this: void): Thenable<string | undefined> {
+    export function warnNoUndoOrRedo(
+        this: void,
+        command: 'undo' | 'redo'
+    ): Thenable<string | undefined> {
         return window.showWarningMessage(
-            localize('no undo', 'Nothing to undo.')
+            localize(`no ${command}`, `Nothing to ${command}.`)
         );
     }
 
@@ -931,25 +934,22 @@ export namespace interaction {
         );
     }
 
-    export async function confirmUndo({
-        revision,
-        kind,
-    }: FossilUndoDetails): Promise<boolean> {
-        // prompt
-        console.log('confirmUndo with args' + revision + kind);
-        const undo = 'Undo';
+    export async function confirmUndoOrRedo(
+        command: 'undo' | 'redo',
+        command_text: FossilUndoCommand
+    ): Promise<boolean> {
+        const confirmText = command[0].toUpperCase() + command.slice(1);
         const message = localize(
-            'undo',
-            'Undo to revision {0}? (undo {1})',
-            revision,
-            kind
+            command,
+            `${confirmText} '{0}'?`,
+            command_text
         );
         const choice = await window.showInformationMessage(
             message,
             { modal: true },
-            undo
+            confirmText
         );
-        return choice === undo;
+        return choice === confirmText;
     }
 
     export async function inputCommitMessage(

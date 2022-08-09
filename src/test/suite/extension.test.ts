@@ -13,6 +13,10 @@ import {
 import { fossil_close, fossil_merge } from './test_commands';
 import { fossil_file_log_can_diff_files } from './test_log';
 import { fossilInit, fossilOpen } from './common';
+import {
+    fossil_undo_and_redo_warning,
+    fossil_undo_and_redo_working,
+} from './test_undo_redo';
 
 async function createFossil(): Promise<Fossil> {
     const outputChannel = window.createOutputChannel('Fossil.Test');
@@ -80,4 +84,8 @@ suite('Fossil', () => {
         )).timeout(10000);
     test('fossil file log can differ files', () =>
         fossil_file_log_can_diff_files(sandbox, fossil)).timeout(10000);
+    test('fossil undo and redo warning', () =>
+        fossil_undo_and_redo_warning(sandbox, fossil)).timeout(5000);
+    test('fossil undo and redo working', () =>
+        fossil_undo_and_redo_working(sandbox, fossil)).timeout(15000);
 });

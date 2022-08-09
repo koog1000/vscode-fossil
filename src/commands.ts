@@ -945,21 +945,30 @@ export class CommandCenter {
         commands.executeCommand('workbench.view.scm');
     }
 
-    @command('fossil.undo', { repository: true })
-    async undo(repository: Repository): Promise<void> {
+    private async undoOrRedo(repository: Repository, command: 'undo' | 'redo') {
         try {
-            const undo = await repository.undo(true); // dry-run
-            if (await interaction.confirmUndo(undo)) {
-                await repository.undo(false); // real-thing
+            const undo = await repository.undoOrRedo(command, true); // dry-run
+            if (await interaction.confirmUndoOrRedo(command, undo)) {
+                await repository.undoOrRedo(command, false); // real-thing
             }
         } catch (e) {
             if (
                 e instanceof FossilError &&
                 e.fossilErrorCode === 'NoUndoInformationAvailable'
             ) {
-                await interaction.warnNoUndo();
+                await interaction.warnNoUndoOrRedo(command);
             }
         }
+    }
+
+    @command('fossil.undo', { repository: true })
+    async undo(repository: Repository): Promise<void> {
+        return this.undoOrRedo(repository, 'undo');
+    }
+
+    @command('fossil.redo', { repository: true })
+    async redo(repository: Repository): Promise<void> {
+        return this.undoOrRedo(repository, 'redo');
     }
 
     @command('fossil.patchCreate', { repository: true })

@@ -20,6 +20,7 @@
     "command.commitAll": "Commit All",
     "command.commitBranch": "Commit Creating New Branch...",
     "command.undo": "Undo",
+    "command.redo": "Redo",
     "command.update": "Update to...",
     "command.branch": "Create Branch...",
     "command.pull": "Pull",
