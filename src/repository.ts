@@ -962,11 +962,11 @@ export class Repository implements IDisposable {
 
                     if (e.exitCode !== 0) {
                         throw new FossilError({
+                            ...e,
                             message: localize(
                                 'cantshow',
                                 'Could not show object'
                             ),
-                            exitCode: e.exitCode,
                         });
                     }
                 }
