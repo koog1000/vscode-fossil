@@ -255,6 +255,11 @@
                 "category": "Fossil"
             },
             {
+                "command": "fossil.redo",
+                "title": "%command.redo%",
+                "category": "Fossil"
+            },
+            {
                 "command": "fossil.unresolve",
                 "title": "%command.unresolve%",
                 "category": "Fossil"
@@ -391,6 +396,10 @@
                     "when": "config.fossil.enabled && fossilOpenRepositoryCount != 0"
                 },
                 {
+                    "command": "fossil.redo",
+                    "when": "config.fossil.enabled && fossilOpenRepositoryCount != 0"
+                },
+                {
                     "command": "fossil.update",
                     "when": "config.fossil.enabled && fossilOpenRepositoryCount != 0"
                 },
@@ -478,7 +487,12 @@
                 },
                 {
                     "command": "fossil.undo",
-                    "group": "3_commit",
+                    "group": "3_commit@0",
+                    "when": "config.fossil.enabled && scmProvider == fossil"
+                },
+                {
+                    "command": "fossil.redo",
+                    "group": "3_commit@1",
                     "when": "config.fossil.enabled && scmProvider == fossil"
                 },
                 {

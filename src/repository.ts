@@ -22,7 +22,6 @@ import {
     IMergeResult,
     CommitDetails,
     TimelineOptions,
-    FossilUndoDetails,
     FossilRoot,
     BranchDetails,
     FossilCheckin,
@@ -34,6 +33,7 @@ import {
     FossilRemote,
     FossilRemoteName,
     FossilURI,
+    FossilUndoCommand,
 } from './fossilBase';
 import {
     anyEvent,
@@ -831,12 +831,19 @@ export class Repository implements IDisposable {
         return true;
     }
 
+    async undoOrRedo<T extends boolean>(
+        command: 'undo' | 'redo',
+        dryRun: T
+    ): Promise<T extends true ? FossilUndoCommand : undefined>;
+
     @throttle
-    async undo(dryRun: boolean): Promise<FossilUndoDetails> {
+    async undoOrRedo(
+        command: 'undo' | 'redo',
+        dryRun: boolean
+    ): Promise<FossilUndoCommand | undefined> {
         const op = dryRun ? Operation.UndoDryRun : Operation.Undo;
-        console.log('Running undo with dryrun ' + dryRun);
         const undo = await this.runWithProgress(op, () =>
-            this.repository.undo(dryRun)
+            this.repository.undoOrRedo(command, dryRun)
         );
 
         return undo;
