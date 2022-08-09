@@ -70,7 +70,18 @@ const timeout = (millis: number) => new Promise(c => setTimeout(c, millis));
 const localize = nls.loadMessageBundle();
 const iconsRootPath = path.join(path.dirname(__dirname), 'resources', 'icons');
 
-function getIconUri(iconName: string, theme: string): Uri {
+type AvailableIcons =
+    | 'status-added'
+    | 'status-clean'
+    | 'status-conflict'
+    | 'status-deleted'
+    | 'status-ignored'
+    | 'status-missing'
+    | 'status-modified'
+    | 'status-renamed'
+    | 'status-untracked';
+
+function getIconUri(iconName: AvailableIcons, theme: 'dark' | 'light'): Uri {
     return Uri.file(path.join(iconsRootPath, theme, `${iconName}.svg`));
 }
 
@@ -80,12 +91,12 @@ export interface LogEntriesOptions
     limit?: TimelineOptions['limit'];
 }
 
-export enum RepositoryState {
+export const enum RepositoryState {
     Idle,
     Disposed,
 }
 
-export enum Status {
+export const enum Status {
     MODIFIED,
     ADDED,
     DELETED,
@@ -97,7 +108,9 @@ export enum Status {
     CONFLICT,
 }
 
-export enum MergeStatus {
+type ThemeName = 'light' | 'dark';
+
+export const enum MergeStatus {
     NONE,
     UNRESOLVED,
     RESOLVED,
@@ -164,64 +177,41 @@ export class FossilResource implements SourceControlResourceState {
         return this._mergeStatus;
     }
 
-    private static Icons: { [key: string]: any } = {
+    private static Icons: { [key in ThemeName]: { [key in Status]: Uri } } = {
         light: {
-            Modified: getIconUri('status-modified', 'light'),
-            Missing: getIconUri('status-missing', 'light'),
-            Added: getIconUri('status-added', 'light'),
-            Deleted: getIconUri('status-deleted', 'light'),
-            Renamed: getIconUri('status-renamed', 'light'),
-            // Copied: getIconUri('status-copied', 'light'),
-            Untracked: getIconUri('status-untracked', 'light'),
-            Ignored: getIconUri('status-ignored', 'light'),
-            Conflict: getIconUri('status-conflict', 'light'),
-            Unmodified: getIconUri('status-clean', 'light'),
+            [Status.MODIFIED]: getIconUri('status-modified', 'light'),
+            [Status.MISSING]: getIconUri('status-missing', 'light'),
+            [Status.ADDED]: getIconUri('status-added', 'light'),
+            [Status.DELETED]: getIconUri('status-deleted', 'light'),
+            [Status.RENAMED]: getIconUri('status-renamed', 'light'),
+            [Status.UNTRACKED]: getIconUri('status-untracked', 'light'),
+            [Status.IGNORED]: getIconUri('status-ignored', 'light'),
+            [Status.CONFLICT]: getIconUri('status-conflict', 'light'),
+            [Status.UNMODIFIED]: getIconUri('status-clean', 'light'),
         },
         dark: {
-            Modified: getIconUri('status-modified', 'dark'),
-            Missing: getIconUri('status-missing', 'dark'),
-            Added: getIconUri('status-added', 'dark'),
-            Deleted: getIconUri('status-deleted', 'dark'),
-            Renamed: getIconUri('status-renamed', 'dark'),
-            // Copied: getIconUri('status-copied', 'dark'),
-            Untracked: getIconUri('status-untracked', 'dark'),
-            Ignored: getIconUri('status-ignored', 'dark'),
-            Conflict: getIconUri('status-conflict', 'dark'),
-            Unmodified: getIconUri('status-clean', 'dark'),
+            [Status.MODIFIED]: getIconUri('status-modified', 'dark'),
+            [Status.MISSING]: getIconUri('status-missing', 'dark'),
+            [Status.ADDED]: getIconUri('status-added', 'dark'),
+            [Status.DELETED]: getIconUri('status-deleted', 'dark'),
+            [Status.RENAMED]: getIconUri('status-renamed', 'dark'),
+            [Status.UNTRACKED]: getIconUri('status-untracked', 'dark'),
+            [Status.IGNORED]: getIconUri('status-ignored', 'dark'),
+            [Status.CONFLICT]: getIconUri('status-conflict', 'dark'),
+            [Status.UNMODIFIED]: getIconUri('status-clean', 'dark'),
         },
     };
 
-    private getIconPath(theme: string): Uri | undefined {
+    private getIconPath(theme: ThemeName): Uri {
         if (
             this.mergeStatus === MergeStatus.UNRESOLVED &&
             this.status !== Status.MISSING &&
             this.status !== Status.DELETED
         ) {
-            return FossilResource.Icons[theme].Conflict;
+            return FossilResource.Icons[theme][Status.CONFLICT];
         }
 
-        switch (this.status) {
-            case Status.MISSING:
-                return FossilResource.Icons[theme].Missing;
-            case Status.MODIFIED:
-                return FossilResource.Icons[theme].Modified;
-            case Status.ADDED:
-                return FossilResource.Icons[theme].Added;
-            case Status.DELETED:
-                return FossilResource.Icons[theme].Deleted;
-            case Status.RENAMED:
-                return FossilResource.Icons[theme].Renamed;
-            case Status.UNTRACKED:
-                return FossilResource.Icons[theme].Untracked;
-            case Status.IGNORED:
-                return FossilResource.Icons[theme].Ignored;
-            case Status.UNMODIFIED:
-                return FossilResource.Icons[theme].Unmodified;
-            case Status.CONFLICT:
-                return FossilResource.Icons[theme].Conflict;
-            default:
-                return void 0;
-        }
+        return FossilResource.Icons[theme][this.status];
     }
 
     private get strikeThrough(): boolean {
@@ -962,11 +952,11 @@ export class Repository implements IDisposable {
 
                     if (e.exitCode !== 0) {
                         throw new FossilError({
+                            ...e,
                             message: localize(
                                 'cantshow',
                                 'Could not show object'
                             ),
-                            exitCode: e.exitCode,
                         });
                     }
                 }
