@@ -27,21 +27,24 @@ export type FossilRoot = Distinct<FossilCWD, 'local root'>;
  * * [file://]path/to/repo.fossil
  */
 export type FossilURI = Distinct<string, 'Fossil URI'>;
+/** Name shown by `fossil remote ls` command */
 export type FossilRemoteName = Distinct<string, 'Fossil Remote Name'>;
 /** https://fossil-scm.org/home/doc/trunk/www/checkin_names.wiki */
 export type FossilBranch = Distinct<string, 'Fossil Branch Name'>;
 /** https://fossil-scm.org/home/doc/trunk/www/checkin_names.wiki#special */
 export const FossilSpecialTagsList = ['current', 'parent', 'tip'] as const;
 export type FossilSpecialTags = typeof FossilSpecialTagsList[number];
-export type FossilTag = Distinct<string, 'Fossil Tag Name'>;
+export type FossilTag = Distinct<string, 'Fossil Tag Name'> | 'closed';
 export type FossilHash = Distinct<string, 'Fossil SHA Hash'>;
 export type FossilCheckin =
     | FossilBranch
     | FossilTag
     | FossilHash
     | FossilSpecialTags;
+/** Stdout of `fossil status` command */
 export type StatusString = Distinct<string, 'fossil status stdout'>;
 export type FossilExecutablePath = Distinct<string, 'fossil executable path'>;
+/** usually two numbers like [2,19] */
 export type FossilVersion = Distinct<number[], 'fossil version'>;
 /** Command returned by `fossil undo --dry-run` */
 export type FossilUndoCommand = Distinct<string, 'Undo Command'>;
@@ -642,6 +645,7 @@ export class Repository {
     }
 
     async getCurrentBranch(): Promise<FossilBranch | undefined> {
+        // bad? `fossil branch current` should show the branch
         const branches = await this.getBranches();
         const currBranch = branches.find(branch => branch.isCurrent)?.name;
         return currBranch;

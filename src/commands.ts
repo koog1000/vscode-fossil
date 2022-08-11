@@ -1127,11 +1127,7 @@ export class CommandCenter {
         const checkin = await interaction.pickCommitToCherrypick(logEntries);
 
         if (checkin) {
-            return await this.doMerge(
-                repository,
-                checkin,
-                MergeAction.Cherrypick
-            );
+            return this.doMerge(repository, checkin, MergeAction.Cherrypick);
         }
     }
 
