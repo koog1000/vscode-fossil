@@ -1091,9 +1091,12 @@ export class CommandCenter {
         }
 
         const openedBranches = await repository.getBranches();
-        const branch = await interaction.pickHead(openedBranches, placeholder);
+        const branch = await interaction.pickBranch(
+            openedBranches,
+            placeholder
+        );
         if (branch) {
-            return await this.doMerge(repository, branch, mergeAction);
+            return this.doMerge(repository, branch, mergeAction);
         }
     }
 

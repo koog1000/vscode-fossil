@@ -560,10 +560,10 @@ export namespace interaction {
         return input as FossilBranch | undefined;
     }
 
-    export async function pickHead(
+    export async function pickBranch(
         branches: BranchDetails[],
         placeHolder: string
-    ): Promise<FossilCheckin | undefined> {
+    ): Promise<FossilBranch | undefined> {
         const headChoices = branches.map(head => new UpdateBranchItem(head));
         const choice = await window.showQuickPick(headChoices, { placeHolder });
         return choice?.checkin;
@@ -572,7 +572,9 @@ export namespace interaction {
     export async function pickUpdateRevision(
         refs: [BranchDetails[], FossilTag[]],
         unclean = false
-    ): Promise<UpdatingItem | undefined> {
+    ): Promise<
+        UpdatingItem<FossilBranch> | UpdatingItem<FossilTag> | undefined
+    > {
         const branches = refs[0].map(ref => new UpdateBranchItem(ref));
         const tags = refs[1].map(ref => new UpdateTagItem(ref));
         const picks = [...branches, ...tags];
@@ -1208,15 +1210,18 @@ class RunnableTimelineEntryItem extends TimelineEntryItem {
     }
 }
 
-abstract class UpdatingItem {
-    constructor(public checkin: FossilCheckin) {}
+abstract class UpdatingItem<T extends FossilCheckin> {
+    constructor(public checkin: T) {}
 
     async run(repository: Repository): Promise<void> {
         await repository.update(this.checkin);
     }
 }
 
-class UpdateBranchItem extends UpdatingItem implements QuickPickItem {
+class UpdateBranchItem
+    extends UpdatingItem<FossilBranch>
+    implements QuickPickItem
+{
     get label(): string {
         return `$(git-branch) ${this.checkin}`;
     }
@@ -1231,7 +1236,7 @@ class UpdateBranchItem extends UpdatingItem implements QuickPickItem {
     }
 }
 
-class UpdateTagItem extends UpdatingItem implements QuickPickItem {
+class UpdateTagItem extends UpdatingItem<FossilTag> implements QuickPickItem {
     get label(): string {
         return `$(tag) ${this.checkin}`;
     }
