@@ -1174,6 +1174,32 @@ export class CommandCenter {
         }
     }
 
+    @command('fossil.closeBranch', { repository: true })
+    async closeBranch(repository: Repository): Promise<void> {
+        const openedBranches = await repository.getBranches();
+        const placeholder = localize('branchtoclose', 'Branch to close');
+        const branch = await interaction.pickBranch(
+            openedBranches,
+            placeholder
+        );
+        if (branch) {
+            return repository.addTag(branch, 'closed');
+        }
+    }
+
+    @command('fossil.reopenBranch', { repository: true })
+    async reopenBranch(repository: Repository): Promise<void> {
+        const openedBranches = await repository.getBranches({ closed: true });
+        const placeholder = localize('branchtoreopen', 'Branch to reopen');
+        const branch = await interaction.pickBranch(
+            openedBranches,
+            placeholder
+        );
+        if (branch) {
+            return repository.cancelTag(branch, 'closed');
+        }
+    }
+
     @command('fossil.push', { repository: true })
     async push(repository: Repository): Promise<void> {
         await repository.push(undefined);

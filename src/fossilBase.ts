@@ -674,6 +674,17 @@ export class Repository {
         }
     }
 
+    async addTag(fossilBranch: FossilBranch, tag: FossilTag): Promise<void> {
+        await this.exec(['tag', 'add', '--raw', tag, fossilBranch]);
+    }
+
+    async cancelTag(
+        fossilBranch: FossilCheckin,
+        tag: FossilTag
+    ): Promise<void> {
+        await this.exec(['tag', 'cancel', '--raw', tag, fossilBranch]);
+    }
+
     async revert(paths: string[]): Promise<void> {
         const pathsByGroup = groupBy(paths, p => path.dirname(p));
         const groups = Object.keys(pathsByGroup).map(k => pathsByGroup[k]);
@@ -1063,8 +1074,12 @@ export class Repository {
         return tags;
     }
 
-    async getBranches(): Promise<BranchDetails[]> {
-        const branchesResult = await this.exec(['branch', 'ls', '-t']);
+    async getBranches(opts: { closed?: true } = {}): Promise<BranchDetails[]> {
+        const args = ['branch', 'ls', '-t'];
+        if (opts.closed) {
+            args.push('-c');
+        }
+        const branchesResult = await this.exec(args);
         const branches = Array.from(
             branchesResult.stdout.matchAll(
                 // Fossil branch names can have spaces and all other characters.
