@@ -149,6 +149,11 @@
                 "category": "Fossil"
             },
             {
+                "command": "fossil.closeBranch",
+                "title": "Close branch...",
+                "category": "Fossil"
+            },
+            {
                 "command": "fossil.log",
                 "title": "%command.log%",
                 "category": "Fossil"
@@ -223,6 +228,12 @@
             {
                 "command": "fossil.refresh",
                 "title": "%command.refresh%",
+                "category": "Fossil",
+                "icon": "$(refresh)"
+            },
+            {
+                "command": "fossil.reopenBranch",
+                "title": "Reopen branch...",
                 "category": "Fossil",
                 "icon": "$(refresh)"
             },

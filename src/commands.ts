@@ -1091,9 +1091,12 @@ export class CommandCenter {
         }
 
         const openedBranches = await repository.getBranches();
-        const branch = await interaction.pickHead(openedBranches, placeholder);
+        const branch = await interaction.pickBranch(
+            openedBranches,
+            placeholder
+        );
         if (branch) {
-            return await this.doMerge(repository, branch, mergeAction);
+            return this.doMerge(repository, branch, mergeAction);
         }
     }
 
@@ -1124,11 +1127,7 @@ export class CommandCenter {
         const checkin = await interaction.pickCommitToCherrypick(logEntries);
 
         if (checkin) {
-            return await this.doMerge(
-                repository,
-                checkin,
-                MergeAction.Cherrypick
-            );
+            return this.doMerge(repository, checkin, MergeAction.Cherrypick);
         }
     }
 
@@ -1172,6 +1171,32 @@ export class CommandCenter {
             }
 
             throw e;
+        }
+    }
+
+    @command('fossil.closeBranch', { repository: true })
+    async closeBranch(repository: Repository): Promise<void> {
+        const openedBranches = await repository.getBranches();
+        const placeholder = localize('branchtoclose', 'Branch to close');
+        const branch = await interaction.pickBranch(
+            openedBranches,
+            placeholder
+        );
+        if (branch) {
+            return repository.addTag(branch, 'closed');
+        }
+    }
+
+    @command('fossil.reopenBranch', { repository: true })
+    async reopenBranch(repository: Repository): Promise<void> {
+        const openedBranches = await repository.getBranches({ closed: true });
+        const placeholder = localize('branchtoreopen', 'Branch to reopen');
+        const branch = await interaction.pickBranch(
+            openedBranches,
+            placeholder
+        );
+        if (branch) {
+            return repository.cancelTag(branch, 'closed');
         }
     }
 

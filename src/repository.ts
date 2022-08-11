@@ -928,6 +928,14 @@ export class Repository implements IDisposable {
         });
     }
 
+    addTag(fossilBranch: FossilBranch, tag: FossilTag): Promise<void> {
+        return this.repository.addTag(fossilBranch, tag);
+    }
+
+    cancelTag(fossilCheckin: FossilCheckin, tag: FossilTag): Promise<void> {
+        return this.repository.cancelTag(fossilCheckin, tag);
+    }
+
     async show(params: FossilUriParams): Promise<string> {
         // TODO@Joao: should we make this a general concept?
         await this.whenIdleAndFocused();
@@ -1067,8 +1075,8 @@ export class Repository implements IDisposable {
     }
 
     @throttle
-    public getBranches(): Promise<BranchDetails[]> {
-        return this.repository.getBranches();
+    public getBranches(opts: { closed?: true } = {}): Promise<BranchDetails[]> {
+        return this.repository.getBranches(opts);
     }
 
     @throttle
