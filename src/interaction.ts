@@ -37,11 +37,6 @@ import { humanise } from './humanise';
 import { Repository, LogEntriesOptions } from './repository';
 const localize = nls.loadMessageBundle();
 
-const USE_CHANGED = 'Use changed version';
-const LEAVE_DELETED = 'Leave deleted';
-const LEAVE_UNRESOLVED = 'Leave unresolved';
-const DELETE = 'Delete';
-
 const SHORT_HASH_LENGTH = 12;
 const LONG_HASH_LENGTH = SHORT_HASH_LENGTH * 2;
 const BULLET = '\u2022';
@@ -211,46 +206,6 @@ export namespace interaction {
         }
     }
 
-    export function warnNonDistinctHeads(
-        nonDistinctHeads: string[]
-    ): Thenable<string | undefined> {
-        const nonDistinctHeadShortHashes = nonDistinctHeads
-            .map(h => h.slice(0, SHORT_HASH_LENGTH))
-            .join(', ');
-        return window.showWarningMessage(
-            localize(
-                'non distinct heads',
-                '{0} heads without bookmarks [{1}]. Set bookmark or merge heads before pushing.',
-                nonDistinctHeads.length,
-                nonDistinctHeadShortHashes
-            )
-        );
-    }
-
-    export function warnBranchMultipleHeads(
-        branchWithMultipleHeads: string
-    ): Thenable<string | undefined> {
-        return window.showWarningMessage(
-            localize(
-                'multi head branch',
-                "Branch '{0}' has multiple heads. Merge required before pushing.",
-                branchWithMultipleHeads
-            )
-        );
-    }
-
-    export function warnMergeOnlyOneHead(
-        branch?: string
-    ): Thenable<string | undefined> {
-        return window.showWarningMessage(
-            localize(
-                'only one head',
-                "There is only 1 head for branch '{0}'. Nothing to merge.",
-                branch
-            )
-        );
-    }
-
     export async function warnPushCreatesNewHead(
         this: void
     ): Promise<PushCreatesNewHeadAction> {
@@ -267,37 +222,6 @@ export namespace interaction {
             return PushCreatesNewHeadAction.Pull;
         }
         return PushCreatesNewHeadAction.None;
-    }
-
-    export async function warnPushCreatesNewBranchesAllow(
-        this: void
-    ): Promise<boolean> {
-        const warningMessage = localize(
-            'pushnewbranches',
-            'Push creates new remote branches. Allow?'
-        );
-        const allowOption = localize('allow', 'Allow');
-        const choice = await window.showWarningMessage(
-            warningMessage,
-            { modal: true },
-            allowOption
-        );
-        if (choice === allowOption) {
-            return true;
-        }
-        return false;
-    }
-
-    export function warnMultipleBranchMultipleHeads(
-        branchesWithMultipleHeads: string[]
-    ): Thenable<string | undefined> {
-        return window.showWarningMessage(
-            localize(
-                'multi head branches',
-                'These branches have multiple heads: {0}. Merges required before pushing.',
-                branchesWithMultipleHeads.join(',')
-            )
-        );
     }
 
     export async function warnNoPaths(type: 'pull' | 'push'): Promise<void> {
@@ -1125,42 +1049,6 @@ export namespace interaction {
             respOpt
         );
         return choice === respOpt;
-    }
-
-    export async function handleChoices(stdout: string): Promise<string> {
-        /* other [merge rev] changed letters.txt which local [working copy] deleted
-    use (c)hanged version, leave (d)eleted, or leave (u)nresolved*/
-        const [options, prompt, ..._] = stdout.split('\n').reverse();
-        const choices: string[] = [];
-        if (options.includes('(c)hanged')) {
-            choices.push(USE_CHANGED);
-        }
-        if (options.includes('leave (d)eleted')) {
-            choices.push(LEAVE_DELETED);
-        }
-        if (options.match(/\(d\)elete\b/)) {
-            choices.push(DELETE);
-        }
-        if (options.includes('(u)nresolved')) {
-            choices.push(LEAVE_UNRESOLVED);
-        }
-
-        const choice = await window.showQuickPick(choices, {
-            ignoreFocusOut: true,
-            placeHolder: prompt,
-        });
-        switch (choice) {
-            case USE_CHANGED:
-                return 'c';
-
-            case DELETE:
-            case LEAVE_DELETED:
-                return 'd';
-
-            case LEAVE_UNRESOLVED:
-            default:
-                return 'u';
-        }
     }
 
     export function errorUntrackedFilesDiffer(filenames: string[]): void {
