@@ -79,7 +79,7 @@ export namespace interaction {
 
     /** ask user for the new .fossil file location */
     export async function selectNewFossilPath(
-        saveLabel: string
+        saveLabel: 'Clone' | 'Create'
     ): Promise<FossilPath | undefined> {
         const defaultFossilFile = suggestPath();
         const uri = await window.showSaveDialog({
@@ -410,18 +410,20 @@ export namespace interaction {
     export async function selectFossilRootPath(
         this: void
     ): Promise<FossilRoot | undefined> {
-        const default_uri = workspace.workspaceFolders
+        const defaultUri = workspace.workspaceFolders
             ? workspace.workspaceFolders[0].uri
             : undefined;
         const uri = await window.showOpenDialog({
-            defaultUri: default_uri,
+            defaultUri: defaultUri,
             canSelectFiles: false,
             canSelectFolders: true,
             canSelectMany: false,
             title: localize('root_directory', 'Select Fossil Root Directory'),
         });
-        if (uri?.length) return uri[0].fsPath as FossilRoot;
-        return undefined;
+        if (uri?.length) {
+            return uri[0].fsPath as FossilRoot;
+        }
+        return;
     }
 
     export async function inputCloneUser(
@@ -786,7 +788,7 @@ export namespace interaction {
     }
 
     export async function pickLogSource(
-        branchName: string | undefined
+        branchName: FossilBranch | undefined
     ): Promise<LogSourcePickItem | undefined> {
         const branch: LogSourcePickItem = {
             label: `$(git-branch) ${branchName || '???'}`,
