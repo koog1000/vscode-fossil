@@ -1083,13 +1083,19 @@ export class Repository implements IDisposable {
     public async getCommitDetails(
         checkin: FossilCheckin
     ): Promise<CommitDetails> {
-        const commits = (await this.getLogEntries({
+        const commits = await this.getLogEntries({
             checkin: checkin,
             limit: 1,
             verbose: true,
-        })) as CommitDetails[];
-        return commits[0];
+        });
+        return commits[0]; // technically can be undefined. ignore.
     }
+
+    public getLogEntries(
+        options: LogEntriesOptions & { verbose: true }
+    ): Promise<CommitDetails[]>;
+
+    public getLogEntries(options?: LogEntriesOptions): Promise<Commit[]>;
 
     @throttle
     public getLogEntries(options: LogEntriesOptions = {}): Promise<Commit[]> {
