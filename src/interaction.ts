@@ -43,6 +43,7 @@ const LEAVE_UNRESOLVED = 'Leave unresolved';
 const DELETE = 'Delete';
 
 const SHORT_HASH_LENGTH = 12;
+const LONG_HASH_LENGTH = SHORT_HASH_LENGTH * 2;
 const BULLET = '\u2022';
 const NBSP = '\u00a0';
 
@@ -605,7 +606,7 @@ export namespace interaction {
     }
 
     function describeCommitOneLine(commit: Commit): string {
-        return `#${commit.hash} ${BULLET} ${
+        return `#${commit.hash.slice(0, LONG_HASH_LENGTH)} ${BULLET} ${
             commit.author
         }, ${humanise.ageFromNow(commit.date)} ${BULLET} ${commit.message}`;
     }
