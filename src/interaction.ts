@@ -560,9 +560,9 @@ export namespace interaction {
     }
 
     export async function presentLogSourcesMenu(
-        commands: LogMenuAPI
+        commands: InteractionAPI
     ): Promise<void> {
-        const branchName = commands.getBranchName();
+        const branchName = commands.currentBranch;
         const source = await interaction.pickLogSource(branchName);
         if (source) {
             const historyScope = localize('history scope', 'history scope');
@@ -581,7 +581,7 @@ export namespace interaction {
     export async function presentLogMenu(
         source: CommitSources,
         logOptions: LogEntryOptions,
-        commands: LogMenuAPI,
+        commands: InteractionAPI,
         back?: RunnableQuickPickItem
     ): Promise<void> {
         const entries = await commands.getLogEntries(logOptions);
@@ -599,7 +599,7 @@ export namespace interaction {
     async function pickCommitAsShowCommitDetailsRunnable(
         source: CommitSources,
         entries: Commit[],
-        commands: LogMenuAPI,
+        commands: InteractionAPI,
         back?: RunnableQuickPickItem
     ): Promise<RunnableQuickPickItem | undefined> {
         const backhere = asBackItem(
@@ -693,11 +693,11 @@ export namespace interaction {
     export async function presentCommitDetails(
         details: CommitDetails,
         back: RunnableQuickPickItem,
-        commands: LogMenuAPI
+        commands: InteractionAPI
     ): Promise<RunnableQuickPickItem | undefined> {
         const placeHolder = describeCommitOneLine(details);
         const fileActionFactory = (f: IFileStatus) => () => {
-            return commands.diffToParent(f, details);
+            return commands.diffToParent(f.path, details.hash);
         };
         const filePickItems = details.files.map(
             f => new FileStatusQuickPickItem(f, fileActionFactory(f))
@@ -764,7 +764,7 @@ export namespace interaction {
                 kind: QuickPickItemKind.Separator,
                 label: '',
                 run: () => {
-                    /* separator acrion */
+                    /* separator action */
                 },
                 description: '',
             } as RunnableQuickPickItem,
@@ -1190,9 +1190,9 @@ export class LiteralRunnableQuickPickItem extends RunnableQuickPickItem {
 
 type RunnableReturnType = Promise<any> | void;
 export type RunnableAction = () => RunnableReturnType;
-export interface LogMenuAPI {
-    getBranchName: () => FossilBranch | undefined;
+export interface InteractionAPI {
+    get currentBranch(): FossilBranch | undefined;
     getCommitDetails: (revision: FossilCheckin) => Promise<CommitDetails>;
     getLogEntries(options: LogEntriesOptions): Promise<Commit[]>;
-    diffToParent: (file: IFileStatus, commit: CommitDetails) => any;
+    diffToParent: (filePath: string, commit: FossilCheckin) => any;
 }

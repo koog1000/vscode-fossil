@@ -62,7 +62,11 @@ import {
     AutoInOutStatuses,
     AutoIncomingOutgoing,
 } from './autoinout';
-import { interaction, PushCreatesNewHeadAction } from './interaction';
+import {
+    interaction,
+    InteractionAPI,
+    PushCreatesNewHeadAction,
+} from './interaction';
 import { FossilUriParams, toFossilUri } from './uri';
 
 const timeout = (millis: number) => new Promise(c => setTimeout(c, millis));
@@ -288,7 +292,7 @@ export interface CommitOptions {
     useBranch?: boolean;
 }
 
-export class Repository implements IDisposable {
+export class Repository implements IDisposable, InteractionAPI {
     private _onDidChangeRepository = new EventEmitter<Uri>();
     readonly onDidChangeRepository: Event<Uri> =
         this._onDidChangeRepository.event;
@@ -1065,6 +1069,31 @@ export class Repository implements IDisposable {
         );
         // Exclude tags that are branches
         return [branches, tags.filter(tag => !branchesSet.has(tag))];
+    }
+
+    /** When user selects one of the modified files using 'fossil.log' command */
+    async diffToParent(
+        filePath: string,
+        checkin: FossilCheckin
+    ): Promise<void> {
+        const uri = this.toUri(filePath);
+        const parent: FossilCheckin = await this.getInfo(checkin, 'parent');
+        const left = toFossilUri(uri, parent);
+        const right = toFossilUri(uri, checkin);
+        const baseName = path.basename(uri.fsPath);
+        const title = `${baseName} (${parent.slice(0, 12)} vs. ${checkin.slice(
+            0,
+            12
+        )})`;
+
+        if (left && right) {
+            return await commands.executeCommand<void>(
+                'vscode.diff',
+                left,
+                right,
+                title
+            );
+        }
     }
 
     public async getInfo(

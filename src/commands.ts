@@ -24,8 +24,6 @@ import * as path from 'path';
 import {
     Fossil,
     FossilError,
-    IFileStatus,
-    CommitDetails,
     FossilPath,
     FossilRoot,
     FossilURI,
@@ -42,7 +40,6 @@ import {
     CommitOptions,
     CommitScope,
     MergeStatus,
-    LogEntriesOptions,
     Repository,
 } from './repository';
 import { FossilResourceGroup, isResourceGroup } from './resourceGroups';
@@ -51,7 +48,6 @@ import {
     BranchExistsAction,
     WarnScenario,
     CommitSources,
-    LogMenuAPI,
 } from './interaction';
 import { humanise } from './humanise';
 import { partition } from './util';
@@ -1233,24 +1229,9 @@ export class CommandCenter {
         //     );
     }
 
-    createLogMenuAPI(repository: Repository): LogMenuAPI {
-        return {
-            getBranchName: () => repository.currentBranch,
-            getCommitDetails: (checkin: FossilCheckin) =>
-                repository.getCommitDetails(checkin),
-            getLogEntries: (options: LogEntriesOptions) =>
-                repository.getLogEntries(options),
-            // diffToLocal: (_file: IFileStatus, _commit: CommitDetails) => { },
-            diffToParent: (file: IFileStatus, commit: CommitDetails) =>
-                this.diffFile(repository, commit.hash, file),
-        };
-    }
-
     @command('fossil.log', { repository: true })
     async log(repository: Repository): Promise<void> {
-        await interaction.presentLogSourcesMenu(
-            this.createLogMenuAPI(repository)
-        );
+        await interaction.presentLogSourcesMenu(repository);
     }
 
     @command('fossil.fileLog')
@@ -1312,35 +1293,6 @@ export class CommandCenter {
         textEditor.selections = [
             new Selection(firstStagedLine, 0, firstStagedLine, 0),
         ];
-    }
-
-    /** When user selects one of the modified files using 'fossil.log' command */
-    private async diffFile(
-        repository: Repository,
-        checkin: FossilCheckin,
-        file: IFileStatus
-    ): Promise<void> {
-        const uri = repository.toUri(file.path);
-        const parent: FossilCheckin = await repository.getInfo(
-            checkin,
-            'parent'
-        );
-        const left = toFossilUri(uri, parent);
-        const right = toFossilUri(uri, checkin);
-        const baseName = path.basename(uri.fsPath);
-        const title = `${baseName} (${parent.slice(0, 12)} vs. ${checkin.slice(
-            0,
-            12
-        )})`;
-
-        if (left && right) {
-            return await commands.executeCommand<void>(
-                'vscode.diff',
-                left,
-                right,
-                title
-            );
-        }
     }
 
     private async diff(
