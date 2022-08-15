@@ -1,5 +1,16 @@
 # Changelog
 
+# v0.1.7
+
+### What's New
+- 'Redo' command
+- Edit commit message with 'Log...' command
+- Commands for openning and reopenning a branch
+
+### Bug Fixes
+- 'Undo' command didn't work
+
+
 # v0.1.6
 
 ### What's New
@@ -12,6 +23,7 @@
 - Message 'Fossil: file _FILENAME_ does not exist in check-in current'
   was popping up when openning an untracked file was opened
 
+
 # v0.1.5
 
 ### What's New
@@ -21,6 +33,7 @@
 ### Bug Fixes
 - Timeline (Log) actions didn't show expected result. It should
   now be possible to show file diff from these menus.
+
 
 # v0.1.4
 
