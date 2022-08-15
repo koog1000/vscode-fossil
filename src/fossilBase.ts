@@ -99,11 +99,6 @@ export interface IFileStatus {
     rename?: string; // ToDo: remove `rename` field
 }
 
-export interface ICommitDetails {
-    message: string;
-    affectedFiles: IFileStatus[];
-}
-
 export interface BranchDetails {
     name: FossilBranch;
     isCurrent: boolean;
