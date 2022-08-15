@@ -32,17 +32,14 @@ import {
     FossilHash,
     FossilSpecialTags,
     FossilUndoCommand,
+    FossilCommitMessage,
 } from './fossilBase';
 import { humanise } from './humanise';
 import { Repository, LogEntriesOptions } from './repository';
 const localize = nls.loadMessageBundle();
 
-const USE_CHANGED = 'Use changed version';
-const LEAVE_DELETED = 'Leave deleted';
-const LEAVE_UNRESOLVED = 'Leave unresolved';
-const DELETE = 'Delete';
-
 const SHORT_HASH_LENGTH = 12;
+const LONG_HASH_LENGTH = SHORT_HASH_LENGTH * 2;
 const BULLET = '\u2022';
 const NBSP = '\u00a0';
 
@@ -83,7 +80,7 @@ export namespace interaction {
 
     /** ask user for the new .fossil file location */
     export async function selectNewFossilPath(
-        saveLabel: string
+        saveLabel: 'Clone' | 'Create'
     ): Promise<FossilPath | undefined> {
         const defaultFossilFile = suggestPath();
         const uri = await window.showSaveDialog({
@@ -210,46 +207,6 @@ export namespace interaction {
         }
     }
 
-    export function warnNonDistinctHeads(
-        nonDistinctHeads: string[]
-    ): Thenable<string | undefined> {
-        const nonDistinctHeadShortHashes = nonDistinctHeads
-            .map(h => h.slice(0, SHORT_HASH_LENGTH))
-            .join(', ');
-        return window.showWarningMessage(
-            localize(
-                'non distinct heads',
-                '{0} heads without bookmarks [{1}]. Set bookmark or merge heads before pushing.',
-                nonDistinctHeads.length,
-                nonDistinctHeadShortHashes
-            )
-        );
-    }
-
-    export function warnBranchMultipleHeads(
-        branchWithMultipleHeads: string
-    ): Thenable<string | undefined> {
-        return window.showWarningMessage(
-            localize(
-                'multi head branch',
-                "Branch '{0}' has multiple heads. Merge required before pushing.",
-                branchWithMultipleHeads
-            )
-        );
-    }
-
-    export function warnMergeOnlyOneHead(
-        branch?: string
-    ): Thenable<string | undefined> {
-        return window.showWarningMessage(
-            localize(
-                'only one head',
-                "There is only 1 head for branch '{0}'. Nothing to merge.",
-                branch
-            )
-        );
-    }
-
     export async function warnPushCreatesNewHead(
         this: void
     ): Promise<PushCreatesNewHeadAction> {
@@ -266,37 +223,6 @@ export namespace interaction {
             return PushCreatesNewHeadAction.Pull;
         }
         return PushCreatesNewHeadAction.None;
-    }
-
-    export async function warnPushCreatesNewBranchesAllow(
-        this: void
-    ): Promise<boolean> {
-        const warningMessage = localize(
-            'pushnewbranches',
-            'Push creates new remote branches. Allow?'
-        );
-        const allowOption = localize('allow', 'Allow');
-        const choice = await window.showWarningMessage(
-            warningMessage,
-            { modal: true },
-            allowOption
-        );
-        if (choice === allowOption) {
-            return true;
-        }
-        return false;
-    }
-
-    export function warnMultipleBranchMultipleHeads(
-        branchesWithMultipleHeads: string[]
-    ): Thenable<string | undefined> {
-        return window.showWarningMessage(
-            localize(
-                'multi head branches',
-                'These branches have multiple heads: {0}. Merges required before pushing.',
-                branchesWithMultipleHeads.join(',')
-            )
-        );
     }
 
     export async function warnNoPaths(type: 'pull' | 'push'): Promise<void> {
@@ -485,18 +411,20 @@ export namespace interaction {
     export async function selectFossilRootPath(
         this: void
     ): Promise<FossilRoot | undefined> {
-        const default_uri = workspace.workspaceFolders
+        const defaultUri = workspace.workspaceFolders
             ? workspace.workspaceFolders[0].uri
             : undefined;
         const uri = await window.showOpenDialog({
-            defaultUri: default_uri,
+            defaultUri: defaultUri,
             canSelectFiles: false,
             canSelectFolders: true,
             canSelectMany: false,
             title: localize('root_directory', 'Select Fossil Root Directory'),
         });
-        if (uri?.length) return uri[0].fsPath as FossilRoot;
-        return undefined;
+        if (uri?.length) {
+            return uri[0].fsPath as FossilRoot;
+        }
+        return;
     }
 
     export async function inputCloneUser(
@@ -605,7 +533,7 @@ export namespace interaction {
     }
 
     function describeCommitOneLine(commit: Commit): string {
-        return `#${commit.hash} ${BULLET} ${
+        return `#${commit.hash.slice(0, LONG_HASH_LENGTH)} ${BULLET} ${
             commit.author
         }, ${humanise.ageFromNow(commit.date)} ${BULLET} ${commit.message}`;
     }
@@ -633,9 +561,9 @@ export namespace interaction {
     }
 
     export async function presentLogSourcesMenu(
-        commands: LogMenuAPI
+        commands: InteractionAPI
     ): Promise<void> {
-        const branchName = commands.getBranchName();
+        const branchName = commands.currentBranch;
         const source = await interaction.pickLogSource(branchName);
         if (source) {
             const historyScope = localize('history scope', 'history scope');
@@ -654,7 +582,7 @@ export namespace interaction {
     export async function presentLogMenu(
         source: CommitSources,
         logOptions: LogEntryOptions,
-        commands: LogMenuAPI,
+        commands: InteractionAPI,
         back?: RunnableQuickPickItem
     ): Promise<void> {
         const entries = await commands.getLogEntries(logOptions);
@@ -672,7 +600,7 @@ export namespace interaction {
     async function pickCommitAsShowCommitDetailsRunnable(
         source: CommitSources,
         entries: Commit[],
-        commands: LogMenuAPI,
+        commands: InteractionAPI,
         back?: RunnableQuickPickItem
     ): Promise<RunnableQuickPickItem | undefined> {
         const backhere = asBackItem(
@@ -766,19 +694,29 @@ export namespace interaction {
     export async function presentCommitDetails(
         details: CommitDetails,
         back: RunnableQuickPickItem,
-        commands: LogMenuAPI
+        commands: InteractionAPI
     ): Promise<RunnableQuickPickItem | undefined> {
         const placeHolder = describeCommitOneLine(details);
         const fileActionFactory = (f: IFileStatus) => () => {
-            return commands.diffToParent(f, details);
+            return commands.diffToParent(f.path, details.hash);
         };
         const filePickItems = details.files.map(
             f => new FileStatusQuickPickItem(f, fileActionFactory(f))
         );
         const backToSelfRunnable = () =>
             presentCommitDetails(details, back, commands);
+        const editCommitMessage = new LiteralRunnableQuickPickItem(
+            '$(edit) Edit commit message',
+            '',
+            '',
+            () => {
+                interaction.editCommitMessage(details, commands);
+            }
+        );
+
         const items = [
             back,
+            editCommitMessage,
             asLabelItem('Files', undefined, backToSelfRunnable),
             ...filePickItems,
         ];
@@ -793,6 +731,29 @@ export namespace interaction {
         );
 
         return choice;
+    }
+
+    export async function editCommitMessage(
+        commitDetails: CommitDetails,
+        interactionAPI: InteractionAPI
+    ): Promise<void> {
+        const newCommitMessage = await interaction.inputCommitMessage(
+            '' as FossilCommitMessage,
+            commitDetails.message
+        );
+        if (
+            newCommitMessage === undefined ||
+            newCommitMessage == commitDetails.message
+        ) {
+            return;
+        }
+        await interactionAPI.updateCommitMessage(
+            commitDetails.hash,
+            newCommitMessage
+        );
+        await window.showInformationMessage(
+            localize('updated message', 'Commit message was update.')
+        );
     }
 
     export async function pickDiffAction(
@@ -837,7 +798,7 @@ export namespace interaction {
                 kind: QuickPickItemKind.Separator,
                 label: '',
                 run: () => {
-                    /* separator acrion */
+                    /* separator action */
                 },
                 description: '',
             } as RunnableQuickPickItem,
@@ -861,7 +822,7 @@ export namespace interaction {
     }
 
     export async function pickLogSource(
-        branchName: string | undefined
+        branchName: FossilBranch | undefined
     ): Promise<LogSourcePickItem | undefined> {
         const branch: LogSourcePickItem = {
             label: `$(git-branch) ${branchName || '???'}`,
@@ -955,9 +916,9 @@ export namespace interaction {
     }
 
     export async function inputCommitMessage(
-        message: string,
-        defaultMessage?: string
-    ): Promise<string | undefined> {
+        message: FossilCommitMessage,
+        defaultMessage?: FossilCommitMessage
+    ): Promise<FossilCommitMessage | undefined> {
         if (message) {
             return message;
         }
@@ -970,7 +931,7 @@ export namespace interaction {
                 'Please provide a commit message'
             ),
             ignoreFocusOut: true,
-        });
+        }) as Promise<FossilCommitMessage | undefined>;
     }
 
     export async function confirmDiscardAllChanges(
@@ -1126,42 +1087,6 @@ export namespace interaction {
         return choice === respOpt;
     }
 
-    export async function handleChoices(stdout: string): Promise<string> {
-        /* other [merge rev] changed letters.txt which local [working copy] deleted
-    use (c)hanged version, leave (d)eleted, or leave (u)nresolved*/
-        const [options, prompt, ..._] = stdout.split('\n').reverse();
-        const choices: string[] = [];
-        if (options.includes('(c)hanged')) {
-            choices.push(USE_CHANGED);
-        }
-        if (options.includes('leave (d)eleted')) {
-            choices.push(LEAVE_DELETED);
-        }
-        if (options.match(/\(d\)elete\b/)) {
-            choices.push(DELETE);
-        }
-        if (options.includes('(u)nresolved')) {
-            choices.push(LEAVE_UNRESOLVED);
-        }
-
-        const choice = await window.showQuickPick(choices, {
-            ignoreFocusOut: true,
-            placeHolder: prompt,
-        });
-        switch (choice) {
-            case USE_CHANGED:
-                return 'c';
-
-            case DELETE:
-            case LEAVE_DELETED:
-                return 'd';
-
-            case LEAVE_UNRESOLVED:
-            default:
-                return 'u';
-        }
-    }
-
     export function errorUntrackedFilesDiffer(filenames: string[]): void {
         const fileList = humanise.formatFilesAsBulletedList(filenames);
         const message = localize(
@@ -1299,9 +1224,13 @@ export class LiteralRunnableQuickPickItem extends RunnableQuickPickItem {
 
 type RunnableReturnType = Promise<any> | void;
 export type RunnableAction = () => RunnableReturnType;
-export interface LogMenuAPI {
-    getBranchName: () => FossilBranch | undefined;
-    getCommitDetails: (revision: FossilCheckin) => Promise<CommitDetails>;
+export interface InteractionAPI {
+    get currentBranch(): FossilBranch | undefined;
+    getCommitDetails(revision: FossilCheckin): Promise<CommitDetails>;
     getLogEntries(options: LogEntriesOptions): Promise<Commit[]>;
-    diffToParent: (file: IFileStatus, commit: CommitDetails) => any;
+    diffToParent(filePath: string, commit: FossilCheckin): Promise<void>;
+    updateCommitMessage(
+        hash: FossilHash,
+        new_commit_message: FossilCommitMessage
+    ): Promise<void>;
 }

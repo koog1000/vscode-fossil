@@ -34,6 +34,7 @@ import {
     FossilRemoteName,
     FossilURI,
     FossilUndoCommand,
+    FossilCommitMessage,
 } from './fossilBase';
 import {
     anyEvent,
@@ -62,7 +63,11 @@ import {
     AutoInOutStatuses,
     AutoIncomingOutgoing,
 } from './autoinout';
-import { interaction, PushCreatesNewHeadAction } from './interaction';
+import {
+    interaction,
+    InteractionAPI,
+    PushCreatesNewHeadAction,
+} from './interaction';
 import { FossilUriParams, toFossilUri } from './uri';
 
 const timeout = (millis: number) => new Promise(c => setTimeout(c, millis));
@@ -288,7 +293,7 @@ export interface CommitOptions {
     useBranch?: boolean;
 }
 
-export class Repository implements IDisposable {
+export class Repository implements IDisposable, InteractionAPI {
     private _onDidChangeRepository = new EventEmitter<Uri>();
     readonly onDidChangeRepository: Event<Uri> =
         this._onDidChangeRepository.event;
@@ -730,7 +735,7 @@ export class Repository implements IDisposable {
 
     @throttle
     async commit(
-        message: string,
+        message: FossilCommitMessage,
         scope: CommitScope,
         branch: FossilBranch | undefined
     ): Promise<void> {
@@ -936,6 +941,16 @@ export class Repository implements IDisposable {
         return this.repository.cancelTag(fossilCheckin, tag);
     }
 
+    async updateCommitMessage(
+        fossilCheckin: FossilCheckin,
+        commitMessage: FossilCommitMessage
+    ): Promise<void> {
+        return this.repository.updateCommitMessage(
+            fossilCheckin,
+            commitMessage
+        );
+    }
+
     async show(params: FossilUriParams): Promise<string> {
         // TODO@Joao: should we make this a general concept?
         await this.whenIdleAndFocused();
@@ -1067,6 +1082,31 @@ export class Repository implements IDisposable {
         return [branches, tags.filter(tag => !branchesSet.has(tag))];
     }
 
+    /** When user selects one of the modified files using 'fossil.log' command */
+    async diffToParent(
+        filePath: string,
+        checkin: FossilCheckin
+    ): Promise<void> {
+        const uri = this.toUri(filePath);
+        const parent: FossilCheckin = await this.getInfo(checkin, 'parent');
+        const left = toFossilUri(uri, parent);
+        const right = toFossilUri(uri, checkin);
+        const baseName = path.basename(uri.fsPath);
+        const title = `${baseName} (${parent.slice(0, 12)} vs. ${checkin.slice(
+            0,
+            12
+        )})`;
+
+        if (left && right) {
+            return await commands.executeCommand<void>(
+                'vscode.diff',
+                left,
+                right,
+                title
+            );
+        }
+    }
+
     public async getInfo(
         checkin: FossilCheckin,
         field: 'parent' | 'hash'
@@ -1083,13 +1123,19 @@ export class Repository implements IDisposable {
     public async getCommitDetails(
         checkin: FossilCheckin
     ): Promise<CommitDetails> {
-        const commits = (await this.getLogEntries({
+        const commits = await this.getLogEntries({
             checkin: checkin,
             limit: 1,
             verbose: true,
-        })) as CommitDetails[];
-        return commits[0];
+        });
+        return commits[0]; // technically can be undefined. ignore.
     }
+
+    public getLogEntries(
+        options: LogEntriesOptions & { verbose: true }
+    ): Promise<CommitDetails[]>;
+
+    public getLogEntries(options?: LogEntriesOptions): Promise<Commit[]>;
 
     @throttle
     public getLogEntries(options: LogEntriesOptions = {}): Promise<Commit[]> {
