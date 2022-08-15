@@ -1225,9 +1225,9 @@ type RunnableReturnType = Promise<any> | void;
 export type RunnableAction = () => RunnableReturnType;
 export interface InteractionAPI {
     get currentBranch(): FossilBranch | undefined;
-    getCommitDetails: (revision: FossilCheckin) => Promise<CommitDetails>;
+    getCommitDetails(revision: FossilCheckin): Promise<CommitDetails>;
     getLogEntries(options: LogEntriesOptions): Promise<Commit[]>;
-    diffToParent: (filePath: string, commit: FossilCheckin) => any;
+    diffToParent(filePath: string, commit: FossilCheckin): Promise<void>;
     updateCommitMessage(
         hash: FossilHash,
         new_commit_message: string
