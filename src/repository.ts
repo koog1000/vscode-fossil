@@ -940,6 +940,16 @@ export class Repository implements IDisposable, InteractionAPI {
         return this.repository.cancelTag(fossilCheckin, tag);
     }
 
+    async updateCommitMessage(
+        fossilCheckin: FossilCheckin,
+        commitMessage: string
+    ): Promise<void> {
+        return this.repository.updateCommitMessage(
+            fossilCheckin,
+            commitMessage
+        );
+    }
+
     async show(params: FossilUriParams): Promise<string> {
         // TODO@Joao: should we make this a general concept?
         await this.whenIdleAndFocused();

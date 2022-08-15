@@ -685,6 +685,13 @@ export class Repository {
         await this.exec(['tag', 'cancel', '--raw', tag, fossilBranch]);
     }
 
+    async updateCommitMessage(
+        fossilCheckin: FossilCheckin,
+        commitMessage: string
+    ): Promise<void> {
+        await this.exec(['amend', fossilCheckin, '--comment', commitMessage]);
+    }
+
     async revert(paths: string[]): Promise<void> {
         const pathsByGroup = groupBy(paths, p => path.dirname(p));
         const groups = Object.keys(pathsByGroup).map(k => pathsByGroup[k]);

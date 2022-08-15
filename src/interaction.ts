@@ -704,8 +704,18 @@ export namespace interaction {
         );
         const backToSelfRunnable = () =>
             presentCommitDetails(details, back, commands);
+        const editCommitMessage = new LiteralRunnableQuickPickItem(
+            '$(edit) Edit commit message',
+            '',
+            '',
+            () => {
+                interaction.editCommitMessage(details, commands);
+            }
+        );
+
         const items = [
             back,
+            editCommitMessage,
             asLabelItem('Files', undefined, backToSelfRunnable),
             ...filePickItems,
         ];
@@ -720,6 +730,29 @@ export namespace interaction {
         );
 
         return choice;
+    }
+
+    export async function editCommitMessage(
+        commitDetails: CommitDetails,
+        interactionAPI: InteractionAPI
+    ): Promise<void> {
+        const newCommitMessage = await interaction.inputCommitMessage(
+            '',
+            commitDetails.message
+        );
+        if (
+            newCommitMessage === undefined ||
+            newCommitMessage == commitDetails.message
+        ) {
+            return;
+        }
+        await interactionAPI.updateCommitMessage(
+            commitDetails.hash,
+            newCommitMessage
+        );
+        await window.showInformationMessage(
+            localize('updated message', 'Commit message was update.')
+        );
     }
 
     export async function pickDiffAction(
@@ -1195,4 +1228,8 @@ export interface InteractionAPI {
     getCommitDetails: (revision: FossilCheckin) => Promise<CommitDetails>;
     getLogEntries(options: LogEntriesOptions): Promise<Commit[]>;
     diffToParent: (filePath: string, commit: FossilCheckin) => any;
+    updateCommitMessage(
+        hash: FossilHash,
+        new_commit_message: string
+    ): Promise<void>;
 }
