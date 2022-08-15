@@ -32,6 +32,7 @@ import {
     FossilHash,
     FossilSpecialTags,
     FossilBranch,
+    FossilCommitMessage,
 } from './fossilBase';
 import { Model } from './model';
 import {
@@ -859,7 +860,7 @@ export class CommandCenter {
 
     private async smartCommit(
         repository: Repository,
-        getCommitMessage: () => Promise<string | undefined>,
+        getCommitMessage: () => Promise<FossilCommitMessage | undefined>,
         opts: CommitOptions = { scope: CommitScope.UNKNOWN }
     ): Promise<boolean> {
         if (
@@ -888,7 +889,7 @@ export class CommandCenter {
         opts: CommitOptions = { scope: CommitScope.UNKNOWN }
     ): Promise<void> {
         const inputBox = repository.sourceControl.inputBox;
-        const message = inputBox.value;
+        const message = inputBox.value as FossilCommitMessage;
         const didCommit = await this.smartCommit(
             repository,
             () => interaction.inputCommitMessage(message),
@@ -909,7 +910,8 @@ export class CommandCenter {
     async commitWithInput(repository: Repository): Promise<void> {
         const didCommit = await this.smartCommit(
             repository,
-            async () => repository.sourceControl.inputBox.value
+            async () =>
+                repository.sourceControl.inputBox.value as FossilCommitMessage
         );
 
         if (didCommit) {
@@ -1147,7 +1149,7 @@ export class CommandCenter {
                     repository,
                     async () =>
                         await interaction.inputCommitMessage(
-                            '',
+                            '' as FossilCommitMessage,
                             defaultMergeMessage
                         )
                 );

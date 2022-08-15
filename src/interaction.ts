@@ -32,6 +32,7 @@ import {
     FossilHash,
     FossilSpecialTags,
     FossilUndoCommand,
+    FossilCommitMessage,
 } from './fossilBase';
 import { humanise } from './humanise';
 import { Repository, LogEntriesOptions } from './repository';
@@ -737,7 +738,7 @@ export namespace interaction {
         interactionAPI: InteractionAPI
     ): Promise<void> {
         const newCommitMessage = await interaction.inputCommitMessage(
-            '',
+            '' as FossilCommitMessage,
             commitDetails.message
         );
         if (
@@ -915,9 +916,9 @@ export namespace interaction {
     }
 
     export async function inputCommitMessage(
-        message: string,
-        defaultMessage?: string
-    ): Promise<string | undefined> {
+        message: FossilCommitMessage,
+        defaultMessage?: FossilCommitMessage
+    ): Promise<FossilCommitMessage | undefined> {
         if (message) {
             return message;
         }
@@ -930,7 +931,7 @@ export namespace interaction {
                 'Please provide a commit message'
             ),
             ignoreFocusOut: true,
-        });
+        }) as Promise<FossilCommitMessage | undefined>;
     }
 
     export async function confirmDiscardAllChanges(
@@ -1230,6 +1231,6 @@ export interface InteractionAPI {
     diffToParent(filePath: string, commit: FossilCheckin): Promise<void>;
     updateCommitMessage(
         hash: FossilHash,
-        new_commit_message: string
+        new_commit_message: FossilCommitMessage
     ): Promise<void>;
 }

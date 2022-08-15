@@ -1,5 +1,6 @@
 import * as path from 'path';
 import * as nls from 'vscode-nls';
+import { FossilCheckin, FossilCommitMessage } from './fossilBase';
 
 const localize = nls.loadMessageBundle();
 
@@ -53,18 +54,18 @@ export namespace humanise {
     }
 
     export function describeMerge(
-        localBranchName: string,
-        otherBranchName: string | undefined
-    ): string {
+        localBranchName: FossilCheckin,
+        otherBranchName: FossilCheckin | undefined
+    ): FossilCommitMessage {
         if (!otherBranchName || localBranchName === otherBranchName) {
-            return localize('merge', 'Merge');
+            return localize('merge', 'Merge') as FossilCommitMessage;
         } else {
             return localize(
                 'merge into',
                 'Merge {0} into {1}',
                 otherBranchName,
                 localBranchName
-            );
+            ) as FossilCommitMessage;
         }
     }
 

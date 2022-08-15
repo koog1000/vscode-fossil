@@ -34,6 +34,7 @@ import {
     FossilRemoteName,
     FossilURI,
     FossilUndoCommand,
+    FossilCommitMessage,
 } from './fossilBase';
 import {
     anyEvent,
@@ -734,7 +735,7 @@ export class Repository implements IDisposable, InteractionAPI {
 
     @throttle
     async commit(
-        message: string,
+        message: FossilCommitMessage,
         scope: CommitScope,
         branch: FossilBranch | undefined
     ): Promise<void> {
@@ -942,7 +943,7 @@ export class Repository implements IDisposable, InteractionAPI {
 
     async updateCommitMessage(
         fossilCheckin: FossilCheckin,
-        commitMessage: string
+        commitMessage: FossilCommitMessage
     ): Promise<void> {
         return this.repository.updateCommitMessage(
             fossilCheckin,

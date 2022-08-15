@@ -48,6 +48,8 @@ export type FossilExecutablePath = Distinct<string, 'fossil executable path'>;
 export type FossilVersion = Distinct<number[], 'fossil version'>;
 /** Command returned by `fossil undo --dry-run` */
 export type FossilUndoCommand = Distinct<string, 'Undo Command'>;
+/** Any commit message */
+export type FossilCommitMessage = Distinct<string, 'Commit Message'>;
 export const enum MergeAction {
     Merge,
     Integrate,
@@ -496,7 +498,7 @@ export interface Revision {
 
 export interface Commit extends Revision {
     branch: FossilBranch;
-    message: string;
+    message: FossilCommitMessage;
     author: string;
     date: Date;
 }
@@ -687,7 +689,7 @@ export class Repository {
 
     async updateCommitMessage(
         fossilCheckin: FossilCheckin,
-        commitMessage: string
+        commitMessage: FossilCommitMessage
     ): Promise<void> {
         await this.exec(['amend', fossilCheckin, '--comment', commitMessage]);
     }
@@ -1042,19 +1044,19 @@ export class Repository {
                     string,
                     FossilBranch,
                     string,
-                    string
+                    FossilCommitMessage
                 ];
-                const commit = {
+                const commit: Commit = {
                     hash,
                     branch,
                     message,
                     author,
                     date: new Date(date),
-                } as CommitDetails;
+                };
                 if (verbose) {
-                    lastFiles = commit.files = [];
+                    lastFiles = (commit as CommitDetails).files = [];
                 }
-                logEntries.push(commit);
+                logEntries.push(commit as CommitDetails);
             }
         }
         return logEntries;
