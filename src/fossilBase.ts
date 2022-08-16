@@ -949,29 +949,27 @@ export class Repository {
             case 'UPDATED_BY_INTEGRATE':
             case 'UPDATED_BY_MERGE':
                 return { status: 'M', path };
-                break;
             case 'ADDED_BY_INTEGRATE':
             case 'ADDED_BY_MERGE':
             case 'ADDED':
                 return { status: 'A', path };
-                break;
             case 'DELETED':
                 return { status: 'R', path };
-                break;
             case 'MISSING':
                 return { status: '!', path };
-                break;
             case 'CONFLICT':
                 return { status: 'C', path };
-                break;
-            case 'RENAMED':
+            case 'RENAMED': {
+                // since fossil 2.19 there's '  ->  '
+                const [from_path, to_path] = path.split('  ->  ');
                 return {
                     status: 'A',
-                    path: path,
-                    rename: path,
+                    path: from_path,
+                    rename: to_path ?? from_path,
                 };
+            }
         }
-        return undefined;
+        return;
     }
 
     parseStatusLines(status: StatusString): IFileStatus[] {
