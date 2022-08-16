@@ -1,5 +1,16 @@
 # Changelog
 
+# v0.1.8
+
+### What's New
+- Prompts show command line arguments above stdout
+- Support fossil 2.19's new rename status (from -> to)
+
+### Bug Fixes
+- Commiting from ui didn't await user input
+- Rework prompt detection using 50ms timeout
+
+
 # v0.1.7
 
 ### What's New
