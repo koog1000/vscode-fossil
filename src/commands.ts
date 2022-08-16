@@ -864,8 +864,8 @@ export class CommandCenter {
         opts: CommitOptions = { scope: CommitScope.UNKNOWN }
     ): Promise<boolean> {
         if (
-            !this.checkTrackedUnsavedFiles(repository) ||
-            !this.validateNoConflicts(repository, opts)
+            !(await this.checkTrackedUnsavedFiles(repository)) ||
+            !(await this.validateNoConflicts(repository, opts))
         ) {
             return false;
         }
