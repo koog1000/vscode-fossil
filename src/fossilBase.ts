@@ -198,8 +198,8 @@ export async function exec(
             once(child, 'exit', c);
         }),
         new Promise<string>(c => {
-            const buffers: string[] = [];
-            async function checkForPrompt(input: any) {
+            const buffers: Buffer[] = [];
+            async function checkForPrompt(input: Buffer) {
                 buffers.push(input);
                 const inputStr: string = input.toString();
                 if (inputStr) {
@@ -210,9 +210,9 @@ export async function exec(
                             inputStr.endsWith(':')) &&
                         !no_err_check
                     ) {
-                        const resp = await interaction.inputPrompt(
-                            buffers.toString()
-                        );
+                        const msg = Buffer.concat(buffers).toString('utf8');
+                        buffers.length = 0;
+                        const resp = await interaction.inputPrompt(msg);
                         child.stdin!.write(resp + '\n');
                     }
                 }
