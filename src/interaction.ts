@@ -316,7 +316,8 @@ export namespace interaction {
     }
 
     export async function inputPrompt(
-        msg: string
+        stdout: string,
+        args: string[]
     ): Promise<string | undefined> {
         const title = 'Fossil Request';
         const panel = window.createWebviewPanel(
@@ -324,6 +325,18 @@ export namespace interaction {
             title,
             ViewColumn.One
         );
+        function escapeHtml(text: string): string {
+            const map: Record<string, string> = {
+                '&': '&amp;',
+                '<': '&lt;',
+                '>': '&gt;',
+                '"': '&quot;',
+                "'": '&#039;',
+            };
+            return text.replace(/[&<>"']/g, function (m) {
+                return map[m];
+            });
+        }
         panel.webview.html = `<!DOCTYPE html>
         <html lang="en">
         <head>
@@ -331,13 +344,13 @@ export namespace interaction {
             <meta name="viewport" content="width=device-width, initial-scale=1.0">
             <title>${title}</title>
         </head>
-        <body>
-            <pre>
-            ${'\n\n\n' + msg}
-            </pre>
+        <body style="padding-top:3em">
+<pre><b>${args.map(escapeHtml).join(' ')}</b>:
+${escapeHtml(stdout)}
+</pre>
         </body>
         </html>`;
-        const lines = msg.split('\n');
+        const lines = stdout.split('\n');
         const resp = await window.showInputBox({
             prompt: localize('inputprompt', lines[lines.length - 1]),
             ignoreFocusOut: true,
