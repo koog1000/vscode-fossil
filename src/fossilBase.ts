@@ -170,7 +170,7 @@ export interface IExecutionResult {
 
 export async function exec(
     child: cp.ChildProcess,
-    no_err_check?: boolean
+    args: string[]
 ): Promise<IExecutionResult> {
     const disposables: IDisposable[] = [];
 
@@ -191,6 +191,23 @@ export async function exec(
         ee.on(name, fn);
         disposables.push(toDisposable(() => ee.removeListener(name, fn)));
     };
+    let readTimeout: NodeJS.Timeout | undefined = undefined;
+    const buffers: Buffer[] = [];
+
+    async function onReadTimeout(): Promise<void> {
+        if (!buffers.length) {
+            return;
+        }
+        const stringThatMightBePrompt = buffers[buffers.length - 1].toString();
+        if (/[:?]\s?$/.test(stringThatMightBePrompt)) {
+            const stdout = Buffer.concat(buffers).toString('utf8');
+            buffers.length = 0;
+            const resp = await interaction.inputPrompt(stdout, args);
+            child.stdin!.write(resp + '\n');
+        }
+    }
+
+    const checkForPrompt = !['cat', 'status'].includes(args[0]);
 
     const [exitCode, stdout, stderr] = await Promise.all<any>([
         new Promise<number>((c, e) => {
@@ -198,34 +215,27 @@ export async function exec(
             once(child, 'exit', c);
         }),
         new Promise<string>(c => {
-            const buffers: Buffer[] = [];
-            async function checkForPrompt(input: Buffer) {
-                buffers.push(input);
-                const inputStr: string = input.toString();
-                if (inputStr) {
-                    if (
-                        (inputStr.endsWith('? ') ||
-                            inputStr.endsWith('?') ||
-                            inputStr.endsWith(': ') ||
-                            inputStr.endsWith(':')) &&
-                        !no_err_check
-                    ) {
-                        const msg = Buffer.concat(buffers).toString('utf8');
-                        buffers.length = 0;
-                        const resp = await interaction.inputPrompt(msg);
-                        child.stdin!.write(resp + '\n');
-                    }
+            function pushBuffer(buffer: Buffer) {
+                buffers.push(buffer);
+                if (checkForPrompt) {
+                    clearTimeout(readTimeout);
+                    readTimeout = setTimeout(() => onReadTimeout(), 50);
                 }
             }
-            on(child.stdout!, 'data', b => checkForPrompt(b));
-            once(child.stdout!, 'close', () => c(buffers.join('')));
+            on(child.stdout!, 'data', b => pushBuffer(b));
+            once(child.stdout!, 'close', () =>
+                c(Buffer.concat(buffers).toString('utf8'))
+            );
         }),
         new Promise<string>(c => {
-            const buffers: string[] = [];
+            const buffers: Buffer[] = [];
             on(child.stderr!, 'data', b => buffers.push(b));
-            once(child.stderr!, 'close', () => c(buffers.join('')));
+            once(child.stderr!, 'close', () =>
+                c(Buffer.concat(buffers).toString('utf8'))
+            );
         }),
     ]);
+    clearTimeout(readTimeout);
 
     dispose(disposables);
 
@@ -407,10 +417,7 @@ export class Fossil {
         );
 
         const child = this.spawn(args, options);
-        const result: IExecutionResult = await exec(
-            child,
-            args.includes('cat')
-        );
+        const result: IExecutionResult = await exec(child, args);
         clearTimeout(logTimeout);
 
         const durationHR = process.hrtime(startTimeHR);
