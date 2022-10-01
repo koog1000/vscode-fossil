@@ -115,7 +115,8 @@ export interface FossilFindAttemptLogger {
 }
 
 interface FossilSpawnOptions extends cp.SpawnOptionsWithoutStdio {
-    logErrors?: boolean;
+    cwd: FossilCWD;
+    logErrors?: boolean; // whether to log stderr to the fossil outputChannel
 }
 
 export class FossilFinder {
@@ -249,6 +250,7 @@ export interface IFossilErrorData {
     exitCode?: number;
     fossilErrorCode?: FossilErrorCode;
     fossilCommand?: string;
+    cwd?: FossilCWD;
 }
 
 export class FossilError implements IFossilErrorData {
@@ -259,14 +261,16 @@ export class FossilError implements IFossilErrorData {
     fossilErrorCode: FossilErrorCode;
     fossilCommand: string;
     untrackedFilenames?: string[];
+    cwd?: FossilCWD;
 
     constructor(data: IFossilErrorData) {
-        this.message = data.message || 'Fossil error';
-        this.stdout = data.stdout || '';
-        this.stderr = data.stderr || '';
+        this.message = data.message ?? 'Fossil error';
+        this.stdout = data.stdout ?? '';
+        this.stderr = data.stderr ?? '';
         this.exitCode = data.exitCode;
-        this.fossilErrorCode = data.fossilErrorCode || 'unknown';
-        this.fossilCommand = data.fossilCommand || '';
+        this.fossilErrorCode = data.fossilErrorCode ?? 'unknown';
+        this.fossilCommand = data.fossilCommand ?? '';
+        this.cwd = data.cwd;
     }
 
     toString(): string {
@@ -280,8 +284,9 @@ export class FossilError implements IFossilErrorData {
                     fossilCommand: this.fossilCommand,
                     stdout: this.stdout,
                     stderr: this.stderr,
+                    cwd: this.cwd,
                 },
-                [],
+                null,
                 2
             );
 
@@ -460,6 +465,7 @@ export class Fossil {
                     exitCode: result.exitCode,
                     fossilErrorCode,
                     fossilCommand: args[0],
+                    cwd: options.cwd,
                 })
             );
         }
