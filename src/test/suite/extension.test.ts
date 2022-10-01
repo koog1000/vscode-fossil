@@ -17,6 +17,7 @@ import {
     fossil_undo_and_redo_warning,
     fossil_undo_and_redo_working,
 } from './test_undo_redo';
+import { error_is_thrown_when_executing_unknown_command } from './test_utils';
 
 async function createFossil(): Promise<Fossil> {
     const outputChannel = window.createOutputChannel('Fossil.Test');
@@ -50,6 +51,10 @@ suite('Fossil', () => {
 
     afterEach(() => {
         sandbox.restore();
+    });
+
+    test('fossil.error', async () => {
+        await error_is_thrown_when_executing_unknown_command(sandbox, fossil);
     });
 
     test('fossil.init', async () => {
