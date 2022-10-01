@@ -36,14 +36,14 @@ export async function fossilInit(
 
     await vscode.commands.executeCommand('fossil.init');
     assert.ok(showSaveDialogstub.calledOnce);
-    assert.ok(
-        fs.existsSync(fossilPath.fsPath),
-        `Not a file: '${fossilPath.fsPath}'`
-    );
-    assert.ok(showInformationMessage.calledOnce);
     if (fossil.version >= [2, 18]) {
         assert.ok(showInputBox.calledTwice);
     }
+    assert.ok(
+        fs.existsSync(fossilPath.fsPath),
+        `Not a file: '${fossilPath.fsPath}' even though 'fossil.init' was sucessfully executed`
+    );
+    assert.ok(showInformationMessage.calledOnce);
     sandbox.restore();
 }
 
