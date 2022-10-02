@@ -167,12 +167,32 @@ export interface IExecutionResult {
     exitCode: number;
     stdout: string;
     stderr: string;
+    args: string[];
+    cwd: FossilCWD;
 }
 
-export async function exec(
-    child: cp.ChildProcess,
-    args: string[]
+async function exec(
+    fossilPath: FossilExecutablePath,
+    args: string[],
+    options: FossilSpawnOptions
 ): Promise<IExecutionResult> {
+    if (!fossilPath) {
+        throw new Error('fossil could not be found in the system.');
+    }
+
+    if (!options.stdio) {
+        options.stdio = 'pipe';
+    }
+
+    options.env = {
+        ...process.env,
+        ...options.env,
+        LC_ALL: 'en_US',
+        LANG: 'en_US.UTF-8',
+    };
+
+    const child = cp.spawn(fossilPath, args, options);
+
     const disposables: IDisposable[] = [];
 
     const once = (
@@ -210,7 +230,7 @@ export async function exec(
 
     const checkForPrompt = !['cat', 'status'].includes(args[0]);
 
-    const [exitCode, stdout, stderr] = await Promise.all<any>([
+    const [exitCode, stdout, stderr] = await Promise.all([
         new Promise<number>((c, e) => {
             once(child, 'error', e);
             once(child, 'exit', c);
@@ -240,36 +260,31 @@ export async function exec(
 
     dispose(disposables);
 
-    return { exitCode, stdout, stderr };
+    return { exitCode, stdout, stderr, args, cwd: options.cwd };
 }
 
-export interface IFossilErrorData {
+export interface IFossilErrorData extends IExecutionResult {
     message: string;
-    stdout?: string;
-    stderr?: string;
-    exitCode?: number;
-    fossilErrorCode?: FossilErrorCode;
-    fossilCommand?: string;
-    cwd?: FossilCWD;
+    fossilErrorCode: FossilErrorCode;
 }
 
 export class FossilError implements IFossilErrorData {
     message: string;
     stdout: string;
     stderr: string;
-    exitCode?: number;
+    exitCode: number;
     fossilErrorCode: FossilErrorCode;
-    fossilCommand: string;
+    args: string[];
     untrackedFilenames?: string[];
-    cwd?: FossilCWD;
+    cwd: FossilCWD;
 
     constructor(data: IFossilErrorData) {
-        this.message = data.message ?? 'Fossil error';
-        this.stdout = data.stdout ?? '';
-        this.stderr = data.stderr ?? '';
+        this.message = data.message;
+        this.stdout = data.stdout;
+        this.stderr = data.stderr;
         this.exitCode = data.exitCode;
-        this.fossilErrorCode = data.fossilErrorCode ?? 'unknown';
-        this.fossilCommand = data.fossilCommand ?? '';
+        this.fossilErrorCode = data.fossilErrorCode;
+        this.args = data.args;
         this.cwd = data.cwd;
     }
 
@@ -281,7 +296,7 @@ export class FossilError implements IFossilErrorData {
                 {
                     exitCode: this.exitCode,
                     fossilErrorCode: this.fossilErrorCode,
-                    fossilCommand: this.fossilCommand,
+                    args: this.args,
                     stdout: this.stdout,
                     stderr: this.stderr,
                     cwd: this.cwd,
@@ -421,8 +436,11 @@ export class Fossil {
             500
         );
 
-        const child = this.spawn(args, options);
-        const result: IExecutionResult = await exec(child, args);
+        const result: IExecutionResult = await exec(
+            this.fossilPath,
+            args,
+            options
+        );
         clearTimeout(logTimeout);
 
         const durationHR = process.hrtime(startTimeHR);
@@ -460,39 +478,13 @@ export class Fossil {
             return Promise.reject<IExecutionResult>(
                 new FossilError({
                     message: 'Failed to execute fossil',
-                    stdout: result.stdout,
-                    stderr: result.stderr,
-                    exitCode: result.exitCode,
+                    ...result,
                     fossilErrorCode,
-                    fossilCommand: args[0],
-                    cwd: options.cwd,
                 })
             );
         }
 
         return result;
-    }
-
-    spawn(
-        args: string[],
-        options: cp.SpawnOptionsWithoutStdio
-    ): cp.ChildProcess {
-        if (!this.fossilPath) {
-            throw new Error('fossil could not be found in the system.');
-        }
-
-        if (!options.stdio) {
-            options.stdio = 'pipe';
-        }
-
-        options.env = {
-            ...process.env,
-            ...options.env,
-            LC_ALL: 'en_US',
-            LANG: 'en_US.UTF-8',
-        };
-
-        return cp.spawn(this.fossilPath, args, options);
     }
 
     private log(output: string): void {
@@ -782,8 +774,8 @@ export class Repository {
                 message: `Unexpected undo result: ${JSON.stringify(
                     result.stdout
                 )}`,
+                fossilErrorCode: 'unknown',
                 ...result,
-                fossilCommand: command,
             });
             if (
                 /^nothing to undo/.test(result.stderr) || // non dry
