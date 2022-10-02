@@ -261,7 +261,7 @@ export class Model implements Disposable {
             // case insensitive file systems
             // https://github.com/Microsoft/vscode/issues/33498
 
-            if (this.getRepository(repositoryRoot)) {
+            if (this.getRepository(Uri.file(repositoryRoot))) {
                 return true;
             }
 
