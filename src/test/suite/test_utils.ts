@@ -1,6 +1,11 @@
 import * as vscode from 'vscode';
 import * as sinon from 'sinon';
-import { Fossil, FossilCWD, FossilError } from '../../fossilBase';
+import {
+    Fossil,
+    FossilCWD,
+    FossilError,
+    FossilExecutablePath,
+} from '../../fossilBase';
 import * as assert from 'assert/strict';
 
 export async function error_is_thrown_when_executing_unknown_command(
@@ -30,6 +35,7 @@ export async function error_is_thrown_when_executing_unknown_command(
         fossilErrorCode: 'unknown',
         args: ['help'],
         cwd: 'cwd' as FossilCWD,
+        fossilPath: '/bin/fossil' as FossilExecutablePath,
     });
     const referenceString = `my message {
   "exitCode": 0,
@@ -39,7 +45,8 @@ export async function error_is_thrown_when_executing_unknown_command(
   ],
   "stdout": "my staout",
   "stderr": "my stderror",
-  "cwd": "cwd"
+  "cwd": "cwd",
+  "fossilPath": "/bin/fossil"
 }`;
     assert.equal(TestError.toString(), referenceString);
 }

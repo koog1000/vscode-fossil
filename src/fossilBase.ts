@@ -166,6 +166,7 @@ export class FossilFinder {
 }
 
 export interface IExecutionResult {
+    fossilPath: FossilExecutablePath;
     exitCode: number;
     stdout: string;
     stderr: string;
@@ -262,7 +263,7 @@ async function exec(
 
     dispose(disposables);
 
-    return { exitCode, stdout, stderr, args, cwd: options.cwd };
+    return { fossilPath, exitCode, stdout, stderr, args, cwd: options.cwd };
 }
 
 export interface IFossilErrorData extends IExecutionResult {
@@ -271,16 +272,18 @@ export interface IFossilErrorData extends IExecutionResult {
 }
 
 export class FossilError implements IFossilErrorData {
-    message: string;
-    stdout: string;
-    stderr: string;
-    exitCode: number;
+    readonly fossilPath: FossilExecutablePath;
+    readonly message: string;
+    readonly stdout: string;
+    readonly stderr: string;
+    readonly exitCode: number;
     fossilErrorCode: FossilErrorCode;
-    args: string[];
+    readonly args: string[];
     untrackedFilenames?: string[];
-    cwd: FossilCWD;
+    readonly cwd: FossilCWD;
 
     constructor(data: IFossilErrorData) {
+        this.fossilPath = data.fossilPath;
         this.message = data.message;
         this.stdout = data.stdout;
         this.stderr = data.stderr;
@@ -302,6 +305,7 @@ export class FossilError implements IFossilErrorData {
                     stdout: this.stdout,
                     stderr: this.stderr,
                     cwd: this.cwd,
+                    fossilPath: this.fossilPath,
                 },
                 null,
                 2
