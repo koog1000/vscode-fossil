@@ -1,4 +1,4 @@
-import { FossilError, IFileStatus } from './fossilBase';
+import { IFileStatus } from './fossilBase';
 import {
     Uri,
     SourceControlResourceGroup,
@@ -179,9 +179,7 @@ export function groupStatuses({
                 status = Status.CONFLICT;
                 break;
             default:
-                throw new FossilError({
-                    message: 'Unknown rawStatus: ' + rawStatus,
-                });
+                throw new Error('Unknown rawStatus: ' + rawStatus);
         }
 
         if (status === Status.UNTRACKED) {
