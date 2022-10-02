@@ -16,10 +16,12 @@ import { throttle } from './decorators';
 type Distinct<T, DistinctName> = T & { __TYPE__: DistinctName };
 /** path to .fossil */
 export type FossilPath = Distinct<string, 'path to .fossil'>;
+/** local repository root */
+export type FossilRoot = Distinct<string, 'local repository root'>;
 /** cwd for executing fossil */
-export type FossilCWD = Distinct<string, 'cwd for executing fossil'>;
-/** local root */
-export type FossilRoot = Distinct<FossilCWD, 'local root'>;
+export type FossilCWD =
+    | Distinct<string, 'cwd for executing fossil'>
+    | FossilRoot;
 /** URI for the close
  *
  * * http[s]://[userid[:password]@]host[:port][/path]
