@@ -16,7 +16,7 @@ export async function error_is_thrown_when_executing_unknown_command(
         stderr: 'fossil: unknown command: fizzbuzz\nfossil: use "help" for more information\n',
         stdout: '',
         exitCode: 1,
-        fossilCommand: 'fizzbuzz',
+        args: ['fizzbuzz'],
         fossilErrorCode: 'unknown',
         cwd: cwd,
     });
@@ -28,13 +28,15 @@ export async function error_is_thrown_when_executing_unknown_command(
         stderr: 'my stderror',
         exitCode: 0,
         fossilErrorCode: 'unknown',
-        fossilCommand: 'help',
+        args: ['help'],
         cwd: 'cwd' as FossilCWD,
     });
     const referenceString = `my message {
   "exitCode": 0,
   "fossilErrorCode": "unknown",
-  "fossilCommand": "help",
+  "args": [
+    "help"
+  ],
   "stdout": "my staout",
   "stderr": "my stderror",
   "cwd": "cwd"
