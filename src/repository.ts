@@ -70,8 +70,6 @@ import {
 } from './interaction';
 import { FossilUriParams, toFossilUri } from './uri';
 
-const timeout = (millis: number) => new Promise(c => setTimeout(c, millis));
-
 const localize = nls.loadMessageBundle();
 const iconsRootPath = path.join(path.dirname(__dirname), 'resources', 'icons');
 
@@ -538,7 +536,7 @@ export class Repository implements IDisposable, InteractionAPI {
     private async updateWhenIdleAndWait(): Promise<void> {
         await this.whenIdleAndFocused();
         await this.status();
-        await timeout(5000);
+        await delay(5000);
     }
 
     async whenIdleAndFocused(): Promise<void> {
