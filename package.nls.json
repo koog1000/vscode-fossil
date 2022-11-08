@@ -36,6 +36,8 @@
     "command.resolveAgain": "Resolve again",
     "command.showOutput": "Show fossil output",
     "command.fileLog": "Show file history...",
+    "command.render": "Preview Using Fossil Renderer",
+    "command.wikiCreate": "Publish as Fossil Wiki or Technote",
     "command.log": "Log...",
     "command.merge": "Merge into working directory...",
     "command.integrate": "Integrate into working directory...",

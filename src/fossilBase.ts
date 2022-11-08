@@ -119,6 +119,7 @@ export interface FossilFindAttemptLogger {
 interface FossilSpawnOptions extends cp.SpawnOptionsWithoutStdio {
     cwd: FossilCWD;
     logErrors?: boolean; // whether to log stderr to the fossil outputChannel
+    stdin_data?: string; // dump data to stdout
 }
 
 export class FossilFinder {
@@ -227,11 +228,15 @@ async function exec(
             const stdout = Buffer.concat(buffers).toString('utf8');
             buffers.length = 0;
             const resp = await interaction.inputPrompt(stdout, args);
-            child.stdin!.write(resp + '\n');
+            child.stdin.write(resp + '\n');
         }
     }
 
     const checkForPrompt = !['cat', 'status'].includes(args[0]);
+    if (options.stdin_data !== undefined) {
+        child.stdin.write(options.stdin_data);
+        child.stdin.end();
+    }
 
     const [exitCode, stdout, stderr] = await Promise.all([
         new Promise<number>((c, e) => {
@@ -410,11 +415,10 @@ export class Fossil {
     async exec(
         cwd: FossilCWD,
         args: string[],
-        options: any = {}
+        options: Omit<FossilSpawnOptions, 'cwd'> = {}
     ): Promise<IExecutionResult> {
-        options = { cwd, ...options };
         try {
-            const result = await this._exec(args, options);
+            const result = await this._exec(args, { cwd, ...options });
             return result;
         } catch (err) {
             if (
