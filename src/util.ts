@@ -10,7 +10,13 @@ export interface IDisposable {
     dispose(): void;
 }
 
-export function dispose<T extends IDisposable>(disposables: T[]): T[] {
+interface HasForEach<T> {
+    forEach: (val: (item: T) => void) => void;
+}
+
+export function dispose<T extends IDisposable>(
+    disposables: HasForEach<T>
+): T[] {
     disposables.forEach(d => d.dispose());
     return [];
 }

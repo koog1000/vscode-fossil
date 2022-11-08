@@ -121,6 +121,18 @@
                 "category": "Fossil"
             },
             {
+                "command": "fossil.render",
+                "title": "%command.render%",
+                "category": "Fossil",
+                "icon": "$(open-preview)"
+            },
+            {
+                "command": "fossil.wikiCreate",
+                "title": "%command.wikiCreate%",
+                "category": "Fossil",
+                "icon": "$(cloud-upload)"
+            },
+            {
                 "command": "fossil.remove",
                 "title": "%command.forget%",
                 "category": "Fossil"
@@ -828,6 +840,16 @@
                 {
                     "command": "fossil.fileLog",
                     "when": "config.fossil.enabled && fossilOpenRepositoryCount != 0 && !isInDiffEditor"
+                },
+                {
+                    "command": "fossil.render",
+                    "when": "config.fossil.enabled && fossilOpenRepositoryCount != 0 && !isInDiffEditor && resourceExtname =~ /^\\.(md|wiki)$/ || config.fossil.enabled && resourceScheme == untitled",
+                    "group": "navigation"
+                },
+                {
+                    "command": "fossil.wikiCreate",
+                    "when": "activeWebviewPanelId == fossil.renderPanel",
+                    "group": "navigation"
                 }
             ]
         },
@@ -890,17 +912,30 @@
                     "default": null
                 }
             }
-        }
+        },
+        "customEditors": [
+            {
+              "viewType": "fossil.previewWikiPanel",
+              "displayName": "Fossil Wiki Preview",
+              "priority": "option",
+              "selector": [
+                {
+                  "filenamePattern": "*.wiki"
+                }
+              ]
+            }
+          ]
     },
     "scripts": {
-        "vscode:prepublish": "npm run esbuild-base -- --minify",
-        "compile": "tsc -p ./",
+        "vscode:prepublish": "npm run esbuild-base -- --minify && npm run esbuild-preview -- --minify",
+        "compile": "tsc -p ./ && npm run esbuild-preview",
+        "esbuild-preview": "esbuild ./media/preview.ts --bundle --outfile=media/preview.js --platform=browser --format=iife",
         "package": "vsce package",
         "deploy": "vsce publish",
         "pretest": "npm run compile",
         "test": "node ./out/test/runTest.js",
-        "lint": "eslint ./src --ext .ts",
-        "lint:fix": "eslint --fix ./src --ext .ts",
+        "lint": "eslint ./src --ext .ts && eslint ./media --ext .ts",
+        "lint:fix": "eslint --fix ./src --ext .ts && eslint --fix ./media --ext .ts",
         "esbuild-base": "esbuild ./src/main.ts --bundle --outfile=out/main.js --external:vscode --format=cjs --platform=node",
         "esbuild": "npm run esbuild-base -- --sourcemap"
     },
@@ -914,14 +949,15 @@
         "@types/mocha": "^9.1.1",
         "@types/node": "^16.11.7",
         "@types/sinon": "^10.0.11",
+        "@types/vscode-webview": "^1.57.0",
         "@types/vscode": "^1.36.0",
         "@typescript-eslint/eslint-plugin": "^5.27.1",
         "@typescript-eslint/parser": "^5.27.1",
         "@vscode/test-electron": "^1.6.1",
         "esbuild": "^0.14.45",
-        "eslint": "^8.17.0",
         "eslint-config-standard": "^17.0.0",
         "eslint-plugin-import": "^2.26.0",
+        "eslint": "^8.17.0",
         "eslint-plugin-n": "^15.2.2",
         "eslint-plugin-prettier": "^4.0.0",
         "eslint-plugin-promise": "^6.0.0",

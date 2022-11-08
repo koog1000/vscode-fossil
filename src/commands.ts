@@ -17,6 +17,7 @@ import {
     TextDocumentShowOptions,
     ViewColumn,
     Selection,
+    ExtensionContext,
 } from 'vscode';
 import { LineChange, revertChanges } from './revert';
 import * as nls from 'vscode-nls';
@@ -53,6 +54,7 @@ import {
 import { humanise } from './humanise';
 import { partition } from './util';
 import { toFossilUri } from './uri';
+import { FossilPreviewManager } from './preview';
 
 const localize = nls.loadMessageBundle();
 
@@ -90,15 +92,17 @@ function command(commandId: string, options: CommandOptions = {}): Function {
 export class CommandCenter {
     [index: string]: any;
 
-    private model: Model;
     private disposables: Disposable[];
+    private previewManager: FossilPreviewManager;
 
     constructor(
-        private fossil: Fossil,
-        model: Model,
-        private outputChannel: OutputChannel
+        private readonly fossil: Fossil,
+        private readonly model: Model,
+        private readonly outputChannel: OutputChannel,
+        private readonly context: ExtensionContext
     ) {
-        this.model = model;
+        // this.model = model;
+        this.previewManager = new FossilPreviewManager(context, fossil);
 
         this.disposables = Commands.map(
             ({ commandId, key, method, options }) => {
@@ -1295,6 +1299,41 @@ export class CommandCenter {
         textEditor.selections = [
             new Selection(firstStagedLine, 0, firstStagedLine, 0),
         ];
+    }
+
+    @command('fossil.render')
+    async render(uri: Uri, _info: { groupId: number }): Promise<void> {
+        return this.previewManager.openDynamicPreview(uri);
+    }
+
+    @command('fossil.wikiCreate')
+    async wikiCreate(): Promise<void> {
+        const preview = this.previewManager.activePreview;
+        if (preview) {
+            const where = await interaction.inputWikiType();
+            if (where) {
+                const comment = await interaction.inputWikiComment(where);
+                if (comment) {
+                    const successfully_created = await preview.wikiCreate(
+                        where,
+                        comment
+                    );
+                    if (successfully_created) {
+                        await window.showInformationMessage(
+                            `${where} was successfully created`
+                        );
+                    } else {
+                        await window.showErrorMessage(
+                            `${where} creation failed`
+                        );
+                    }
+                }
+            }
+        } else {
+            this.outputChannel.appendLine(
+                "couldn't create wiki entity - no active preview"
+            );
+        }
     }
 
     private async diff(

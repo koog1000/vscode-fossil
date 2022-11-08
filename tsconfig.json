@@ -16,9 +16,12 @@
         "removeComments": true,
         "sourceMap": true,
         "strictNullChecks": true,
-        "experimentalDecorators": true
+        "experimentalDecorators": true,
     },
-    "exclude": [
-        "node_modules"
+    "include": [
+        "src/**/*"
+    ],
+    "references": [
+        {"path": "./media"}   
     ]
 }

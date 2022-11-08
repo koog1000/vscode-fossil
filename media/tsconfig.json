@@ -1,0 +1,23 @@
+{
+    "compilerOptions": {
+        "target": "es2020",
+        "outDir": "./out/media",
+        "jsx": "react",
+        "esModuleInterop": true,
+        "lib": [
+            "es2018",
+            "DOM",
+            "DOM.Iterable"
+        ],
+        "composite": true
+
+    },
+    "include": [
+        "./*.ts"
+    ],
+    "typeAcquisition": {
+        "include": [
+            "@types/vscode-webview"
+        ]
+    },
+}

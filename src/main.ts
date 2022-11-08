@@ -23,7 +23,7 @@ import typedConfig from './config';
 const localize = nls.loadMessageBundle();
 
 async function init(
-    _context: ExtensionContext,
+    context: ExtensionContext,
     disposables: Disposable[]
 ): Promise<Model | undefined> {
     // const { name, version, aiKey } = require(context.asAbsolutePath('./package.json')) as { name: string, version: string, aiKey: string };
@@ -53,7 +53,12 @@ async function init(
     onRepository();
 
     if (!enabled) {
-        const commandCenter = new CommandCenter(fossil, model, outputChannel);
+        const commandCenter = new CommandCenter(
+            fossil,
+            model,
+            outputChannel,
+            context
+        );
         disposables.push(commandCenter);
         return;
     }
@@ -69,7 +74,7 @@ async function init(
     fossil.onOutput(str => outputChannel.append(str), null, disposables);
 
     disposables.push(
-        new CommandCenter(fossil, model, outputChannel),
+        new CommandCenter(fossil, model, outputChannel, context),
         new FossilContentProvider(model)
     );
     return model;

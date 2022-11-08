@@ -361,7 +361,12 @@ ${escapeHtml(stdout)}
 
     async function inputCommon(
         this: void,
-        key: string,
+        key:
+            | 'repourl'
+            | 'project name'
+            | 'project description'
+            | 'tecknote comment'
+            | 'wiki entry',
         message: string,
         extra: InputBoxOptions = {}
     ): Promise<string | undefined> {
@@ -395,6 +400,21 @@ ${escapeHtml(stdout)}
         return inputCommon('project description', 'Project Description', {
             placeHolder: 'Leave empty to not set Project Description',
         });
+    }
+
+    export async function inputWikiComment(
+        this: void,
+        what: 'Technote' | 'Wiki'
+    ): Promise<string | undefined> {
+        switch (what) {
+            case 'Technote':
+                return inputCommon(
+                    'tecknote comment',
+                    'Timeline comment of the technote'
+                );
+            case 'Wiki':
+                return inputCommon('wiki entry', 'Name of the wiki entry');
+        }
     }
 
     export async function inputPatchCreate(): Promise<string | undefined> {
@@ -1098,6 +1118,15 @@ ${escapeHtml(stdout)}
             respOpt
         );
         return choice === respOpt;
+    }
+
+    export async function inputWikiType(): Promise<
+        'Technote' | 'Wiki' | undefined
+    > {
+        const choice = await window.showQuickPick(['Technote', 'Wiki'], {
+            title: 'Create',
+        });
+        return choice as 'Technote' | 'Wiki' | undefined;
     }
 
     export function errorUntrackedFilesDiffer(filenames: string[]): void {
