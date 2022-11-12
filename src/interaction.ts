@@ -789,7 +789,6 @@ ${escapeHtml(stdout)}
         interactionAPI: InteractionAPI
     ): Promise<void> {
         const newCommitMessage = await interaction.inputCommitMessage(
-            '' as FossilCommitMessage,
             commitDetails.message
         );
         if (
@@ -967,13 +966,8 @@ ${escapeHtml(stdout)}
     }
 
     export async function inputCommitMessage(
-        message: FossilCommitMessage,
         defaultMessage?: FossilCommitMessage
     ): Promise<FossilCommitMessage | undefined> {
-        if (message) {
-            return message;
-        }
-
         return window.showInputBox({
             value: defaultMessage,
             placeHolder: localize('commit message', 'Commit message'),
