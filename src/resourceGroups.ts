@@ -13,7 +13,7 @@ import { FossilResource, Status, MergeStatus } from './repository';
 const localize = nls.loadMessageBundle();
 
 export interface IGroupStatusesParams {
-    respositoryRoot: string;
+    repositoryRoot: string;
     statusGroups: IStatusGroups;
     fileStatuses: IFileStatus[];
     // repoStatus: IRepoStatus,
@@ -137,7 +137,7 @@ export class FossilResourceGroup {
 }
 
 export function groupStatuses({
-    respositoryRoot,
+    repositoryRoot,
     statusGroups: { conflict, staging, merge, working, untracked },
     fileStatuses,
     // repoStatus,
@@ -206,11 +206,11 @@ export function groupStatuses({
     const seenUriStrings: Map<string, boolean> = new Map();
 
     for (const raw of fileStatuses) {
-        const uri = Uri.file(path.join(respositoryRoot, raw.path));
+        const uri = Uri.file(path.join(repositoryRoot, raw.path));
         const uriString = uri.toString();
         seenUriStrings.set(uriString, true);
         const renameUri = raw.rename
-            ? Uri.file(path.join(respositoryRoot, raw.rename))
+            ? Uri.file(path.join(repositoryRoot, raw.rename))
             : undefined;
         const resolveFile =
             resolveStatuses &&
@@ -233,7 +233,7 @@ export function groupStatuses({
     // e.g. when local changed and other deleted
     if (resolveStatuses) {
         for (const raw of resolveStatuses) {
-            const uri = Uri.file(path.join(respositoryRoot, raw.path));
+            const uri = Uri.file(path.join(repositoryRoot, raw.path));
             const uriString = uri.toString();
             if (seenUriStrings.has(uriString)) {
                 continue; // dealt with by the fileStatuses (this is the norm)
