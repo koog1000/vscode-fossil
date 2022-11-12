@@ -330,7 +330,7 @@ export class CommandCenter {
         } catch (err) {
             if (
                 err instanceof FossilError &&
-                err.fossilErrorCode === 'OperationMustBeforced'
+                err.fossilErrorCode === 'OperationMustBeForced'
             ) {
                 const openNotEmpty = await interaction.confirmOpenNotEmpty(
                     parentPath
