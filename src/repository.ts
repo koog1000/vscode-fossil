@@ -885,7 +885,7 @@ export class Repository implements IDisposable, InteractionAPI {
     }
 
     @throttle
-    async push(_path: string | undefined): Promise<void> {
+    async push(_path: FossilURI | undefined): Promise<void> {
         return await this.runWithProgress(Operation.Push, async () => {
             try {
                 await this.repository.push();
@@ -1064,7 +1064,10 @@ export class Repository implements IDisposable, InteractionAPI {
             // noop
         }
 
-        return { name: '' as FossilRemoteName, url: '' as FossilURI };
+        return {
+            name: '' as FossilRemoteName,
+            url: Uri.parse('') as FossilURI,
+        };
     }
 
     @throttle

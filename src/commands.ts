@@ -34,6 +34,8 @@ import {
     FossilSpecialTags,
     FossilBranch,
     FossilCommitMessage,
+    FossilPassword,
+    FossilUsername,
 } from './fossilBase';
 import { Model } from './model';
 import {
@@ -262,22 +264,46 @@ export class CommandCenter {
         if (!url) {
             return;
         }
-        const username = await interaction.inputCloneUser();
-        let userauth: string | undefined;
-        if (username) {
-            userauth = await interaction.inputCloneUserAuth();
+        let password: FossilPassword | undefined;
+        let username: FossilUsername | undefined;
+
+        // uri.authority = [userinfo "@"] host [":" port]
+        let host = url.authority;
+        // match:
+        // - username:pws@host
+        // - username@host
+        const found = url.authority.match(
+            /((?<username>.+?):(?<password>.+)|(?<full>.+))@/
+        );
+        if (found) {
+            // we have username and optionally password
+            password = found.groups!.password as FossilPassword | undefined;
+            username = (
+                password === undefined
+                    ? found.groups!.full
+                    : found.groups!.username
+            ) as FossilUsername;
+            host = host.slice(found[0].length);
         }
-        if (userauth) {
-            const regex =
-                url.search('@') < 0 ? /(^.+:\/\/)(.+)/ : /(^.+:\/\/).*@(.+)/;
-            const match = url.match(regex);
-            if (match) {
-                url = (match[1] +
-                    username +
-                    ':' +
-                    userauth +
-                    '@' +
-                    match[2]) as FossilURI;
+
+        if (url.scheme.toLowerCase() != 'file') {
+            if (username === undefined) {
+                username = await interaction.inputCloneUser();
+                if (username === undefined) {
+                    return; // user pressed <Esc>
+                }
+            }
+            if (username) {
+                if (password === undefined) {
+                    password = await interaction.inputClonePassword();
+                    // if user pressed <Esc> its okay - he or she just
+                    // don't want to specify a password
+                }
+                const userinfo = password
+                    ? username + ':' + password
+                    : username;
+                const authority = userinfo.replace('@', '%40') + '@' + host;
+                url = url.with({ authority: authority }) as FossilURI;
             }
         }
         const fossilPath = await interaction.selectNewFossilPath('Clone');
@@ -1061,7 +1087,7 @@ export class CommandCenter {
     async pull(repository: Repository): Promise<void> {
         const paths = await repository.getPath();
 
-        if (paths.url == '') {
+        if (!paths.url) {
             return interaction.warnNoPaths('pull');
         }
 
@@ -1211,7 +1237,7 @@ export class CommandCenter {
     async pushTo(repository: Repository): Promise<void> {
         const path = await repository.getPath();
 
-        if (path.url == '') {
+        if (!path.url) {
             return interaction.warnNoPaths('push');
         }
         repository.push(path.url);

@@ -33,15 +33,21 @@ import {
     FossilSpecialTags,
     FossilUndoCommand,
     FossilCommitMessage,
+    FossilUsername,
+    FossilPassword,
 } from './fossilBase';
 import { humanise } from './humanise';
 import { Repository, LogEntriesOptions } from './repository';
+import typedConfig from './config';
 const localize = nls.loadMessageBundle();
 
 const SHORT_HASH_LENGTH = 12;
 const LONG_HASH_LENGTH = SHORT_HASH_LENGTH * 2;
 const BULLET = '\u2022';
 const NBSP = '\u00a0';
+let lastUsedRepoUrl = 'https://fossil-scm.org/home';
+let lastUsedNewFossilPath: Uri | undefined;
+let lastUsedUser: string | undefined;
 
 export const enum BranchExistsAction {
     None,
@@ -82,7 +88,7 @@ export namespace interaction {
     export async function selectNewFossilPath(
         saveLabel: 'Clone' | 'Create'
     ): Promise<FossilPath | undefined> {
-        const defaultFossilFile = suggestPath();
+        const defaultFossilFile = lastUsedNewFossilPath || suggestPath();
         const uri = await window.showSaveDialog({
             defaultUri: defaultFossilFile,
             title: 'Select New Fossil File Location',
@@ -91,6 +97,9 @@ export namespace interaction {
                 'All files': ['*'],
             },
         });
+        if (uri) {
+            lastUsedNewFossilPath = uri;
+        }
         return uri?.fsPath as FossilPath;
     }
 
@@ -112,7 +121,9 @@ export namespace interaction {
             },
             canSelectMany: false,
         });
-        if (uri?.length) return uri[0].fsPath as FossilPath;
+        if (uri?.length) {
+            return uri[0].fsPath as FossilPath;
+        }
         return undefined;
     }
 
@@ -307,12 +318,16 @@ export namespace interaction {
         this: void
     ): Promise<FossilURI | undefined> {
         const url = await window.showInputBox({
-            value: 'https://fossil-scm.org/home',
-            valueSelection: [8, 100],
+            value: lastUsedRepoUrl,
+            valueSelection: [lastUsedRepoUrl.indexOf('//') + 2, 99999],
             prompt: localize('repourl', 'Repository URI'),
             ignoreFocusOut: true,
         });
-        return url as FossilURI;
+        if (url) {
+            lastUsedRepoUrl = url;
+            return Uri.parse(url) as FossilURI;
+        }
+        return undefined;
     }
 
     export async function inputPrompt(
@@ -462,31 +477,34 @@ ${escapeHtml(stdout)}
 
     export async function inputCloneUser(
         this: void
-    ): Promise<string | undefined> {
-        const auth = await window.showInputBox({
-            prompt: localize('parent', 'Username '),
+    ): Promise<FossilUsername | undefined> {
+        const value = lastUsedUser || typedConfig.username || process.env.USER;
+        const user = await window.showInputBox({
+            prompt: localize('username', 'Username'),
             placeHolder: 'None',
             ignoreFocusOut: true,
+            value,
         });
-        return auth;
+        lastUsedUser = user;
+        return user as FossilUsername | undefined;
     }
 
-    export async function inputCloneUserAuth(
+    export async function inputClonePassword(
         this: void
-    ): Promise<string | undefined> {
+    ): Promise<FossilPassword | undefined> {
         const auth = await window.showInputBox({
             prompt: localize('parent', 'User Authentication'),
-            placeHolder: 'None',
+            placeHolder: localize('password', 'Password. Leave empty for none'),
             password: true,
             ignoreFocusOut: true,
         });
-        return auth;
+        return auth as FossilPassword | undefined;
     }
 
     export async function warnBranchAlreadyExists(
-        name: string
+        name: FossilBranch
     ): Promise<BranchExistsAction> {
-        const updateTo = localize('upadte', 'Update');
+        const updateTo = localize('update', 'Update');
         const reopen = localize('reopen', 'Re-open');
         const message = localize(
             'branch already exists',
