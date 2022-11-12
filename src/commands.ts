@@ -922,7 +922,10 @@ export class CommandCenter {
         const message = inputBox.value as FossilCommitMessage;
         const didCommit = await this.smartCommit(
             repository,
-            () => interaction.inputCommitMessage(message),
+            () =>
+                message
+                    ? Promise.resolve(message)
+                    : interaction.inputCommitMessage(),
             opts
         );
 
@@ -1179,7 +1182,6 @@ export class CommandCenter {
                     repository,
                     async () =>
                         await interaction.inputCommitMessage(
-                            '' as FossilCommitMessage,
                             defaultMergeMessage
                         )
                 );
