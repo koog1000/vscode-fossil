@@ -483,8 +483,9 @@ export class Fossil {
                 if (/Authentication failed/.test(result.stderr)) {
                     return 'AuthenticationFailed';
                 } else if (
-                    /not within an open checkout/.test(result.stderr) ||
-                    /specify the repository database/.test(result.stderr)
+                    /(not within an open checkout|specify the repository database|cannot find current working directory)/.test(
+                        result.stderr
+                    )
                 ) {
                     return 'NotAFossilRepository';
                 } else if (
