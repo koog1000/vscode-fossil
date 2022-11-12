@@ -346,7 +346,7 @@ export type FossilErrorCode =
     | 'NoUndoInformationAvailable'
     | 'UntrackedFilesDiffer'
     | 'DefaultRepositoryNotConfigured'
-    | 'OperationMustBeforced'
+    | 'OperationMustBeForced'
     | 'unknown';
 
 export class Fossil {
@@ -447,7 +447,7 @@ export class Fossil {
                 err instanceof FossilError &&
                 err.fossilErrorCode !== 'NoSuchFile' &&
                 err.fossilErrorCode !== 'NotAFossilRepository' &&
-                err.fossilErrorCode !== 'OperationMustBeforced'
+                err.fossilErrorCode !== 'OperationMustBeForced'
             ) {
                 const openLog = await interaction.errorPromptOpenLog(err);
                 if (openLog) {
@@ -494,7 +494,7 @@ export class Fossil {
                 ) {
                     return 'NoSuchFile';
                 } else if (/--force\b/.test(result.stderr)) {
-                    return 'OperationMustBeforced';
+                    return 'OperationMustBeForced';
                 }
                 return 'unknown';
             })();
