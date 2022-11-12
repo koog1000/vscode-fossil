@@ -1176,7 +1176,7 @@ export class Repository implements IDisposable, InteractionAPI {
         this._currentBranch = currentRef;
 
         const groupInput: IGroupStatusesParams = {
-            respositoryRoot: this.repository.root,
+            repositoryRoot: this.repository.root,
             fileStatuses: fileStat,
             // repoStatus: this._repoStatus,
             resolveStatuses: undefined,
