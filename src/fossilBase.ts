@@ -9,7 +9,15 @@ import * as cp from 'child_process';
 import * as fs from 'fs/promises';
 import { appendFileSync, existsSync, writeFileSync } from 'fs';
 import { groupBy, IDisposable, toDisposable, dispose } from './util';
-import { EventEmitter, Event, workspace, window, OutputChannel } from 'vscode';
+import {
+    EventEmitter,
+    Event,
+    workspace,
+    window,
+    OutputChannel,
+    Uri,
+    ProgressLocation,
+} from 'vscode';
 import { interaction } from './interaction';
 import { throttle } from './decorators';
 
@@ -28,7 +36,7 @@ export type FossilCWD =
  * * ssh://[userid@]host[:port]/path/to/repo.fossil[?fossil=path/fossil.exe]
  * * [file://]path/to/repo.fossil
  */
-export type FossilURI = Distinct<string, 'Fossil URI'>;
+export type FossilURI = Distinct<Uri, 'Fossil URI'>;
 /** Name shown by `fossil remote ls` command */
 export type FossilRemoteName = Distinct<string, 'Fossil Remote Name'>;
 /** https://fossil-scm.org/home/doc/trunk/www/checkin_names.wiki */
@@ -57,6 +65,8 @@ export const enum MergeAction {
     Integrate,
     Cherrypick,
 }
+export type FossilUsername = Distinct<string, 'fossil username'>;
+export type FossilPassword = Distinct<string, 'fossil password'>;
 
 export interface IFossil {
     path: FossilExecutablePath;
@@ -377,10 +387,20 @@ export class Fossil {
     }
 
     async clone(uri: FossilURI, fossilPath: FossilPath): Promise<FossilRoot> {
-        const fossilRoot = path.dirname(fossilPath) as FossilRoot;
-        await fs.mkdir(fossilRoot, { recursive: true });
-        await this.exec(fossilRoot, ['clone', uri, fossilPath, '--verbose']);
-        return fossilRoot;
+        return window.withProgress(
+            { location: ProgressLocation.SourceControl, title: 'Cloning...' },
+            async (): Promise<FossilRoot> => {
+                const fossilRoot = path.dirname(fossilPath) as FossilRoot;
+                await fs.mkdir(fossilRoot, { recursive: true });
+                await this.exec(fossilRoot, [
+                    'clone',
+                    uri.toString(),
+                    fossilPath,
+                    '--verbose',
+                ]);
+                return fossilRoot;
+            }
+        );
     }
 
     async openClone(
@@ -408,7 +428,9 @@ export class Fossil {
         this.log(`getting root for '${anypath}'\n`);
         const result = await this.exec(cwd, ['status']);
         const root = result.stdout.match(/local-root:\s*(.+)\/\s/);
-        if (root) return root[1] as FossilRoot;
+        if (root) {
+            return root[1] as FossilRoot;
+        }
         return '' as FossilRoot;
     }
 
@@ -442,7 +464,7 @@ export class Fossil {
     ): Promise<IExecutionResult> {
         const startTimeHR = process.hrtime();
         const logTimeout = setTimeout(
-            () => this.log(`fossil ${args.join(' ')}: still running\n`),
+            () => this.logArgs(args, 'still running'),
             500
         );
 
@@ -454,11 +476,7 @@ export class Fossil {
         clearTimeout(logTimeout);
 
         const durationHR = process.hrtime(startTimeHR);
-        this.log(
-            `fossil ${args.join(' ')}: ${Math.floor(
-                msFromHighResTime(durationHR)
-            )}ms\n`
-        );
+        this.logArgs(args, `${Math.floor(msFromHighResTime(durationHR))}ms`);
 
         if (result.exitCode) {
             const fossilErrorCode: FossilErrorCode = (() => {
@@ -499,6 +517,14 @@ export class Fossil {
 
     private log(output: string): void {
         this._onOutput.fire(output);
+    }
+    private logArgs(args: string[], info: string): void {
+        if (args[0] == 'clone') {
+            // replace password with asterisks
+            args = [...args];
+            args[1] = args[1].replace(/(.*:\/\/.+:)(.+)(@.*)/, '$1*********$3');
+        }
+        this.log(`fossil ${args.join(' ')}: ${info}\n`);
     }
 }
 
@@ -1120,7 +1146,7 @@ export class Repository {
         const pathsResult = await this.exec(['remote-url']);
         return {
             name: 'path' as FossilRemoteName,
-            url: pathsResult.stdout.trim() as FossilURI,
+            url: Uri.parse(pathsResult.stdout.trim()) as FossilURI,
         };
     }
 }
