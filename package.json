@@ -620,7 +620,7 @@
             "scm/change/title": [
                 {
                     "command": "fossil.revertChange",
-                    "when": "config.fossil.enabled && scmProvider == fossil"
+                    "when": "config.fossil.enabled && originalResourceScheme == fossil"
                 }
             ],
             "scm/sourceControl": [
