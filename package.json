@@ -218,8 +218,8 @@
                 }
             },
             {
-                "command": "fossil.openui",
-                "title": "%command.openui%",
+                "command": "fossil.openUI",
+                "title": "%command.openUI%",
                 "category": "Fossil"
             },
             {
@@ -347,7 +347,7 @@
                     "when": "config.fossil.enabled"
                 },
                 {
-                    "command": "fossil.openui",
+                    "command": "fossil.openUI",
                     "when": "config.fossil.enabled && fossilOpenRepositoryCount != 0"
                 },
                 {

@@ -64,7 +64,7 @@ export class AutoIncomingOutgoing {
         this.repository.statusPromise.then(() => this.refresh());
         this.timer = setInterval(
             () => this.refresh(),
-            typedConfig.autoInOutIntervalMillis
+            typedConfig.autoInOutIntervalMs
         );
     }
 
@@ -91,7 +91,7 @@ export class AutoIncomingOutgoing {
     @throttle
     private async refresh(): Promise<void> {
         const nextCheckTime = new Date(
-            Date.now() + typedConfig.autoInOutIntervalMillis
+            Date.now() + typedConfig.autoInOutIntervalMs
         );
         this.repository.changeAutoInoutState({ nextCheckTime });
 

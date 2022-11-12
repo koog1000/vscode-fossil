@@ -34,7 +34,7 @@ class Config {
         );
     }
 
-    get autoInOutIntervalMillis(): number {
+    get autoInOutIntervalMs(): number {
         return this.autoInOutInterval * 1000;
     }
 

@@ -1248,8 +1248,8 @@ export class CommandCenter {
         this.outputChannel.show();
     }
 
-    @command('fossil.openui', { repository: true })
-    async openUi(repository: Repository): Promise<void> {
+    @command('fossil.openUI', { repository: true })
+    async openUI(repository: Repository): Promise<void> {
         const terminal = window.createTerminal({
             name: 'Fossil UI',
             cwd: repository.root,
