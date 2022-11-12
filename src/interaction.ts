@@ -299,7 +299,7 @@ export namespace interaction {
         this: void,
         dir: FossilRoot
     ): Promise<boolean> {
-        const open = localize('openrepo', 'Open Repository');
+        const open = localize('openrepo', '&&Open Repository');
 
         const message = localize(
             'proposeforceopen',
@@ -504,8 +504,8 @@ ${escapeHtml(stdout)}
     export async function warnBranchAlreadyExists(
         name: FossilBranch
     ): Promise<BranchExistsAction> {
-        const updateTo = localize('update', 'Update');
-        const reopen = localize('reopen', 'Re-open');
+        const updateTo = localize('update', '&&Update');
+        const reopen = localize('reopen', '&&Re-open');
         const message = localize(
             'branch already exists',
             "Branch '{0}' already exists. Update or Re-open?",
@@ -992,7 +992,7 @@ ${escapeHtml(stdout)}
             'confirm discard all',
             'Are you sure you want to discard ALL changes?'
         );
-        const discard = localize('discard', 'Discard Changes');
+        const discard = localize('discard', '&&Discard Changes');
         const choice = await window.showWarningMessage(
             message,
             { modal: true },
@@ -1006,7 +1006,7 @@ ${escapeHtml(stdout)}
             'confirm delete extras',
             'Are you sure you want to delete untracked and uningnored files?'
         );
-        const discard = localize('discard', 'Delete Extras');
+        const discard = localize('discard', '&&Delete Extras');
         const choice = await window.showWarningMessage(
             message,
             { modal: true },
@@ -1027,14 +1027,14 @@ ${escapeHtml(stdout)}
                 'Are you sure you want to DELETE {0}?\nThis is IRREVERSIBLE!\nThis file will be FOREVER LOST if you proceed.',
                 path.basename(paths[0])
             );
-            yes = localize('delete file', 'Delete file');
+            yes = localize('delete file', '&&Delete file');
         } else {
             message = localize(
                 'confirm delete multiple',
                 'Are you sure you want to DELETE {0} files?\nThis is IRREVERSIBLE!\nThese files will be FOREVER LOST if you proceed.',
                 paths.length
             );
-            yes = localize('delete files', 'Delete Files');
+            yes = localize('delete files', '&&Delete Files');
         }
 
         const choice = await window.showWarningMessage(
@@ -1086,7 +1086,7 @@ ${escapeHtml(stdout)}
             );
         }
 
-        const discard = localize('discard', 'Discard Changes');
+        const discard = localize('discard', '&&Discard Changes');
         const choice = await window.showWarningMessage(
             message,
             { modal: true },
@@ -1115,7 +1115,7 @@ ${escapeHtml(stdout)}
             );
         }
 
-        const deleteOption = localize('delete', 'Delete');
+        const deleteOption = localize('delete', '&&Delete');
         const choice = await window.showWarningMessage(
             message,
             { modal: true },
@@ -1129,7 +1129,7 @@ ${escapeHtml(stdout)}
             'confirm commit working group',
             'There are no staged changes, do you want to commit working changes?\n'
         );
-        const respOpt = localize('confirm', 'Confirm');
+        const respOpt = localize('confirm', 'C&&onfirm');
         const choice = await window.showWarningMessage(
             message,
             { modal: true },
