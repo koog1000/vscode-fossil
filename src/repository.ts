@@ -855,11 +855,11 @@ export class Repository implements IDisposable, InteractionAPI {
         return { autoUpdate: typedConfig.autoUpdate };
     }
 
-    async changeInoutAfterDelay(delayMillis = 3000): Promise<void> {
+    async changeInoutAfterDelay(delayMs = 3000): Promise<void> {
         try {
             // then confirm after delay
-            if (delayMillis) {
-                await delay(delayMillis);
+            if (delayMs) {
+                await delay(delayMs);
             }
             this._onDidChangeInOutState.fire();
         } catch (err) {

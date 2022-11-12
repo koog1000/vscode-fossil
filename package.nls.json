@@ -3,7 +3,7 @@
     "command.init": "Initialize Fossil Repository",
     "command.open": "Open Fossil Repository",
     "command.close": "Close Repository",
-    "command.openui": "Open web UI",
+    "command.openUI": "Open web UI",
     "command.refresh": "Refresh",
     "command.openChange": "Open Changes",
     "command.openFile": "Open File",

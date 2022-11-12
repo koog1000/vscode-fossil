@@ -11,5 +11,16 @@
         "**/.DS_Store": true,
         "*.vsix": true,
         "images/production": true
-    }
+    },
+    "cSpell.words": [
+        "anypath",
+        "Checkin",
+        "cherrypick",
+        "esbuild",
+        "humanise",
+        "outfile",
+        "repourl",
+        "sequentialize",
+        "Technote"
+    ]
 }

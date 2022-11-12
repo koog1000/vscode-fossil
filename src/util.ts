@@ -102,8 +102,8 @@ export function partition<T>(
     );
 }
 
-export const delay = (millis: number): Promise<void> =>
-    new Promise(c => setTimeout(c, millis));
+export const delay = (ms: number): Promise<void> =>
+    new Promise(c => setTimeout(c, ms));
 
 // export const isInArray = <T, A extends T>(
 //     item: T,
