@@ -544,21 +544,6 @@
                     "when": "config.fossil.enabled && scmProvider == fossil"
                 },
                 {
-                    "command": "fossil.unstageAll",
-                    "group": "4_stage",
-                    "when": "config.fossil.enabled && scmProvider == fossil"
-                },
-                {
-                    "command": "fossil.revertAll",
-                    "group": "4_stage",
-                    "when": "config.fossil.enabled && scmProvider == fossil"
-                },
-                {
-                    "command": "fossil.clean",
-                    "group": "4_stage",
-                    "when": "config.fossil.enabled && scmProvider == fossil"
-                },
-                {
                     "submenu": "fossil.commit",
                     "when": "scmProvider == fossil",
                     "group": "5_groups@0"
