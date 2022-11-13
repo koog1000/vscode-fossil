@@ -1,5 +1,19 @@
 # Changelog
 
+# v0.1.9
+
+### What's New
+- Preview of wiki/md files using fossil's renderer
+- Publish Technote right from preview
+- Stash support (save, snapshot, pop, apply, drop)
+- Rewrote Cloning operation to make it more user friendly
+- Remove 'Delete Extras', 'Discard All Changes', 'Unstage All Changes' commands from Source Control menu because all these actions are available as buttons
+
+### Bug Fixes
+- Restore the "Restore" button in "scm/change/title"
+- Minor bugfixes (#78, #80)
+
+
 # v0.1.8
 
 ### What's New
@@ -7,7 +21,7 @@
 - Support fossil 2.19's new rename status (from -> to)
 
 ### Bug Fixes
-- Commiting from ui didn't await user input
+- Committing from ui didn't await user input
 - Rework prompt detection using 50ms timeout
 
 
@@ -16,7 +30,7 @@
 ### What's New
 - 'Redo' command
 - Edit commit message with 'Log...' command
-- Commands for openning and reopenning a branch
+- Commands for opening and reopening a branch
 
 ### Bug Fixes
 - 'Undo' command didn't work
@@ -32,7 +46,7 @@
 
 ### Bug Fixes
 - Message 'Fossil: file _FILENAME_ does not exist in check-in current'
-  was popping up when openning an untracked file was opened
+  was popping up when opening an untracked file was opened
 
 
 # v0.1.5
@@ -50,7 +64,7 @@
 
 ### What's New
 - Support fossil patch create/apply
-- Warn about unsaved files when commiting
+- Warn about unsaved files when committing
 
 ### Bug Fixes
 - Files merged by integration (`--integrate`)
@@ -69,7 +83,7 @@
 # v0.1.2
 
 ### What's New
-- Restore repositoty initialization buttons in "Source Control" tab
+- Restore repository initialization buttons in "Source Control" tab
   when no repository is opened
 - Reduce package size from 1.7MB to 0.25MB
 - Extension codebase is modernized. It should be easier to add tests
@@ -90,20 +104,20 @@
 # v0.0.19
 
 ### What's New
-- More fixes to repo actions to resouce folders,
-  Maybe somedeay I'll leran to test beter...
+- More fixes to repo actions to resource folders,
+  Maybe someday I'll learn to test better...
 
 
 # v0.0.18
 
 ### What's New
-- Fix repo actions to resouce folders
+- Fix repo actions to resource folders
 
 
 # v0.0.17
 
 ### What's New
-- Added repo actions to resouce folders
+- Added repo actions to resource folders
 
 
 # v0.0.16
@@ -182,7 +196,7 @@
 # v0.0.6
 
 ### What's New
-- Update readme with link to cloning doc and and troubleshooting seciton
+- Update readme with link to cloning doc and and troubleshooting section
 - Update cloning inputboxes to default to empty
 - Default all commands to check for input prompt
 
