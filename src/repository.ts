@@ -35,6 +35,7 @@ import {
     FossilURI,
     FossilUndoCommand,
     FossilCommitMessage,
+    StashItem,
 } from './fossilBase';
 import {
     anyEvent,
@@ -731,24 +732,30 @@ export class Repository implements IDisposable, InteractionAPI {
         this._onDidChangeResources.fire();
     }
 
+    scopeToFileList(
+        scope: Exclude<CommitScope, CommitScope.UNKNOWN>
+    ): string[] {
+        if (scope === CommitScope.STAGING_GROUP) {
+            return this.stagingGroup.resourceStates.map(r =>
+                this.mapResourceToRepoRelativePath(r)
+            );
+        } else if (scope === CommitScope.WORKING_GROUP) {
+            return this.workingGroup.resourceStates.map(r =>
+                this.mapResourceToRepoRelativePath(r)
+            );
+        }
+        return [];
+    }
+
     @throttle
     async commit(
         message: FossilCommitMessage,
-        scope: CommitScope,
+        scope: Exclude<CommitScope, CommitScope.UNKNOWN>,
         branch: FossilBranch | undefined
     ): Promise<void> {
         await this.runWithProgress(Operation.Commit, async () => {
-            let fileList: string[] = [];
-            if (scope === CommitScope.STAGING_GROUP) {
-                fileList = this.stagingGroup.resourceStates.map(r =>
-                    this.mapResourceToRepoRelativePath(r)
-                );
-            } else if (scope === CommitScope.WORKING_GROUP) {
-                fileList = this.workingGroup.resourceStates.map(r =>
-                    this.mapResourceToRepoRelativePath(r)
-                );
-            }
             const user = typedConfig.username;
+            const fileList = this.scopeToFileList(scope);
             await this.repository.commit(message, { fileList, user, branch });
             return;
         });
@@ -996,6 +1003,38 @@ export class Repository implements IDisposable, InteractionAPI {
     async patchApply(path: string): Promise<void> {
         return this.runWithProgress(Operation.PatchApply, async () =>
             this.repository.patchApply(path)
+        );
+    }
+
+    async stash(
+        message: FossilCommitMessage,
+        scope: Exclude<CommitScope, CommitScope.UNKNOWN>,
+        operation: 'save' | 'snapshot'
+    ): Promise<void> {
+        return this.runWithProgress(Operation.Commit, async () => {
+            const fileList = this.scopeToFileList(scope);
+            this.repository.stash(message, operation, fileList);
+        });
+    }
+
+    async stashList(): Promise<StashItem[]> {
+        return this.runWithProgress(Operation.Status, async () =>
+            this.repository.stashList()
+        );
+    }
+
+    async stashPop(): Promise<void> {
+        return this.runWithProgress(Operation.Status, async () =>
+            this.repository.stashPop()
+        );
+    }
+
+    async stashApplyOrDrop(
+        operation: 'apply' | 'drop',
+        stashId: number
+    ): Promise<void> {
+        return this.runWithProgress(Operation.Status, async () =>
+            this.repository.stashApplyOrDrop(operation, stashId)
         );
     }
 

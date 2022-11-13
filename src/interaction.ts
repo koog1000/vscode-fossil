@@ -35,6 +35,7 @@ import {
     FossilCommitMessage,
     FossilUsername,
     FossilPassword,
+    StashItem,
 } from './fossilBase';
 import { humanise } from './humanise';
 import { Repository, LogEntriesOptions } from './repository';
@@ -739,6 +740,23 @@ ${escapeHtml(stdout)}
         return choice?.commit.hash;
     }
 
+    export async function pickStashItem(
+        items: StashItem[],
+        operation: 'drop' | 'apply'
+    ): Promise<number | undefined> {
+        const stashItems = items.map(entry => new StashEntryItem(entry));
+        const placeHolder = localize(
+            `stash to ${operation}`,
+            `Stash to ${operation}`
+        );
+        const item = await window.showQuickPick(stashItems, {
+            placeHolder,
+            matchOnDescription: true,
+            matchOnDetail: true,
+        });
+        return item?.item.stashId;
+    }
+
     /**
      * use selected commit in 'fossil.log' command
      */
@@ -1174,6 +1192,28 @@ class TimelineEntryItem extends RunnableQuickPickItem {
     }
     get detail(): string {
         return this.commit.message;
+    }
+    run() {
+        // do nothing.
+    }
+}
+
+class StashEntryItem extends RunnableQuickPickItem {
+    constructor(public item: StashItem) {
+        super();
+    }
+    protected get age(): string {
+        return humanise.ageFromNow(this.item.date);
+    }
+    get label(): string {
+        const hash = this.item.hash.slice(0, SHORT_HASH_LENGTH);
+        return `$(circle-outline) ${this.item.stashId} ${BULLET} ${hash}`;
+    }
+    get description(): string {
+        return `$(calendar) ${this.age}`;
+    }
+    get detail(): string {
+        return this.item.comment;
     }
     run() {
         // do nothing.

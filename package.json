@@ -334,6 +334,31 @@
                 "command": "fossil.patchApply",
                 "title": "Apply Patch",
                 "category": "Fossil"
+            },
+            {
+                "command": "fossil.stashSnapshot",
+                "title": "Stash Snapshot",
+                "category": "Fossil"
+            },
+            {
+                "command": "fossil.stashSave",
+                "title": "Stash Push",
+                "category": "Fossil"
+            },
+            {
+                "command": "fossil.stashPop",
+                "title": "Stash Pop",
+                "category": "Fossil"
+            },
+            {
+                "command": "fossil.stashApply",
+                "title": "Stash Apply",
+                "category": "Fossil"
+            },
+            {
+                "command": "fossil.stashDrop",
+                "title": "Stash Drop",
+                "category": "Fossil"
             }
         ],
         "menus": {
@@ -544,14 +569,19 @@
                     "group": "5_groups@1"
                 },
                 {
-                    "submenu": "fossil.timeline",
+                    "submenu": "fossil.stash",
                     "when": "scmProvider == fossil",
                     "group": "5_groups@2"
                 },
                 {
-                    "submenu": "fossil.patch",
+                    "submenu": "fossil.timeline",
                     "when": "scmProvider == fossil",
                     "group": "5_groups@3"
+                },
+                {
+                    "submenu": "fossil.patch",
+                    "when": "scmProvider == fossil",
+                    "group": "5_groups@4"
                 },
                 {
                     "command": "fossil.showOutput",
@@ -615,6 +645,33 @@
                     "command": "fossil.patchApply",
                     "when": "scmProvider == fossil",
                     "group": "patch@1"
+                }
+            ],
+            "fossil.stash": [
+                {
+                    "command": "fossil.stashSnapshot",
+                    "when": "scmProvider == fossil",
+                    "group": "stash@0"
+                },
+                {
+                    "command": "fossil.stashSave",
+                    "when": "scmProvider == fossil",
+                    "group": "stash@1"
+                },
+                {
+                    "command": "fossil.stashPop",
+                    "when": "scmProvider == fossil",
+                    "group": "stash@2"
+                },
+                {
+                    "command": "fossil.stashApply",
+                    "when": "scmProvider == fossil",
+                    "group": "stash@3"
+                },
+                {
+                    "command": "fossil.stashDrop",
+                    "when": "scmProvider == fossil",
+                    "group": "stash@4"
                 }
             ],
             "scm/change/title": [
@@ -861,6 +918,10 @@
             {
                 "id": "fossil.timeline",
                 "label": "%submenu.timeline%"
+            },
+            {
+                "id": "fossil.stash",
+                "label": "%submenu.stash%"
             },
             {
                 "id": "fossil.patch",

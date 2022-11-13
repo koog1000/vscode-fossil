@@ -50,8 +50,9 @@
     "config.autoRefresh": "Whether auto refreshing is enabled",
     "config.autoUpdate": "Update to latest head after a pull (when there are incoming changesets)",
     "config.enableLongCommitWarning": "Whether long commit messages should be warned about",
+    "submenu.commit": "Commit",
     "submenu.merge": "Merge",
     "submenu.patch": "Patch",
-    "submenu.timeline": "Timeline",
-    "submenu.commit": "Commit"
+    "submenu.stash": "Stash",
+    "submenu.timeline": "Timeline"
 }

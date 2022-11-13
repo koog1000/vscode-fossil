@@ -1,4 +1,5 @@
 import { workspace } from 'vscode';
+import { FossilUsername } from './fossilBase';
 
 const DEFAULT_AUTO_IN_OUT_INTERVAL_SECONDS = 3 * 60; /* three minutes */
 
@@ -38,7 +39,7 @@ class Config {
         return this.autoInOutInterval * 1000;
     }
 
-    get username(): string | undefined {
+    get username(): FossilUsername | undefined {
         return this.get('username', undefined);
     }
 }
