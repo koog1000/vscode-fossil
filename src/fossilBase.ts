@@ -122,6 +122,13 @@ export interface FossilRemote {
     url: FossilURI;
 }
 
+export interface StashItem {
+    stashId: number;
+    hash: string;
+    date: Date;
+    comment: FossilCommitMessage;
+}
+
 export interface FossilFindAttemptLogger {
     log(path: string): void;
 }
@@ -646,7 +653,7 @@ export class Repository {
         message: string,
         opts: {
             fileList: string[];
-            user?: string | undefined;
+            user?: FossilUsername | undefined;
             branch: FossilBranch | undefined;
         }
     ): Promise<void> {
@@ -939,6 +946,55 @@ export class Repository {
 
     async patchApply(path: string): Promise<void> {
         const args = ['patch', 'apply', path];
+        await this.exec(args);
+    }
+
+    async stash(
+        message: FossilCommitMessage,
+        operation: 'save' | 'snapshot',
+        paths: string[]
+    ): Promise<void> {
+        const args = ['stash', operation, '-m', message, ...paths];
+        await this.exec(args);
+    }
+
+    async stashList(): Promise<StashItem[]> {
+        const args = ['stash', 'list'];
+        const res = await this.exec(args);
+        const out: StashItem[] = [];
+        const lines = res.stdout.split('\n');
+        for (let idx = 0; idx < lines.length; ++idx) {
+            const line = lines[idx];
+            if (line[5] == ':') {
+                const match = line.match(/\s+(\d+):\s*\[(\w+)\] on (.*)/);
+                if (!match) {
+                    console.log('unexpected fossil stash output: ', line);
+                } else {
+                    let comment = '' as FossilCommitMessage;
+                    if (lines[idx + 1][5] != ':') {
+                        comment = lines[++idx].trim() as FossilCommitMessage;
+                    }
+                    out.push({
+                        stashId: parseInt(match[1], 10),
+                        hash: match[2],
+                        date: new Date(match[3]),
+                        comment,
+                    });
+                }
+            }
+        }
+        return out;
+    }
+
+    async stashPop(): Promise<void> {
+        await this.exec(['stash', 'pop']);
+    }
+
+    async stashApplyOrDrop(
+        operation: 'apply' | 'drop',
+        stashId: number
+    ): Promise<void> {
+        const args = ['stash', operation, stashId.toString()];
         await this.exec(args);
     }
 

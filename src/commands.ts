@@ -776,7 +776,7 @@ export class CommandCenter {
             doc => !doc.isUntitled && doc.isDirty
         );
         const existingUris = new Set<string>();
-        if (allUnsavedDocuments) {
+        if (allUnsavedDocuments.length) {
             (
                 await repository.ls(...allUnsavedDocuments.map(doc => doc.uri))
             ).map(uri => existingUris.add(uri.fsPath));
@@ -803,7 +803,7 @@ export class CommandCenter {
                 'save and commit',
                 'Save All & Commit'
             );
-            const commit = localize('commit', 'Commit Staged Changes');
+            const commit = localize('commit', 'C&&ommit Staged Changes');
             const pick = await window.showWarningMessage(
                 message,
                 { modal: true },
@@ -820,72 +820,75 @@ export class CommandCenter {
         }
         return true;
     }
-    private async validateNoConflicts(
+    private async confirmCommitScope(
         repository: Repository,
-        opts: CommitOptions
-    ): Promise<boolean> {
-        const numConflictResources =
-            repository.conflictGroup.resourceStates.length;
-        if (numConflictResources > 0) {
-            interaction.warnResolveConflicts();
-            return false;
-        }
+        scope: CommitScope
+    ): Promise<Exclude<CommitScope, CommitScope.UNKNOWN> | undefined> {
         const numWorkingResources =
             repository.workingGroup.resourceStates.length;
         const numStagingResources =
             repository.stagingGroup.resourceStates.length;
+        if (scope === CommitScope.UNKNOWN) {
+            if (numWorkingResources > 0 && numStagingResources == 0) {
+                const useWorkingGroup =
+                    await interaction.confirmCommitWorkingGroup();
+                if (!useWorkingGroup) {
+                    return;
+                }
+                scope = CommitScope.WORKING_GROUP;
+            } else {
+                scope = CommitScope.STAGING_GROUP;
+            }
+        }
+
+        if (scope === CommitScope.WORKING_GROUP) {
+            const missingResources =
+                repository.workingGroup.resourceStates.filter(
+                    r => r.status === Status.MISSING
+                );
+            if (missingResources.length > 0) {
+                const missingFilenames = missingResources.map(r =>
+                    repository.mapResourceToWorkspaceRelativePath(r)
+                );
+                const deleteConfirmed =
+                    await interaction.confirmDeleteMissingFilesForCommit(
+                        missingFilenames
+                    );
+                if (!deleteConfirmed) {
+                    return;
+                }
+                await this.remove(...missingResources);
+            }
+        }
+
+        if (
+            (numWorkingResources === 0 && numStagingResources === 0) || // no changes
+            (scope === CommitScope.STAGING_GROUP &&
+                numStagingResources === 0) || // no staged changes
+            (scope === CommitScope.WORKING_GROUP && numWorkingResources === 0) // no working directory changes
+        ) {
+            interaction.informNoChangesToCommit();
+            return;
+        }
+        return scope;
+    }
+    private async validateNoConflicts(
+        repository: Repository,
+        scope: CommitScope
+    ): Promise<Exclude<CommitScope, CommitScope.UNKNOWN> | undefined> {
+        const numConflictResources =
+            repository.conflictGroup.resourceStates.length;
+        if (numConflictResources > 0) {
+            await interaction.warnResolveConflicts();
+            return;
+        }
         const isMergeCommit = repository.repoStatus?.isMerge;
 
         if (isMergeCommit) {
-            opts.scope = CommitScope.ALL;
+            return CommitScope.ALL;
         } else {
-            if (opts.scope === CommitScope.UNKNOWN) {
-                if (numWorkingResources > 0 && numStagingResources == 0) {
-                    const useWorkingGroup =
-                        await interaction.confirmCommitWorkingGroup();
-                    if (!useWorkingGroup) {
-                        return false;
-                    }
-                    opts.scope = CommitScope.WORKING_GROUP;
-                } else {
-                    opts.scope = CommitScope.STAGING_GROUP;
-                }
-            }
-
-            if (opts.scope === CommitScope.WORKING_GROUP) {
-                const missingResources =
-                    repository.workingGroup.resourceStates.filter(
-                        r => r.status === Status.MISSING
-                    );
-                if (missingResources.length > 0) {
-                    const missingFilenames = missingResources.map(r =>
-                        repository.mapResourceToWorkspaceRelativePath(r)
-                    );
-                    const deleteConfirmed =
-                        await interaction.confirmDeleteMissingFilesForCommit(
-                            missingFilenames
-                        );
-                    if (!deleteConfirmed) {
-                        return false;
-                    }
-                    await this.remove(...missingResources);
-                }
-            }
-
-            if (
-                (numWorkingResources === 0 && numStagingResources === 0) || // no changes
-                (opts &&
-                    opts.scope === CommitScope.STAGING_GROUP &&
-                    numStagingResources === 0) || // no staged changes
-                (opts &&
-                    opts.scope === CommitScope.WORKING_GROUP &&
-                    numWorkingResources === 0) // no working directory changes
-            ) {
-                interaction.informNoChangesToCommit();
-                return false;
-            }
+            return this.confirmCommitScope(repository, scope);
         }
-        return true;
     }
 
     private async smartCommit(
@@ -893,10 +896,11 @@ export class CommandCenter {
         getCommitMessage: () => Promise<FossilCommitMessage | undefined>,
         opts: CommitOptions = { scope: CommitScope.UNKNOWN }
     ): Promise<boolean> {
-        if (
-            !(await this.checkTrackedUnsavedFiles(repository)) ||
-            !(await this.validateNoConflicts(repository, opts))
-        ) {
+        if (!(await this.checkTrackedUnsavedFiles(repository))) {
+            return false;
+        }
+        const scope = await this.validateNoConflicts(repository, opts.scope);
+        if (scope === undefined) {
             return false;
         }
         const branch: FossilBranch | undefined =
@@ -909,14 +913,14 @@ export class CommandCenter {
             return false;
         }
 
-        await repository.commit(message, opts.scope, branch);
+        await repository.commit(message, scope, branch);
 
         return true;
     }
 
     private async commitWithAnyInput(
         repository: Repository,
-        opts: CommitOptions = { scope: CommitScope.UNKNOWN }
+        opts: CommitOptions
     ): Promise<void> {
         const inputBox = repository.sourceControl.inputBox;
         const message = inputBox.value as FossilCommitMessage;
@@ -936,7 +940,9 @@ export class CommandCenter {
 
     @command('fossil.commit', { repository: true })
     async commit(repository: Repository): Promise<void> {
-        await this.commitWithAnyInput(repository);
+        await this.commitWithAnyInput(repository, {
+            scope: CommitScope.UNKNOWN,
+        });
     }
 
     @command('fossil.commitWithInput', { repository: true })
@@ -1016,6 +1022,73 @@ export class CommandCenter {
         if (newPatchPath) {
             await repository.patchApply(newPatchPath);
         }
+    }
+
+    private async stash(
+        repository: Repository,
+        operation: 'save' | 'snapshot'
+    ): Promise<void> {
+        const now = new Date();
+        const dateTime = new Date(
+            now.getTime() - now.getTimezoneOffset() * 60000
+        )
+            .toISOString()
+            .slice(0, 19)
+            .replace('T', ' ');
+        const defaultMessage =
+            `vscode-${operation} ${dateTime}` as FossilCommitMessage;
+        const stashCommitMessage = await interaction.inputCommitMessage(
+            defaultMessage
+        );
+        if (stashCommitMessage !== undefined) {
+            if (!(await this.checkTrackedUnsavedFiles(repository))) {
+                return;
+            }
+            const scope = await this.validateNoConflicts(
+                repository,
+                CommitScope.UNKNOWN
+            );
+            if (scope === undefined) {
+                return;
+            }
+            await repository.stash(stashCommitMessage, scope, operation);
+        }
+    }
+
+    @command('fossil.stashSnapshot', { repository: true })
+    async stashSnapshot(repository: Repository): Promise<void> {
+        return this.stash(repository, 'snapshot');
+    }
+
+    @command('fossil.stashSave', { repository: true })
+    async stashSave(repository: Repository): Promise<void> {
+        return this.stash(repository, 'save');
+    }
+
+    private async stashApplyOrDrop(
+        repository: Repository,
+        operation: 'apply' | 'drop'
+    ) {
+        const items = await repository.stashList();
+        const stashId = await interaction.pickStashItem(items, operation);
+        if (stashId) {
+            repository.stashApplyOrDrop(operation, stashId);
+        }
+    }
+
+    @command('fossil.stashPop', { repository: true })
+    async stashPop(repository: Repository): Promise<void> {
+        return repository.stashPop();
+    }
+
+    @command('fossil.stashApply', { repository: true })
+    async stashApply(repository: Repository): Promise<void> {
+        return this.stashApplyOrDrop(repository, 'apply');
+    }
+
+    @command('fossil.stashDrop', { repository: true })
+    async stashDrop(repository: Repository): Promise<void> {
+        return this.stashApplyOrDrop(repository, 'drop');
     }
 
     @command('fossil.update', { repository: true })
