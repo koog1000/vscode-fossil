@@ -89,7 +89,7 @@ export class Model implements Disposable {
 
     private enabled = false;
     private configurationChangeDisposable: Disposable;
-    private disposables: Disposable[] = [];
+    private readonly disposables: Disposable[] = [];
 
     constructor(private _hg: Fossil) {
         this.enabled = typedConfig.enabled;
@@ -161,7 +161,7 @@ export class Model implements Disposable {
         this.openRepositories = [];
 
         this.possibleHgRepositoryPaths.clear();
-        this.disposables = dispose(this.disposables);
+        dispose(this.disposables);
     }
 
     /**
