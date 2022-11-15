@@ -5,7 +5,6 @@
  *--------------------------------------------------------------------------------------------*/
 
 import { Disposable, Command, EventEmitter, Event } from 'vscode';
-import { FossilBranch, IRepoStatus } from './fossilBase';
 import { anyEvent, dispose } from './util';
 import { AutoInOutStatuses, AutoInOutState } from './autoinout';
 import * as nls from 'vscode-nls';
@@ -16,11 +15,6 @@ const enum SyncStatus {
     None = 0,
     Pushing = 1,
     Pulling = 2,
-}
-
-interface CurrentRef {
-    ref: FossilBranch | undefined;
-    icon: string;
 }
 
 class ScopeStatusBar {
@@ -38,36 +32,18 @@ class ScopeStatusBar {
         );
     }
 
-    chooseCurrentRef(
-        currentBranch: FossilBranch | undefined,
-        repoStatus: IRepoStatus | undefined
-    ): CurrentRef {
-        const mergeIcon = repoStatus?.isMerge
-            ? '$(git-merge)'
-            : '$(git-branch)';
-        return { ref: currentBranch, icon: mergeIcon };
-    }
-
     get command(): Command | undefined {
         const { currentBranch, repoStatus } = this.repository;
-        const currentRef: CurrentRef = this.chooseCurrentRef(
-            currentBranch,
-            repoStatus
-        );
-
-        if (!currentRef.ref) {
+        if (!currentBranch) {
             return undefined;
         }
-
-        const label = currentRef.ref;
+        const icon = repoStatus?.isMerge ? '$(git-merge)' : '$(git-branch)';
         const title =
-            currentRef.icon +
+            icon +
             ' ' +
-            label +
-            (this.repository.workingGroup.resourceStates.length > 0
-                ? '+'
-                : '') +
-            (this.repository.mergeGroup.resourceStates.length > 0 ? '!' : '');
+            currentBranch +
+            (this.repository.workingGroup.resourceStates.length ? '+' : '') +
+            (this.repository.mergeGroup.resourceStates.length ? '!' : '');
 
         return {
             command: 'fossil.branchChange',
