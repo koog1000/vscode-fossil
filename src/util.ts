@@ -10,15 +10,15 @@ export interface IDisposable {
     dispose(): void;
 }
 
-interface HasForEach<T> {
-    forEach: (val: (item: T) => void) => void;
-}
-
 export function dispose<T extends IDisposable>(
-    disposables: HasForEach<T>
-): T[] {
+    disposables: Set<T> | T[]
+): void {
     disposables.forEach(d => d.dispose());
-    return [];
+    if (disposables instanceof Set) {
+        disposables.clear();
+    } else {
+        disposables.length = 0;
+    }
 }
 
 export function toDisposable(dispose: () => void): IDisposable {

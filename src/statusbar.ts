@@ -205,9 +205,9 @@ class SyncStatusBar {
 }
 
 export class StatusBarCommands {
-    private syncStatusBar: SyncStatusBar;
-    private scopeStatusBar: ScopeStatusBar;
-    private disposables: Disposable[] = [];
+    private readonly syncStatusBar: SyncStatusBar;
+    private readonly scopeStatusBar: ScopeStatusBar;
+    private readonly disposables: Disposable[] = [];
 
     constructor(repository: Repository) {
         this.syncStatusBar = new SyncStatusBar(repository);
@@ -242,6 +242,6 @@ export class StatusBarCommands {
     dispose(): void {
         this.syncStatusBar.dispose();
         this.scopeStatusBar.dispose();
-        this.disposables = dispose(this.disposables);
+        dispose(this.disposables);
     }
 }

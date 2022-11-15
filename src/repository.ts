@@ -432,7 +432,7 @@ export class Repository implements IDisposable, InteractionAPI {
         return this.repository.root;
     }
 
-    private disposables: Disposable[] = [];
+    private readonly disposables: Disposable[] = [];
     public statusPromise: Promise<StatusString>;
 
     constructor(private readonly repository: BaseRepository) {
@@ -1239,6 +1239,6 @@ export class Repository implements IDisposable, InteractionAPI {
     }
 
     dispose(): void {
-        this.disposables = dispose(this.disposables);
+        dispose(this.disposables);
     }
 }
