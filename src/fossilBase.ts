@@ -566,28 +566,6 @@ export class Repository {
         return await this.fossil.exec(this.repositoryRoot, args, options);
     }
 
-    async config(
-        scope: string,
-        key: string,
-        value: string,
-        options: any
-    ): Promise<string> {
-        const args = ['config'];
-
-        if (scope) {
-            args.push('--' + scope);
-        }
-
-        args.push(key);
-
-        if (value) {
-            args.push(value);
-        }
-
-        const result = await this.exec(args, options);
-        return result.stdout;
-    }
-
     async add(paths?: string[]): Promise<void> {
         const args = ['add'];
 
