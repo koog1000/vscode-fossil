@@ -554,16 +554,12 @@ export interface CommitDetails extends Commit {
 export class Repository {
     constructor(private _fossil: Fossil, private repositoryRoot: FossilRoot) {}
 
-    get fossil(): Fossil {
-        return this._fossil;
-    }
-
     get root(): FossilRoot {
         return this.repositoryRoot;
     }
 
     async exec(args: string[], options: any = {}): Promise<IExecutionResult> {
-        return await this.fossil.exec(this.repositoryRoot, args, options);
+        return await this._fossil.exec(this.repositoryRoot, args, options);
     }
 
     async add(paths?: string[]): Promise<void> {
