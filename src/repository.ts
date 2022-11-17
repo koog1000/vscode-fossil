@@ -12,6 +12,7 @@ import {
     window,
     workspace,
     commands,
+    RelativePattern,
 } from 'vscode';
 import {
     Repository as BaseRepository,
@@ -436,29 +437,26 @@ export class Repository implements IDisposable, InteractionAPI {
     public statusPromise: Promise<StatusString>;
 
     constructor(private readonly repository: BaseRepository) {
-        const fsWatcher = workspace.createFileSystemWatcher('**');
-        this.disposables.push(fsWatcher);
+        const repoRootWatcher = workspace.createFileSystemWatcher(
+            new RelativePattern(repository.root, '**')
+        );
+        this.disposables.push(repoRootWatcher);
 
-        const onWorkspaceChange = anyEvent(
-            fsWatcher.onDidChange,
-            fsWatcher.onDidCreate,
-            fsWatcher.onDidDelete
+        const onRepositoryChange = anyEvent(
+            repoRootWatcher.onDidChange,
+            repoRootWatcher.onDidCreate,
+            repoRootWatcher.onDidDelete
         );
-        const onRepositoryChange = filterEvent(
-            onWorkspaceChange,
-            uri => !/^\.\./.test(path.relative(repository.root, uri.fsPath))
-        );
-        const onRelevantRepositoryChange = filterEvent(
+        const onRepositoryFilesChange = filterEvent(
             onRepositoryChange,
-            uri => !/\/\.hg\/(\w?lock.*|.*\.log([-.]\w+)?)$/.test(uri.path)
+            uri => !/\/\.fslckout$/.test(uri.path)
         );
-        onRelevantRepositoryChange(this.onFSChange, this, this.disposables);
+        onRepositoryFilesChange(this.onFSChange, this, this.disposables);
 
-        const onRelevantHgChange = filterEvent(
-            onRelevantRepositoryChange,
-            uri => /\/\.hg\//.test(uri.path)
+        const onCheckoutDatabaseChange = filterEvent(onRepositoryChange, uri =>
+            /\/\.fslckout$/.test(uri.path)
         );
-        onRelevantHgChange(
+        onCheckoutDatabaseChange(
             this._onDidChangeRepository.fire,
             this._onDidChangeRepository,
             this.disposables
