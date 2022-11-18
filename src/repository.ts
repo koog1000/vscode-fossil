@@ -808,12 +808,9 @@ export class Repository implements IDisposable, InteractionAPI {
     }
 
     @throttle
-    async update(
-        treeish: FossilCheckin,
-        opts?: { discard: boolean }
-    ): Promise<void> {
+    async update(checkin: FossilCheckin): Promise<void> {
         await this.runWithProgress(Operation.Update, () =>
-            this.repository.update(treeish, opts)
+            this.repository.update(checkin)
         );
     }
 

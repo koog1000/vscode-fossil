@@ -606,18 +606,11 @@ export class Repository {
         }
     }
 
-    async update(
-        treeish: FossilCheckin,
-        opts?: { discard: boolean }
-    ): Promise<void> {
+    async update(checkin: FossilCheckin): Promise<void> {
         const args = ['update'];
 
-        if (opts?.discard) {
-            args.push('--dry-run');
-        }
-
-        if (treeish) {
-            args.push(treeish);
+        if (checkin) {
+            args.push(checkin);
         }
 
         await this.exec(args);
