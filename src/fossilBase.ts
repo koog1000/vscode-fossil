@@ -412,16 +412,16 @@ export class Fossil {
 
     async openClone(
         fossilPath: FossilPath,
-        workdir: FossilRoot
+        fossilRoot: FossilRoot
     ): Promise<void> {
-        await this.exec(workdir, ['open', fossilPath]);
+        await this.exec(fossilRoot, ['open', fossilPath]);
     }
 
     async openCloneForce(
         fossilPath: FossilPath,
-        parentPath: FossilRoot
+        fossilRoot: FossilRoot
     ): Promise<void> {
-        await this.exec(parentPath, ['open', fossilPath, '--force']);
+        await this.exec(fossilRoot, ['open', fossilPath, '--force']);
     }
 
     /**
