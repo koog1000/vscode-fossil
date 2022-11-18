@@ -801,29 +801,6 @@ export class Repository {
         return match[2] as FossilUndoCommand;
     }
 
-    async revertFiles(treeish: string, paths: string[]): Promise<void> {
-        const args: string[] = ['revert'];
-
-        if (paths?.length) {
-            args.push(...paths);
-        }
-
-        try {
-            await this.exec(args);
-        } catch (err) {
-            // In case there are merge conflicts to be resolved, fossil reset will output
-            // some "needs merge" data. We try to get around that.
-            if (
-                err instanceof FossilError &&
-                /([^:]+: needs merge\n)+/m.test(err.stdout || '')
-            ) {
-                return;
-            }
-
-            throw err;
-        }
-    }
-
     async pull(options: PullOptions): Promise<void> {
         let args = ['pull'];
 
