@@ -91,7 +91,7 @@ export class Model implements Disposable {
     private configurationChangeDisposable: Disposable;
     private readonly disposables: Disposable[] = [];
 
-    constructor(private _hg: Fossil) {
+    constructor(private readonly fossil: Fossil) {
         this.enabled = typedConfig.enabled;
         this.configurationChangeDisposable = workspace.onDidChangeConfiguration(
             this.onDidChangeConfiguration,
@@ -255,7 +255,7 @@ export class Model implements Disposable {
         }
 
         try {
-            const repositoryRoot = await this._hg.getRepositoryRoot(path);
+            const repositoryRoot = await this.fossil.getRepositoryRoot(path);
 
             // This can happen whenever `path` has the wrong case sensitivity in
             // case insensitive file systems
@@ -265,7 +265,7 @@ export class Model implements Disposable {
                 return true;
             }
 
-            const repository = new Repository(this._hg.open(repositoryRoot));
+            const repository = new Repository(this.fossil.open(repositoryRoot));
 
             this.open(repository);
             return true;
