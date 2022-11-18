@@ -140,7 +140,7 @@ interface FossilSpawnOptions extends cp.SpawnOptionsWithoutStdio {
 }
 
 export class FossilFinder {
-    constructor(private logger: FossilFindAttemptLogger) {}
+    constructor(private readonly logger: FossilFindAttemptLogger) {}
 
     private logAttempt(path: string) {
         this.logger.log(path);
@@ -361,7 +361,7 @@ export class Fossil {
     private readonly outputChannel: OutputChannel;
     public readonly version: FossilVersion;
     private openRepository: Repository | undefined;
-    private _onOutput = new EventEmitter<string>();
+    private readonly _onOutput = new EventEmitter<string>();
     get onOutput(): Event<string> {
         return this._onOutput.event;
     }
