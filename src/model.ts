@@ -91,7 +91,7 @@ export class Model implements Disposable {
         return this.openRepositories.map(r => r.repository);
     }
 
-    private possibleHgRepositoryPaths = new Set<string>();
+    private possibleFossilRepositoryPaths = new Set<string>();
 
     private enabled = false;
     private configurationChangeDisposable: Disposable;
@@ -143,16 +143,17 @@ export class Model implements Disposable {
         );
         this.onDidChangeVisibleTextEditors(window.visibleTextEditors);
 
-        const fsWatcher = workspace.createFileSystemWatcher('**');
-        this.disposables.push(fsWatcher);
+        const checkoutWatcher =
+            workspace.createFileSystemWatcher('**/.fslckout');
+        this.disposables.push(checkoutWatcher);
 
         const onWorkspaceChange = anyEvent(
-            fsWatcher.onDidChange,
-            fsWatcher.onDidCreate,
-            fsWatcher.onDidDelete
+            checkoutWatcher.onDidChange,
+            checkoutWatcher.onDidCreate,
+            checkoutWatcher.onDidDelete
         );
         onWorkspaceChange(
-            this.onPossibleHgRepositoryChange,
+            this.onPossibleFossilRepositoryChange,
             this,
             this.disposables
         );
@@ -166,7 +167,7 @@ export class Model implements Disposable {
         openRepositories.forEach(r => r.dispose());
         this.openRepositories = [];
 
-        this.possibleHgRepositoryPaths.clear();
+        this.possibleFossilRepositoryPaths.clear();
         dispose(this.disposables);
     }
 
@@ -184,19 +185,20 @@ export class Model implements Disposable {
         }
     }
 
-    private onPossibleHgRepositoryChange(uri: Uri): void {
-        const possibleHgRepositoryPath = uri.fsPath.replace(/\.hg.*$/, '');
-        this.possibleHgRepositoryPaths.add(possibleHgRepositoryPath);
-        this.eventuallyScanPossibleHgRepositories();
+    private onPossibleFossilRepositoryChange(uri: Uri): void {
+        this.possibleFossilRepositoryPaths.add(
+            uri.fsPath.replace('.fslckout', '')
+        );
+        this.eventuallyScanPossibleFossilRepositories();
     }
 
     @debounce(500)
-    private eventuallyScanPossibleHgRepositories(): void {
-        for (const path of this.possibleHgRepositoryPaths) {
+    private eventuallyScanPossibleFossilRepositories(): void {
+        for (const path of this.possibleFossilRepositoryPaths) {
             this.tryOpenRepository(path);
         }
 
-        this.possibleHgRepositoryPaths.clear();
+        this.possibleFossilRepositoryPaths.clear();
     }
 
     // An event that is emitted when a workspace folder is added or removed.
