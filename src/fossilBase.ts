@@ -183,6 +183,10 @@ export class FossilFinder {
     }
 }
 
+const enum Inline {
+    ENOENT = -1002, // special code for NodeJS.ErrnoException
+}
+
 export interface IExecutionResult {
     fossilPath: FossilExecutablePath;
     exitCode: number;
@@ -259,6 +263,12 @@ async function exec(
         new Promise<number>((c, e) => {
             once(child, 'error', e);
             once(child, 'exit', c);
+        }).catch((e: NodeJS.ErrnoException) => {
+            if (e.code === 'ENOENT') {
+                // most likely cwd was deleted
+                return Inline.ENOENT;
+            }
+            throw e;
         }),
         new Promise<string>(c => {
             function pushBuffer(buffer: Buffer) {
@@ -492,7 +502,8 @@ export class Fossil {
                 } else if (
                     /(not within an open checkout|specify the repository database|cannot find current working directory)/.test(
                         result.stderr
-                    )
+                    ) ||
+                    result.exitCode == Inline.ENOENT
                 ) {
                     return 'NotAFossilRepository';
                 } else if (
