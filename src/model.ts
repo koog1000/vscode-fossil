@@ -179,9 +179,13 @@ export class Model implements Disposable {
         for (const folder of workspace.workspaceFolders || []) {
             const root = folder.uri.fsPath;
             const children = await fs.readdir(root, { withFileTypes: true });
-            children
-                .filter(child => child.isDirectory())
-                .some(child => this.tryOpenRepository(child.name));
+            for (const child of children) {
+                if (child.isDirectory()) {
+                    await this.tryOpenRepository(
+                        Uri.joinPath(folder.uri, child.name).fsPath
+                    );
+                }
+            }
         }
     }
 
