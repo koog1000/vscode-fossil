@@ -1202,11 +1202,7 @@ export class Repository implements IDisposable, InteractionAPI {
 
         const fileStat = this.repository
             .parseStatusLines(statusString)
-            .concat(
-                this.repository.parseExtrasLines(
-                    await this.repository.getExtras()
-                )
-            );
+            .concat(await this.repository.getExtras());
 
         const currentRef = await currentRefPromise;
 
