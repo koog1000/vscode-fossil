@@ -62,6 +62,12 @@ function isParent(parent: string, child: string): boolean {
     return child.startsWith(parent);
 }
 
+/**
+ *
+ * 1) Model should manage list of Repository objects
+ *    in vscode's source control panel
+ * 2) Model is exposed as fossil Extension API
+ */
 export class Model implements Disposable {
     private _onDidOpenRepository = new EventEmitter<Repository>();
     readonly onDidOpenRepository: Event<Repository> =
@@ -193,6 +199,7 @@ export class Model implements Disposable {
         this.possibleHgRepositoryPaths.clear();
     }
 
+    // An event that is emitted when a workspace folder is added or removed.
     private async onDidChangeWorkspaceFolders({
         added,
         removed,
