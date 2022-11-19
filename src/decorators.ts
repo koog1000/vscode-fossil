@@ -85,6 +85,7 @@ function _throttle<T>(fn: Function, key: string): Function {
 
 export const throttle = decorate(_throttle);
 
+// Make sure asynchronous functions are called one after another (untested).
 function _sequentialize(fn: Function, key: string): Function {
     const currentKey = `__$sequence$${key}`;
 

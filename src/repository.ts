@@ -538,6 +538,9 @@ export class Repository implements IDisposable, InteractionAPI {
         await delay(5000);
     }
 
+    /**
+     *  wait till all operations are complete and the window is in focus
+     */
     async whenIdleAndFocused(): Promise<void> {
         while (true) {
             if (this.operations.size !== 0) {
