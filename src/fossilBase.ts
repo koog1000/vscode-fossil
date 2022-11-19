@@ -967,7 +967,7 @@ export class Repository {
     /**
      * @param line: line from `fossil status` of `fossil timeline --verbose`
      */
-    parseStatusLine(line: string): IFileStatus | undefined {
+    private parseStatusLine(line: string): IFileStatus | undefined {
         // regexp:
         // 1) (?:\s{3})? at the start of the line there are 0 or 3 spaces
         // 2) ([A-Z_]+) single uppercase word
@@ -1020,13 +1020,13 @@ export class Repository {
         return result;
     }
 
-    async getExtras(): Promise<string> {
+    async getExtras(): Promise<IFileStatus[]> {
         const args = ['extras'];
         const executionResult = await this.exec(args);
-        return executionResult.stdout;
+        return this.parseExtrasLines(executionResult.stdout);
     }
 
-    parseExtrasLines(extraString: string): IFileStatus[] {
+    private parseExtrasLines(extraString: string): IFileStatus[] {
         const result: IFileStatus[] = [];
         const lines = extraString.split('\n');
         lines.forEach(line => {
