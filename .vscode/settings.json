@@ -3,20 +3,16 @@
     "files.exclude": {
         "out": true,
         "**/.git": true,
-        "**/.svn": true,
-        "**/.hg": true,
-        "**/CVS": true,
-        "_FOSSIL_": true,
         ".fossil-settings/*.no-warn": true,
         "**/.DS_Store": true,
-        "*.vsix": true,
-        "images/production": true
+        "*.vsix": true
     },
     "cSpell.words": [
         "anypath",
         "Checkin",
         "cherrypick",
         "esbuild",
+        "fslckout",
         "humanise",
         "outfile",
         "repourl",
