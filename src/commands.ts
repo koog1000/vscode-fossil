@@ -168,7 +168,7 @@ export class CommandCenter {
             await window.showTextDocument(document, opts);
             return;
         }
-        return await commands.executeCommand<void>(
+        return commands.executeCommand<void>(
             'vscode.diff',
             left,
             right,
@@ -491,7 +491,7 @@ export class CommandCenter {
             return;
         }
 
-        return await this.openFile(resource);
+        return this.openFile(resource);
     }
 
     @command('fossil.openChangeFromUri')
@@ -502,7 +502,7 @@ export class CommandCenter {
             return;
         }
 
-        return await this._openResource(resource);
+        return this._openResource(resource);
     }
 
     @command('fossil.ignore')
@@ -537,7 +537,7 @@ export class CommandCenter {
 
     @command('fossil.addAll', { repository: true })
     async addAll(repository: Repository): Promise<void> {
-        return await repository.add();
+        return repository.add();
     }
 
     @command('fossil.add')
@@ -699,7 +699,7 @@ export class CommandCenter {
 
     @command('fossil.unstageAll', { repository: true })
     async unstageAll(repository: Repository): Promise<void> {
-        return await repository.unstage();
+        return repository.unstage();
     }
 
     @command('fossil.revert')
@@ -1455,7 +1455,7 @@ export class CommandCenter {
         const relativePath = repository.mapFileUriToWorkspaceRelativePath(uri);
         const title = `${relativePath} (${fromName} vs. ${toName})`;
 
-        return await commands.executeCommand<void>(
+        return commands.executeCommand<void>(
             'vscode.diff',
             fromUri,
             toUri,
