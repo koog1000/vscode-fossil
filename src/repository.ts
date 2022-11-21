@@ -447,11 +447,7 @@ export class Repository implements IDisposable, InteractionAPI {
             repoRootWatcher.onDidCreate,
             repoRootWatcher.onDidDelete
         );
-        const onRepositoryFilesChange = filterEvent(
-            onRepositoryChange,
-            uri => !/\/\.fslckout$/.test(uri.path)
-        );
-        onRepositoryFilesChange(this.onFSChange, this, this.disposables);
+        onRepositoryChange(this.onFSChange, this, this.disposables);
 
         const onCheckoutDatabaseChange = filterEvent(onRepositoryChange, uri =>
             /\/\.fslckout$/.test(uri.path)
