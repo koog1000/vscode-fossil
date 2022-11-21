@@ -11,12 +11,15 @@
         "anypath",
         "Checkin",
         "cherrypick",
+        "Crowl",
         "esbuild",
         "fslckout",
         "humanise",
         "outfile",
         "repourl",
         "sequentialize",
-        "Technote"
+        "Technote",
+        "unstage",
+        "userid"
     ]
 }
