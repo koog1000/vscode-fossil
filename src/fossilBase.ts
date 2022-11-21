@@ -159,6 +159,7 @@ export class FossilFinder {
         if (match) {
             return match[1].split('.').map(s => parseInt(s)) as FossilVersion;
         }
+        this.logger.log(`Failed to parse fossil version from output: '${raw}'`);
         return [0] as FossilVersion;
     }
 
