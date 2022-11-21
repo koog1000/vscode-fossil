@@ -880,14 +880,14 @@ export class Repository implements IDisposable, InteractionAPI {
 
     @throttle
     async pull(options: PullOptions): Promise<void> {
-        await this.runWithProgress(Operation.Pull, async () => {
+        return this.runWithProgress(Operation.Pull, async () => {
             await this.repository.pull(options);
         });
     }
 
     @throttle
     async push(_path: FossilURI | undefined): Promise<void> {
-        return await this.runWithProgress(Operation.Push, async () => {
+        return this.runWithProgress(Operation.Push, async () => {
             try {
                 await this.repository.push();
             } catch (e) {
@@ -914,7 +914,7 @@ export class Repository implements IDisposable, InteractionAPI {
     ): Promise<IMergeResult> {
         return this.runWithProgress(Operation.Merge, async () => {
             try {
-                return await this.repository.merge(revQuery, mergeAction);
+                return this.repository.merge(revQuery, mergeAction);
             } catch (e) {
                 if (
                     e instanceof FossilError &&
@@ -954,7 +954,7 @@ export class Repository implements IDisposable, InteractionAPI {
         // TODO@Joao: should we make this a general concept?
         await this.whenIdleAndFocused();
 
-        return await this.runWithProgress(Operation.Show, async () => {
+        return this.runWithProgress(Operation.Show, async () => {
             const relativePath = path
                 .relative(this.repository.root, params.path)
                 .replace(/\\/g, '/');
@@ -965,7 +965,7 @@ export class Repository implements IDisposable, InteractionAPI {
                         ' checkin: ' +
                         params.checkin
                 );
-                return await this.repository.cat(relativePath, params.checkin!);
+                return this.repository.cat(relativePath, params.checkin!);
             } catch (e) {
                 if (e instanceof FossilError) {
                     if (e.fossilErrorCode === 'NoSuchFile') {
@@ -1132,7 +1132,7 @@ export class Repository implements IDisposable, InteractionAPI {
         )})`;
 
         if (left && right) {
-            return await commands.executeCommand<void>(
+            return commands.executeCommand<void>(
                 'vscode.diff',
                 left,
                 right,

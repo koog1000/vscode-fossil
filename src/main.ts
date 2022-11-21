@@ -109,5 +109,5 @@ export async function activate(
         new Disposable(() => Disposable.from(...disposables).dispose())
     );
 
-    return await init(context, disposables).catch(err => console.error(err));
+    return init(context, disposables).catch(err => console.error(err));
 }

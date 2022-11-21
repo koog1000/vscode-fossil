@@ -114,7 +114,7 @@ export class FossilContentProvider {
         const params = fromFossilUri(uri);
 
         try {
-            return await repository.show(params);
+            return repository.show(params);
         } catch (err) {
             // no-op
         }
