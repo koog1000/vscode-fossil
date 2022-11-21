@@ -373,11 +373,11 @@
                 },
                 {
                     "command": "fossil.openUI",
-                    "when": "config.fossil.enabled && fossilOpenRepositoryCount != 0"
+                    "when": "fossilOpenRepositoryCount"
                 },
                 {
                     "command": "fossil.refresh",
-                    "when": "config.fossil.enabled && fossilOpenRepositoryCount != 0"
+                    "when": "fossilOpenRepositoryCount"
                 },
                 {
                     "command": "fossil.openChange",
@@ -393,103 +393,195 @@
                 },
                 {
                     "command": "fossil.openChangeFromUri",
-                    "when": "config.fossil.enabled && fossilOpenRepositoryCount != 0"
+                    "when": "fossilOpenRepositoryCount"
                 },
                 {
                     "command": "fossil.openFileFromUri",
-                    "when": "config.fossil.enabled && fossilOpenRepositoryCount != 0"
+                    "when": "fossilOpenRepositoryCount"
                 },
                 {
                     "command": "fossil.stage",
-                    "when": "config.fossil.enabled && fossilOpenRepositoryCount != 0"
+                    "when": "fossilOpenRepositoryCount"
                 },
                 {
                     "command": "fossil.stageAll",
-                    "when": "config.fossil.enabled && fossilOpenRepositoryCount != 0"
+                    "when": "fossilOpenRepositoryCount"
                 },
                 {
                     "command": "fossil.unstage",
-                    "when": "config.fossil.enabled && fossilOpenRepositoryCount != 0"
+                    "when": "fossilOpenRepositoryCount"
                 },
                 {
                     "command": "fossil.unstageAll",
-                    "when": "config.fossil.enabled && fossilOpenRepositoryCount != 0"
+                    "when": "fossilOpenRepositoryCount"
                 },
                 {
                     "command": "fossil.revert",
-                    "when": "config.fossil.enabled && fossilOpenRepositoryCount != 0"
+                    "when": "fossilOpenRepositoryCount"
                 },
                 {
                     "command": "fossil.revertAll",
-                    "when": "config.fossil.enabled && fossilOpenRepositoryCount != 0"
+                    "when": "fossilOpenRepositoryCount"
                 },
                 {
                     "command": "fossil.commit",
-                    "when": "config.fossil.enabled && fossilOpenRepositoryCount != 0"
+                    "when": "fossilOpenRepositoryCount"
                 },
                 {
                     "command": "fossil.commitStaged",
-                    "when": "config.fossil.enabled && fossilOpenRepositoryCount != 0"
+                    "when": "fossilOpenRepositoryCount"
                 },
                 {
                     "command": "fossil.commitAll",
-                    "when": "config.fossil.enabled && fossilOpenRepositoryCount != 0"
+                    "when": "fossilOpenRepositoryCount"
                 },
                 {
                     "command": "fossil.commitBranch",
-                    "when": "config.fossil.enabled && fossilOpenRepositoryCount != 0"
+                    "when": "fossilOpenRepositoryCount"
                 },
                 {
                     "command": "fossil.undo",
-                    "when": "config.fossil.enabled && fossilOpenRepositoryCount != 0"
+                    "when": "fossilOpenRepositoryCount"
                 },
                 {
                     "command": "fossil.redo",
-                    "when": "config.fossil.enabled && fossilOpenRepositoryCount != 0"
+                    "when": "fossilOpenRepositoryCount"
                 },
                 {
                     "command": "fossil.update",
-                    "when": "config.fossil.enabled && fossilOpenRepositoryCount != 0"
+                    "when": "fossilOpenRepositoryCount"
                 },
                 {
                     "command": "fossil.branch",
-                    "when": "config.fossil.enabled && fossilOpenRepositoryCount != 0"
+                    "when": "fossilOpenRepositoryCount"
                 },
                 {
                     "command": "fossil.pull",
-                    "when": "config.fossil.enabled && fossilOpenRepositoryCount != 0"
+                    "when": "fossilOpenRepositoryCount"
                 },
                 {
                     "command": "fossil.push",
-                    "when": "config.fossil.enabled && fossilOpenRepositoryCount != 0"
+                    "when": "fossilOpenRepositoryCount"
                 },
                 {
                     "command": "fossil.pushTo",
-                    "when": "config.fossil.enabled && fossilOpenRepositoryCount != 0"
+                    "when": "fossilOpenRepositoryCount"
                 },
                 {
                     "command": "fossil.merge",
-                    "when": "config.fossil.enabled && fossilOpenRepositoryCount != 0"
+                    "when": "fossilOpenRepositoryCount"
                 },
                 {
                     "command": "fossil.integrate",
-                    "when": "config.fossil.enabled && fossilOpenRepositoryCount != 0"
+                    "when": "fossilOpenRepositoryCount"
                 },
                 {
                     "command": "fossil.cherrypick",
-                    "when": "config.fossil.enabled && fossilOpenRepositoryCount != 0"
+                    "when": "fossilOpenRepositoryCount"
                 },
                 {
                     "command": "fossil.showOutput",
-                    "when": "config.fossil.enabled && fossilOpenRepositoryCount != 0"
+                    "when": "fossilOpenRepositoryCount"
                 },
                 {
                     "command": "fossil.fileLog",
-                    "when": "config.fossil.enabled && fossilOpenRepositoryCount != 0"
+                    "when": "fossilOpenRepositoryCount"
                 },
                 {
                     "command": "fossil.log",
-                    "when": "config.fossil.enabled && fossilOpenRepositoryCount != 0"
+                    "when": "fossilOpenRepositoryCount"
+                },
+                {
+                    "command": "fossil.patchApply",
+                    "when": "fossilOpenRepositoryCount"
+                },
+                {
+                    "command": "fossil.patchCreate",
+                    "when": "fossilOpenRepositoryCount"
+                },
+                {
+                    "command": "fossil.stashApply",
+                    "when": "fossilOpenRepositoryCount"
+                },
+                {
+                    "command": "fossil.stashDrop",
+                    "when": "fossilOpenRepositoryCount"
+                },
+                {
+                    "command": "fossil.stashPop",
+                    "when": "fossilOpenRepositoryCount"
+                },
+                {
+                    "command": "fossil.stashSave",
+                    "when": "fossilOpenRepositoryCount"
+                },
+                {
+                    "command": "fossil.stashSnapshot",
+                    "when": "fossilOpenRepositoryCount"
+                },
+                {
+                    "command": "fossil.clean",
+                    "when": "fossilOpenRepositoryCount"
+                },
+                {
+                    "command": "fossil.add",
+                    "when": "fossilOpenRepositoryCount"
+                },
+                {
+                    "command": "fossil.addAll",
+                    "when": "fossilOpenRepositoryCount"
+                },
+                {
+                    "command": "fossil.ignore",
+                    "when": "fossilOpenRepositoryCount"
+                },
+                {
+                    "command": "fossil.close",
+                    "when": "fossilOpenRepositoryCount"
+                },
+                {
+                    "command": "fossil.closeBranch",
+                    "when": "fossilOpenRepositoryCount"
+                },
+                {
+                    "command": "fossil.remove",
+                    "when": "fossilOpenRepositoryCount"
+                },
+                {
+                    "command": "fossil.revertChange",
+                    "when": "fossilOpenRepositoryCount"
+                },
+                {
+                    "command": "fossil.resolveAgain",
+                    "when": "fossilOpenRepositoryCount"
+                },
+                {
+                    "command": "fossil.reopenBranch",
+                    "when": "fossilOpenRepositoryCount"
+                },
+                {
+                    "command": "fossil.wikiCreate",
+                    "when": "fossilOpenRepositoryCount && activeWebviewPanelId == fossil.renderPanel"
+                },
+                {
+                    "command": "fossil.render",
+                    "when": "fossilOpenRepositoryCount && !isInDiffEditor && resourceExtname =~ /^\\.(md|wiki)$/ || config.fossil.enabled && resourceScheme == untitled"
+                },
+                {
+                    "command": "fossil.markResolved",
+                    "when": "fossilOpenRepositoryCount"
+                },
+                {
+                    "command": "fossil.unresolve",
+                    "when": "fossilOpenRepositoryCount"
+                },
+                {
+                    "command": "fossil.deleteFiles",
+                    "when": "fossilOpenRepositoryCount"
+                },
+                {
+                    "command": "fossil.deleteFile",
+                    "when": "fossilOpenRepositoryCount"
                 }
             ],
             "scm/title": [
@@ -500,72 +592,72 @@
                 },
                 {
                     "command": "fossil.open",
-                    "group": "0_open",
+                    "group": "9_open",
                     "when": "config.fossil.enabled && !scmProvider && fossilOpenRepositoryCount == 0"
                 },
                 {
                     "command": "fossil.clone",
                     "when": "config.fossil.enabled",
-                    "group": "0_open"
+                    "group": "9_open"
                 },
                 {
                     "command": "fossil.commit",
                     "group": "navigation",
-                    "when": "config.fossil.enabled && scmProvider == fossil"
+                    "when": "fossilOpenRepositoryCount"
                 },
                 {
                     "command": "fossil.refresh",
                     "group": "navigation",
-                    "when": "config.fossil.enabled && scmProvider == fossil"
+                    "when": "fossilOpenRepositoryCount"
                 },
                 {
                     "command": "fossil.pull",
                     "group": "1_sync",
-                    "when": "config.fossil.enabled && scmProvider == fossil"
+                    "when": "fossilOpenRepositoryCount"
                 },
                 {
                     "command": "fossil.push",
                     "group": "1_sync",
-                    "when": "config.fossil.enabled && scmProvider == fossil"
+                    "when": "fossilOpenRepositoryCount"
                 },
                 {
                     "command": "fossil.pushTo",
                     "group": "1_sync",
-                    "when": "config.fossil.enabled && scmProvider == fossil"
+                    "when": "fossilOpenRepositoryCount"
                 },
                 {
                     "command": "fossil.undo",
                     "group": "3_commit@0",
-                    "when": "config.fossil.enabled && scmProvider == fossil"
+                    "when": "fossilOpenRepositoryCount"
                 },
                 {
                     "command": "fossil.redo",
                     "group": "3_commit@1",
-                    "when": "config.fossil.enabled && scmProvider == fossil"
+                    "when": "fossilOpenRepositoryCount"
                 },
                 {
                     "submenu": "fossil.commit",
-                    "when": "scmProvider == fossil",
+                    "when": "fossilOpenRepositoryCount",
                     "group": "5_groups@0"
                 },
                 {
                     "submenu": "fossil.merge",
-                    "when": "scmProvider == fossil",
+                    "when": "fossilOpenRepositoryCount",
                     "group": "5_groups@1"
                 },
                 {
                     "submenu": "fossil.stash",
-                    "when": "scmProvider == fossil",
+                    "when": "fossilOpenRepositoryCount",
                     "group": "5_groups@2"
                 },
                 {
                     "submenu": "fossil.timeline",
-                    "when": "scmProvider == fossil",
+                    "when": "fossilOpenRepositoryCount",
                     "group": "5_groups@3"
                 },
                 {
                     "submenu": "fossil.patch",
-                    "when": "scmProvider == fossil",
+                    "when": "fossilOpenRepositoryCount",
                     "group": "5_groups@4"
                 },
                 {
@@ -578,33 +670,33 @@
                 {
                     "command": "fossil.commitStaged",
                     "group": "commit@0",
-                    "when": "config.fossil.enabled && scmProvider == fossil"
+                    "when": "fossilOpenRepositoryCount"
                 },
                 {
                     "command": "fossil.commitAll",
                     "group": "commit@1",
-                    "when": "config.fossil.enabled && scmProvider == fossil"
+                    "when": "fossilOpenRepositoryCount"
                 },
                 {
                     "command": "fossil.commitBranch",
                     "group": "commit@2",
-                    "when": "config.fossil.enabled && scmProvider == fossil"
+                    "when": "fossilOpenRepositoryCount"
                 }
             ],
             "fossil.merge": [
                 {
                     "command": "fossil.merge",
-                    "when": "scmProvider == fossil",
+                    "when": "fossilOpenRepositoryCount",
                     "group": "merge@0"
                 },
                 {
                     "command": "fossil.integrate",
-                    "when": "scmProvider == fossil",
+                    "when": "fossilOpenRepositoryCount",
                     "group": "merge@1"
                 },
                 {
                     "command": "fossil.cherrypick",
-                    "when": "scmProvider == fossil",
+                    "when": "fossilOpenRepositoryCount",
                     "group": "merge@2"
                 }
             ],
@@ -623,39 +715,39 @@
             "fossil.patch": [
                 {
                     "command": "fossil.patchCreate",
-                    "when": "scmProvider == fossil",
+                    "when": "fossilOpenRepositoryCount",
                     "group": "patch@0"
                 },
                 {
                     "command": "fossil.patchApply",
-                    "when": "scmProvider == fossil",
+                    "when": "fossilOpenRepositoryCount",
                     "group": "patch@1"
                 }
             ],
             "fossil.stash": [
                 {
                     "command": "fossil.stashSnapshot",
-                    "when": "scmProvider == fossil",
+                    "when": "fossilOpenRepositoryCount",
                     "group": "stash@0"
                 },
                 {
                     "command": "fossil.stashSave",
-                    "when": "scmProvider == fossil",
+                    "when": "fossilOpenRepositoryCount",
                     "group": "stash@1"
                 },
                 {
                     "command": "fossil.stashPop",
-                    "when": "scmProvider == fossil",
+                    "when": "fossilOpenRepositoryCount",
                     "group": "stash@2"
                 },
                 {
                     "command": "fossil.stashApply",
-                    "when": "scmProvider == fossil",
+                    "when": "fossilOpenRepositoryCount",
                     "group": "stash@3"
                 },
                 {
                     "command": "fossil.stashDrop",
-                    "when": "scmProvider == fossil",
+                    "when": "fossilOpenRepositoryCount",
                     "group": "stash@4"
                 }
             ],
@@ -872,20 +964,20 @@
                 {
                     "command": "fossil.openFileFromUri",
                     "group": "navigation",
-                    "when": "config.fossil.enabled && fossilOpenRepositoryCount != 0 && isInDiffEditor && resourceScheme != extension && scmProvider == fossil"
+                    "when": "fossilOpenRepositoryCount && isInDiffEditor && resourceScheme != extension && scmProvider == fossil"
                 },
                 {
                     "command": "fossil.openChangeFromUri",
                     "group": "navigation",
-                    "when": "config.fossil.enabled && fossilOpenRepositoryCount != 0 && !isInDiffEditor && resourceScheme == file && scmProvider == fossil"
+                    "when": "fossilOpenRepositoryCount && !isInDiffEditor && resourceScheme == file && scmProvider == fossil"
                 },
                 {
                     "command": "fossil.fileLog",
-                    "when": "config.fossil.enabled && fossilOpenRepositoryCount != 0 && !isInDiffEditor"
+                    "when": "fossilOpenRepositoryCount && !isInDiffEditor"
                 },
                 {
                     "command": "fossil.render",
-                    "when": "config.fossil.enabled && fossilOpenRepositoryCount != 0 && !isInDiffEditor && resourceExtname =~ /^\\.(md|wiki)$/ || config.fossil.enabled && resourceScheme == untitled",
+                    "when": "fossilOpenRepositoryCount && !isInDiffEditor && resourceExtname =~ /^\\.(md|wiki)$/ || config.fossil.enabled && resourceScheme == untitled",
                     "group": "navigation"
                 },
                 {
@@ -961,16 +1053,16 @@
         },
         "customEditors": [
             {
-              "viewType": "fossil.previewWikiPanel",
-              "displayName": "Fossil Wiki Preview",
-              "priority": "option",
-              "selector": [
-                {
-                  "filenamePattern": "*.wiki"
-                }
-              ]
+                "viewType": "fossil.previewWikiPanel",
+                "displayName": "Fossil Wiki Preview",
+                "priority": "option",
+                "selector": [
+                    {
+                        "filenamePattern": "*.wiki"
+                    }
+                ]
             }
-          ]
+        ]
     },
     "scripts": {
         "vscode:prepublish": "npm run esbuild-base -- --minify && npm run esbuild-preview -- --minify",
