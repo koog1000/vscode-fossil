@@ -170,7 +170,7 @@ export class FossilFinder {
             const child = cp.spawn(path, ['version']);
             child.stdout.on('data', (b: Buffer) => buffers.push(b));
             child.on('error', e);
-            child.on('exit', code => {
+            child.on('close', code => {
                 if (!code) {
                     const output = Buffer.concat(buffers).toString('utf8');
                     return c({
