@@ -43,7 +43,7 @@ export type FossilRemoteName = Distinct<string, 'Fossil Remote Name'>;
 export type FossilBranch = Distinct<string, 'Fossil Branch Name'>;
 /** https://fossil-scm.org/home/doc/trunk/www/checkin_names.wiki#special */
 export const FossilSpecialTagsList = ['current', 'parent', 'tip'] as const;
-export type FossilSpecialTags = typeof FossilSpecialTagsList[number];
+export type FossilSpecialTags = (typeof FossilSpecialTagsList)[number];
 export type FossilTag = Distinct<string, 'Fossil Tag Name'> | 'closed';
 export type FossilHash = Distinct<string, 'Fossil SHA Hash'>;
 export type FossilCheckin =
