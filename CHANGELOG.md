@@ -1,5 +1,15 @@
 # Changelog
 
+# v0.2.0
+
+### With 0.2.0 release we remove all Mercurial SCM references which were in the code after initial fork.
+
+### Bug Fixes
+
+- Remove inaccessible commands from Command Palette
+- Each workspace subfolder is searched for repository (logic was broken)
+
+
 # v0.1.9
 
 ### What's New
