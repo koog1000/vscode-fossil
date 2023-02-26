@@ -1,6 +1,4 @@
-# Overview
-
-## Integrated Fossil source control
+# Integrated Fossil source control for Visual Studio Code 
 
 ### Prerequisites
 
@@ -10,15 +8,11 @@ so you need to
 first. Also read the [cloning](/docs/cloning.md) documentation for info
 about cloning from the extension.
 
-## WORK IN PROGRESS. PLEASE SUBMIT [ISSUES](https://github.com/koog1000/vscode-fossil/issues) IF YOU FIND THEM.
-
------
-
-![Fossil](/images/fossil.png)
+![Fossil](images/fossil.png)
 
 # Features
 
-* Add files and commit from the source control side-bar
+* Add files and commit from the source control panel
   (i.e. where git normally appears).
 
 * All the basics: commit, add, revert, update, push and pull.
@@ -35,23 +29,22 @@ about cloning from the extension.
 
 * Automatic incoming/outgoing counters.
 
-* Undo
+* Undo/Redo.
 
 * Use command palette `Ctrl-Shift-P` >> `fossil:` to see all commands. (Not everything has a UI control.)
 
-* Keybindings can be added via right-click context menu from palette
- ![add keybinding](https://user-images.githubusercontent.com/486200/127265219-ab259b53-d134-462e-85e2-f93d90673e29.png)
+* Preview md and wiki files
 
 
 ## View file changes
 ![View changes](images/fossil-diff.gif)
 
-  * right click file and select `Open Changes`
+  * Click a file see the diff view
+  * Or open a file by using context menu
 
 ## Initialize a new repo
 
 ![Init a repo](images/init.gif)
-__TODO__: update gif for fossil
 
   * Just click the Fossil icon from the source control title area
     * Follow prompts
