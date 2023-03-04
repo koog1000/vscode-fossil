@@ -1468,9 +1468,9 @@ export class CommandCenter {
         key: string,
         method: Function,
         options: CommandOptions
-    ): (...args: any[]) => Promise<any> | undefined {
+    ): (...args: SourceControl[]) => Promise<unknown> | undefined {
         const res = async (...args: SourceControl[]) => {
-            let result: Promise<any>;
+            let result: Promise<unknown>;
             if (!options.repository) {
                 result = Promise.resolve(method.apply(this, args));
             } else {

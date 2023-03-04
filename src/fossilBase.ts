@@ -570,7 +570,10 @@ export class Repository {
         return this.repositoryRoot;
     }
 
-    async exec(args: string[], options: any = {}): Promise<IExecutionResult> {
+    async exec(
+        args: string[],
+        options: Omit<FossilSpawnOptions, 'cwd'> = {}
+    ): Promise<IExecutionResult> {
         return await this._fossil.exec(this.repositoryRoot, args, options);
     }
 
