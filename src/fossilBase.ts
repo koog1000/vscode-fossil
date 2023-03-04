@@ -699,22 +699,19 @@ export class Repository {
         }
     }
 
-    async addTag(fossilBranch: FossilBranch, tag: FossilTag): Promise<void> {
-        await this.exec(['tag', 'add', '--raw', tag, fossilBranch]);
+    async addTag(branch: FossilBranch, tag: FossilTag): Promise<void> {
+        await this.exec(['tag', 'add', '--raw', tag, branch]);
     }
 
-    async cancelTag(
-        fossilBranch: FossilCheckin,
-        tag: FossilTag
-    ): Promise<void> {
-        await this.exec(['tag', 'cancel', '--raw', tag, fossilBranch]);
+    async cancelTag(branch: FossilBranch, tag: FossilTag): Promise<void> {
+        await this.exec(['tag', 'cancel', '--raw', tag, branch]);
     }
 
     async updateCommitMessage(
-        fossilCheckin: FossilCheckin,
+        checkin: FossilCheckin,
         commitMessage: FossilCommitMessage
     ): Promise<void> {
-        await this.exec(['amend', fossilCheckin, '--comment', commitMessage]);
+        await this.exec(['amend', checkin, '--comment', commitMessage]);
     }
 
     async revert(paths: string[]): Promise<void> {
@@ -853,7 +850,7 @@ export class Repository {
     }
 
     async merge(
-        revQuery: FossilCheckin,
+        checkin: FossilCheckin,
         integrate: MergeAction
     ): Promise<IMergeResult> {
         try {
@@ -867,7 +864,7 @@ export class Repository {
                         return [];
                 }
             })();
-            const args = ['merge', revQuery, ...extraArgs];
+            const args = ['merge', checkin, ...extraArgs];
             await this.exec(args);
             return {
                 unresolvedCount: 0,
