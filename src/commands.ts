@@ -537,7 +537,8 @@ export class CommandCenter {
 
     @command('fossil.addAll', { repository: true })
     async addAll(repository: Repository): Promise<void> {
-        return repository.add();
+        await repository.add();
+        return repository.stage();
     }
 
     @command('fossil.add')
@@ -564,6 +565,7 @@ export class CommandCenter {
         const repository = this.model.getRepository(resources[0]);
         if (repository) {
             await repository.add(...resources);
+            await repository.stage(...resources);
         }
     }
 
@@ -659,7 +661,6 @@ export class CommandCenter {
         if (repository) {
             await repository.stage(...resources);
         }
-        // await this.runByRepository(resources, async (repository, uris) => repository.stage(...uris));
     }
 
     @command('fossil.stageAll', { repository: true })
