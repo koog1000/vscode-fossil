@@ -1439,18 +1439,18 @@ export class CommandCenter {
 
     private async diff(
         repository: Repository,
-        source: FossilCheckin,
+        checkin: FossilCheckin,
         target: FossilHash | FossilSpecialTags | undefined,
         uri: Uri
     ) {
-        const fromUri = toFossilUri(uri, source);
+        const fromUri = toFossilUri(uri, checkin);
         switch (target) {
             case 'parent':
-                target = await repository.getInfo(source, 'parent');
+                target = await repository.getInfo(checkin, 'parent');
                 break;
         }
         const toUri = toFossilUri(uri, target);
-        const fromName = source.slice(0, 12);
+        const fromName = checkin.slice(0, 12);
         const toName = (target || 'local').slice(0, 12);
         const relativePath = repository.mapFileUriToWorkspaceRelativePath(uri);
         const title = `${relativePath} (${fromName} vs. ${toName})`;

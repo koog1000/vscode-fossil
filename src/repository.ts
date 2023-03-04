@@ -909,12 +909,12 @@ export class Repository implements IDisposable, InteractionAPI {
 
     @throttle
     merge(
-        revQuery: FossilCheckin,
+        checkin: FossilCheckin,
         mergeAction: MergeAction
     ): Promise<IMergeResult> {
         return this.runWithProgress(Operation.Merge, async () => {
             try {
-                return this.repository.merge(revQuery, mergeAction);
+                return this.repository.merge(checkin, mergeAction);
             } catch (e) {
                 if (
                     e instanceof FossilError &&
@@ -932,22 +932,19 @@ export class Repository implements IDisposable, InteractionAPI {
         });
     }
 
-    addTag(fossilBranch: FossilBranch, tag: FossilTag): Promise<void> {
-        return this.repository.addTag(fossilBranch, tag);
+    addTag(branch: FossilBranch, tag: FossilTag): Promise<void> {
+        return this.repository.addTag(branch, tag);
     }
 
-    cancelTag(fossilCheckin: FossilCheckin, tag: FossilTag): Promise<void> {
-        return this.repository.cancelTag(fossilCheckin, tag);
+    cancelTag(branch: FossilBranch, tag: FossilTag): Promise<void> {
+        return this.repository.cancelTag(branch, tag);
     }
 
     async updateCommitMessage(
-        fossilCheckin: FossilCheckin,
+        checkin: FossilCheckin,
         commitMessage: FossilCommitMessage
     ): Promise<void> {
-        return this.repository.updateCommitMessage(
-            fossilCheckin,
-            commitMessage
-        );
+        return this.repository.updateCommitMessage(checkin, commitMessage);
     }
 
     async show(params: FossilUriParams): Promise<string> {
