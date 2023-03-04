@@ -671,7 +671,7 @@ export class Repository implements IDisposable, InteractionAPI {
     }
 
     // resource --> repo-relative path
-    public mapResourceToRepoRelativePath(resource: FossilResource): string {
+    private mapResourceToRepoRelativePath(resource: FossilResource): string {
         const relativePath = this.mapFileUriToRepoRelativePath(
             resource.resourceUri
         );
