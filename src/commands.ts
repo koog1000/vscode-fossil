@@ -60,16 +60,70 @@ import { FossilPreviewManager } from './preview';
 
 const localize = nls.loadMessageBundle();
 
-interface Command {
-    commandId: string;
-    key: string;
-    method: Function;
-    options: CommandOptions;
-}
+type CommandKey =
+    | 'add'
+    | 'addAll'
+    | 'branch'
+    | 'branchChange'
+    | 'cherrypick'
+    | 'clean'
+    | 'clone'
+    | 'close'
+    | 'closeBranch'
+    | 'commit'
+    | 'commitAll'
+    | 'commitBranch'
+    | 'commitStaged'
+    | 'commitWithInput'
+    | 'deleteFile'
+    | 'deleteFiles'
+    | 'fileLog'
+    | 'ignore'
+    | 'init'
+    | 'integrate'
+    | 'log'
+    | 'merge'
+    | 'open'
+    | 'openChange'
+    | 'openChangeFromUri'
+    | 'openFile'
+    | 'openFileFromUri'
+    | 'openFiles'
+    | 'openResource'
+    | 'openUI'
+    | 'patchApply'
+    | 'patchCreate'
+    | 'pull'
+    | 'push'
+    | 'pushTo'
+    | 'redo'
+    | 'refresh'
+    | 'remove'
+    | 'render'
+    | 'reopenBranch'
+    | 'revert'
+    | 'revertAll'
+    | 'revertChange'
+    | 'showOutput'
+    | 'stage'
+    | 'stageAll'
+    | 'stashApply'
+    | 'stashDrop'
+    | 'stashPop'
+    | 'stashSave'
+    | 'stashSnapshot'
+    | 'undo'
+    | 'unstage'
+    | 'unstageAll'
+    | 'update'
+    | 'wikiCreate';
+type CommandId = `fossil.${CommandKey}`;
 
-interface CommandOptions {
-    repository?: boolean;
-    diff?: boolean;
+interface Command {
+    id: CommandId;
+    key: CommandKey;
+    method: Function;
+    repository: boolean;
 }
 
 const Commands: Command[] = [];
@@ -77,17 +131,29 @@ const Commands: Command[] = [];
 /**
  * Decorator
  */
-function command(commandId: string, options: CommandOptions = {}): Function {
+function command(
+    id: CommandId,
+    options: { repository?: boolean } = {}
+): (
+    target: CommandCenter,
+    key: CommandKey,
+    descriptor: PropertyDescriptor
+) => void {
     return (
         target: CommandCenter,
-        key: string,
+        key: CommandKey,
         descriptor: PropertyDescriptor
     ) => {
-        if (!(typeof descriptor.value === 'function')) {
+        if (typeof descriptor.value !== 'function') {
             throw new Error('not supported');
         }
 
-        Commands.push({ commandId, key, method: descriptor.value, options });
+        Commands.push({
+            id,
+            key,
+            method: descriptor.value,
+            repository: !!options.repository,
+        });
     };
 }
 
@@ -103,25 +169,13 @@ export class CommandCenter {
         private readonly outputChannel: OutputChannel,
         private readonly context: ExtensionContext
     ) {
-        // this.model = model;
         this.previewManager = new FossilPreviewManager(context, fossil);
 
-        this.disposables = Commands.map(
-            ({ commandId, key, method, options }) => {
-                const command = this.createCommand(
-                    commandId,
-                    key,
-                    method,
-                    options
-                );
+        this.disposables = Commands.map(command => {
+            const callback = this.createCallback(command);
 
-                // if (options.diff) {
-                //  return commands.registerDiffInformationCommand(commandId, command);
-                // } else {
-                return commands.registerCommand(commandId, command);
-                // }
-            }
-        );
+            return commands.registerCommand(command.id, callback);
+        });
     }
 
     @command('fossil.refresh', { repository: true })
@@ -1464,16 +1518,13 @@ export class CommandCenter {
         );
     }
 
-    private createCommand(
-        id: string,
-        key: string,
-        method: Function,
-        options: CommandOptions
-    ): (...args: SourceControl[]) => Promise<unknown> | undefined {
-        const res = async (...args: SourceControl[]) => {
-            let result: Promise<unknown>;
-            if (!options.repository) {
-                result = Promise.resolve(method.apply(this, args));
+    private createCallback(
+        command: Command
+    ): (...args: SourceControl[]) => Promise<void> | undefined {
+        const res = async (...args: any[]) => {
+            let result: Promise<void>;
+            if (!command.repository) {
+                result = Promise.resolve(command.method.apply(this, args));
             } else {
                 // try to guess the repository based on the first argument
                 const repository = this.model.getRepository(args[0]);
@@ -1495,7 +1546,7 @@ export class CommandCenter {
                     }
 
                     return Promise.resolve(
-                        method.apply(this, [repository, ...args])
+                        command.method.apply(this, [repository, ...args])
                     );
                 });
             }
@@ -1513,7 +1564,7 @@ export class CommandCenter {
         };
 
         // patch this object, so people can call methods directly
-        this[key] = res;
+        this[command.key] = res;
         return res;
     }
 
