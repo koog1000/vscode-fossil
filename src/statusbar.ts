@@ -143,7 +143,7 @@ class SyncStatusBar {
                     );
 
                     return {
-                        icon: '$(check)',
+                        icon: '$(sync)',
                         message,
                         status: AutoInOutStatuses.Enabled,
                     };
@@ -168,7 +168,7 @@ class SyncStatusBar {
             default: {
                 const message = localize('sync', 'Sync');
                 return {
-                    icon: '$(check)',
+                    icon: '$(sync-ignored)',
                     message,
                     status: AutoInOutStatuses.Disabled,
                 };
