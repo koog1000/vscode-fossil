@@ -12,7 +12,6 @@ import {
     workspace,
     OutputChannel,
     SourceControlResourceState,
-    SourceControl,
     SourceControlResourceGroup,
     TextDocumentShowOptions,
     ViewColumn,
@@ -121,44 +120,46 @@ type CommandId = `fossil.${CommandKey}`;
 
 interface Command {
     id: CommandId;
-    key: CommandKey;
-    method: Function;
-    repository: boolean;
+    method: CommandMethod;
 }
+type CommandMethod = (() => any) | ((...args: any) => Promise<void>);
 
-const Commands: Command[] = [];
+function makeCommandWithRepository(method: CommandMethod): CommandMethod {
+    return async function (this: CommandCenter, ...args: any[]): Promise<void> {
+        const repository = await this.guessRepository(args[0]);
+        if (repository) {
+            return Promise.resolve(method.apply(this, [repository, ...args]));
+        }
+    };
+}
 
 /**
  * Decorator
  */
-function command(
-    id: CommandId,
-    options: { repository?: boolean } = {}
-): (
-    target: CommandCenter,
-    key: CommandKey,
-    descriptor: PropertyDescriptor
-) => void {
+function command(id: CommandId, options: { repository?: boolean } = {}) {
     return (
         target: CommandCenter,
-        key: CommandKey,
-        descriptor: PropertyDescriptor
-    ) => {
-        if (typeof descriptor.value !== 'function') {
-            throw new Error('not supported');
+        key: unknown,
+        descriptor: TypedPropertyDescriptor<CommandMethod>
+    ): TypedPropertyDescriptor<CommandMethod> => {
+        if (!descriptor.value) {
+            throw new Error('descriptor with no value');
         }
-
-        Commands.push({
-            id,
-            key,
-            method: descriptor.value,
-            repository: !!options.repository,
-        });
+        if (options.repository) {
+            descriptor.value = makeCommandWithRepository(descriptor.value);
+        }
+        target.register.push({ id, method: descriptor.value });
+        return descriptor;
     };
 }
 
+function setProtoArray<K extends string>(target: Record<K, Command[]>, key: K) {
+    target[key] = [];
+}
+
 export class CommandCenter {
-    [index: string]: any;
+    @setProtoArray
+    register!: Command[];
 
     private disposables: Disposable[];
     private previewManager: FossilPreviewManager;
@@ -171,10 +172,8 @@ export class CommandCenter {
     ) {
         this.previewManager = new FossilPreviewManager(context, fossil);
 
-        this.disposables = Commands.map(command => {
-            const callback = this.createCallback(command);
-
-            return commands.registerCommand(command.id, callback);
+        this.disposables = this.register.map(command => {
+            return commands.registerCommand(command.id, command.method, this);
         });
     }
 
@@ -1518,54 +1517,18 @@ export class CommandCenter {
         );
     }
 
-    private createCallback(
-        command: Command
-    ): (...args: SourceControl[]) => Promise<void> | undefined {
-        const res = async (...args: any[]) => {
-            let result: Promise<void>;
-            if (!command.repository) {
-                result = Promise.resolve(command.method.apply(this, args));
-            } else {
-                // try to guess the repository based on the first argument
-                const repository = this.model.getRepository(args[0]);
-                let repositoryPromise: Promise<Repository | undefined>;
+    public guessRepository(arg: any): Promise<Repository | undefined> {
+        const repository = this.model.getRepository(arg);
+        let repositoryPromise: Promise<Repository | undefined>;
 
-                if (repository) {
-                    repositoryPromise = Promise.resolve(repository);
-                } else if (this.model.repositories.length === 1) {
-                    repositoryPromise = Promise.resolve(
-                        this.model.repositories[0]
-                    );
-                } else {
-                    repositoryPromise = this.model.pickRepository();
-                }
-
-                result = repositoryPromise.then(repository => {
-                    if (!repository) {
-                        return Promise.resolve();
-                    }
-
-                    return Promise.resolve(
-                        command.method.apply(this, [repository, ...args])
-                    );
-                });
-            }
-
-            try {
-                return result; // ??? this line will never throw?
-            } catch (err) {
-                const openLog = await interaction.errorPromptOpenLog(err);
-                if (openLog) {
-                    this.outputChannel.show();
-                } else {
-                    this.focusScm();
-                }
-            }
-        };
-
-        // patch this object, so people can call methods directly
-        this[command.key] = res;
-        return res;
+        if (repository) {
+            repositoryPromise = Promise.resolve(repository);
+        } else if (this.model.repositories.length === 1) {
+            repositoryPromise = Promise.resolve(this.model.repositories[0]);
+        } else {
+            repositoryPromise = this.model.pickRepository();
+        }
+        return repositoryPromise;
     }
 
     private getSCMResource(uri?: Uri): FossilResource | undefined {
