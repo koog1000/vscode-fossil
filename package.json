@@ -603,100 +603,100 @@
                 {
                     "command": "fossil.commit",
                     "group": "navigation",
-                    "when": "fossilOpenRepositoryCount"
+                    "when": "scmProvider == fossil"
                 },
                 {
                     "command": "fossil.refresh",
                     "group": "navigation",
-                    "when": "fossilOpenRepositoryCount"
+                    "when": "scmProvider == fossil"
                 },
                 {
                     "command": "fossil.pull",
                     "group": "1_sync",
-                    "when": "fossilOpenRepositoryCount"
+                    "when": "scmProvider == fossil"
                 },
                 {
                     "command": "fossil.push",
                     "group": "1_sync",
-                    "when": "fossilOpenRepositoryCount"
+                    "when": "scmProvider == fossil"
                 },
                 {
                     "command": "fossil.pushTo",
                     "group": "1_sync",
-                    "when": "fossilOpenRepositoryCount"
+                    "when": "scmProvider == fossil"
                 },
                 {
                     "command": "fossil.undo",
                     "group": "3_commit@0",
-                    "when": "fossilOpenRepositoryCount"
+                    "when": "scmProvider == fossil"
                 },
                 {
                     "command": "fossil.redo",
                     "group": "3_commit@1",
-                    "when": "fossilOpenRepositoryCount"
+                    "when": "scmProvider == fossil"
                 },
                 {
                     "submenu": "fossil.commit",
-                    "when": "fossilOpenRepositoryCount",
+                    "when": "scmProvider == fossil",
                     "group": "5_groups@0"
                 },
                 {
                     "submenu": "fossil.merge",
-                    "when": "fossilOpenRepositoryCount",
+                    "when": "scmProvider == fossil",
                     "group": "5_groups@1"
                 },
                 {
                     "submenu": "fossil.stash",
-                    "when": "fossilOpenRepositoryCount",
+                    "when": "scmProvider == fossil",
                     "group": "5_groups@2"
                 },
                 {
                     "submenu": "fossil.timeline",
-                    "when": "fossilOpenRepositoryCount",
+                    "when": "scmProvider == fossil",
                     "group": "5_groups@3"
                 },
                 {
                     "submenu": "fossil.patch",
-                    "when": "fossilOpenRepositoryCount",
+                    "when": "scmProvider == fossil",
                     "group": "5_groups@4"
                 },
                 {
                     "command": "fossil.showOutput",
                     "group": "6_output",
-                    "when": "config.fossil.enabled && scmProvider == fossil"
+                    "when": "scmProvider == fossil"
                 }
             ],
             "fossil.commit": [
                 {
                     "command": "fossil.commitStaged",
                     "group": "commit@0",
-                    "when": "fossilOpenRepositoryCount"
+                    "when": "scmProvider == fossil"
                 },
                 {
                     "command": "fossil.commitAll",
                     "group": "commit@1",
-                    "when": "fossilOpenRepositoryCount"
+                    "when": "scmProvider == fossil"
                 },
                 {
                     "command": "fossil.commitBranch",
                     "group": "commit@2",
-                    "when": "fossilOpenRepositoryCount"
+                    "when": "scmProvider == fossil"
                 }
             ],
             "fossil.merge": [
                 {
                     "command": "fossil.merge",
-                    "when": "fossilOpenRepositoryCount",
+                    "when": "scmProvider == fossil",
                     "group": "merge@0"
                 },
                 {
                     "command": "fossil.integrate",
-                    "when": "fossilOpenRepositoryCount",
+                    "when": "scmProvider == fossil",
                     "group": "merge@1"
                 },
                 {
                     "command": "fossil.cherrypick",
-                    "when": "fossilOpenRepositoryCount",
+                    "when": "scmProvider == fossil",
                     "group": "merge@2"
                 }
             ],
@@ -715,39 +715,39 @@
             "fossil.patch": [
                 {
                     "command": "fossil.patchCreate",
-                    "when": "fossilOpenRepositoryCount",
+                    "when": "scmProvider == fossil",
                     "group": "patch@0"
                 },
                 {
                     "command": "fossil.patchApply",
-                    "when": "fossilOpenRepositoryCount",
+                    "when": "scmProvider == fossil",
                     "group": "patch@1"
                 }
             ],
             "fossil.stash": [
                 {
                     "command": "fossil.stashSnapshot",
-                    "when": "fossilOpenRepositoryCount",
+                    "when": "scmProvider == fossil",
                     "group": "stash@0"
                 },
                 {
                     "command": "fossil.stashSave",
-                    "when": "fossilOpenRepositoryCount",
+                    "when": "scmProvider == fossil",
                     "group": "stash@1"
                 },
                 {
                     "command": "fossil.stashPop",
-                    "when": "fossilOpenRepositoryCount",
+                    "when": "scmProvider == fossil",
                     "group": "stash@2"
                 },
                 {
                     "command": "fossil.stashApply",
-                    "when": "fossilOpenRepositoryCount",
+                    "when": "scmProvider == fossil",
                     "group": "stash@3"
                 },
                 {
                     "command": "fossil.stashDrop",
-                    "when": "fossilOpenRepositoryCount",
+                    "when": "scmProvider == fossil",
                     "group": "stash@4"
                 }
             ],
@@ -1101,7 +1101,8 @@
         "eslint-plugin-promise": "~6.1.1",
         "mocha": "~10.2.0",
         "prettier": "~2.8.4",
-        "sinon": "~15.0.1"
+        "sinon": "~15.0.1",
+        "typescript": "^4.9.5"
     },
     "__metadata": {
         "id": "e828bfe6-95e7-4c7a-a334-ae2cc5ba8788",
