@@ -1,5 +1,17 @@
 # Changelog
 
+# v0.2.1
+
+### What's New
+
+- "Add" command not only does `fossil add` but stages files as well
+- Add placeholder text for commit message input box
+
+### Bug Fixes
+
+- Fossil commands clutter git menus when fossil and git are open at the same time
+
+
 # v0.2.0
 
 ### With 0.2.0 release we remove all Mercurial SCM references which were in the code after initial fork.
