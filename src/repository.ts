@@ -507,6 +507,7 @@ export class Repository implements IDisposable, InteractionAPI {
     async status(): Promise<StatusString> {
         const statusPromise = this.repository.getStatus();
         await this.runWithProgress(Operation.Status, () => statusPromise);
+        this.updateInputBoxPlaceholder();
         return statusPromise;
     }
 
@@ -532,6 +533,26 @@ export class Repository implements IDisposable, InteractionAPI {
         await this.whenIdleAndFocused();
         await this.status();
         await delay(5000);
+    }
+
+    private updateInputBoxPlaceholder(): void {
+        const branch = this.currentBranch;
+        let placeholder: string;
+        if (branch) {
+            // '{0}' will be replaced by the corresponding key-command later in the process, which is why it needs to stay.
+            placeholder = localize(
+                'Message ({0} to commit on "{1}")',
+                'Message ({0} to commit on "{1}")',
+                '{0}',
+                branch
+            );
+        } else {
+            placeholder = localize(
+                'Message ({0} to commit)',
+                'Message ({0} to commit)'
+            );
+        }
+        this._sourceControl.inputBox.placeholder = placeholder;
     }
 
     /**
