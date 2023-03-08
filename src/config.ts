@@ -3,13 +3,25 @@ import { FossilUsername } from './fossilBase';
 
 const DEFAULT_AUTO_IN_OUT_INTERVAL_SECONDS = 3 * 60; /* three minutes */
 
+interface ConfigScheme {
+    enabled: boolean;
+    path?: string;
+    autoInOutInterval: number;
+    username?: FossilUsername;
+    autoUpdate: boolean;
+    autoRefresh: boolean;
+}
+
 class Config {
     private get config() {
         return workspace.getConfiguration('fossil');
     }
 
-    private get<T>(name: keyof Config, defaultValue: T): T {
-        return this.config.get<T>(name, defaultValue);
+    private get<TName extends keyof ConfigScheme>(
+        name: TName,
+        defaultValue: ConfigScheme[TName]
+    ) {
+        return this.config.get(name, defaultValue);
     }
 
     get enabled(): boolean {
@@ -36,17 +48,20 @@ class Config {
         return this.get('autoRefresh', true);
     }
 
-    get autoInOutInterval(): number {
-        return this.get(
-            'autoInOutInterval',
-            DEFAULT_AUTO_IN_OUT_INTERVAL_SECONDS
+    get autoInOutIntervalMs(): number {
+        return (
+            this.get(
+                'autoInOutInterval',
+                DEFAULT_AUTO_IN_OUT_INTERVAL_SECONDS
+            ) * 1000
         );
     }
 
-    get autoInOutIntervalMs(): number {
-        return this.autoInOutInterval * 1000;
-    }
-
+    /**
+     * * Specifies an explicit user to use for fossil commits.
+     * * This should only be used if the user is different
+     *   than the fossil default user.
+     */
     get username(): FossilUsername | undefined {
         return this.get('username', undefined);
     }
