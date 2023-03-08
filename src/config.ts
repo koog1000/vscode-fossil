@@ -20,10 +20,18 @@ class Config {
         return this.get('path', undefined);
     }
 
+    /**
+     * Enables automatic update of working directory to branch head
+     * after pulling (equivalent to fossil update)
+     */
     get autoUpdate(): boolean {
         return this.get('autoUpdate', true);
     }
 
+    /**
+     * Enables automatic refreshing of Source Control tab and badge
+     * counter when files within the project change.
+     */
     get autoRefresh(): boolean {
         return this.get('autoRefresh', true);
     }
