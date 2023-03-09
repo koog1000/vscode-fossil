@@ -1,13 +1,11 @@
 import { workspace } from 'vscode';
-import { FossilUsername } from './fossilBase';
-
-const DEFAULT_AUTO_IN_OUT_INTERVAL_SECONDS = 3 * 60; /* three minutes */
+import { UnvalidatedFossilExecutablePath, FossilUsername } from './fossilBase';
 
 interface ConfigScheme {
     enabled: boolean;
-    path?: string;
+    path: UnvalidatedFossilExecutablePath | null;
     autoInOutInterval: number;
-    username?: FossilUsername;
+    username: FossilUsername | null;
     autoUpdate: boolean;
     autoRefresh: boolean;
 }
@@ -18,18 +16,26 @@ class Config {
     }
 
     private get<TName extends keyof ConfigScheme>(
-        name: TName,
-        defaultValue: ConfigScheme[TName]
-    ) {
-        return this.config.get(name, defaultValue);
+        name: TName
+    ): ConfigScheme[TName] {
+        // for keys existing in packages.json this function
+        // will not return `undefined`
+        return this.config.get<ConfigScheme[TName]>(
+            name
+        ) as ConfigScheme[TName];
     }
 
+    /**
+     * This flag should be removed. It exists because there's no way to
+     * disable `git` internal extension in vscode using extensions UI
+     * and this code is a fork of internal extension.
+     */
     get enabled(): boolean {
-        return this.get('enabled', true);
+        return this.get('enabled');
     }
 
-    get path(): string | undefined {
-        return this.get('path', undefined);
+    get path(): UnvalidatedFossilExecutablePath | null {
+        return this.get('path');
     }
 
     /**
@@ -37,7 +43,7 @@ class Config {
      * after pulling (equivalent to fossil update)
      */
     get autoUpdate(): boolean {
-        return this.get('autoUpdate', true);
+        return this.get('autoUpdate');
     }
 
     /**
@@ -45,16 +51,11 @@ class Config {
      * counter when files within the project change.
      */
     get autoRefresh(): boolean {
-        return this.get('autoRefresh', true);
+        return this.get('autoRefresh');
     }
 
     get autoInOutIntervalMs(): number {
-        return (
-            this.get(
-                'autoInOutInterval',
-                DEFAULT_AUTO_IN_OUT_INTERVAL_SECONDS
-            ) * 1000
-        );
+        return this.get('autoInOutInterval') * 1000;
     }
 
     /**
@@ -62,8 +63,8 @@ class Config {
      * * This should only be used if the user is different
      *   than the fossil default user.
      */
-    get username(): FossilUsername | undefined {
-        return this.get('username', undefined);
+    get username(): FossilUsername | null {
+        return this.get('username');
     }
 }
 

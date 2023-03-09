@@ -6,19 +6,14 @@
 
 // based on https://github.com/Microsoft/vscode/commit/41f0ff15d7327da30fdae73aa04ca570ce34fa0a
 
-import {
-    ExtensionContext,
-    window,
-    Disposable,
-    commands,
-    OutputChannel,
-} from 'vscode';
-import { FossilFinder, Fossil, IFossil } from './fossilBase';
+import { ExtensionContext, window, Disposable, commands } from 'vscode';
+import { Fossil } from './fossilBase';
 import { Model } from './model';
 import { CommandCenter } from './commands';
 import { FossilContentProvider } from './contentProvider';
 import * as nls from 'vscode-nls';
 import typedConfig from './config';
+import { findFossil, FossilInfo } from './fossilFinder';
 
 const localize = nls.loadMessageBundle();
 
@@ -33,7 +28,7 @@ async function init(
 
     const enabled = typedConfig.enabled;
     const pathHint = typedConfig.path;
-    const info: IFossil = await findFossil(pathHint, outputChannel);
+    const info: FossilInfo = await findFossil(pathHint, outputChannel);
     const fossil = new Fossil({
         fossilPath: info.path,
         version: info.version,
@@ -78,27 +73,6 @@ async function init(
         new FossilContentProvider(model)
     );
     return model;
-}
-
-export async function findFossil(
-    pathHint: string | undefined,
-    outputChannel: OutputChannel
-): Promise<IFossil> {
-    const logger = {
-        attempts: <string[]>[],
-        log: (path: string) => logger.attempts.push(path),
-    };
-
-    try {
-        const finder = new FossilFinder(logger);
-        return await finder.find(pathHint);
-    } catch (e) {
-        outputChannel.appendLine('Could not find fossil, tried:');
-        logger.attempts.forEach(attempt =>
-            outputChannel.appendLine(` - ${attempt}`)
-        );
-        throw e;
-    }
 }
 
 export async function activate(
