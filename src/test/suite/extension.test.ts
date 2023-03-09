@@ -4,7 +4,7 @@ import * as vscode from 'vscode';
 import * as sinon from 'sinon';
 import * as fs from 'fs';
 import { Fossil } from '../../fossilBase';
-import { findFossil } from '../../main';
+import { findFossil } from '../../fossilFinder';
 import {
     status_merge_integrate_is_visible_in_source_control_panel,
     status_missing_is_visible_in_source_control_panel,
@@ -21,7 +21,7 @@ import { error_is_thrown_when_executing_unknown_command } from './test_utils';
 
 async function createFossil(): Promise<Fossil> {
     const outputChannel = window.createOutputChannel('Fossil.Test');
-    const info = await findFossil('', outputChannel);
+    const info = await findFossil(null, outputChannel);
     const fossil = new Fossil({
         fossilPath: info.path,
         version: info.version,

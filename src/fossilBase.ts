@@ -54,6 +54,10 @@ export type FossilCheckin =
 /** Stdout of `fossil status` command */
 export type StatusString = Distinct<string, 'fossil status stdout'>;
 export type FossilExecutablePath = Distinct<string, 'fossil executable path'>;
+export type UnvalidatedFossilExecutablePath = Distinct<
+    string,
+    'unvalidated fossil executable path' | 'fossil executable path'
+>;
 /** usually two numbers like [2,19] */
 export type FossilVersion = Distinct<number[], 'fossil version'>;
 /** Command returned by `fossil undo --dry-run` */
@@ -67,11 +71,6 @@ export const enum MergeAction {
 }
 export type FossilUsername = Distinct<string, 'fossil username'>;
 export type FossilPassword = Distinct<string, 'fossil password'>;
-
-export interface IFossil {
-    path: FossilExecutablePath;
-    version: FossilVersion;
-}
 
 export interface TimelineOptions extends LogEntryOptions {
     /** Output items affecting filePath only */
@@ -129,59 +128,10 @@ export interface StashItem {
     comment: FossilCommitMessage;
 }
 
-export interface FossilFindAttemptLogger {
-    log(path: string): void;
-}
-
 interface FossilSpawnOptions extends cp.SpawnOptionsWithoutStdio {
     cwd: FossilCWD;
     logErrors?: boolean; // whether to log stderr to the fossil outputChannel
-    stdin_data?: string; // dump data to stdout
-}
-
-export class FossilFinder {
-    constructor(private readonly logger: FossilFindAttemptLogger) {}
-
-    private logAttempt(path: string) {
-        this.logger.log(path);
-    }
-
-    public async find(hint?: string): Promise<IFossil> {
-        const first = hint
-            ? this.findSpecificFossil(hint)
-            : Promise.reject<IFossil>(null);
-
-        return first.then(undefined, () => this.findSpecificFossil('fossil'));
-    }
-
-    private parseVersion(raw: string): FossilVersion {
-        const match = raw.match(/version (.+)\[/);
-        if (match) {
-            return match[1].split('.').map(s => parseInt(s)) as FossilVersion;
-        }
-        this.logger.log(`Failed to parse fossil version from output: '${raw}'`);
-        return [0] as FossilVersion;
-    }
-
-    private findSpecificFossil(path: string): Promise<IFossil> {
-        return new Promise<IFossil>((c, e) => {
-            const buffers: Buffer[] = [];
-            this.logAttempt(path);
-            const child = cp.spawn(path, ['version']);
-            child.stdout.on('data', (b: Buffer) => buffers.push(b));
-            child.on('error', e);
-            child.on('close', code => {
-                if (!code) {
-                    const output = Buffer.concat(buffers).toString('utf8');
-                    return c({
-                        path: path as FossilExecutablePath,
-                        version: this.parseVersion(output),
-                    });
-                }
-                return e(new Error('Not found'));
-            });
-        });
-    }
+    stdin_data?: string; // dump data to stdin
 }
 
 const enum Inline {
@@ -635,7 +585,7 @@ export class Repository {
         message: string,
         opts: {
             fileList: string[];
-            user?: FossilUsername | undefined;
+            user?: FossilUsername | null;
             branch: FossilBranch | undefined;
         }
     ): Promise<void> {
