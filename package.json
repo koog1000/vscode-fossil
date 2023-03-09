@@ -1038,8 +1038,7 @@
                         "null"
                     ],
                     "description": "%config.path%",
-                    "default": null,
-                    "isExecutable": true
+                    "default": null
                 },
                 "fossil.username": {
                     "type": [
