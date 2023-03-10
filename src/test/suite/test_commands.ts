@@ -1,6 +1,6 @@
 import * as vscode from 'vscode';
 import * as sinon from 'sinon';
-import { Fossil, FossilCWD } from '../../fossilExecutable';
+import { FossilExecutable, FossilCWD } from '../../fossilExecutable';
 import { fossilInit, fossilOpen } from './common';
 import * as assert from 'assert/strict';
 import * as fs from 'fs/promises';
@@ -11,15 +11,15 @@ import { FossilBranch } from '../../fossilBase';
 
 export async function fossil_close(
     sandbox: sinon.SinonSandbox,
-    fossil: Fossil
+    executable: FossilExecutable
 ): Promise<void> {
-    await fossilInit(sandbox, fossil);
-    await fossilOpen(sandbox, fossil);
+    await fossilInit(sandbox, executable);
+    await fossilOpen(sandbox, executable);
     const cwd = vscode.workspace.workspaceFolders![0].uri.fsPath as FossilCWD;
-    const res = await fossil.exec(cwd, ['info']);
+    const res = await executable.exec(cwd, ['info']);
     assert.ok(/check-ins:\s+1\s*$/.test(res.stdout));
     await vscode.commands.executeCommand('fossil.close');
-    const res_promise = fossil.exec(cwd, ['status']);
+    const res_promise = executable.exec(cwd, ['status']);
     await assert.rejects(res_promise, (thrown: any): boolean => {
         return /^current directory is not within an open checkout\s*$/.test(
             thrown.stderr
@@ -29,21 +29,26 @@ export async function fossil_close(
 
 export async function fossil_merge(
     sandbox: sinon.SinonSandbox,
-    fossil: Fossil
+    executable: FossilExecutable
 ): Promise<void> {
-    await fossilInit(sandbox, fossil);
-    await fossilOpen(sandbox, fossil);
+    await fossilInit(sandbox, executable);
+    await fossilOpen(sandbox, executable);
     const rootUri = vscode.workspace.workspaceFolders![0].uri;
     const fooPath = vscode.Uri.joinPath(rootUri, 'foo.txt').fsPath;
     await fs.writeFile(fooPath, 'foo content\n');
     const cwd = rootUri.fsPath as FossilCWD;
-    await fossil.exec(cwd, ['add', 'foo.txt']);
-    await fossil.exec(cwd, ['commit', '-m', 'add: foo.txt', '--no-warnings']);
+    await executable.exec(cwd, ['add', 'foo.txt']);
+    await executable.exec(cwd, [
+        'commit',
+        '-m',
+        'add: foo.txt',
+        '--no-warnings',
+    ]);
     const barPath = vscode.Uri.joinPath(rootUri, 'foo.txt').fsPath;
     await fs.writeFile(barPath, 'bar content\n');
-    await fossil.exec(cwd, ['add', 'bar.txt']);
+    await executable.exec(cwd, ['add', 'bar.txt']);
     await fs.appendFile(fooPath, 'foo content 2\n');
-    await fossil.exec(cwd, [
+    await executable.exec(cwd, [
         'commit',
         '-m',
         'add: bar.txt; mod',
@@ -51,7 +56,7 @@ export async function fossil_merge(
         '--branch',
         'fossil-merge',
     ]);
-    await fossil.exec(cwd, ['up', 'trunk']);
+    await executable.exec(cwd, ['up', 'trunk']);
     const model = vscode.extensions.getExtension('koog1000.fossil')!
         .exports as Model;
     const repository = model.repositories[0];

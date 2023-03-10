@@ -3,7 +3,7 @@ import { window, Uri } from 'vscode';
 import * as vscode from 'vscode';
 import * as sinon from 'sinon';
 import * as fs from 'fs';
-import { Fossil } from '../../fossilExecutable';
+import { FossilExecutable } from '../../fossilExecutable';
 import { findFossil } from '../../fossilFinder';
 import {
     status_merge_integrate_is_visible_in_source_control_panel,
@@ -19,22 +19,22 @@ import {
 } from './test_undo_redo';
 import { error_is_thrown_when_executing_unknown_command } from './test_utils';
 
-async function createFossil(): Promise<Fossil> {
+async function createFossil(): Promise<FossilExecutable> {
     const outputChannel = window.createOutputChannel('Fossil.Test');
     const info = await findFossil(null, outputChannel);
-    const fossil = new Fossil({
+    const executable = new FossilExecutable({
         fossilPath: info.path,
         version: info.version,
         outputChannel: outputChannel,
     });
-    return fossil;
+    return executable;
 }
 
 suite('Fossil', () => {
     const sandbox = sinon.createSandbox();
-    let fossil: Fossil;
+    let executable: FossilExecutable;
     before(async () => {
-        fossil = await createFossil();
+        executable = await createFossil();
     });
     beforeEach(async () => {
         if (!vscode.workspace.workspaceFolders) {
@@ -54,43 +54,48 @@ suite('Fossil', () => {
     });
 
     test('fossil.error', async () => {
-        await error_is_thrown_when_executing_unknown_command(sandbox, fossil);
+        await error_is_thrown_when_executing_unknown_command(
+            sandbox,
+            executable
+        );
     });
 
     test('fossil.init', async () => {
-        await fossilInit(sandbox, fossil);
+        await fossilInit(sandbox, executable);
     });
 
     test('fossil.open', async () => {
-        await fossilInit(sandbox, fossil);
-        await fossilOpen(sandbox, fossil);
+        await fossilInit(sandbox, executable);
+        await fossilOpen(sandbox, executable);
     });
 
-    test('fossil.merge', () => fossil_merge(sandbox, fossil)).timeout(14000);
+    test('fossil.merge', () => fossil_merge(sandbox, executable)).timeout(
+        14000
+    );
 
-    test('fossil.close', () => fossil_close(sandbox, fossil));
+    test('fossil.close', () => fossil_close(sandbox, executable));
 
     test('fossil missing is visible in Source Control panel', async () =>
         status_missing_is_visible_in_source_control_panel(
             sandbox,
-            fossil
+            executable
         )).timeout(5000);
 
     test('fossil rename is visible in Source Control panel', () =>
         status_rename_is_visible_in_source_control_panel(
             sandbox,
-            fossil
+            executable
         )).timeout(15000);
 
     test('fossil integrate is visible in Source Control panel', () =>
         status_merge_integrate_is_visible_in_source_control_panel(
             sandbox,
-            fossil
+            executable
         )).timeout(10000);
     test('fossil file log can differ files', () =>
-        fossil_file_log_can_diff_files(sandbox, fossil)).timeout(10000);
+        fossil_file_log_can_diff_files(sandbox, executable)).timeout(10000);
     test('fossil undo and redo warning', () =>
-        fossil_undo_and_redo_warning(sandbox, fossil)).timeout(5000);
+        fossil_undo_and_redo_warning(sandbox, executable)).timeout(5000);
     test('fossil undo and redo working', () =>
-        fossil_undo_and_redo_working(sandbox, fossil)).timeout(15000);
+        fossil_undo_and_redo_working(sandbox, executable)).timeout(15000);
 });

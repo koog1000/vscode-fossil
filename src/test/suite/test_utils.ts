@@ -1,7 +1,7 @@
 import * as vscode from 'vscode';
 import * as sinon from 'sinon';
 import {
-    Fossil,
+    FossilExecutable,
     FossilCWD,
     FossilError,
     FossilExecutablePath,
@@ -10,13 +10,13 @@ import * as assert from 'assert/strict';
 
 export async function error_is_thrown_when_executing_unknown_command(
     sandbox: sinon.SinonSandbox,
-    fossil: Fossil
+    executable: FossilExecutable
 ): Promise<void> {
     const rootUri = vscode.workspace.workspaceFolders![0].uri;
     const cwd = rootUri.fsPath as FossilCWD;
     const showErrorMessage = sandbox.stub(vscode.window, 'showErrorMessage');
     showErrorMessage.resolves(undefined);
-    await assert.rejects(fossil.exec(cwd, ['fizzbuzz']), {
+    await assert.rejects(executable.exec(cwd, ['fizzbuzz']), {
         message: 'Failed to execute fossil',
         stderr: 'fossil: unknown command: fizzbuzz\nfossil: use "help" for more information\n',
         stdout: '',

@@ -54,7 +54,7 @@ import { humanise } from './humanise';
 import { partition } from './util';
 import { toFossilUri } from './uri';
 import { FossilPreviewManager } from './preview';
-import { Fossil, FossilError } from './fossilExecutable';
+import { FossilExecutable, FossilError } from './fossilExecutable';
 
 const localize = nls.loadMessageBundle();
 
@@ -164,12 +164,12 @@ export class CommandCenter {
     private previewManager: FossilPreviewManager;
 
     constructor(
-        private readonly fossil: Fossil,
+        private readonly executable: FossilExecutable,
         private readonly model: Model,
         private readonly outputChannel: OutputChannel,
         private readonly context: ExtensionContext
     ) {
-        this.previewManager = new FossilPreviewManager(context, fossil);
+        this.previewManager = new FossilPreviewManager(context, executable);
 
         this.disposables = this.register.map(command => {
             return commands.registerCommand(command.id, command.method, this);
@@ -363,7 +363,7 @@ export class CommandCenter {
             return;
         }
 
-        const clonePromise = this.fossil.clone(url, fossilPath);
+        const clonePromise = this.executable.clone(url, fossilPath);
         interaction.statusCloning(clonePromise);
         const fossilRoot = await clonePromise;
         await this.askOpenRepository(fossilPath, fossilRoot);
@@ -378,7 +378,7 @@ export class CommandCenter {
         parentPath: FossilRoot
     ): Promise<void> {
         try {
-            await this.fossil.openClone(filePath, parentPath);
+            await this.executable.openClone(filePath, parentPath);
         } catch (err) {
             if (
                 err instanceof FossilError &&
@@ -388,7 +388,7 @@ export class CommandCenter {
                     parentPath
                 );
                 if (openNotEmpty) {
-                    this.fossil.openCloneForce(filePath, parentPath);
+                    this.executable.openCloneForce(filePath, parentPath);
                 }
             } else {
                 throw err;
@@ -420,7 +420,7 @@ export class CommandCenter {
         const fossilRoot = path.dirname(fossilPath) as FossilRoot;
         let projectName = '';
         let projectDesc = '';
-        if (this.fossil.version >= [2, 18]) {
+        if (this.executable.version >= [2, 18]) {
             const userProjectName = await interaction.inputProjectName();
             if (userProjectName === undefined) {
                 return;
@@ -435,7 +435,7 @@ export class CommandCenter {
         }
 
         // run init in the file folder in case any artifacts appear
-        await this.fossil.init(
+        await this.executable.init(
             fossilRoot,
             fossilPath,
             projectName,

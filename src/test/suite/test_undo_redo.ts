@@ -1,7 +1,7 @@
 import * as vscode from 'vscode';
 import { Uri } from 'vscode';
 import * as sinon from 'sinon';
-import { Fossil } from '../../fossilExecutable';
+import { FossilExecutable } from '../../fossilExecutable';
 import { fossilInit, fossilOpen } from './common';
 import * as assert from 'assert/strict';
 import * as fs from 'fs';
@@ -10,10 +10,10 @@ import { eventToPromise } from '../../util';
 
 export async function fossil_undo_and_redo_warning(
     sandbox: sinon.SinonSandbox,
-    fossil: Fossil
+    executable: FossilExecutable
 ): Promise<void> {
-    await fossilInit(sandbox, fossil);
-    await fossilOpen(sandbox, fossil);
+    await fossilInit(sandbox, executable);
+    await fossilOpen(sandbox, executable);
     const showWarningMessage: sinon.SinonStub = sandbox.stub(
         vscode.window,
         'showWarningMessage'
@@ -30,10 +30,10 @@ export async function fossil_undo_and_redo_warning(
 
 export async function fossil_undo_and_redo_working(
     sandbox: sinon.SinonSandbox,
-    fossil: Fossil
+    executable: FossilExecutable
 ): Promise<void> {
-    await fossilInit(sandbox, fossil);
-    await fossilOpen(sandbox, fossil);
+    await fossilInit(sandbox, executable);
+    await fossilOpen(sandbox, executable);
     const showWarningMessage: sinon.SinonStub = sandbox.stub(
         vscode.window,
         'showWarningMessage'

@@ -1,6 +1,6 @@
 import * as vscode from 'vscode';
 import * as sinon from 'sinon';
-import { Fossil } from '../../fossilExecutable';
+import { FossilExecutable } from '../../fossilExecutable';
 import { fossilInit, fossilOpen } from './common';
 import * as assert from 'assert/strict';
 import * as fs from 'fs/promises';
@@ -9,7 +9,7 @@ import { Model } from '../../model';
 import { FossilCWD } from '../../fossilExecutable';
 
 async function add(
-    fossil: Fossil,
+    executable: FossilExecutable,
     filename: string,
     content: string,
     message: string
@@ -18,24 +18,29 @@ async function add(
     const cwd = rootUri.fsPath as FossilCWD;
     const fileUri = vscode.Uri.joinPath(rootUri, filename);
     await fs.writeFile(fileUri.fsPath, content);
-    await fossil.exec(cwd, ['add', filename]);
-    await fossil.exec(cwd, ['commit', filename, '-m', message]);
+    await executable.exec(cwd, ['add', filename]);
+    await executable.exec(cwd, ['commit', filename, '-m', message]);
     return fileUri;
 }
 
 export async function fossil_file_log_can_diff_files(
     sandbox: sinon.SinonSandbox,
-    fossil: Fossil
+    executable: FossilExecutable
 ): Promise<void> {
-    await fossilInit(sandbox, fossil);
-    await fossilOpen(sandbox, fossil);
-    await add(fossil, 'file1.txt', 'line1\n', 'file1.txt: first');
-    await add(fossil, 'file1.txt', 'line1\nline2\n', 'file1.txt: second');
-    await add(fossil, 'file1.txt', 'line1\nline2\nline3\n', 'file1.txt: third');
-    await add(fossil, 'file2.txt', 'line1\n', 'file2.txt: first');
-    await add(fossil, 'file2.txt', 'line1\nline2\n', 'file2.txt: second');
+    await fossilInit(sandbox, executable);
+    await fossilOpen(sandbox, executable);
+    await add(executable, 'file1.txt', 'line1\n', 'file1.txt: first');
+    await add(executable, 'file1.txt', 'line1\nline2\n', 'file1.txt: second');
+    await add(
+        executable,
+        'file1.txt',
+        'line1\nline2\nline3\n',
+        'file1.txt: third'
+    );
+    await add(executable, 'file2.txt', 'line1\n', 'file2.txt: first');
+    await add(executable, 'file2.txt', 'line1\nline2\n', 'file2.txt: second');
     const file2uri = await add(
-        fossil,
+        executable,
         'file2.txt',
         'line1\nline2\nline3\n',
         'file2.txt: third'

@@ -1,7 +1,7 @@
 import * as vscode from 'vscode';
 import { Uri } from 'vscode';
 import * as sinon from 'sinon';
-import { Fossil, FossilCWD } from '../../fossilExecutable';
+import { FossilExecutable, FossilCWD } from '../../fossilExecutable';
 import { fossilInit, fossilOpen } from './common';
 import * as fs from 'fs';
 import { eventToPromise } from '../../util';
@@ -26,16 +26,21 @@ export function assertGroups(
 
 export async function status_missing_is_visible_in_source_control_panel(
     sandbox: sinon.SinonSandbox,
-    fossil: Fossil
+    executable: FossilExecutable
 ): Promise<void> {
-    await fossilInit(sandbox, fossil);
-    await fossilOpen(sandbox, fossil);
+    await fossilInit(sandbox, executable);
+    await fossilOpen(sandbox, executable);
     const rootUri = vscode.workspace.workspaceFolders![0].uri;
     const cwd = rootUri.fsPath as FossilCWD;
     const fooPath = Uri.joinPath(rootUri, 'foo.txt').fsPath;
     await fs.promises.writeFile(fooPath, 'test\n');
-    await fossil.exec(cwd, ['add', 'foo.txt']);
-    await fossil.exec(cwd, ['commit', '-m', 'add: foo.txt', '--no-warnings']);
+    await executable.exec(cwd, ['add', 'foo.txt']);
+    await executable.exec(cwd, [
+        'commit',
+        '-m',
+        'add: foo.txt',
+        '--no-warnings',
+    ]);
     await fs.promises.unlink(fooPath);
     const model = vscode.extensions.getExtension('koog1000.fossil')!
         .exports as Model;
@@ -47,15 +52,15 @@ export async function status_missing_is_visible_in_source_control_panel(
 
 export async function status_rename_is_visible_in_source_control_panel(
     sandbox: sinon.SinonSandbox,
-    fossil: Fossil
+    executable: FossilExecutable
 ): Promise<void> {
-    await fossilInit(sandbox, fossil);
-    await fossilOpen(sandbox, fossil);
+    await fossilInit(sandbox, executable);
+    await fossilOpen(sandbox, executable);
     const rootUri = vscode.workspace.workspaceFolders![0].uri;
     const cwd = rootUri.fsPath as FossilCWD;
     const fooPath = Uri.joinPath(rootUri, 'foo.txt').fsPath;
     await fs.promises.writeFile(fooPath, 'test\n');
-    await fossil.exec(cwd, ['add', 'foo.txt']);
+    await executable.exec(cwd, ['add', 'foo.txt']);
     const model = vscode.extensions.getExtension('koog1000.fossil')!
         .exports as Model;
     const repository = model.repositories[0];
@@ -63,11 +68,16 @@ export async function status_rename_is_visible_in_source_control_panel(
     await repository.status();
     assertGroups(repository, new Map([[fooPath, Status.ADDED]]), new Map());
 
-    await fossil.exec(cwd, ['commit', '-m', 'add: foo.txt', '--no-warnings']);
+    await executable.exec(cwd, [
+        'commit',
+        '-m',
+        'add: foo.txt',
+        '--no-warnings',
+    ]);
     await repository.status();
     assertGroups(repository, new Map(), new Map());
 
-    await fossil.exec(cwd, ['mv', 'foo.txt', 'bar.txt', '--hard']);
+    await executable.exec(cwd, ['mv', 'foo.txt', 'bar.txt', '--hard']);
     await repository.status();
     await eventToPromise(repository.onDidRunOperation);
     const barPath = Uri.joinPath(rootUri, 'bar.txt').fsPath;
@@ -76,23 +86,28 @@ export async function status_rename_is_visible_in_source_control_panel(
 
 export async function status_merge_integrate_is_visible_in_source_control_panel(
     sandbox: sinon.SinonSandbox,
-    fossil: Fossil
+    executable: FossilExecutable
 ): Promise<void> {
-    await fossilInit(sandbox, fossil);
-    await fossilOpen(sandbox, fossil);
+    await fossilInit(sandbox, executable);
+    await fossilOpen(sandbox, executable);
     const rootUri = vscode.workspace.workspaceFolders![0].uri;
     const cwd = rootUri.fsPath as FossilCWD;
     const fooPath = Uri.joinPath(rootUri, 'foo.txt').fsPath;
 
     await fs.promises.writeFile(fooPath, 'test\n');
-    await fossil.exec(cwd, ['add', 'foo.txt']);
-    await fossil.exec(cwd, ['commit', '-m', 'add: foo.txt', '--no-warnings']);
+    await executable.exec(cwd, ['add', 'foo.txt']);
+    await executable.exec(cwd, [
+        'commit',
+        '-m',
+        'add: foo.txt',
+        '--no-warnings',
+    ]);
     const barPath = Uri.joinPath(rootUri, 'bar.txt').fsPath;
     await fs.promises.writeFile(barPath, 'test bar\n');
     await fs.promises.appendFile(fooPath, 'appended\n');
-    await fossil.exec(cwd, ['add', 'bar.txt']);
+    await executable.exec(cwd, ['add', 'bar.txt']);
     console.log;
-    await fossil.exec(cwd, [
+    await executable.exec(cwd, [
         'commit',
         '-m',
         'add: bar.txt, mod foo.txt',
@@ -101,8 +116,8 @@ export async function status_merge_integrate_is_visible_in_source_control_panel(
         '--no-warnings',
     ]);
 
-    await fossil.exec(cwd, ['up', 'trunk']);
-    await fossil.exec(cwd, ['merge', 'test_brunch']);
+    await executable.exec(cwd, ['up', 'trunk']);
+    await executable.exec(cwd, ['merge', 'test_brunch']);
     const model = vscode.extensions.getExtension('koog1000.fossil')!
         .exports as Model;
     const repository = model.repositories[0];
