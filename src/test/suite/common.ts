@@ -3,7 +3,7 @@ import { window, Uri } from 'vscode';
 import * as vscode from 'vscode';
 import * as sinon from 'sinon';
 import * as fs from 'fs';
-import { Fossil, FossilCWD } from '../../fossilBase';
+import { Fossil, FossilCWD } from '../../fossilExecutable';
 
 export async function fossilInit(
     sandbox: sinon.SinonSandbox,

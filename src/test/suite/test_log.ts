@@ -1,11 +1,12 @@
 import * as vscode from 'vscode';
 import * as sinon from 'sinon';
-import { Fossil, FossilCWD } from '../../fossilBase';
+import { Fossil } from '../../fossilExecutable';
 import { fossilInit, fossilOpen } from './common';
 import * as assert from 'assert/strict';
 import * as fs from 'fs/promises';
 import { toFossilUri } from '../../uri';
 import { Model } from '../../model';
+import { FossilCWD } from '../../fossilExecutable';
 
 async function add(
     fossil: Fossil,

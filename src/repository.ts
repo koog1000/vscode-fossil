@@ -17,7 +17,6 @@ import {
 import {
     Repository as BaseRepository,
     Commit,
-    FossilError,
     IRepoStatus,
     PullOptions,
     IMergeResult,
@@ -71,6 +70,7 @@ import {
     PushCreatesNewHeadAction,
 } from './interaction';
 import { FossilUriParams, toFossilUri } from './uri';
+import { FossilError } from './fossilExecutable';
 
 const localize = nls.loadMessageBundle();
 const iconsRootPath = path.join(path.dirname(__dirname), 'resources', 'icons');

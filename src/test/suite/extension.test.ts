@@ -3,7 +3,7 @@ import { window, Uri } from 'vscode';
 import * as vscode from 'vscode';
 import * as sinon from 'sinon';
 import * as fs from 'fs';
-import { Fossil } from '../../fossilBase';
+import { Fossil } from '../../fossilExecutable';
 import { findFossil } from '../../fossilFinder';
 import {
     status_merge_integrate_is_visible_in_source_control_panel,
@@ -40,11 +40,11 @@ suite('Fossil', () => {
         if (!vscode.workspace.workspaceFolders) {
             throw new Error('Expected opened workspace. Probably setup issue.');
         }
-        const roorPath = vscode.workspace.workspaceFolders[0].uri;
-        const entities = await fs.promises.readdir(roorPath.fsPath);
+        const rootPath = vscode.workspace.workspaceFolders[0].uri;
+        const entities = await fs.promises.readdir(rootPath.fsPath);
         await Promise.all(
             entities.map(name =>
-                fs.promises.unlink(Uri.joinPath(roorPath, name).fsPath)
+                fs.promises.unlink(Uri.joinPath(rootPath, name).fsPath)
             )
         );
     });

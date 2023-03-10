@@ -22,8 +22,6 @@ import { LineChange, revertChanges } from './revert';
 import * as nls from 'vscode-nls';
 import * as path from 'path';
 import {
-    Fossil,
-    FossilError,
     FossilPath,
     FossilRoot,
     FossilURI,
@@ -56,6 +54,7 @@ import { humanise } from './humanise';
 import { partition } from './util';
 import { toFossilUri } from './uri';
 import { FossilPreviewManager } from './preview';
+import { Fossil, FossilError } from './fossilExecutable';
 
 const localize = nls.loadMessageBundle();
 

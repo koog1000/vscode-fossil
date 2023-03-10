@@ -7,7 +7,7 @@
 // based on https://github.com/Microsoft/vscode/commit/41f0ff15d7327da30fdae73aa04ca570ce34fa0a
 
 import { ExtensionContext, window, Disposable, commands } from 'vscode';
-import { Fossil } from './fossilBase';
+import { Fossil } from './fossilExecutable';
 import { Model } from './model';
 import { CommandCenter } from './commands';
 import { FossilContentProvider } from './contentProvider';
