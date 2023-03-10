@@ -7,7 +7,7 @@
 // based on https://github.com/Microsoft/vscode/commit/41f0ff15d7327da30fdae73aa04ca570ce34fa0a
 
 import { ExtensionContext, window, Disposable, commands } from 'vscode';
-import { Fossil } from './fossilExecutable';
+import { FossilExecutable } from './fossilExecutable';
 import { Model } from './model';
 import { CommandCenter } from './commands';
 import { FossilContentProvider } from './contentProvider';
@@ -29,12 +29,12 @@ async function init(
     const enabled = typedConfig.enabled;
     const pathHint = typedConfig.path;
     const info: FossilInfo = await findFossil(pathHint, outputChannel);
-    const fossil = new Fossil({
+    const executable = new FossilExecutable({
         fossilPath: info.path,
         version: info.version,
         outputChannel: outputChannel,
     });
-    const model = new Model(fossil);
+    const model = new Model(executable);
     disposables.push(model);
 
     const onRepository = () =>
@@ -49,7 +49,7 @@ async function init(
 
     if (!enabled) {
         const commandCenter = new CommandCenter(
-            fossil,
+            executable,
             model,
             outputChannel,
             context
@@ -66,10 +66,10 @@ async function init(
             info.path
         )
     );
-    fossil.onOutput(str => outputChannel.append(str), null, disposables);
+    executable.onOutput(str => outputChannel.append(str), null, disposables);
 
     disposables.push(
-        new CommandCenter(fossil, model, outputChannel, context),
+        new CommandCenter(executable, model, outputChannel, context),
         new FossilContentProvider(model)
     );
     return model;

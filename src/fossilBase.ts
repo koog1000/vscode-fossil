@@ -11,7 +11,7 @@ import { groupBy, IDisposable, dispose } from './util';
 import { workspace, window, Uri } from 'vscode';
 import { throttle } from './decorators';
 import {
-    Fossil,
+    FossilExecutable,
     FossilError,
     FossilSpawnOptions,
     IExecutionResult,
@@ -129,7 +129,10 @@ export interface CommitDetails extends Commit {
 }
 
 export class Repository {
-    constructor(private _fossil: Fossil, private repositoryRoot: FossilRoot) {}
+    constructor(
+        private _fossil: FossilExecutable,
+        private repositoryRoot: FossilRoot
+    ) {}
 
     get root(): FossilRoot {
         return this.repositoryRoot;

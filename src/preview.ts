@@ -1,4 +1,4 @@
-import { Fossil, FossilCWD } from './fossilExecutable';
+import { FossilExecutable, FossilCWD } from './fossilExecutable';
 import * as path from 'path';
 import {
     Uri,
@@ -27,7 +27,10 @@ export class FossilPreviewManager
     private readonly _disposables: IDisposable[];
     private _activePreview: FossilPreview | undefined = undefined;
 
-    constructor(context: ExtensionContext, private readonly fossil: Fossil) {
+    constructor(
+        context: ExtensionContext,
+        private readonly executable: FossilExecutable
+    ) {
         // super();
         this.previews = new Set();
         this.mediaDir = Uri.joinPath(context.extensionUri, 'media');
@@ -54,7 +57,7 @@ export class FossilPreviewManager
         const uri = Uri.parse(state.uri);
         const preview = new FossilPreview(
             panel,
-            this.fossil,
+            this.executable,
             uri,
             this.mediaDir
         );
@@ -81,7 +84,11 @@ export class FossilPreviewManager
                 return pv.reveal();
             }
         }
-        const preview = FossilPreview.create(this.fossil, uri, this.mediaDir);
+        const preview = FossilPreview.create(
+            this.executable,
+            uri,
+            this.mediaDir
+        );
         this.registerPreview(preview);
         // await preview.initializeFromUri(uri);
     }
@@ -125,7 +132,7 @@ export class FossilPreview implements IDisposable {
     // public currently_rendered_content?: string; // currently visible text before it was rendered
 
     public static create(
-        fossil: Fossil,
+        executable: FossilExecutable,
         uri: Uri,
         mediaDir: Uri
     ): FossilPreview {
@@ -136,12 +143,12 @@ export class FossilPreview implements IDisposable {
             ViewColumn.Beside,
             { retainContextWhenHidden: true }
         );
-        return new FossilPreview(panel, fossil, uri, mediaDir);
+        return new FossilPreview(panel, executable, uri, mediaDir);
     }
 
     constructor(
         public readonly panel: WebviewPanel,
-        private readonly fossil: Fossil,
+        private readonly fossil: FossilExecutable,
         public uri: Uri,
         private readonly mediaDir: Uri
     ) {

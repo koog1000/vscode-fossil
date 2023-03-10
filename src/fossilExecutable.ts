@@ -217,7 +217,7 @@ export class FossilError implements IFossilErrorData {
     }
 }
 
-export class Fossil {
+export class FossilExecutable {
     private readonly fossilPath: FossilExecutablePath;
     private readonly outputChannel: OutputChannel;
     public readonly version: FossilVersion;

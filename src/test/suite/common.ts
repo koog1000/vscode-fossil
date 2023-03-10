@@ -3,11 +3,11 @@ import { window, Uri } from 'vscode';
 import * as vscode from 'vscode';
 import * as sinon from 'sinon';
 import * as fs from 'fs';
-import { Fossil, FossilCWD } from '../../fossilExecutable';
+import { FossilExecutable, FossilCWD } from '../../fossilExecutable';
 
 export async function fossilInit(
     sandbox: sinon.SinonSandbox,
-    fossil: Fossil
+    executable: FossilExecutable
 ): Promise<void> {
     assert.ok(vscode.workspace.workspaceFolders);
     const fossilPath = Uri.joinPath(
@@ -29,14 +29,14 @@ export async function fossilInit(
     showInformationMessage.resolves(undefined);
 
     const showInputBox = sandbox.stub(window, 'showInputBox');
-    if (fossil.version >= [2, 18]) {
+    if (executable.version >= [2, 18]) {
         showInputBox.onFirstCall().resolves('Test repo name');
         showInputBox.onSecondCall().resolves('Test repo description');
     }
 
     await vscode.commands.executeCommand('fossil.init');
     assert.ok(showSaveDialogstub.calledOnce);
-    if (fossil.version >= [2, 18]) {
+    if (executable.version >= [2, 18]) {
         assert.ok(showInputBox.calledTwice);
     }
     assert.ok(
@@ -49,7 +49,7 @@ export async function fossilInit(
 
 export async function fossilOpen(
     sandbox: sinon.SinonSandbox,
-    fossil: Fossil
+    executable: FossilExecutable
 ): Promise<void> {
     assert.ok(vscode.workspace.workspaceFolders);
     const rootPath = vscode.workspace.workspaceFolders![0].uri;
@@ -64,6 +64,6 @@ export async function fossilOpen(
     showInformationMessage.onSecondCall().resolves([rootPath]);
 
     await vscode.commands.executeCommand('fossil.open');
-    const res = await fossil.exec(rootPath.fsPath as FossilCWD, ['info']);
+    const res = await executable.exec(rootPath.fsPath as FossilCWD, ['info']);
     assert.ok(/check-ins:\s+1\s*$/.test(res.stdout));
 }

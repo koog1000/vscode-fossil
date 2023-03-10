@@ -16,7 +16,7 @@ import {
     TextEditor,
     QuickPickItem,
 } from 'vscode';
-import { Fossil, FossilError } from './fossilExecutable';
+import { FossilExecutable, FossilError } from './fossilExecutable';
 import { anyEvent, filterEvent, dispose } from './util';
 import { memoize, debounce, sequentialize } from './decorators';
 import * as path from 'path';
@@ -97,7 +97,7 @@ export class Model implements Disposable {
     private configurationChangeDisposable: Disposable;
     private readonly disposables: Disposable[] = [];
 
-    constructor(private readonly fossil: Fossil) {
+    constructor(private readonly executable: FossilExecutable) {
         this.enabled = typedConfig.enabled;
         this.configurationChangeDisposable = workspace.onDidChangeConfiguration(
             this.onDidChangeConfiguration,
@@ -268,7 +268,9 @@ export class Model implements Disposable {
         }
 
         try {
-            const repositoryRoot = await this.fossil.getRepositoryRoot(path);
+            const repositoryRoot = await this.executable.getRepositoryRoot(
+                path
+            );
 
             // This can happen whenever `path` has the wrong case sensitivity in
             // case insensitive file systems
@@ -278,7 +280,9 @@ export class Model implements Disposable {
                 return true;
             }
 
-            const repository = new Repository(this.fossil.open(repositoryRoot));
+            const repository = new Repository(
+                this.executable.open(repositoryRoot)
+            );
 
             this.open(repository);
             return true;
