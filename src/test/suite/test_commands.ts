@@ -1,12 +1,13 @@
 import * as vscode from 'vscode';
 import * as sinon from 'sinon';
-import { Fossil, FossilBranch, FossilCWD } from '../../fossilBase';
+import { Fossil, FossilCWD } from '../../fossilExecutable';
 import { fossilInit, fossilOpen } from './common';
 import * as assert from 'assert/strict';
 import * as fs from 'fs/promises';
 import { assertGroups } from './test_status';
 import { eventToPromise } from '../../util';
 import { Model } from '../../model';
+import { FossilBranch } from '../../fossilBase';
 
 export async function fossil_close(
     sandbox: sinon.SinonSandbox,

@@ -1,7 +1,7 @@
 import * as vscode from 'vscode';
 import { Uri } from 'vscode';
 import * as sinon from 'sinon';
-import { Fossil, FossilCWD } from '../../fossilBase';
+import { Fossil, FossilCWD } from '../../fossilExecutable';
 import { fossilInit, fossilOpen } from './common';
 import * as fs from 'fs';
 import { eventToPromise } from '../../util';

@@ -5,7 +5,7 @@ import {
     FossilCWD,
     FossilError,
     FossilExecutablePath,
-} from '../../fossilBase';
+} from '../../fossilExecutable';
 import * as assert from 'assert/strict';
 
 export async function error_is_thrown_when_executing_unknown_command(

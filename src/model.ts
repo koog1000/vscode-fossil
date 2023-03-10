@@ -16,7 +16,7 @@ import {
     TextEditor,
     QuickPickItem,
 } from 'vscode';
-import { Fossil, FossilError } from './fossilBase';
+import { Fossil, FossilError } from './fossilExecutable';
 import { anyEvent, filterEvent, dispose } from './util';
 import { memoize, debounce, sequentialize } from './decorators';
 import * as path from 'path';

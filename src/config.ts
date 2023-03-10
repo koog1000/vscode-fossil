@@ -1,5 +1,6 @@
 import { workspace } from 'vscode';
-import { UnvalidatedFossilExecutablePath, FossilUsername } from './fossilBase';
+import { FossilUsername } from './fossilBase';
+import { UnvalidatedFossilExecutablePath } from './fossilFinder';
 
 interface ConfigScheme {
     enabled: boolean;

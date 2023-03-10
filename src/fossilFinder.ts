@@ -1,10 +1,12 @@
 import * as cp from 'child_process';
 import { OutputChannel } from 'vscode';
-import {
-    FossilExecutablePath,
-    FossilVersion,
-    UnvalidatedFossilExecutablePath,
-} from './fossilBase';
+import { Distinct } from './fossilBase';
+import { FossilExecutablePath, FossilVersion } from './fossilExecutable';
+
+export type UnvalidatedFossilExecutablePath = Distinct<
+    string,
+    'unvalidated fossil executable path' | 'fossil executable path'
+>;
 
 export interface FossilInfo {
     path: FossilExecutablePath;

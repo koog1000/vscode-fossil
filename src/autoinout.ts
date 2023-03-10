@@ -5,7 +5,7 @@
  *--------------------------------------------------------------------------------------------*/
 
 import { workspace, Disposable } from 'vscode';
-import { FossilError } from './fossilBase';
+import { FossilError } from './fossilExecutable';
 import { throttle } from './decorators';
 import typedConfig from './config';
 import { Repository, Operation } from './repository';

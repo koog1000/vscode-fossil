@@ -1,4 +1,4 @@
-import { Fossil, FossilCWD } from './fossilBase';
+import { Fossil, FossilCWD } from './fossilExecutable';
 import * as path from 'path';
 import {
     Uri,
