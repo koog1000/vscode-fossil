@@ -15,7 +15,7 @@ import {
     RelativePattern,
 } from 'vscode';
 import {
-    Repository as BaseRepository,
+    OpenedRepository,
     Commit,
     IRepoStatus,
     PullOptions,
@@ -435,7 +435,7 @@ export class Repository implements IDisposable, InteractionAPI {
     private readonly disposables: Disposable[] = [];
     public statusPromise: Promise<StatusString>;
 
-    constructor(private readonly repository: BaseRepository) {
+    constructor(private readonly repository: OpenedRepository) {
         const repoRootWatcher = workspace.createFileSystemWatcher(
             new RelativePattern(repository.root, '**')
         );

@@ -3,7 +3,7 @@ import {
     FossilPath,
     FossilRoot,
     FossilURI,
-    Repository,
+    OpenedRepository,
 } from './fossilBase';
 import * as path from 'path';
 import * as fs from 'fs/promises';
@@ -221,7 +221,7 @@ export class FossilExecutable {
     private readonly fossilPath: FossilExecutablePath;
     private readonly outputChannel: OutputChannel;
     public readonly version: FossilVersion;
-    private openRepository: Repository | undefined;
+    private openRepository: OpenedRepository | undefined;
     private readonly _onOutput = new EventEmitter<string>();
     get onOutput(): Event<string> {
         return this._onOutput.event;
@@ -233,8 +233,8 @@ export class FossilExecutable {
         this.version = options.version;
     }
 
-    open(repository: FossilRoot): Repository {
-        this.openRepository = new Repository(this, repository);
+    open(repository: FossilRoot): OpenedRepository {
+        this.openRepository = new OpenedRepository(this, repository);
         return this.openRepository;
     }
 
