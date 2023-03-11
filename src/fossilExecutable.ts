@@ -293,8 +293,11 @@ export class FossilExecutable {
     async getRepositoryRoot(anypath: string): Promise<FossilRoot> {
         const isFile = (await fs.stat(anypath)).isFile();
         const cwd = (isFile ? path.dirname(anypath) : anypath) as FossilCWD;
-        this.log(`getting root for '${anypath}'\n`);
-        const result = await this.exec(cwd, ['status']);
+        const result = await this.exec(
+            cwd,
+            ['status'],
+            `getting root for '${anypath}'`
+        );
         const root = result.stdout.match(/local-root:\s*(.+)\/\s/);
         if (root) {
             return root[1] as FossilRoot;
@@ -305,10 +308,11 @@ export class FossilExecutable {
     async exec(
         cwd: FossilCWD,
         args: string[],
+        reason = '',
         options: Omit<FossilSpawnOptions, 'cwd'> = {}
     ): Promise<IExecutionResult> {
         try {
-            const result = await this._exec(args, { cwd, ...options });
+            const result = await this._exec(args, reason, { cwd, ...options });
             return result;
         } catch (err) {
             if (
@@ -328,11 +332,12 @@ export class FossilExecutable {
 
     private async _exec(
         args: string[],
+        reason: string,
         options: FossilSpawnOptions
     ): Promise<IExecutionResult> {
         const startTimeHR = process.hrtime();
         const logTimeout = setTimeout(
-            () => this.logArgs(args, 'still running'),
+            () => this.logArgs(args, reason, 'still running'),
             500
         );
 
@@ -344,7 +349,11 @@ export class FossilExecutable {
         clearTimeout(logTimeout);
 
         const durationHR = process.hrtime(startTimeHR);
-        this.logArgs(args, `${Math.floor(msFromHighResTime(durationHR))}ms`);
+        this.logArgs(
+            args,
+            reason,
+            `${Math.floor(msFromHighResTime(durationHR))}ms`
+        );
 
         if (result.exitCode) {
             const fossilErrorCode: FossilErrorCode = (() => {
@@ -388,13 +397,17 @@ export class FossilExecutable {
     private log(output: string): void {
         this._onOutput.fire(output);
     }
-    private logArgs(args: string[], info: string): void {
+    private logArgs(args: string[], reason: string, info: string): void {
         if (args[0] == 'clone') {
             // replace password with 9 asterisks
             args = [...args];
             args[1] = args[1].replace(/(.*:\/\/.+:)(.+)(@.*)/, '$1*********$3');
         }
-        this.log(`fossil ${args.join(' ')}: ${info}\n`);
+        this.log(
+            `fossil ${args.join(' ')}: ${info}${
+                reason ? ' // ' + reason : ''
+            }\n`
+        );
     }
 }
 

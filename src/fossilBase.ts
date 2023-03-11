@@ -140,9 +140,10 @@ export class OpenedRepository {
 
     async exec(
         args: string[],
+        reason = '',
         options: Omit<FossilSpawnOptions, 'cwd'> = {}
     ): Promise<IExecutionResult> {
-        return await this.executable.exec(this.repositoryRoot, args, options);
+        return this.executable.exec(this.repositoryRoot, args, reason, options);
     }
 
     async add(paths?: string[]): Promise<void> {
@@ -166,7 +167,7 @@ export class OpenedRepository {
         if (checkin) {
             args.push('-r', checkin);
         }
-        const result = await this.exec(args, { logErrors: false });
+        const result = await this.exec(args, '', { logErrors: false });
         return result.stdout;
     }
 
@@ -538,10 +539,10 @@ export class OpenedRepository {
 
     /** Report the change status of files in the current checkout */
     @throttle
-    async getStatus(): Promise<StatusString> {
+    async getStatus(reason: string): Promise<StatusString> {
         const args = ['status'];
         // quiet, include renames/copies of current checkout
-        const executionResult = await this.exec(args);
+        const executionResult = await this.exec(args, reason);
         return executionResult.stdout as StatusString;
     }
     /**

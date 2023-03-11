@@ -176,7 +176,7 @@ export class CommandCenter {
 
     @command('fossil.refresh', { repository: true })
     async refresh(repository: Repository): Promise<void> {
-        await repository.status();
+        await repository.status('forced refresh');
     }
 
     @command('fossil.openResource')
