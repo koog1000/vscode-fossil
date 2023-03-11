@@ -44,17 +44,17 @@ class RepositoryPick implements QuickPickItem {
 }
 
 export interface ModelChangeEvent {
-    repository: Repository;
-    uri: Uri;
+    readonly repository: Repository;
+    readonly uri: Uri;
 }
 
 export interface OriginalResourceChangeEvent {
-    repository: Repository;
-    uri: Uri;
+    readonly repository: Repository;
+    readonly uri: Uri;
 }
 
 interface OpenRepository extends Disposable {
-    repository: Repository;
+    readonly repository: Repository;
 }
 
 function isParent(parent: string, child: string): boolean {
