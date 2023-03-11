@@ -16,6 +16,7 @@ import {
     FossilSpawnOptions,
     IExecutionResult,
     FossilArgs,
+    FossilStdOut,
 } from './fossilExecutable';
 
 export type Distinct<T, DistinctName> = T & { __TYPE__: DistinctName };
@@ -565,7 +566,7 @@ export class OpenedRepository {
         return this.parseExtrasLines(executionResult.stdout);
     }
 
-    private parseExtrasLines(extraString: string): IFileStatus[] {
+    private parseExtrasLines(extraString: FossilStdOut): IFileStatus[] {
         const result: IFileStatus[] = [];
         const lines = extraString.split('\n');
         lines.forEach(line => {
