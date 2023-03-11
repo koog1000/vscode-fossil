@@ -60,69 +60,69 @@ export type FossilPassword = Distinct<string, 'fossil password'>;
 
 export interface TimelineOptions extends LogEntryOptions {
     /** Output items affecting filePath only */
-    filePath?: string;
+    readonly filePath?: string;
     /**
      * If `limit` is positive, output the first N entries. If
      * N is negative, output the first -N lines. If `limit` is
      * zero, no limit.  Default is -20 meaning 20 lines.
      */
-    limit: number;
+    readonly limit: number;
     /** Output the list of files changed by each commit */
-    verbose?: boolean;
+    readonly verbose?: boolean;
 }
 
 export interface LogEntryOptions {
-    checkin?: FossilCheckin;
+    readonly checkin?: FossilCheckin;
 }
 
 export interface PullOptions {
-    branch?: string;
-    revs?: string[];
-    autoUpdate: boolean; // run an update after the pull?
+    readonly branch?: string;
+    readonly revs?: string[];
+    readonly autoUpdate: boolean; // run an update after the pull?
 }
 
 export interface IMergeResult {
-    unresolvedCount: number;
+    readonly unresolvedCount: number;
 }
 
 export interface IRepoStatus {
-    isMerge: boolean;
-    parent?: FossilHash;
+    readonly isMerge: boolean;
+    readonly parent?: FossilHash;
 }
 
 export interface IFileStatus {
-    status: 'M' | 'A' | 'R' | 'C' | '!' | '?';
-    path: string;
-    rename?: string; // ToDo: remove `rename` field
+    readonly status: 'M' | 'A' | 'R' | 'C' | '!' | '?';
+    readonly path: string;
+    readonly rename?: string; // ToDo: remove `rename` field
 }
 
 export interface BranchDetails {
-    name: FossilBranch;
-    isCurrent: boolean;
-    isPrivate: boolean;
+    readonly name: FossilBranch;
+    readonly isCurrent: boolean;
+    readonly isPrivate: boolean;
 }
 
 export interface FossilRemote {
-    name: FossilRemoteName;
-    url: FossilURI;
+    readonly name: FossilRemoteName;
+    readonly url: FossilURI;
 }
 
 export interface StashItem {
-    stashId: number;
-    hash: string;
-    date: Date;
-    comment: FossilCommitMessage;
+    readonly stashId: number;
+    readonly hash: string;
+    readonly date: Date;
+    readonly comment: FossilCommitMessage;
 }
 
 export interface Revision {
-    hash: FossilHash;
+    readonly hash: FossilHash;
 }
 
 export interface Commit extends Revision {
-    branch: FossilBranch;
-    message: FossilCommitMessage;
-    author: string;
-    date: Date;
+    readonly branch: FossilBranch;
+    readonly message: FossilCommitMessage;
+    readonly author: FossilUsername;
+    readonly date: Date;
 }
 
 export interface CommitDetails extends Commit {
@@ -131,8 +131,8 @@ export interface CommitDetails extends Commit {
 
 export class OpenedRepository {
     constructor(
-        private executable: FossilExecutable,
-        private repositoryRoot: FossilRoot
+        private readonly executable: FossilExecutable,
+        private readonly repositoryRoot: FossilRoot
     ) {}
 
     get root(): FossilRoot {
@@ -610,7 +610,7 @@ export class OpenedRepository {
                     FossilHash,
                     string,
                     FossilBranch,
-                    string,
+                    FossilUsername,
                     FossilCommitMessage
                 ];
                 const commit: Commit = {
