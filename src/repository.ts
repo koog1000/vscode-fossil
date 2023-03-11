@@ -264,6 +264,7 @@ export const enum Operation {
     Unresolve,
     Parents,
     Remove,
+    Rename,
     Merge,
     Close,
     Ignore,
@@ -611,6 +612,12 @@ export class Repository implements IDisposable, InteractionAPI {
         );
         await this.runWithProgress(Operation.Remove, () =>
             this.repository.remove(relativePaths)
+        );
+    }
+
+    async rename(oldPath: string, newPath: string): Promise<void> {
+        await this.runWithProgress(Operation.Rename, () =>
+            this.repository.rename(oldPath, newPath)
         );
     }
 
@@ -1207,7 +1214,7 @@ export class Repository implements IDisposable, InteractionAPI {
      * `UpdateModelState` is called after every non read only operation run
      */
     @throttle
-    private async updateModelState(): Promise<void> {
+    public async updateModelState(): Promise<void> {
         const statusString = await this.repository.getStatus(
             'model state is updating'
         );

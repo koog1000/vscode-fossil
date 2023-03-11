@@ -15,6 +15,7 @@ import {
     WorkspaceFoldersChangeEvent,
     TextEditor,
     QuickPickItem,
+    FileRenameEvent,
 } from 'vscode';
 import { FossilExecutable, FossilError } from './fossilExecutable';
 import { anyEvent, filterEvent, dispose } from './util';
@@ -25,6 +26,7 @@ import typedConfig from './config';
 import { Repository, RepositoryState } from './repository';
 
 import { localize } from './main';
+import { interaction } from './interaction';
 
 class RepositoryPick implements QuickPickItem {
     @memoize get label(): string {
@@ -127,6 +129,11 @@ export class Model implements Disposable {
     private enable(): void {
         workspace.onDidChangeWorkspaceFolders(
             this.onDidChangeWorkspaceFolders,
+            this,
+            this.disposables
+        );
+        workspace.onDidRenameFiles(
+            this.onDidRenameFiles,
             this,
             this.disposables
         );
@@ -253,6 +260,25 @@ export class Model implements Disposable {
 
             this.tryOpenRepository(path.dirname(uri.fsPath));
         });
+    }
+
+    async onDidRenameFiles(e: FileRenameEvent): Promise<void> {
+        for (const { oldUri, newUri } of e.files) {
+            const repository = this.getRepository(oldUri);
+            if (repository) {
+                await repository.updateModelState();
+                if (repository.isInAnyGroup(oldUri)) {
+                    const oldPath =
+                        repository.mapFileUriToWorkspaceRelativePath(oldUri);
+                    const newPath =
+                        repository.mapFileUriToWorkspaceRelativePath(newUri);
+
+                    if (await interaction.confirmRename(oldPath, newPath)) {
+                        return repository.rename(oldPath, newPath);
+                    }
+                }
+            }
+        }
     }
 
     /**
