@@ -239,7 +239,7 @@ export class FossilExecutable {
     }
 
     async init(
-        fossilRoot: FossilRoot,
+        fossilRoot: FossilCWD,
         fossilPath: FossilPath,
         projectName: string, // since fossil 2.18
         projectDesc: string // since fossil 2.18
@@ -273,16 +273,16 @@ export class FossilExecutable {
 
     async openClone(
         fossilPath: FossilPath,
-        fossilRoot: FossilRoot
+        fossilCwd: FossilCWD
     ): Promise<void> {
-        await this.exec(fossilRoot, ['open', fossilPath]);
+        await this.exec(fossilCwd, ['open', fossilPath]);
     }
 
     async openCloneForce(
         fossilPath: FossilPath,
-        fossilRoot: FossilRoot
+        fossilCwd: FossilCWD
     ): Promise<void> {
-        await this.exec(fossilRoot, ['open', fossilPath, '--force']);
+        await this.exec(fossilCwd, ['open', fossilPath, '--force']);
     }
 
     /**

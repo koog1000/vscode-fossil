@@ -40,6 +40,7 @@ import { humanise } from './humanise';
 import { Repository, LogEntriesOptions } from './repository';
 import typedConfig from './config';
 import { localize } from './main';
+import { FossilCWD } from './fossilExecutable';
 
 const SHORT_HASH_LENGTH = 12;
 const LONG_HASH_LENGTH = SHORT_HASH_LENGTH * 2;
@@ -297,7 +298,7 @@ export namespace interaction {
 
     export async function confirmOpenNotEmpty(
         this: void,
-        dir: FossilRoot
+        dir: FossilCWD
     ): Promise<boolean> {
         const open = localize('openrepo', '&&Open Repository');
 
