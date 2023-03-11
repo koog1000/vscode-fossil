@@ -7,7 +7,7 @@
 'use strict';
 
 import { Uri } from 'vscode';
-import { FossilCheckin } from './fossilBase';
+import { FossilCheckin } from './openedRepository';
 
 export interface FossilUriParams {
     // full filesystem path

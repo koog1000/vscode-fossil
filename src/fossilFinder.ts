@@ -1,6 +1,6 @@
 import * as cp from 'child_process';
 import { OutputChannel } from 'vscode';
-import { Distinct } from './fossilBase';
+import { Distinct } from './openedRepository';
 import {
     FossilExecutable,
     FossilExecutablePath,

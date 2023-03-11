@@ -1,4 +1,4 @@
-import { FossilRoot, IFileStatus } from './fossilBase';
+import { FossilRoot, IFileStatus } from './openedRepository';
 import {
     Uri,
     SourceControlResourceGroup,

@@ -4,7 +4,7 @@ import {
     FossilRoot,
     FossilURI,
     OpenedRepository,
-} from './fossilBase';
+} from './openedRepository';
 import * as path from 'path';
 import * as fs from 'fs/promises';
 import {

@@ -35,7 +35,7 @@ import {
     FossilUsername,
     FossilPassword,
     StashItem,
-} from './fossilBase';
+} from './openedRepository';
 import { humanise } from './humanise';
 import { Repository, LogEntriesOptions } from './repository';
 import typedConfig from './config';
