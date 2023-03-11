@@ -238,7 +238,7 @@ export class FossilPreview implements IDisposable {
         }
         const source = await this.getSource();
         if (source) {
-            const res = await this.fossil.exec(this.dirname, args, {
+            const res = await this.fossil.exec(this.dirname, args, '', {
                 stdin_data: source,
             });
             return res.exitCode == 0;
@@ -257,6 +257,7 @@ export class FossilPreview implements IDisposable {
             const res = this.fossil.exec(
                 this.dirname,
                 [`test-${this.renderer}-render`, '-'],
+                '',
                 { stdin_data: this.current_content }
             );
             // this.currently_rendered_content = this.current_content;

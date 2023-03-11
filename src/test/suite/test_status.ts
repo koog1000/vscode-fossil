@@ -46,7 +46,7 @@ export async function status_missing_is_visible_in_source_control_panel(
         .exports as Model;
     const repository = model.repositories[0];
     await eventToPromise(repository.onDidRunOperation);
-    await repository.status();
+    await repository.status('test');
     assertGroups(repository, new Map([[fooPath, Status.MISSING]]), new Map());
 }
 
@@ -65,7 +65,7 @@ export async function status_rename_is_visible_in_source_control_panel(
         .exports as Model;
     const repository = model.repositories[0];
     await eventToPromise(repository.onDidRunOperation);
-    await repository.status();
+    await repository.status('test');
     assertGroups(repository, new Map([[fooPath, Status.ADDED]]), new Map());
 
     await executable.exec(cwd, [
@@ -74,11 +74,11 @@ export async function status_rename_is_visible_in_source_control_panel(
         'add: foo.txt',
         '--no-warnings',
     ]);
-    await repository.status();
+    await repository.status('test');
     assertGroups(repository, new Map(), new Map());
 
     await executable.exec(cwd, ['mv', 'foo.txt', 'bar.txt', '--hard']);
-    await repository.status();
+    await repository.status('test');
     await eventToPromise(repository.onDidRunOperation);
     const barPath = Uri.joinPath(rootUri, 'bar.txt').fsPath;
     assertGroups(repository, new Map([[barPath, Status.RENAMED]]), new Map());
@@ -122,7 +122,7 @@ export async function status_merge_integrate_is_visible_in_source_control_panel(
         .exports as Model;
     const repository = model.repositories[0];
     await eventToPromise(repository.onDidRunOperation);
-    await repository.status();
+    await repository.status('test');
     assertGroups(
         repository,
         new Map([

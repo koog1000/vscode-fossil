@@ -77,6 +77,6 @@ export async function fossil_merge(
     assert.ok(showInputBoxstub.calledOnce);
 
     await eventToPromise(repository.onDidRunOperation);
-    await repository.status();
+    await repository.status('test');
     assertGroups(repository, new Map(), new Map());
 }

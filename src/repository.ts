@@ -490,7 +490,7 @@ export class Repository implements IDisposable, InteractionAPI {
         );
         this._sourceControl.statusBarCommands = statusBar.commands;
 
-        this.statusPromise = this.status();
+        this.statusPromise = this.status('repository constructed');
 
         this.disposables.push(new AutoIncomingOutgoing(this));
     }
@@ -503,8 +503,8 @@ export class Repository implements IDisposable, InteractionAPI {
     }
 
     @throttle
-    async status(): Promise<StatusString> {
-        const statusPromise = this.repository.getStatus();
+    async status(reason: string): Promise<StatusString> {
+        const statusPromise = this.repository.getStatus(reason);
         await this.runWithProgress(Operation.Status, () => statusPromise);
         this.updateInputBoxPlaceholder();
         return statusPromise;
@@ -530,7 +530,7 @@ export class Repository implements IDisposable, InteractionAPI {
     @throttle
     private async updateWhenIdleAndWait(): Promise<void> {
         await this.whenIdleAndFocused();
-        await this.status();
+        await this.status('idle update');
         await delay(5000);
     }
 
@@ -1208,7 +1208,9 @@ export class Repository implements IDisposable, InteractionAPI {
      */
     @throttle
     private async updateModelState(): Promise<void> {
-        const statusString = await this.repository.getStatus();
+        const statusString = await this.repository.getStatus(
+            'model state is updating'
+        );
         this._repoStatus = this.repository.getSummary(statusString);
 
         const currentRefPromise = this.repository.getCurrentBranch();
