@@ -5,6 +5,8 @@ import {
     FossilCWD,
     FossilError,
     FossilExecutablePath,
+    FossilStdOut,
+    FossilStdErr,
 } from '../../fossilExecutable';
 import * as assert from 'assert/strict';
 
@@ -29,8 +31,8 @@ export async function error_is_thrown_when_executing_unknown_command(
 
     const TestError = new FossilError({
         message: 'my message',
-        stdout: 'my staout',
-        stderr: 'my stderror',
+        stdout: 'my stdout' as FossilStdOut,
+        stderr: 'my stderr' as FossilStdErr,
         exitCode: 0,
         fossilErrorCode: 'unknown',
         args: ['cat'],
@@ -43,8 +45,8 @@ export async function error_is_thrown_when_executing_unknown_command(
   "args": [
     "cat"
   ],
-  "stdout": "my staout",
-  "stderr": "my stderror",
+  "stdout": "my stdout",
+  "stderr": "my stderr",
   "cwd": "cwd",
   "fossilPath": "/bin/fossil"
 }`;

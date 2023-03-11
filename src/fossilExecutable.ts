@@ -20,11 +20,16 @@ import { interaction } from './interaction';
 
 /** usually two numbers like [2,19] */
 export type FossilVersion = Distinct<number[], 'fossil version'>;
+export type FossilStdOut = Distinct<
+    string,
+    'raw fossil stdout' | 'fossil status stdout' | 'RenderedHTML'
+>;
+export type FossilStdErr = Distinct<string, 'raw fossil stderr'>;
 
 export interface IFossilOptions {
-    fossilPath: FossilExecutablePath;
-    version: FossilVersion;
-    outputChannel: OutputChannel;
+    readonly fossilPath: FossilExecutablePath;
+    readonly version: FossilVersion;
+    readonly outputChannel: OutputChannel;
 }
 
 /** cwd for executing fossil */
@@ -35,18 +40,18 @@ export type FossilCWD =
 export type FossilExecutablePath = Distinct<string, 'fossil executable path'>;
 
 export interface FossilSpawnOptions extends cp.SpawnOptionsWithoutStdio {
-    cwd: FossilCWD;
-    logErrors?: boolean; // whether to log stderr to the fossil outputChannel
-    stdin_data?: string; // dump data to stdin
+    readonly cwd: FossilCWD;
+    readonly logErrors?: boolean; // whether to log stderr to the fossil outputChannel
+    readonly stdin_data?: string; // dump data to stdin
 }
 
 export interface IExecutionResult {
-    fossilPath: FossilExecutablePath;
-    exitCode: number;
-    stdout: string;
-    stderr: string;
-    args: FossilArgs;
-    cwd: FossilCWD;
+    readonly fossilPath: FossilExecutablePath;
+    readonly exitCode: number;
+    readonly stdout: FossilStdOut;
+    readonly stderr: FossilStdErr;
+    readonly args: FossilArgs;
+    readonly cwd: FossilCWD;
 }
 
 export interface IFossilErrorData extends IExecutionResult {
@@ -179,7 +184,7 @@ async function exec(
             }
             throw e;
         }),
-        new Promise<string>(c => {
+        new Promise<FossilStdOut>(c => {
             function pushBuffer(buffer: Buffer) {
                 buffers.push(buffer);
                 if (checkForPrompt) {
@@ -189,14 +194,14 @@ async function exec(
             }
             on(child.stdout!, 'data', b => pushBuffer(b));
             once(child.stdout!, 'close', () =>
-                c(Buffer.concat(buffers).toString('utf8'))
+                c(Buffer.concat(buffers).toString('utf8') as FossilStdOut)
             );
         }),
-        new Promise<string>(c => {
+        new Promise<FossilStdErr>(c => {
             const buffers: Buffer[] = [];
             on(child.stderr!, 'data', b => buffers.push(b));
             once(child.stderr!, 'close', () =>
-                c(Buffer.concat(buffers).toString('utf8'))
+                c(Buffer.concat(buffers).toString('utf8') as FossilStdErr)
             );
         }),
     ]);
@@ -210,8 +215,8 @@ async function exec(
 export class FossilError implements IFossilErrorData {
     readonly fossilPath: FossilExecutablePath;
     readonly message: string;
-    readonly stdout: string;
-    readonly stderr: string;
+    readonly stdout: FossilStdOut;
+    readonly stderr: FossilStdErr;
     readonly exitCode: number;
     fossilErrorCode: FossilErrorCode;
     readonly args: FossilArgs;
