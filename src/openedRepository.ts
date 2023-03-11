@@ -24,6 +24,7 @@ export type Distinct<T, DistinctName> = T & { __TYPE__: DistinctName };
 export type FossilPath = Distinct<string, 'path to .fossil'>;
 /** local repository root */
 export type FossilRoot = Distinct<string, 'local repository root'>;
+export type RelativePath = Distinct<string, 'path relative to `FossilRoot`'>;
 /** URI for the close
  *
  * * http[s]://[userid[:password]@]host[:port][/path]

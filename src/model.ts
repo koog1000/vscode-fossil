@@ -269,9 +269,9 @@ export class Model implements Disposable {
                 await repository.updateModelState();
                 if (repository.isInAnyGroup(oldUri)) {
                     const oldPath =
-                        repository.mapFileUriToWorkspaceRelativePath(oldUri);
+                        repository.mapFileUriToRepoRelativePath(oldUri);
                     const newPath =
-                        repository.mapFileUriToWorkspaceRelativePath(newUri);
+                        repository.mapFileUriToRepoRelativePath(newUri);
 
                     if (await interaction.confirmRename(oldPath, newPath)) {
                         return repository.rename(oldPath, newPath);
