@@ -290,7 +290,7 @@ export class OpenedRepository {
 
     async clean(paths: string[]): Promise<void> {
         if (paths) {
-            this.exec(['clean', ...paths]);
+            await this.exec(['clean', ...paths]);
         }
     }
 
