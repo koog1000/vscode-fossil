@@ -1212,13 +1212,13 @@ export class Repository implements IDisposable, InteractionAPI {
         );
         this._repoStatus = this.repository.getSummary(statusString);
 
-        const currentRefPromise = this.repository.getCurrentBranch();
+        const currentBranchPromise = this.repository.getCurrentBranch();
 
         const fileStat = this.repository
             .parseStatusLines(statusString)
             .concat(await this.repository.getExtras());
 
-        const currentRef = await currentRefPromise;
+        const currentRef = await currentBranchPromise;
 
         this._currentBranch = currentRef;
 
