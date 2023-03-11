@@ -16,7 +16,7 @@ export async function error_is_thrown_when_executing_unknown_command(
     const cwd = rootUri.fsPath as FossilCWD;
     const showErrorMessage = sandbox.stub(vscode.window, 'showErrorMessage');
     showErrorMessage.resolves(undefined);
-    await assert.rejects(executable.exec(cwd, ['fizzbuzz']), {
+    await assert.rejects(executable.exec(cwd, ['fizzbuzz'] as any), {
         message: 'Failed to execute fossil',
         stderr: 'fossil: unknown command: fizzbuzz\nfossil: use "help" for more information\n',
         stdout: '',

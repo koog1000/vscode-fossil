@@ -7,7 +7,7 @@
 import * as path from 'path';
 import * as fs from 'fs/promises';
 import { appendFileSync, existsSync, writeFileSync } from 'fs';
-import { groupBy, IDisposable, dispose } from './util';
+import { groupBy } from './util';
 import { workspace, window, Uri } from 'vscode';
 import { throttle } from './decorators';
 import {
@@ -15,6 +15,7 @@ import {
     FossilError,
     FossilSpawnOptions,
     IExecutionResult,
+    FossilArgs,
 } from './fossilExecutable';
 
 export type Distinct<T, DistinctName> = T & { __TYPE__: DistinctName };
@@ -139,7 +140,7 @@ export class OpenedRepository {
     }
 
     async exec(
-        args: string[],
+        args: FossilArgs,
         reason = '',
         options: Omit<FossilSpawnOptions, 'cwd'> = {}
     ): Promise<IExecutionResult> {
@@ -147,27 +148,20 @@ export class OpenedRepository {
     }
 
     async add(paths?: string[]): Promise<void> {
-        const args = ['add'];
-
-        if (paths?.length) {
-            args.push(...paths);
-        }
-
-        await this.exec(args);
+        await this.exec(['add', ...(paths || [])]);
     }
 
     async ls(paths: string[]): Promise<string[]> {
-        const args = ['ls', ...paths];
-        const result = await this.exec(args);
+        const result = await this.exec(['ls', ...paths]);
         return result.stdout.split('\n').filter(Boolean);
     }
 
     async cat(relativePath: string, checkin: FossilCheckin): Promise<string> {
-        const args = ['cat', relativePath];
-        if (checkin) {
-            args.push('-r', checkin);
-        }
-        const result = await this.exec(args, '', { logErrors: false });
+        const result = await this.exec(
+            ['cat', relativePath, ...(checkin ? ['-r', checkin] : [])],
+            '',
+            { logErrors: false }
+        );
         return result.stdout;
     }
 
@@ -177,9 +171,8 @@ export class OpenedRepository {
      *           string on success
      */
     async close(): Promise<string> {
-        const args = ['close'];
         try {
-            const result = await this.exec(args);
+            const result = await this.exec(['close']);
             return result.stdout + result.stderr;
         } catch (err) {
             if (err instanceof FossilError && err.stderr) {
@@ -191,13 +184,7 @@ export class OpenedRepository {
     }
 
     async update(checkin: FossilCheckin): Promise<void> {
-        const args = ['update'];
-
-        if (checkin) {
-            args.push(checkin);
-        }
-
-        await this.exec(args);
+        await this.exec(['update', checkin]);
     }
 
     async commit(
@@ -208,24 +195,17 @@ export class OpenedRepository {
             branch: FossilBranch | undefined;
         }
     ): Promise<void> {
-        const disposables: IDisposable[] = [];
-        const args = ['commit'];
-
-        if (opts.user != undefined) {
-            args.push('--user-override', opts.user);
-        }
-
-        args.push(...opts.fileList);
-        if (opts.branch !== undefined) {
-            args.push('--branch', opts.branch);
-        }
-
-        // always pass a message, otherwise fossil
-        // internal editor will spawn
-        args.push('-m', message);
-
         try {
-            await this.exec(args);
+            // always pass a message, otherwise fossil
+            // internal editor will spawn
+            await this.exec([
+                'commit',
+                ...(opts.user ? ['--user-override', opts.user] : []),
+                ...(opts.branch ? ['--branch', opts.branch] : []),
+                ...opts.fileList,
+                '-m',
+                message,
+            ]);
         } catch (err) {
             if (
                 err instanceof FossilError &&
@@ -236,8 +216,6 @@ export class OpenedRepository {
             }
 
             throw err;
-        } finally {
-            dispose(disposables);
         }
     }
 
@@ -249,14 +227,15 @@ export class OpenedRepository {
     }
 
     async newBranch(name: FossilBranch): Promise<void> {
-        const args = ['branch', 'new', name];
         const currBranch = await this.getCurrentBranch();
-        if (currBranch) {
-            args.push(currBranch);
-        }
 
         try {
-            await this.exec(args);
+            await this.exec([
+                'branch',
+                'new',
+                name,
+                ...(currBranch ? [currBranch] : []),
+            ]);
         } catch (err) {
             if (
                 err instanceof FossilError &&
@@ -290,7 +269,7 @@ export class OpenedRepository {
         const pathsByGroup = groupBy(paths, p => path.dirname(p));
         const groups = Object.keys(pathsByGroup).map(k => pathsByGroup[k]);
         const tasks = groups.map(
-            paths => () => this.exec(['revert'].concat(paths))
+            paths => () => this.exec(['revert', ...paths])
         ); // -C = no-backup
 
         for (const task of tasks) {
@@ -301,9 +280,7 @@ export class OpenedRepository {
     async remove(paths: string[]): Promise<void> {
         const pathsByGroup = groupBy(paths, p => path.dirname(p));
         const groups = Object.keys(pathsByGroup).map(k => pathsByGroup[k]);
-        const tasks = groups.map(
-            paths => () => this.exec(['rm'].concat(paths))
-        );
+        const tasks = groups.map(paths => () => this.exec(['rm', ...paths]));
 
         for (const task of tasks) {
             await task();
@@ -346,13 +323,10 @@ export class OpenedRepository {
         command: 'undo' | 'redo',
         dryRun: boolean
     ): Promise<FossilUndoCommand | undefined> {
-        const args: string[] = [command];
-
-        if (dryRun) {
-            args.push('--dry-run');
-        }
-
-        const result = await this.exec(args);
+        const result = await this.exec([
+            command,
+            ...(dryRun ? ['--dry-run'] : []),
+        ]);
         if (result.exitCode == 0 && !dryRun) {
             return;
         }
@@ -383,20 +357,12 @@ export class OpenedRepository {
     }
 
     async pull(options: PullOptions): Promise<void> {
-        let args = ['pull'];
-
-        if (options?.autoUpdate) {
-            args = ['update'];
-        }
-
-        await this.exec(args);
+        await this.exec(['pull', ...(options?.autoUpdate ? ['update'] : [])]);
     }
 
     async push(): Promise<void> {
-        const args = ['push'];
-
         try {
-            await this.exec(args);
+            await this.exec(['push']);
         } catch (err) {
             if (
                 err instanceof FossilError &&
@@ -436,8 +402,7 @@ export class OpenedRepository {
                         return [];
                 }
             })();
-            const args = ['merge', checkin, ...extraArgs];
-            await this.exec(args);
+            await this.exec(['merge', checkin, ...extraArgs]);
             return {
                 unresolvedCount: 0,
             };
@@ -465,13 +430,11 @@ export class OpenedRepository {
     }
 
     async patchCreate(path: string): Promise<void> {
-        const args = ['patch', 'create', path];
-        await this.exec(args);
+        await this.exec(['patch', 'create', path]);
     }
 
     async patchApply(path: string): Promise<void> {
-        const args = ['patch', 'apply', path];
-        await this.exec(args);
+        await this.exec(['patch', 'apply', path]);
     }
 
     async stash(
@@ -479,13 +442,11 @@ export class OpenedRepository {
         operation: 'save' | 'snapshot',
         paths: string[]
     ): Promise<void> {
-        const args = ['stash', operation, '-m', message, ...paths];
-        await this.exec(args);
+        await this.exec(['stash', operation, '-m', message, ...paths]);
     }
 
     async stashList(): Promise<StashItem[]> {
-        const args = ['stash', 'list'];
-        const res = await this.exec(args);
+        const res = await this.exec(['stash', 'list']);
         const out: StashItem[] = [];
         const lines = res.stdout.split('\n');
         for (let idx = 0; idx < lines.length; ++idx) {
@@ -519,8 +480,7 @@ export class OpenedRepository {
         operation: 'apply' | 'drop',
         stashId: number
     ): Promise<void> {
-        const args = ['stash', operation, stashId.toString()];
-        await this.exec(args);
+        await this.exec(['stash', operation, stashId.toString()]);
     }
 
     getSummary(summary: string): IRepoStatus {
@@ -540,9 +500,8 @@ export class OpenedRepository {
     /** Report the change status of files in the current checkout */
     @throttle
     async getStatus(reason: string): Promise<StatusString> {
-        const args = ['status'];
         // quiet, include renames/copies of current checkout
-        const executionResult = await this.exec(args, reason);
+        const executionResult = await this.exec(['status'], reason);
         return executionResult.stdout as StatusString;
     }
     /**
@@ -602,8 +561,7 @@ export class OpenedRepository {
     }
 
     async getExtras(): Promise<IFileStatus[]> {
-        const args = ['extras'];
-        const executionResult = await this.exec(args);
+        const executionResult = await this.exec(['extras']);
         return this.parseExtrasLines(executionResult.stdout);
     }
 
@@ -625,24 +583,17 @@ export class OpenedRepository {
         limit,
         verbose,
     }: TimelineOptions): Promise<Commit[] | CommitDetails[]> {
-        const args = ['timeline'];
-
-        if (checkin) {
-            args.push('before', checkin);
-        }
-        if (limit) {
-            args.push('-n', `${limit}`);
-        }
-        if (filePath) {
-            args.push('-p', filePath);
-        }
-        if (verbose) {
-            args.push('--verbose');
-        }
-        args.push('--type', 'ci');
-        args.push('--format', '%H+++%d+++%b+++%a+++%c');
-
-        const result = await this.exec(args);
+        const result = await this.exec([
+            'timeline',
+            ...(checkin ? ['before', checkin] : []),
+            ...(limit ? ['-n', `${limit}`] : []),
+            ...(filePath ? ['-p', filePath] : []),
+            ...(verbose ? ['--verbose'] : []),
+            '--type',
+            'ci',
+            '--format',
+            '%H+++%d+++%b+++%a+++%c',
+        ]);
 
         const logEntries: Commit[] | CommitDetails[] = [];
         let lastFiles: CommitDetails['files'] = [];
@@ -700,11 +651,12 @@ export class OpenedRepository {
     }
 
     async getBranches(opts: { closed?: true } = {}): Promise<BranchDetails[]> {
-        const args = ['branch', 'ls', '-t'];
-        if (opts.closed) {
-            args.push('-c');
-        }
-        const branchesResult = await this.exec(args);
+        const branchesResult = await this.exec([
+            'branch',
+            'ls',
+            '-t',
+            ...(opts.closed ? ['-c'] : []),
+        ]);
         const branches = Array.from(
             branchesResult.stdout.matchAll(
                 // Fossil branch names can have spaces and all other characters.

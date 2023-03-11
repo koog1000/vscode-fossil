@@ -71,9 +71,43 @@ const enum Inline {
     ENOENT = -1002, // special code for NodeJS.ErrnoException
 }
 
+type FossilCommand =
+    | 'mv'
+    | 'wiki'
+    | 'test-wiki-render'
+    | 'test-markdown-render'
+    | 'pull'
+    | 'push'
+    | 'extras'
+    | 'timeline'
+    | 'merge'
+    | 'clean'
+    | 'remote-url'
+    | 'info'
+    | 'branch'
+    | 'revert'
+    | 'rm'
+    | 'tag'
+    | 'amend'
+    | 'commit'
+    | 'status'
+    | 'cat'
+    | 'clone'
+    | 'open'
+    | 'init'
+    | 'stash'
+    | 'undo'
+    | 'redo'
+    | 'patch'
+    | 'add'
+    | 'update'
+    | 'close'
+    | 'ls';
+export type FossilArgs = [FossilCommand, ...string[]];
+
 async function exec(
     fossilPath: FossilExecutablePath,
-    args: string[],
+    args: FossilArgs,
     options: FossilSpawnOptions
 ): Promise<IExecutionResult> {
     if (!fossilPath) {
@@ -244,14 +278,12 @@ export class FossilExecutable {
         projectName: string, // since fossil 2.18
         projectDesc: string // since fossil 2.18
     ): Promise<void> {
-        const args = ['init', fossilPath];
-        if (projectName) {
-            args.push('--project-name', projectName);
-        }
-        if (projectDesc) {
-            args.push('--project-desc', projectDesc);
-        }
-        await this.exec(fossilRoot, args);
+        await this.exec(fossilRoot, [
+            'init',
+            fossilPath,
+            ...(projectName ? ['--project-name', projectName] : []),
+            ...(projectDesc ? ['--project-desc', projectDesc] : []),
+        ]);
     }
 
     async clone(uri: FossilURI, fossilPath: FossilPath): Promise<FossilRoot> {
@@ -307,7 +339,7 @@ export class FossilExecutable {
 
     async exec(
         cwd: FossilCWD,
-        args: string[],
+        args: FossilArgs,
         reason = '',
         options: Omit<FossilSpawnOptions, 'cwd'> = {}
     ): Promise<IExecutionResult> {
@@ -331,7 +363,7 @@ export class FossilExecutable {
     }
 
     private async _exec(
-        args: string[],
+        args: FossilArgs,
         reason: string,
         options: FossilSpawnOptions
     ): Promise<IExecutionResult> {
