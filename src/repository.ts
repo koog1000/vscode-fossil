@@ -36,7 +36,7 @@ import {
     FossilUndoCommand,
     FossilCommitMessage,
     StashItem,
-} from './fossilBase';
+} from './openedRepository';
 import {
     anyEvent,
     filterEvent,

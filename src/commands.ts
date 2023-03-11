@@ -31,7 +31,7 @@ import {
     FossilCommitMessage,
     FossilPassword,
     FossilUsername,
-} from './fossilBase';
+} from './openedRepository';
 import { Model } from './model';
 import {
     FossilResource,

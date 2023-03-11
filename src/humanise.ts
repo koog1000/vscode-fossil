@@ -1,5 +1,5 @@
 import * as path from 'path';
-import { FossilCheckin, FossilCommitMessage } from './fossilBase';
+import { FossilCheckin, FossilCommitMessage } from './openedRepository';
 
 import { localize } from './main';
 

@@ -7,7 +7,7 @@ import * as fs from 'fs/promises';
 import { assertGroups } from './test_status';
 import { eventToPromise } from '../../util';
 import { Model } from '../../model';
-import { FossilBranch } from '../../fossilBase';
+import { FossilBranch } from '../../openedRepository';
 
 export async function fossil_close(
     sandbox: sinon.SinonSandbox,
