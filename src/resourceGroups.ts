@@ -1,4 +1,4 @@
-import { IFileStatus } from './fossilBase';
+import { FossilRoot, IFileStatus } from './fossilBase';
 import {
     Uri,
     SourceControlResourceGroup,
@@ -12,7 +12,7 @@ import { FossilResource, Status, MergeStatus } from './repository';
 import { localize } from './main';
 
 export interface IGroupStatusesParams {
-    repositoryRoot: string;
+    repositoryRoot: FossilRoot;
     statusGroups: IStatusGroups;
     fileStatuses: IFileStatus[];
     // repoStatus: IRepoStatus,
