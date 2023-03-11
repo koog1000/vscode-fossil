@@ -61,7 +61,7 @@ export class AutoIncomingOutgoing {
         if (this.enabled) {
             return;
         }
-        this.repository.statusPromise.then(() => this.refresh());
+        this.refresh();
         this.timer = setInterval(
             () => this.refresh(),
             typedConfig.autoInOutIntervalMs
