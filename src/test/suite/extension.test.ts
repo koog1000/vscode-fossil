@@ -21,13 +21,7 @@ import { error_is_thrown_when_executing_unknown_command } from './test_utils';
 
 async function createFossil(): Promise<FossilExecutable> {
     const outputChannel = window.createOutputChannel('Fossil.Test');
-    const info = await findFossil(null, outputChannel);
-    const executable = new FossilExecutable({
-        fossilPath: info.path,
-        version: info.version,
-        outputChannel: outputChannel,
-    });
-    return executable;
+    return findFossil(null, outputChannel);
 }
 
 suite('Fossil', () => {

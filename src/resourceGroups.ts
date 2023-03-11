@@ -6,11 +6,10 @@ import {
     Disposable,
 } from 'vscode';
 import * as path from 'path';
-import * as nls from 'vscode-nls';
 import * as fs from 'fs';
 import { FossilResource, Status, MergeStatus } from './repository';
 
-const localize = nls.loadMessageBundle();
+import { localize } from './main';
 
 export interface IGroupStatusesParams {
     repositoryRoot: string;

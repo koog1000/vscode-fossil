@@ -51,7 +51,6 @@ import { StatusBarCommands } from './statusbar';
 import typedConfig from './config';
 
 import * as path from 'path';
-import * as nls from 'vscode-nls';
 import {
     FossilResourceGroup,
     createEmptyStatusGroups,
@@ -72,7 +71,7 @@ import {
 import { FossilUriParams, toFossilUri } from './uri';
 import { FossilError } from './fossilExecutable';
 
-const localize = nls.loadMessageBundle();
+import { localize } from './main';
 const iconsRootPath = path.join(path.dirname(__dirname), 'resources', 'icons');
 
 type AvailableIcons =

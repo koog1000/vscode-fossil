@@ -19,7 +19,6 @@ import {
     ExtensionContext,
 } from 'vscode';
 import { LineChange, revertChanges } from './revert';
-import * as nls from 'vscode-nls';
 import * as path from 'path';
 import {
     FossilPath,
@@ -56,7 +55,7 @@ import { toFossilUri } from './uri';
 import { FossilPreviewManager } from './preview';
 import { FossilExecutable, FossilError } from './fossilExecutable';
 
-const localize = nls.loadMessageBundle();
+import { localize } from './main';
 
 type CommandKey =
     | 'add'

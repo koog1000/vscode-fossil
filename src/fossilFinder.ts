@@ -1,14 +1,19 @@
 import * as cp from 'child_process';
 import { OutputChannel } from 'vscode';
 import { Distinct } from './fossilBase';
-import { FossilExecutablePath, FossilVersion } from './fossilExecutable';
+import {
+    FossilExecutable,
+    FossilExecutablePath,
+    FossilVersion,
+} from './fossilExecutable';
+import { localize } from './main';
 
 export type UnvalidatedFossilExecutablePath = Distinct<
     string,
     'unvalidated fossil executable path' | 'fossil executable path'
 >;
 
-export interface FossilInfo {
+interface FossilInfo {
     path: FossilExecutablePath;
     version: FossilVersion;
 }
@@ -16,9 +21,22 @@ export interface FossilInfo {
 export async function findFossil(
     pathHint: UnvalidatedFossilExecutablePath | null,
     outputChannel: OutputChannel
-): Promise<FossilInfo> {
+): Promise<FossilExecutable> {
     const finder = new FossilFinder(outputChannel.appendLine);
-    return finder.find(pathHint);
+    const info = await finder.find(pathHint);
+    outputChannel.appendLine(
+        localize(
+            'using fossil',
+            'Using fossil {0} from {1}',
+            info.version.join('.'),
+            info.path
+        )
+    );
+    return new FossilExecutable({
+        fossilPath: info.path,
+        version: info.version,
+        outputChannel: outputChannel,
+    });
 }
 
 /**
