@@ -40,7 +40,7 @@ import { humanise } from './humanise';
 import { Repository, LogEntriesOptions } from './repository';
 import typedConfig from './config';
 import { localize } from './main';
-import { FossilCWD } from './fossilExecutable';
+import { FossilArgs, FossilCWD } from './fossilExecutable';
 
 const SHORT_HASH_LENGTH = 12;
 const LONG_HASH_LENGTH = SHORT_HASH_LENGTH * 2;
@@ -333,7 +333,7 @@ export namespace interaction {
 
     export async function inputPrompt(
         stdout: string,
-        args: string[]
+        args: FossilArgs
     ): Promise<string | undefined> {
         const title = 'Fossil Request';
         const panel = window.createWebviewPanel(
