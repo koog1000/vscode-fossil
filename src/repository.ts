@@ -272,12 +272,13 @@ export const enum Operation {
 }
 
 function isReadOnly(operation: Operation): boolean {
-    switch (operation) {
-        case Operation.Show:
-            return true;
-        default:
-            return false;
-    }
+    return [
+        Operation.Show,
+        // ToDo: make readonly, 'fossil.refresh' doesn't allow it yet...
+        // Operation.Status
+        Operation.Parents,
+        Operation.UndoDryRun,
+    ].includes(operation);
 }
 
 export const enum CommitScope {
