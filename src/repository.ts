@@ -36,6 +36,7 @@ import {
     FossilUndoCommand,
     FossilCommitMessage,
     StashItem,
+    RelativePath,
 } from './openedRepository';
 import {
     anyEvent,
@@ -615,7 +616,7 @@ export class Repository implements IDisposable, InteractionAPI {
         );
     }
 
-    async rename(oldPath: string, newPath: string): Promise<void> {
+    async rename(oldPath: RelativePath, newPath: RelativePath): Promise<void> {
         await this.runWithProgress(Operation.Rename, () =>
             this.repository.rename(oldPath, newPath)
         );
@@ -698,7 +699,9 @@ export class Repository implements IDisposable, InteractionAPI {
     }
 
     // resource --> repo-relative path
-    private mapResourceToRepoRelativePath(resource: FossilResource): string {
+    private mapResourceToRepoRelativePath(
+        resource: FossilResource
+    ): RelativePath {
         const relativePath = this.mapFileUriToRepoRelativePath(
             resource.resourceUri
         );
@@ -706,11 +709,11 @@ export class Repository implements IDisposable, InteractionAPI {
     }
 
     // file uri --> repo-relative path
-    private mapFileUriToRepoRelativePath(fileUri: Uri): string {
+    public mapFileUriToRepoRelativePath(fileUri: Uri): RelativePath {
         const relativePath = path
             .relative(this.repository.root, fileUri.fsPath)
             .replace(/\\/g, '/');
-        return relativePath;
+        return relativePath as RelativePath;
     }
 
     // resource --> workspace-relative path
