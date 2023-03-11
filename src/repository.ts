@@ -91,8 +91,8 @@ function getIconUri(iconName: AvailableIcons, theme: 'dark' | 'light'): Uri {
 
 export interface LogEntriesOptions
     extends Omit<TimelineOptions, 'filePath' | 'limit'> {
-    fileUri?: Uri;
-    limit?: TimelineOptions['limit'];
+    readonly fileUri?: Uri;
+    readonly limit?: TimelineOptions['limit'];
 }
 
 export const enum RepositoryState {
@@ -288,8 +288,8 @@ export const enum CommitScope {
 }
 
 export interface CommitOptions {
-    scope: CommitScope;
-    useBranch?: boolean;
+    readonly scope: CommitScope;
+    readonly useBranch?: boolean;
 }
 
 export class Repository implements IDisposable, InteractionAPI {
