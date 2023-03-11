@@ -45,7 +45,7 @@ export interface IExecutionResult {
     exitCode: number;
     stdout: string;
     stderr: string;
-    args: string[];
+    args: FossilArgs;
     cwd: FossilCWD;
 }
 
@@ -131,7 +131,7 @@ async function exec(
 
     const once = (
         ee: NodeJS.EventEmitter,
-        name: string,
+        name: 'close' | 'error' | 'exit',
         fn: (...args: any[]) => void
     ) => {
         ee.once(name, fn);
@@ -140,7 +140,7 @@ async function exec(
 
     const on = (
         ee: NodeJS.EventEmitter,
-        name: string,
+        name: 'data',
         fn: (...args: any[]) => void
     ) => {
         ee.on(name, fn);
@@ -214,7 +214,7 @@ export class FossilError implements IFossilErrorData {
     readonly stderr: string;
     readonly exitCode: number;
     fossilErrorCode: FossilErrorCode;
-    readonly args: string[];
+    readonly args: FossilArgs;
     untrackedFilenames?: string[];
     readonly cwd: FossilCWD;
 
@@ -429,7 +429,7 @@ export class FossilExecutable {
     private log(output: string): void {
         this._onOutput.fire(output);
     }
-    private logArgs(args: string[], reason: string, info: string): void {
+    private logArgs(args: FossilArgs, reason: string, info: string): void {
         if (args[0] == 'clone') {
             // replace password with 9 asterisks
             args = [...args];

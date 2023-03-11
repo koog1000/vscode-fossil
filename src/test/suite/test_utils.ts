@@ -33,7 +33,7 @@ export async function error_is_thrown_when_executing_unknown_command(
         stderr: 'my stderror',
         exitCode: 0,
         fossilErrorCode: 'unknown',
-        args: ['help'],
+        args: ['cat'],
         cwd: 'cwd' as FossilCWD,
         fossilPath: '/bin/fossil' as FossilExecutablePath,
     });
@@ -41,7 +41,7 @@ export async function error_is_thrown_when_executing_unknown_command(
   "exitCode": 0,
   "fossilErrorCode": "unknown",
   "args": [
-    "help"
+    "cat"
   ],
   "stdout": "my staout",
   "stderr": "my stderror",
