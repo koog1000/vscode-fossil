@@ -288,6 +288,10 @@ export class OpenedRepository {
         }
     }
 
+    async rename(oldPath: string, newPath: string): Promise<void> {
+        await this.exec(['rename', oldPath, newPath]);
+    }
+
     async clean(paths: string[]): Promise<void> {
         if (paths) {
             await this.exec(['clean', ...paths]);

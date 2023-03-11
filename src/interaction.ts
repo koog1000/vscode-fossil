@@ -315,6 +315,24 @@ export namespace interaction {
         return result === open;
     }
 
+    export async function confirmRename(
+        oldPath: string,
+        newPath: string
+    ): Promise<boolean> {
+        const question = localize(
+            'rename {0} to {1}',
+            '"{0}" was renamed to "{1}" on filesystem. Rename in fossil repository too?',
+            oldPath,
+            newPath
+        );
+        const answer = await window.showInformationMessage(
+            question,
+            'Yes',
+            'Cancel'
+        );
+        return answer === 'Yes';
+    }
+
     export async function inputRepoUrl(
         this: void
     ): Promise<FossilURI | undefined> {
