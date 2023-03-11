@@ -148,7 +148,7 @@ export class FossilPreview implements IDisposable {
 
     constructor(
         public readonly panel: WebviewPanel,
-        private readonly fossil: FossilExecutable,
+        private readonly executable: FossilExecutable,
         public uri: Uri,
         private readonly mediaDir: Uri
     ) {
@@ -232,15 +232,23 @@ export class FossilPreview implements IDisposable {
                     return 'text/plain';
             }
         })();
-        const args = ['wiki', 'create', title, '--mimetype', mimetype];
-        if (where == 'Technote') {
-            args.push(...['--technote', 'now']);
-        }
         const source = await this.getSource();
         if (source) {
-            const res = await this.fossil.exec(this.dirname, args, '', {
-                stdin_data: source,
-            });
+            const res = await this.executable.exec(
+                this.dirname,
+                [
+                    'wiki',
+                    'create',
+                    title,
+                    '--mimetype',
+                    mimetype,
+                    ...(where == 'Technote' ? ['--technote', 'now'] : []),
+                ],
+                '',
+                {
+                    stdin_data: source,
+                }
+            );
             return res.exitCode == 0;
         } else {
             await window.showErrorMessage(
@@ -250,13 +258,15 @@ export class FossilPreview implements IDisposable {
         }
     }
 
-    private async _run_current_task(): Promise<void> {
+    private async _run_current_task(
+        renderer: 'wiki' | 'markdown'
+    ): Promise<void> {
         while (this.current_content) {
             const awaiting_callback = this._callbacks;
             this._callbacks = [];
-            const res = this.fossil.exec(
+            const res = this.executable.exec(
                 this.dirname,
-                [`test-${this.renderer}-render`, '-'],
+                [`test-${renderer}-render`, '-'],
                 '',
                 { stdin_data: this.current_content }
             );
@@ -279,7 +289,8 @@ export class FossilPreview implements IDisposable {
      *          All old promises get rejected.
      */
     private async render(content: MDorWIKI): Promise<RenderedHTML> {
-        if (this.renderer === undefined) {
+        const renderer = this.renderer;
+        if (!renderer) {
             return `<h1>unknown fossil renderer</h1>` as RenderedHTML;
         }
         const ret = new Promise<RenderedHTML>((resolve, reject) => {
@@ -290,7 +301,7 @@ export class FossilPreview implements IDisposable {
         } else {
             this.current_content = content;
             if (!this.next_content) {
-                this._run_current_task();
+                this._run_current_task(renderer);
             }
         }
         return ret;

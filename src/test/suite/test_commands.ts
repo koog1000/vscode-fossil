@@ -56,7 +56,7 @@ export async function fossil_merge(
         '--branch',
         'fossil-merge',
     ]);
-    await executable.exec(cwd, ['up', 'trunk']);
+    await executable.exec(cwd, ['update', 'trunk']);
     const model = vscode.extensions.getExtension('koog1000.fossil')!
         .exports as Model;
     const repository = model.repositories[0];

@@ -116,7 +116,7 @@ export async function status_merge_integrate_is_visible_in_source_control_panel(
         '--no-warnings',
     ]);
 
-    await executable.exec(cwd, ['up', 'trunk']);
+    await executable.exec(cwd, ['update', 'trunk']);
     await executable.exec(cwd, ['merge', 'test_brunch']);
     const model = vscode.extensions.getExtension('koog1000.fossil')!
         .exports as Model;
