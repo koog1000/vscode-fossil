@@ -22,7 +22,6 @@ import { LineChange, revertChanges } from './revert';
 import * as path from 'path';
 import {
     FossilPath,
-    FossilRoot,
     FossilURI,
     FossilCheckin,
     MergeAction,
@@ -53,7 +52,7 @@ import { humanise } from './humanise';
 import { partition } from './util';
 import { toFossilUri } from './uri';
 import { FossilPreviewManager } from './preview';
-import { FossilExecutable, FossilError } from './fossilExecutable';
+import { FossilExecutable, FossilError, FossilCWD } from './fossilExecutable';
 
 import { localize } from './main';
 
@@ -374,7 +373,7 @@ export class CommandCenter {
      */
     async openRepository(
         filePath: FossilPath,
-        parentPath: FossilRoot
+        parentPath: FossilCWD
     ): Promise<void> {
         try {
             await this.executable.openClone(filePath, parentPath);
@@ -400,12 +399,12 @@ export class CommandCenter {
      */
     async askOpenRepository(
         filePath: FossilPath,
-        fossilRoot: FossilRoot
+        fossilCwd: FossilCWD
     ): Promise<void> {
         const openClonedRepo = await interaction.promptOpenClonedRepo();
         if (openClonedRepo) {
-            await this.openRepository(filePath, fossilRoot);
-            await this.model.tryOpenRepository(fossilRoot);
+            await this.openRepository(filePath, fossilCwd);
+            await this.model.tryOpenRepository(fossilCwd);
         }
     }
 
@@ -416,7 +415,7 @@ export class CommandCenter {
         if (!fossilPath) {
             return;
         }
-        const fossilRoot = path.dirname(fossilPath) as FossilRoot;
+        const fossilCwd = path.dirname(fossilPath) as FossilCWD;
         let projectName = '';
         let projectDesc = '';
         if (this.executable.version >= [2, 18]) {
@@ -435,12 +434,12 @@ export class CommandCenter {
 
         // run init in the file folder in case any artifacts appear
         await this.executable.init(
-            fossilRoot,
+            fossilCwd,
             fossilPath,
             projectName,
             projectDesc
         );
-        await this.askOpenRepository(fossilPath, fossilRoot);
+        await this.askOpenRepository(fossilPath, fossilCwd);
     }
 
     @command('fossil.open')
