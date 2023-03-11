@@ -21,11 +21,10 @@ import { anyEvent, filterEvent, dispose } from './util';
 import { memoize, debounce, sequentialize } from './decorators';
 import * as path from 'path';
 import * as fs from 'fs/promises';
-import * as nls from 'vscode-nls';
 import typedConfig from './config';
 import { Repository, RepositoryState } from './repository';
 
-const localize = nls.loadMessageBundle();
+import { localize } from './main';
 
 class RepositoryPick implements QuickPickItem {
     @memoize get label(): string {

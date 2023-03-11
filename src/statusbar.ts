@@ -7,10 +7,10 @@
 import { Disposable, Command, EventEmitter, Event } from 'vscode';
 import { anyEvent, dispose } from './util';
 import { AutoInOutStatuses, AutoInOutState } from './autoinout';
-import * as nls from 'vscode-nls';
 import { Repository, Operation } from './repository';
 
-const localize = nls.loadMessageBundle();
+import { localize } from './main';
+
 const enum SyncStatus {
     None = 0,
     Pushing = 1,

@@ -1,8 +1,7 @@
 import * as path from 'path';
-import * as nls from 'vscode-nls';
 import { FossilCheckin, FossilCommitMessage } from './fossilBase';
 
-const localize = nls.loadMessageBundle();
+import { localize } from './main';
 
 class TimeSpan {
     private seconds: number;

@@ -4,7 +4,6 @@
  *  Licensed under the MIT License. See LICENSE.txt in the project root for license information.
  *--------------------------------------------------------------------------------------------*/
 
-import * as nls from 'vscode-nls';
 import * as path from 'path';
 import * as os from 'os';
 import {
@@ -40,7 +39,7 @@ import {
 import { humanise } from './humanise';
 import { Repository, LogEntriesOptions } from './repository';
 import typedConfig from './config';
-const localize = nls.loadMessageBundle();
+import { localize } from './main';
 
 const SHORT_HASH_LENGTH = 12;
 const LONG_HASH_LENGTH = SHORT_HASH_LENGTH * 2;

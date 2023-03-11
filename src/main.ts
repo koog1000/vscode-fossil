@@ -7,15 +7,14 @@
 // based on https://github.com/Microsoft/vscode/commit/41f0ff15d7327da30fdae73aa04ca570ce34fa0a
 
 import { ExtensionContext, window, Disposable, commands } from 'vscode';
-import { FossilExecutable } from './fossilExecutable';
 import { Model } from './model';
 import { CommandCenter } from './commands';
 import { FossilContentProvider } from './contentProvider';
 import * as nls from 'vscode-nls';
 import typedConfig from './config';
-import { findFossil, FossilInfo } from './fossilFinder';
+import { findFossil } from './fossilFinder';
 
-const localize = nls.loadMessageBundle();
+export const localize = nls.loadMessageBundle();
 
 async function init(
     context: ExtensionContext,
@@ -26,14 +25,7 @@ async function init(
     const outputChannel = window.createOutputChannel('Fossil');
     disposables.push(outputChannel);
 
-    const enabled = typedConfig.enabled;
-    const pathHint = typedConfig.path;
-    const info: FossilInfo = await findFossil(pathHint, outputChannel);
-    const executable = new FossilExecutable({
-        fossilPath: info.path,
-        version: info.version,
-        outputChannel: outputChannel,
-    });
+    const executable = await findFossil(typedConfig.path, outputChannel);
     const model = new Model(executable);
     disposables.push(model);
 
@@ -47,7 +39,7 @@ async function init(
     model.onDidCloseRepository(onRepository, null, disposables);
     onRepository();
 
-    if (!enabled) {
+    if (!typedConfig.enabled) {
         const commandCenter = new CommandCenter(
             executable,
             model,
@@ -58,14 +50,6 @@ async function init(
         return;
     }
 
-    outputChannel.appendLine(
-        localize(
-            'using fossil',
-            'Using fossil {0} from {1}',
-            info.version.join('.'),
-            info.path
-        )
-    );
     executable.onOutput(str => outputChannel.append(str), null, disposables);
 
     disposables.push(
