@@ -128,9 +128,9 @@ export interface CommitDetails extends Commit {
     files: IFileStatus[];
 }
 
-export class Repository {
+export class OpenedRepository {
     constructor(
-        private _fossil: FossilExecutable,
+        private executable: FossilExecutable,
         private repositoryRoot: FossilRoot
     ) {}
 
@@ -142,7 +142,7 @@ export class Repository {
         args: string[],
         options: Omit<FossilSpawnOptions, 'cwd'> = {}
     ): Promise<IExecutionResult> {
-        return await this._fossil.exec(this.repositoryRoot, args, options);
+        return await this.executable.exec(this.repositoryRoot, args, options);
     }
 
     async add(paths?: string[]): Promise<void> {
