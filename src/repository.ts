@@ -433,7 +433,6 @@ export class Repository implements IDisposable, InteractionAPI {
     }
 
     private readonly disposables: Disposable[] = [];
-    public statusPromise: Promise<StatusString>;
 
     constructor(private readonly repository: OpenedRepository) {
         const repoRootWatcher = workspace.createFileSystemWatcher(
@@ -490,7 +489,7 @@ export class Repository implements IDisposable, InteractionAPI {
         );
         this._sourceControl.statusBarCommands = statusBar.commands;
 
-        this.statusPromise = this.status('repository constructed');
+        this.updateModelState();
 
         this.disposables.push(new AutoIncomingOutgoing(this));
     }
