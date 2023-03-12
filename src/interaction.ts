@@ -325,11 +325,17 @@ export namespace interaction {
             oldPath,
             newPath
         );
+        const dontShowAgain = localize('neverAgain', "Don't show again");
         const answer = await window.showInformationMessage(
             question,
+            { modal: false },
             'Yes',
-            'Cancel'
+            'Cancel',
+            dontShowAgain
         );
+        if (answer === dontShowAgain) {
+            typedConfig.disableRenaming();
+        }
         return answer === 'Yes';
     }
 

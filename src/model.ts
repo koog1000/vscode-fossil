@@ -95,22 +95,31 @@ export class Model implements Disposable {
     private possibleFossilRepositoryPaths = new Set<string>();
 
     private enabled = false;
-    private configurationChangeDisposable: Disposable;
     private readonly disposables: Disposable[] = [];
+    private renamingDisposable: Disposable | undefined;
 
     constructor(private readonly executable: FossilExecutable) {
         this.enabled = typedConfig.enabled;
-        this.configurationChangeDisposable = workspace.onDidChangeConfiguration(
+        workspace.onDidChangeConfiguration(
             this.onDidChangeConfiguration,
-            this
+            this,
+            this.disposables
         );
-
         if (this.enabled) {
             this.enable();
         }
+        this.onDidChangeConfiguration();
     }
 
     private onDidChangeConfiguration(): void {
+        this.renamingDisposable?.dispose();
+        if (typedConfig.enableRenaming) {
+            this.renamingDisposable = workspace.onDidRenameFiles(
+                this.onDidRenameFiles,
+                this,
+                this.disposables
+            );
+        }
         const enabled = typedConfig.enabled;
 
         if (enabled === this.enabled) {
@@ -129,11 +138,6 @@ export class Model implements Disposable {
     private enable(): void {
         workspace.onDidChangeWorkspaceFolders(
             this.onDidChangeWorkspaceFolders,
-            this,
-            this.disposables
-        );
-        workspace.onDidRenameFiles(
-            this.onDidRenameFiles,
             this,
             this.disposables
         );
@@ -434,6 +438,6 @@ export class Model implements Disposable {
 
     dispose(): void {
         this.disable();
-        this.configurationChangeDisposable.dispose();
+        this.renamingDisposable?.dispose();
     }
 }
