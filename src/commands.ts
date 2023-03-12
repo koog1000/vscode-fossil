@@ -139,13 +139,10 @@ function command(id: CommandId, options: { repository?: boolean } = {}) {
         key: unknown,
         descriptor: TypedPropertyDescriptor<CommandMethod>
     ): TypedPropertyDescriptor<CommandMethod> => {
-        if (!descriptor.value) {
-            throw new Error('descriptor with no value');
-        }
         if (options.repository) {
-            descriptor.value = makeCommandWithRepository(descriptor.value);
+            descriptor.value = makeCommandWithRepository(descriptor.value!);
         }
-        target.register.push({ id, method: descriptor.value });
+        target.register.push({ id, method: descriptor.value! });
         return descriptor;
     };
 }
