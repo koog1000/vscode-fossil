@@ -1,19 +1,13 @@
 import * as vscode from 'vscode';
 import { Uri } from 'vscode';
 import * as sinon from 'sinon';
-import { FossilExecutable } from '../../fossilExecutable';
-import { fossilInit, fossilOpen } from './common';
 import * as assert from 'assert/strict';
 import * as fs from 'fs';
 import { Model } from '../../model';
-import { eventToPromise } from '../../util';
 
 export async function fossil_undo_and_redo_warning(
-    sandbox: sinon.SinonSandbox,
-    executable: FossilExecutable
+    sandbox: sinon.SinonSandbox
 ): Promise<void> {
-    await fossilInit(sandbox, executable);
-    await fossilOpen(sandbox, executable);
     const showWarningMessage: sinon.SinonStub = sandbox.stub(
         vscode.window,
         'showWarningMessage'
@@ -29,31 +23,30 @@ export async function fossil_undo_and_redo_warning(
 }
 
 export async function fossil_undo_and_redo_working(
-    sandbox: sinon.SinonSandbox,
-    executable: FossilExecutable
+    sandbox: sinon.SinonSandbox
 ): Promise<void> {
-    await fossilInit(sandbox, executable);
-    await fossilOpen(sandbox, executable);
     const showWarningMessage: sinon.SinonStub = sandbox.stub(
         vscode.window,
         'showWarningMessage'
     );
 
     const rootUri = vscode.workspace.workspaceFolders![0].uri;
-    const undoTxtPath = Uri.joinPath(rootUri, 'undo.txt').fsPath;
+    const undoTxtPath = Uri.joinPath(rootUri, 'undo-fuarw.txt').fsPath;
     await fs.promises.writeFile(undoTxtPath, 'line\n');
 
     const model = vscode.extensions.getExtension('koog1000.fossil')!
         .exports as Model;
     const repository = model.repositories[0];
-    await eventToPromise(repository.onDidRunOperation);
+    await repository.updateModelState();
     assert.ok(repository.untrackedGroup.resourceStates.length == 1);
 
-    showWarningMessage.onFirstCall().resolves('Delete file');
+    showWarningMessage.onFirstCall().resolves('&&Delete file');
+
     await vscode.commands.executeCommand(
         'fossil.deleteFiles',
         repository.untrackedGroup
     );
+    assert.ok(showWarningMessage.calledOnce);
     assert.ok(!fs.existsSync(undoTxtPath));
 
     const showInformationMessage: sinon.SinonStub = sandbox.stub(
