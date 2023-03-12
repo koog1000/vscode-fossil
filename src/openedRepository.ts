@@ -134,19 +134,15 @@ export interface CommitDetails extends Commit {
 export class OpenedRepository {
     constructor(
         private readonly executable: FossilExecutable,
-        private readonly repositoryRoot: FossilRoot
+        public readonly root: FossilRoot
     ) {}
-
-    get root(): FossilRoot {
-        return this.repositoryRoot;
-    }
 
     async exec(
         args: FossilArgs,
         reason = '',
         options: Omit<FossilSpawnOptions, 'cwd'> = {}
     ): Promise<IExecutionResult> {
-        return this.executable.exec(this.repositoryRoot, args, reason, options);
+        return this.executable.exec(this.root, args, reason, options);
     }
 
     async add(paths?: string[]): Promise<void> {
@@ -308,12 +304,11 @@ export class OpenedRepository {
     }
 
     async ignore(paths: string[]): Promise<void> {
-        const ignore_file =
-            this.repositoryRoot + '/.fossil-settings/ignore-glob';
+        const ignore_file = this.root + '/.fossil-settings/ignore-glob';
         if (existsSync(ignore_file)) {
             appendFileSync(ignore_file, paths.join('\n') + '\n');
         } else {
-            await fs.mkdir(this.repositoryRoot + '/.fossil-settings/');
+            await fs.mkdir(this.root + '/.fossil-settings/');
             writeFileSync(ignore_file, paths.join('\n') + '\n');
             this.add([ignore_file]);
         }
