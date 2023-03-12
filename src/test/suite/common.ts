@@ -41,7 +41,7 @@ export async function fossilInit(
     }
     assert.ok(
         fs.existsSync(fossilPath.fsPath),
-        `Not a file: '${fossilPath.fsPath}' even though 'fossil.init' was sucessfully executed`
+        `Not a file: '${fossilPath.fsPath}' even though 'fossil.init' was successfully executed`
     );
     assert.ok(showInformationMessage.calledOnce);
     sandbox.restore();

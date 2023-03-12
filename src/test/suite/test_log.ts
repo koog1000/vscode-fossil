@@ -1,7 +1,6 @@
 import * as vscode from 'vscode';
 import * as sinon from 'sinon';
 import { FossilExecutable } from '../../fossilExecutable';
-import { fossilInit, fossilOpen } from './common';
 import * as assert from 'assert/strict';
 import * as fs from 'fs/promises';
 import { toFossilUri } from '../../uri';
@@ -27,8 +26,11 @@ export async function fossil_file_log_can_diff_files(
     sandbox: sinon.SinonSandbox,
     executable: FossilExecutable
 ): Promise<void> {
-    await fossilInit(sandbox, executable);
-    await fossilOpen(sandbox, executable);
+    const rootUri = vscode.workspace.workspaceFolders![0].uri;
+    const cwd = rootUri.fsPath as FossilCWD;
+
+    await executable.exec(cwd, ['revert']);
+    await executable.exec(cwd, ['clean']);
     await add(executable, 'file1.txt', 'line1\n', 'file1.txt: first');
     await add(executable, 'file1.txt', 'line1\nline2\n', 'file1.txt: second');
     await add(

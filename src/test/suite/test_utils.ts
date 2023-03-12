@@ -28,7 +28,9 @@ export async function error_is_thrown_when_executing_unknown_command(
         cwd: cwd,
     });
     assert.ok(showErrorMessage.calledOnce);
+}
 
+export async function error_to_string_is_valid(): Promise<void> {
     const TestError = new FossilError({
         message: 'my message',
         stdout: 'my stdout' as FossilStdOut,

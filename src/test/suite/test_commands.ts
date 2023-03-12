@@ -5,7 +5,6 @@ import { fossilInit, fossilOpen } from './common';
 import * as assert from 'assert/strict';
 import * as fs from 'fs/promises';
 import { assertGroups } from './test_status';
-import { eventToPromise } from '../../util';
 import { Model } from '../../model';
 import { FossilBranch } from '../../openedRepository';
 
@@ -31,8 +30,8 @@ export async function fossil_merge(
     sandbox: sinon.SinonSandbox,
     executable: FossilExecutable
 ): Promise<void> {
-    await fossilInit(sandbox, executable);
-    await fossilOpen(sandbox, executable);
+    // await fossilInit(sandbox, executable);
+    // await fossilOpen(sandbox, executable);
     const rootUri = vscode.workspace.workspaceFolders![0].uri;
     const fooPath = vscode.Uri.joinPath(rootUri, 'foo.txt').fsPath;
     await fs.writeFile(fooPath, 'foo content\n');
@@ -61,7 +60,7 @@ export async function fossil_merge(
         .exports as Model;
     const repository = model.repositories[0];
     await vscode.commands.executeCommand('fossil.refresh');
-    await eventToPromise(repository.onDidRunOperation);
+    await repository.updateModelState();
     assertGroups(repository, new Map(), new Map());
 
     const showQuickPickstub = sandbox.stub(
@@ -76,7 +75,6 @@ export async function fossil_merge(
     assert.ok(showQuickPickstub.calledOnce);
     assert.ok(showInputBoxstub.calledOnce);
 
-    await eventToPromise(repository.onDidRunOperation);
-    await repository.status('test');
+    await repository.updateModelState();
     assertGroups(repository, new Map(), new Map());
 }
