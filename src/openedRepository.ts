@@ -218,10 +218,12 @@ export class OpenedRepository {
     }
 
     async getCurrentBranch(): Promise<FossilBranch | undefined> {
-        // bad? `fossil branch current` should show the branch
-        const branches = await this.getBranches();
-        const currBranch = branches.find(branch => branch.isCurrent)?.name;
-        return currBranch;
+        try {
+            const res = await this.exec(['branch', 'current']);
+            return res.stdout.trim() as FossilBranch;
+        } catch {
+            return undefined;
+        }
     }
 
     async newBranch(name: FossilBranch): Promise<void> {
