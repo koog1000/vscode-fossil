@@ -154,7 +154,10 @@ export class OpenedRepository {
         return result.stdout.split('\n').filter(Boolean);
     }
 
-    async cat(relativePath: string, checkin: FossilCheckin): Promise<string> {
+    async cat(
+        relativePath: string,
+        checkin: FossilCheckin
+    ): Promise<FossilStdOut> {
         const result = await this.exec(
             ['cat', relativePath, ...(checkin ? ['-r', checkin] : [])],
             '',
