@@ -1032,6 +1032,11 @@
                     "description": "%config.autoUpdate%",
                     "default": true
                 },
+                "fossil.enableRenaming": {
+                    "type": "boolean",
+                    "description": "%config.enableRenaming%",
+                    "default": true
+                },
                 "fossil.path": {
                     "type": [
                         "string",

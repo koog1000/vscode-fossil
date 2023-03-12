@@ -9,6 +9,7 @@ interface ConfigScheme {
     username: FossilUsername | null;
     autoUpdate: boolean;
     autoRefresh: boolean;
+    enableRenaming: boolean;
 }
 
 class Config {
@@ -59,6 +60,10 @@ class Config {
         return this.get('autoInOutInterval') * 1000;
     }
 
+    get enableRenaming(): boolean {
+        return this.get('enableRenaming');
+    }
+
     /**
      * * Specifies an explicit user to use for fossil commits.
      * * This should only be used if the user is different
@@ -66,6 +71,10 @@ class Config {
      */
     get username(): FossilUsername | null {
         return this.get('username');
+    }
+
+    disableRenaming() {
+        this.config.update('enableRenaming', false, false);
     }
 }
 

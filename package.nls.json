@@ -49,6 +49,7 @@
     "config.autoInOutInterval": "How many seconds between each autoInOut poll",
     "config.autoRefresh": "Whether auto refreshing is enabled",
     "config.autoUpdate": "Update to latest head after a pull (when there are incoming changesets)",
+    "config.enableRenaming": "Show rename request after a file was renamed in UI",
     "config.enableLongCommitWarning": "Whether long commit messages should be warned about",
     "submenu.commit": "Commit",
     "submenu.merge": "Merge",
