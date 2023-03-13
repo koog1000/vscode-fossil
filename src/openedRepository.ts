@@ -95,7 +95,9 @@ export interface IRepoStatus {
 export interface IFileStatus {
     readonly status: 'M' | 'A' | 'R' | 'C' | '!' | '?';
     readonly path: string;
-    readonly rename?: string; // ToDo: remove `rename` field
+    // `rename` is a valid field since fossil 2.19
+    // field should contain the new path and `path` must contain original path
+    readonly rename?: string;
 }
 
 export interface BranchDetails {

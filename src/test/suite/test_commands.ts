@@ -7,6 +7,8 @@ import * as fs from 'fs/promises';
 import { assertGroups } from './test_status';
 import { Model } from '../../model';
 import { FossilBranch } from '../../openedRepository';
+import { Status } from '../../repository';
+import { eventToPromise } from '../../util';
 
 export async function fossil_close(
     sandbox: sinon.SinonSandbox,
@@ -30,27 +32,27 @@ export async function fossil_merge(
     sandbox: sinon.SinonSandbox,
     executable: FossilExecutable
 ): Promise<void> {
-    // await fossilInit(sandbox, executable);
-    // await fossilOpen(sandbox, executable);
+    const fooFilename = 'foo-merge.txt';
+    const barFilename = 'bar-merge.txt';
     const rootUri = vscode.workspace.workspaceFolders![0].uri;
-    const fooPath = vscode.Uri.joinPath(rootUri, 'foo.txt').fsPath;
+    const fooPath = vscode.Uri.joinPath(rootUri, fooFilename).fsPath;
     await fs.writeFile(fooPath, 'foo content\n');
     const cwd = rootUri.fsPath as FossilCWD;
-    await executable.exec(cwd, ['add', 'foo.txt']);
+    await executable.exec(cwd, ['add', fooFilename]);
     await executable.exec(cwd, [
         'commit',
         '-m',
-        'add: foo.txt',
+        `add: ${fooFilename}`,
         '--no-warnings',
     ]);
-    const barPath = vscode.Uri.joinPath(rootUri, 'foo.txt').fsPath;
+    const barPath = vscode.Uri.joinPath(rootUri, fooFilename).fsPath;
     await fs.writeFile(barPath, 'bar content\n');
-    await executable.exec(cwd, ['add', 'bar.txt']);
+    await executable.exec(cwd, ['add', barFilename]);
     await fs.appendFile(fooPath, 'foo content 2\n');
     await executable.exec(cwd, [
         'commit',
         '-m',
-        'add: bar.txt; mod',
+        `add: ${barFilename}; mod`,
         '--no-warnings',
         '--branch',
         'fossil-merge',
@@ -77,4 +79,50 @@ export async function fossil_merge(
 
     await repository.updateModelState();
     assertGroups(repository, new Map(), new Map());
+}
+
+export async function fossil_rename_a_file(
+    sandbox: sinon.SinonSandbox,
+    executable: FossilExecutable
+): Promise<void> {
+    const oldFIlename = 'not_renamed.txt';
+    const newFIlename = 'renamed.txt';
+    const rootUri = vscode.workspace.workspaceFolders![0].uri;
+    const fooPath = vscode.Uri.joinPath(rootUri, oldFIlename).fsPath;
+    await fs.writeFile(fooPath, 'foo content\n');
+    const cwd = rootUri.fsPath as FossilCWD;
+    await executable.exec(cwd, ['add', oldFIlename]);
+    await executable.exec(cwd, [
+        'commit',
+        '-m',
+        `add: ${oldFIlename}`,
+        '--no-warnings',
+    ]);
+
+    const showInformationMessage: sinon.SinonStub = sandbox.stub(
+        vscode.window,
+        'showInformationMessage'
+    );
+
+    const answeredYes = showInformationMessage.onFirstCall().resolves('Yes');
+
+    const edit = new vscode.WorkspaceEdit();
+    const newFilePath = vscode.Uri.joinPath(rootUri, newFIlename);
+    edit.renameFile(vscode.Uri.joinPath(rootUri, oldFIlename), newFilePath);
+
+    const success = await vscode.workspace.applyEdit(edit);
+    assert.ok(success);
+
+    const model = vscode.extensions.getExtension('koog1000.fossil')!
+        .exports as Model;
+    const repository = model.repositories[0];
+    await answeredYes;
+    await eventToPromise(repository.onDidRunOperation);
+    await repository.updateModelState();
+
+    assertGroups(
+        repository,
+        new Map([[newFilePath.fsPath, Status.RENAMED]]),
+        new Map()
+    );
 }

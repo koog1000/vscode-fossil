@@ -10,7 +10,11 @@ import {
     status_missing_is_visible_in_source_control_panel,
     status_rename_is_visible_in_source_control_panel,
 } from './test_status';
-import { fossil_close, fossil_merge } from './test_commands';
+import {
+    fossil_close,
+    fossil_merge,
+    fossil_rename_a_file,
+} from './test_commands';
 import { fossil_file_log_can_diff_files } from './test_log';
 import { fossilInit, fossilOpen } from './common';
 import {
@@ -25,6 +29,22 @@ import {
 async function createFossil(): Promise<FossilExecutable> {
     const outputChannel = window.createOutputChannel('Fossil.Test');
     return findFossil(null, outputChannel);
+}
+
+async function cleanRoot() {
+    if (!vscode.workspace.workspaceFolders) {
+        throw new Error(
+            'Expected opened workspace. Probably setup issue and `out/test/test_repo` does not exist.'
+        );
+    }
+
+    const rootPath = vscode.workspace.workspaceFolders[0].uri;
+    const entities = await fs.promises.readdir(rootPath.fsPath);
+    await Promise.all(
+        entities.map(name =>
+            fs.promises.unlink(Uri.joinPath(rootPath, name).fsPath)
+        )
+    );
 }
 
 suite('Fossil.NoRepoRequired', () => {
@@ -48,21 +68,7 @@ suite('Fossil.EveryTestFromEmptyState', () => {
     before(async () => {
         executable = await createFossil();
     });
-    beforeEach(async () => {
-        // clean test directory
-        if (!vscode.workspace.workspaceFolders) {
-            throw new Error(
-                'Expected opened workspace. Probably setup issue and `out/test/test_repo` does not exist.'
-            );
-        }
-        const rootPath = vscode.workspace.workspaceFolders[0].uri;
-        const entities = await fs.promises.readdir(rootPath.fsPath);
-        await Promise.all(
-            entities.map(name =>
-                fs.promises.unlink(Uri.joinPath(rootPath, name).fsPath)
-            )
-        );
-    });
+    beforeEach(cleanRoot);
 
     afterEach(() => {
         sandbox.restore();
@@ -80,16 +86,8 @@ suite('Fossil.OpenedRepo', function () {
     let executable: FossilExecutable;
     before(async function () {
         this.timeout(5555);
+        await cleanRoot();
         executable = await createFossil();
-
-        const fossilPath = Uri.joinPath(
-            vscode.workspace.workspaceFolders![0].uri,
-            '/test.fossil'
-        );
-        if (fs.existsSync(fossilPath.fsPath)) {
-            await fs.promises.unlink(fossilPath.fsPath);
-        }
-
         await fossilInit(sandbox, executable);
         await fossilOpen(sandbox, executable);
     });
@@ -124,6 +122,10 @@ suite('Fossil.OpenedRepo', function () {
 
     test('fossil undo and redo working', () =>
         fossil_undo_and_redo_working(sandbox)).timeout(15000);
+
+    test('fossil rename a file', () =>
+        fossil_rename_a_file(sandbox, executable)
+    ).timeout(15000);
 
     afterEach(() => {
         sandbox.restore();
