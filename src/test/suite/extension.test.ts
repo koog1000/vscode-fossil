@@ -13,6 +13,7 @@ import {
 import {
     fossil_close,
     fossil_merge,
+    fossil_rename_a_directory,
     fossil_rename_a_file,
 } from './test_commands';
 import { fossil_file_log_can_diff_files } from './test_log';
@@ -42,7 +43,10 @@ async function cleanRoot() {
     const entities = await fs.promises.readdir(rootPath.fsPath);
     await Promise.all(
         entities.map(name =>
-            fs.promises.unlink(Uri.joinPath(rootPath, name).fsPath)
+            fs.promises.rm(Uri.joinPath(rootPath, name).fsPath, {
+                force: true,
+                recursive: true,
+            })
         )
     );
 }
@@ -124,8 +128,10 @@ suite('Fossil.OpenedRepo', function () {
         fossil_undo_and_redo_working(sandbox)).timeout(15000);
 
     test('fossil rename a file', () =>
-        fossil_rename_a_file(sandbox, executable)
-    ).timeout(15000);
+        fossil_rename_a_file(sandbox, executable)).timeout(15000);
+
+    test('fossil rename a directory', () =>
+        fossil_rename_a_directory(sandbox, executable)).timeout(20000);
 
     afterEach(() => {
         sandbox.restore();

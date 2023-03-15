@@ -271,7 +271,10 @@ export class Model implements Disposable {
             const repository = this.getRepository(oldUri);
             if (repository) {
                 await repository.updateModelState();
-                if (repository.isInAnyGroup(oldUri)) {
+                if (
+                    repository.isInAnyGroup(oldUri) ||
+                    repository.isDirInAnyGroup(oldUri)
+                ) {
                     const oldPath =
                         repository.mapFileUriToRepoRelativePath(oldUri);
                     const newPath =

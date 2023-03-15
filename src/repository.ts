@@ -873,13 +873,28 @@ export class Repository implements IDisposable, InteractionAPI {
         return undo;
     }
 
-    public isInAnyGroup(uri: Uri): boolean {
+    private _isInAnyGroup(
+        check: (group: FossilResourceGroup) => boolean
+    ): boolean {
         return [
             this.workingGroup,
             this.stagingGroup,
             this.mergeGroup,
             this.conflictGroup,
-        ].some(group => group.includesUri(uri));
+        ].some(check);
+    }
+
+    public isInAnyGroup(uri: Uri): boolean {
+        return this._isInAnyGroup((group: FossilResourceGroup) =>
+            group.includesUri(uri)
+        );
+    }
+
+    public isDirInAnyGroup(uri: Uri): boolean {
+        const dir = uri.toString() + path.sep;
+        return this._isInAnyGroup((group: FossilResourceGroup) =>
+            group.includesDir(dir)
+        );
     }
 
     public async createPullOptions(): Promise<PullOptions> {

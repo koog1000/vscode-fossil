@@ -84,6 +84,15 @@ export class FossilResourceGroup {
     includesUri(uri: Uri): boolean {
         return this._uriToResource.has(uri.toString());
     }
+    includesDir(uriStr: string): boolean {
+        // important: `uriStr` should end with path.sep to work properly
+        for (const key of this._uriToResource.keys()) {
+            if (key.startsWith(uriStr)) {
+                return true;
+            }
+        }
+        return false;
+    }
 
     constructor(
         sourceControl: SourceControl,
