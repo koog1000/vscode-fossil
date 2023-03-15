@@ -1,4 +1,4 @@
-# Integrated Fossil source control for Visual Studio Code 
+# Integrated Fossil source control for Visual Studio Code
 
 ### Prerequisites
 
@@ -31,9 +31,9 @@ about cloning from the extension.
 
 * Undo/Redo.
 
-* Use command palette `Ctrl-Shift-P` >> `fossil:` to see all commands. (Not everything has a UI control.)
-
 * Preview md and wiki files
+
+* Use command palette `Ctrl-Shift-P` >> `fossil:` to see all commands. (Not everything has a UI control.)
 
 
 ## View file changes

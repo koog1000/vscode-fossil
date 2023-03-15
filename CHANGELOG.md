@@ -1,5 +1,16 @@
 # Changelog
 
+# v0.2.2
+
+### What's New
+
+- Renaming: after a file or a directory is renamed from the explorer a dialog confirming rename in fossil is shown
+
+### Bug Fixes
+
+- Run one fewer `fossil status` command on startup
+
+
 # v0.2.1
 
 ### What's New
