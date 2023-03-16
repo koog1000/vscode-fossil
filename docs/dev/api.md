@@ -24,7 +24,7 @@ _Work in progress_.
 | fossil.deleteFile | Delete Untracked File |
 | fossil.deleteFiles | Delete All Untracked Files |
 | fossil.fileLog | Show file history... |
-| fossil.ignore | Add to ignore-glob |
+| fossil.ignore | Add to ignore-glob | •&nbsp;Command palette<br>•&nbsp;Untracked submenu | 1. Modify `/.fossil-settings/ignore-glob`<br>2. Add `ignore-glob` to the current checkout (not staging)<br>3. Show ignore-glob file
 | fossil.init | Initialize Fossil Repository |
 | fossil.integrate | Integrate into working directory... |
 | fossil.log | Log... |
