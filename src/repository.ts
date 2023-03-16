@@ -630,7 +630,7 @@ export class Repository implements IDisposable, InteractionAPI {
         } else {
             resources = this.mapResources(uris);
         }
-        const relativePaths: string[] = resources.map(r =>
+        const relativePaths = resources.map(r =>
             this.mapResourceToRepoRelativePath(r)
         );
         await this.runWithProgress(Operation.Ignore, () =>

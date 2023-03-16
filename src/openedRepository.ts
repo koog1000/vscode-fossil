@@ -310,7 +310,7 @@ export class OpenedRepository {
         this.exec(['clean']);
     }
 
-    async ignore(paths: string[]): Promise<void> {
+    async ignore(paths: RelativePath[]): Promise<void> {
         const ignore_file = this.root + '/.fossil-settings/ignore-glob';
         if (existsSync(ignore_file)) {
             appendFileSync(ignore_file, paths.join('\n') + '\n');
