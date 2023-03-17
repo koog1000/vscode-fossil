@@ -1076,9 +1076,10 @@
         "deploy": "vsce publish",
         "pretest": "npm run compile",
         "test": "node ./out/test/runTest.js",
-        "coverage": "node ./node_modules/c8/bin/c8.js --reporter lcov --check-coverage npm run test",
-        "lint": "eslint ./src --ext .ts && eslint ./media --ext .ts",
-        "lint:fix": "eslint --fix ./src --ext .ts && eslint --fix ./media --ext .ts",
+        "coverage": "node ./node_modules/c8/bin/c8.js --reporter lcov --check-coverage --lines 66 npm run test",
+        "coverage-ci": "node ./node_modules/c8/bin/c8.js --reporter json-summary --check-coverage --lines 66 npm run test && node ./out/test/summary_as_markdown.js coverage/coverage-summary.json",
+        "lint": "eslint ./src --ext .ts src media",
+        "lint:fix": "eslint --fix --ext .ts src media",
         "esbuild-base": "esbuild ./src/main.ts --bundle --outfile=out/main.js --external:vscode --format=cjs --platform=node",
         "esbuild": "npm run esbuild-base -- --sourcemap"
     },

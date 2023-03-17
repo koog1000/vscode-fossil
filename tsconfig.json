@@ -19,9 +19,9 @@
         "experimentalDecorators": true,
     },
     "include": [
-        "src/**/*"
+        "src/**/*",
     ],
     "references": [
-        {"path": "./media"}   
+        {"path": "./media"}
     ]
 }

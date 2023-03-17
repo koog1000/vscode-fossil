@@ -26,7 +26,7 @@ async function main() {
         });
         /* c8 ignore next 4 */
     } catch (err) {
-        console.error('Failed to run tests');
+        console.error('Failed to run tests', err);
         process.exit(1);
     }
 }
