@@ -476,7 +476,7 @@ export class CommandCenter {
         return this.openFile(...(<FossilResource[]>resources));
     }
 
-    @command('fossil.openFile')
+    @command('fossil.openFile') // todo: remove as this is not a real @command
     async openFile(...resources: FossilResource[]): Promise<void> {
         if (!resources) {
             return;
