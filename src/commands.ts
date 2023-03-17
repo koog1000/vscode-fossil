@@ -1434,9 +1434,9 @@ export class CommandCenter {
         if (!uri) {
             return;
         }
-        const textEditor = window.visibleTextEditors.filter(
+        const textEditor = window.visibleTextEditors.find(
             e => e.document.uri.toString() === uri.toString()
-        )[0];
+        );
         if (!textEditor) {
             return;
         }
