@@ -14,6 +14,7 @@ import {
     fossil_close,
     fossil_ignore,
     fossil_merge,
+    fossil_open_files,
     fossil_rename_a_directory,
     fossil_rename_a_file,
 } from './test_commands';
@@ -134,9 +135,12 @@ suite('Fossil.OpenedRepo', function () {
     test('fossil rename a directory', () =>
         fossil_rename_a_directory(sandbox, executable)).timeout(20000);
 
-    test('fossil ignore', () =>
-        fossil_ignore(sandbox, executable)
-    ).timeout(8000);
+    test('fossil open files', () =>
+        fossil_open_files(sandbox, executable)).timeout(6000);
+
+    test('fossil ignore', () => fossil_ignore(sandbox, executable)).timeout(
+        8000
+    );
 
     afterEach(() => {
         sandbox.restore();
