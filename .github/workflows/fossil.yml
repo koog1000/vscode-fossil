@@ -1,4 +1,4 @@
-name: ESLint
+name: Fossil
 
 on:
   push:
@@ -7,8 +7,8 @@ on:
     branches: [ "master" ]
 
 jobs:
-  eslint:
-    name: Run ESLint
+  main:
+    name: Run Fossil Tests
     runs-on: ubuntu-latest
     permissions:
       contents: read
@@ -31,3 +31,9 @@ jobs:
         with:
           sarif_file: eslint-results.sarif
           wait-for-processing: true
+
+      - name: Install fossil
+        run: sudo apt-get install -y fossil
+
+      - name: Run tests and coverage
+        run: xvfb-run -a npm run coverage-ci $GITHUB_STEP_SUMMARY
