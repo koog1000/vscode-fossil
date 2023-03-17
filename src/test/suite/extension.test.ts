@@ -17,6 +17,7 @@ import {
     fossil_open_files,
     fossil_rename_a_directory,
     fossil_rename_a_file,
+    fossil_revert_change,
 } from './test_commands';
 import { fossil_file_log_can_diff_files } from './test_log';
 import { fossilInit, fossilOpen } from './common';
@@ -141,6 +142,8 @@ suite('Fossil.OpenedRepo', function () {
     test('fossil ignore', () => fossil_ignore(sandbox, executable)).timeout(
         8000
     );
+    test('fossil revert change', () =>
+        fossil_revert_change(sandbox, executable)).timeout(11000);
 
     afterEach(() => {
         sandbox.restore();

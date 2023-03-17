@@ -10,6 +10,7 @@ import { Model } from '../../model';
 import { FossilBranch } from '../../openedRepository';
 import { Status } from '../../repository';
 import { eventToPromise } from '../../util';
+import { LineChange } from '../../revert';
 
 export async function fossil_close(
     sandbox: sinon.SinonSandbox,
@@ -288,4 +289,45 @@ export async function fossil_open_files(
         ],
         () => vscode.commands.executeCommand('fossil.openFiles', resource)
     );
+}
+
+export async function fossil_revert_change(
+    sandbox: sinon.SinonSandbox,
+    executable: FossilExecutable
+): Promise<void> {
+    const rootUri = vscode.workspace.workspaceFolders![0].uri;
+    const cwd = rootUri.fsPath as FossilCWD;
+    const filename = 'revert_change.txt';
+    const uriToChange = vscode.Uri.joinPath(rootUri, filename);
+    await vscode.commands.executeCommand('fossil.revertChange', uriToChange); // branch coverage
+
+    const content = [...'abcdefghijklmnopqrstuvwxyz'].join('\n');
+    fs.writeFile(uriToChange.fsPath, content);
+    await executable.exec(cwd, ['add', filename]);
+    await executable.exec(cwd, ['commit', filename, '-m', `add '${filename}'`]);
+    const content2 = [...'abcdefghijklmn', 'typo', ...'opqrstuvwxyz'].join(
+        '\n'
+    );
+    fs.writeFile(uriToChange.fsPath, content2);
+
+    const document = await vscode.workspace.openTextDocument(uriToChange);
+    await vscode.window.showTextDocument(document);
+
+    const line_change: LineChange = {
+        modifiedEndLineNumber: 15,
+        modifiedStartLineNumber: 15,
+        originalEndLineNumber: 0,
+        originalStartLineNumber: 14,
+    };
+    await vscode.commands.executeCommand(
+        'fossil.revertChange',
+        uriToChange,
+        [line_change],
+        0
+    );
+    const revertedContent = document.getText();
+    assert.equal(revertedContent, content);
+    await document.save();
+
+    await vscode.commands.executeCommand('fossil.revertChange'); // ranch coverage
 }
