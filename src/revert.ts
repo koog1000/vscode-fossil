@@ -84,7 +84,7 @@ function applyLineChanges(
     return result.join('');
 }
 
-// copy from vscode/extensions/git/src/commands.ts
+// copy from vscode/extensions/git/src/commands.ts (modified)
 export async function revertChanges(
     textEditor: TextEditor,
     changes: LineChange[]
@@ -118,7 +118,7 @@ export async function revertChanges(
         ),
         result
     );
-    workspace.applyEdit(edit);
+    await workspace.applyEdit(edit);
 
     await modifiedDocument.save();
 
