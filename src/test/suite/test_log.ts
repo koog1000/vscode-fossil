@@ -49,18 +49,14 @@ export async function fossil_file_log_can_diff_files(
     );
     const showQuickPick = sandbox.stub(vscode.window, 'showQuickPick');
     showQuickPick.onFirstCall().callsFake(items => {
-        if (items instanceof Array) {
-            assert.equal(items[0].label, '$(tag) Current');
-            return Promise.resolve(items[0]);
-        }
-        assert.fail();
+        assert.ok(items instanceof Array);
+        assert.equal(items[0].label, '$(tag) Current');
+        return Promise.resolve(items[0]);
     });
     showQuickPick.onSecondCall().callsFake(items => {
-        if (items instanceof Array) {
-            assert.equal(items[0].label, '$(circle-outline) Parent');
-            return Promise.resolve(items[0]);
-        }
-        assert.fail();
+        assert.ok(items instanceof Array);
+        assert.equal(items[0].label, '$(circle-outline) Parent');
+        return Promise.resolve(items[0]);
     });
 
     const model = vscode.extensions.getExtension('koog1000.fossil')!

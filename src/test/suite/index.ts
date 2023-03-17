@@ -12,6 +12,7 @@ export function run(): Promise<void> {
 
     return new Promise((c, e) => {
         glob('**/**.test.js', { cwd: testsRoot }, (err, files) => {
+            /* c8 ignore next 3 */
             if (err) {
                 return e(err);
             }
@@ -23,11 +24,13 @@ export function run(): Promise<void> {
                 // Run the mocha test
                 mocha.run(failures => {
                     if (failures > 0) {
+                        /* c8 ignore next */
                         e(new Error(`${failures} tests failed.`));
                     } else {
                         c();
                     }
                 });
+                /* c8 ignore next 3 */
             } catch (err) {
                 e(err);
             }
