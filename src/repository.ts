@@ -1001,12 +1001,6 @@ export class Repository implements IDisposable, InteractionAPI {
                 .relative(this.repository.root, params.path)
                 .replace(/\\/g, '/');
             try {
-                console.log(
-                    'Repository: show: relativePath: ' +
-                        relativePath +
-                        ' checkin: ' +
-                        params.checkin
-                );
                 return this.repository.cat(relativePath, params.checkin!);
             } catch (e) {
                 if (e instanceof FossilError) {
