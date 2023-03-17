@@ -24,6 +24,7 @@ async function main() {
             extensionTestsPath,
             launchArgs: [testWorkspace, '--disable-extensions'],
         });
+        /* c8 ignore next 4 */
     } catch (err) {
         console.error('Failed to run tests');
         process.exit(1);
