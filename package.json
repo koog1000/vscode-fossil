@@ -1084,7 +1084,6 @@
         "esbuild": "npm run esbuild-base -- --sourcemap"
     },
     "dependencies": {
-        "nyc": "^15.1.0",
         "vscode-nls": "^5.0.1"
     },
     "devDependencies": {
