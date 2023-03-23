@@ -93,6 +93,7 @@ type FossilCommand =
     | 'mv'
     | 'open'
     | 'patch'
+    | 'praise'
     | 'pull'
     | 'push'
     | 'redo'

@@ -133,6 +133,8 @@ export interface CommitDetails extends Commit {
     files: IFileStatus[];
 }
 
+export type Praise = [FossilHash, string, FossilUsername];
+
 export class OpenedRepository {
     constructor(
         private readonly executable: FossilExecutable,
@@ -268,6 +270,51 @@ export class OpenedRepository {
         commitMessage: FossilCommitMessage
     ): Promise<void> {
         await this.exec(['amend', checkin, '--comment', commitMessage]);
+    }
+
+    async praise(path: string): Promise<Praise[]> {
+        const diffPromise = this.exec(['diff' as any, '--json', path]);
+        const praiseRes = await this.exec(['praise', path]);
+        const praises = praiseRes.stdout
+            .split('\n')
+            .map(line => line.split(/\s+|:/, 3) as Praise);
+        praises.pop(); // empty last line
+        const diffJSONraw = (await diffPromise).stdout;
+        if (diffJSONraw.length > 2) {
+            const diff = JSON.parse(diffJSONraw)[0]['diff'] as (
+                | string
+                | number
+            )[];
+            let lineNo = 0;
+            for (let idx = 0; idx < diff.length; idx += 2) {
+                switch (diff[idx]) {
+                    case 1: // skip N
+                        lineNo += diff[idx + 1] as number;
+                        continue;
+                    // case 2: // info
+                    //     break;
+                    case 3: // new
+                        praises.splice(lineNo, 0, [
+                            '' as FossilHash,
+                            '',
+                            'you' as FossilUsername,
+                        ]);
+                        break;
+                    case 4: // remove
+                        praises.splice(lineNo, 1);
+                        break;
+                    case 5: // change
+                        praises[lineNo] = [
+                            '' as FossilHash,
+                            '',
+                            'you' as FossilUsername,
+                        ];
+                        break;
+                }
+                ++lineNo;
+            }
+        }
+        return praises;
     }
 
     async revert(paths: string[]): Promise<void> {
@@ -649,6 +696,33 @@ export class OpenedRepository {
             return parent[1] as FossilHash;
         }
         throw new Error(`fossil checkin '${checkin}' has no ${field}`);
+    }
+
+    async info(checkin: FossilCheckin): Promise<{ [key: string]: string }> {
+        const info = await this.exec([
+            'info',
+            checkin,
+            '--comment-format',
+            '-wordbreak',
+        ]);
+        const ret: { [key: string]: string } = {};
+        let key: string | undefined;
+        const kw = new RegExp(`^(\\w+):\\s+(.*)$`, 'm');
+        for (const line of info.stdout.split('\n')) {
+            if (line.length < 14) {
+                continue;
+            }
+            if (line[0] != ' ') {
+                const match = line.match(kw);
+                if (match) {
+                    key = match[1];
+                    ret[key] = match[2];
+                }
+            } else {
+                ret[key!] += '\n' + line.slice(14);
+            }
+        }
+        return ret;
     }
 
     async getTags(): Promise<FossilTag[]> {

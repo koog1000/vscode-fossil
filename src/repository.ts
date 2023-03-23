@@ -37,6 +37,7 @@ import {
     FossilCommitMessage,
     StashItem,
     RelativePath,
+    Praise,
 } from './openedRepository';
 import {
     anyEvent,
@@ -992,6 +993,14 @@ export class Repository implements IDisposable, InteractionAPI {
         return this.repository.updateCommitMessage(checkin, commitMessage);
     }
 
+    async praise(path: string): Promise<Praise[]> {
+        return this.repository.praise(path);
+    }
+
+    async info(checkin: FossilCheckin): Promise<{ [key: string]: string }> {
+        return this.repository.info(checkin);
+    }
+
     async show(params: FossilUriParams): Promise<string> {
         // TODO@Joao: should we make this a general concept?
         await this.whenIdleAndFocused();
@@ -1001,7 +1010,7 @@ export class Repository implements IDisposable, InteractionAPI {
                 .relative(this.repository.root, params.path)
                 .replace(/\\/g, '/');
             try {
-                return this.repository.cat(relativePath, params.checkin!);
+                return this.repository.cat(relativePath, params.checkin);
             } catch (e) {
                 if (e instanceof FossilError) {
                     if (e.fossilErrorCode === 'NoSuchFile') {

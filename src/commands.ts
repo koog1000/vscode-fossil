@@ -55,6 +55,7 @@ import { FossilPreviewManager } from './preview';
 import { FossilExecutable, FossilError, FossilCWD } from './fossilExecutable';
 
 import { localize } from './main';
+import { PraiseAnnotator } from './praise';
 
 type CommandKey =
     | 'add'
@@ -89,6 +90,7 @@ type CommandKey =
     | 'openUI'
     | 'patchApply'
     | 'patchCreate'
+    | 'praise'
     | 'pull'
     | 'push'
     | 'pushTo'
@@ -1485,6 +1487,23 @@ export class CommandCenter {
         }
     }
 
+    @command('fossil.praise')
+    async praise(): Promise<void> {
+        const editor = window.activeTextEditor;
+        if (!editor) {
+            return;
+        }
+        if (PraiseAnnotator.tryDelete(editor)) {
+            return;
+        }
+        const uri = editor.document.uri;
+        const repository = this.model.getRepository(uri);
+        if (!repository) {
+            return;
+        }
+        const praises = await repository.praise(uri.fsPath);
+        await PraiseAnnotator.create(repository, editor, praises);
+    }
     private async diff(
         repository: Repository,
         checkin: FossilCheckin,
