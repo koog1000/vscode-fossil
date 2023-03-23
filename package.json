@@ -359,6 +359,11 @@
                 "command": "fossil.stashDrop",
                 "title": "Stash Drop",
                 "category": "Fossil"
+            },
+            {
+                "command": "fossil.praise",
+                "title": "Praise (blame)",
+                "category": "Fossil"
             }
         ],
         "menus": {
@@ -581,6 +586,10 @@
                 },
                 {
                     "command": "fossil.deleteFile",
+                    "when": "fossilOpenRepositoryCount"
+                },
+                {
+                    "command": "fossil.praise",
                     "when": "fossilOpenRepositoryCount"
                 }
             ],
