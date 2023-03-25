@@ -3,6 +3,7 @@
 **/.gitignore
 **/*.map
 .github/
+coverage/
 images/
 src/
 docs/
