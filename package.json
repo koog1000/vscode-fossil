@@ -16,7 +16,7 @@
     "bugs": {
         "url": "https://github.com/koog1000/vscode-fossil/issues"
     },
-    "version": "0.2.2",
+    "version": "0.2.3",
     "engines": {
         "vscode": "^1.36.0"
     },

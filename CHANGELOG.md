@@ -1,5 +1,12 @@
 # Changelog
 
+# v0.2.3
+
+### Bug Fixes
+
+- Pull not working (issue #98)
+
+
 # v0.2.2
 
 ### What's New
