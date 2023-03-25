@@ -7,7 +7,7 @@ import * as fs from 'fs/promises';
 import { existsSync } from 'fs';
 import { assertGroups } from './test_status';
 import { Model } from '../../model';
-import { FossilBranch } from '../../openedRepository';
+import { FossilBranch, OpenedRepository } from '../../openedRepository';
 import { Status } from '../../repository';
 import { eventToPromise } from '../../util';
 import { LineChange } from '../../revert';
@@ -330,4 +330,40 @@ export async function fossil_revert_change(
     await document.save();
 
     await vscode.commands.executeCommand('fossil.revertChange'); // ranch coverage
+}
+
+export async function fossil_pull_with_autoUpdate_on(
+    sandbox: sinon.SinonSandbox,
+    _executable: FossilExecutable
+): Promise<void> {
+    const model = vscode.extensions.getExtension('koog1000.fossil')!
+        .exports as Model;
+    const repository: OpenedRepository = (model.repositories[0] as any)
+        .repository;
+    const execStub = sandbox.stub(repository, 'exec');
+    const updateCall = execStub.withArgs(['update']);
+    execStub.callThrough();
+    await vscode.commands.executeCommand('fossil.pull');
+    assert.ok(updateCall.calledOnce);
+}
+
+export async function fossil_pull_with_autoUpdate_off(
+    sandbox: sinon.SinonSandbox,
+    _executable: FossilExecutable
+): Promise<void> {
+    const model = vscode.extensions.getExtension('koog1000.fossil')!
+        .exports as Model;
+    const repository: OpenedRepository = (model.repositories[0] as any)
+        .repository;
+    const fossilConfig = vscode.workspace.getConfiguration(
+        'fossil',
+        vscode.workspace.workspaceFolders![0].uri
+    );
+    await fossilConfig.update('autoUpdate', false);
+    const execStub = sandbox.stub(repository, 'exec');
+    const updateCall = execStub.withArgs(['pull']);
+    updateCall.resolves(undefined); // stub as 'undefined' as we can't do pull
+    execStub.callThrough();
+    await vscode.commands.executeCommand('fossil.pull');
+    assert.ok(updateCall.calledOnce);
 }

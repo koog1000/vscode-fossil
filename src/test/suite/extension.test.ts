@@ -15,6 +15,8 @@ import {
     fossil_ignore,
     fossil_merge,
     fossil_open_files,
+    fossil_pull_with_autoUpdate_off,
+    fossil_pull_with_autoUpdate_on,
     fossil_rename_a_directory,
     fossil_rename_a_file,
     fossil_revert_change,
@@ -144,6 +146,12 @@ suite('Fossil.OpenedRepo', function () {
     );
     test('fossil revert change', () =>
         fossil_revert_change(sandbox, executable)).timeout(11000);
+
+    test('fossil pull with autoUpdate on', () =>
+        fossil_pull_with_autoUpdate_on(sandbox, executable)).timeout(5000);
+
+    test('fossil pull with autoUpdate off', () =>
+        fossil_pull_with_autoUpdate_off(sandbox, executable)).timeout(5000);
 
     afterEach(() => {
         sandbox.restore();

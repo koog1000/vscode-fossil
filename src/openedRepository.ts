@@ -365,7 +365,7 @@ export class OpenedRepository {
     }
 
     async pull(options: PullOptions): Promise<void> {
-        await this.exec(['pull', ...(options?.autoUpdate ? ['update'] : [])]);
+        await this.exec([options?.autoUpdate ? 'update' : 'pull']);
     }
 
     async push(): Promise<void> {
