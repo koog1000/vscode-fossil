@@ -67,3 +67,23 @@ export async function fossilOpen(
     const res = await executable.exec(rootPath.fsPath as FossilCWD, ['info']);
     assert.ok(/check-ins:\s+1\s*$/.test(res.stdout));
 }
+
+export async function add(
+    executable: FossilExecutable,
+    filename: string,
+    content: string,
+    message: string,
+    action: 'ADDED' | 'SKIP' = 'ADDED'
+): Promise<vscode.Uri> {
+    const rootUri = vscode.workspace.workspaceFolders![0].uri;
+    const cwd = rootUri.fsPath as FossilCWD;
+    const fileUri = vscode.Uri.joinPath(rootUri, filename);
+    await fs.promises.writeFile(fileUri.fsPath, content);
+    const addRes = await executable.exec(cwd, ['add', filename]);
+    assert.match(
+        addRes.stdout.trimEnd(),
+        new RegExp(`${action}\\s+${filename}`)
+    );
+    await executable.exec(cwd, ['commit', filename, '-m', message]);
+    return fileUri;
+}

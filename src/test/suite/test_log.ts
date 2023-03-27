@@ -2,30 +2,10 @@ import * as vscode from 'vscode';
 import * as sinon from 'sinon';
 import { FossilExecutable } from '../../fossilExecutable';
 import * as assert from 'assert/strict';
-import * as fs from 'fs/promises';
 import { toFossilUri } from '../../uri';
 import { Model } from '../../model';
 import { FossilCWD } from '../../fossilExecutable';
-
-async function add(
-    executable: FossilExecutable,
-    filename: string,
-    content: string,
-    message: string,
-    action: 'ADDED' | 'SKIP' = 'ADDED'
-): Promise<vscode.Uri> {
-    const rootUri = vscode.workspace.workspaceFolders![0].uri;
-    const cwd = rootUri.fsPath as FossilCWD;
-    const fileUri = vscode.Uri.joinPath(rootUri, filename);
-    await fs.writeFile(fileUri.fsPath, content);
-    const addRes = await executable.exec(cwd, ['add', filename]);
-    assert.match(
-        addRes.stdout.trimEnd(),
-        new RegExp(`${action}\\s+${filename}`)
-    );
-    await executable.exec(cwd, ['commit', filename, '-m', message]);
-    return fileUri;
-}
+import { add } from './common';
 
 export async function fossil_file_log_can_diff_files(
     sandbox: sinon.SinonSandbox,
