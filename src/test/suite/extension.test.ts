@@ -21,7 +21,10 @@ import {
     fossil_rename_a_file,
     fossil_revert_change,
 } from './test_commands';
-import { fossil_file_log_can_diff_files } from './test_log';
+import {
+    fossil_can_amend_commit_message,
+    fossil_file_log_can_diff_files,
+} from './test_log';
 import { fossilInit, fossilOpen } from './common';
 import {
     fossil_undo_and_redo_warning,
@@ -152,6 +155,9 @@ suite('Fossil.OpenedRepo', function () {
 
     test('fossil pull with autoUpdate off', () =>
         fossil_pull_with_autoUpdate_off(sandbox, executable)).timeout(5000);
+
+    test('fossil can amend commit message', () =>
+        fossil_can_amend_commit_message(sandbox, executable)).timeout(5000);
 
     afterEach(() => {
         sandbox.restore();
