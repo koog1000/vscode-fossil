@@ -72,7 +72,7 @@ export async function add(
     executable: FossilExecutable,
     filename: string,
     content: string,
-    message: string,
+    commitMessage: string,
     action: 'ADDED' | 'SKIP' = 'ADDED'
 ): Promise<vscode.Uri> {
     const rootUri = vscode.workspace.workspaceFolders![0].uri;
@@ -84,6 +84,6 @@ export async function add(
         addRes.stdout.trimEnd(),
         new RegExp(`${action}\\s+${filename}`)
     );
-    await executable.exec(cwd, ['commit', filename, '-m', message]);
+    await executable.exec(cwd, ['commit', filename, '-m', commitMessage]);
     return fileUri;
 }
