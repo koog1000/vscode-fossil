@@ -88,8 +88,43 @@ export async function fossil_file_log_can_diff_files(
             }
         );
     executeCommand.callThrough();
-    // callsFake()
 
     await vscode.commands.executeCommand('fossil.fileLog', file2uri);
     assert.equal(showQuickPick.callCount, 2);
+}
+
+export async function fossil_can_amend_commit_message(
+    sandbox: sinon.SinonSandbox,
+    executable: FossilExecutable
+): Promise<void> {
+    const rootUri = vscode.workspace.workspaceFolders![0].uri;
+    const cwd = rootUri.fsPath as FossilCWD;
+
+    await executable.exec(cwd, ['revert']);
+    await executable.exec(cwd, ['clean']);
+    await add(executable, 'amend.txt', '\n', 'message to amend');
+
+    const showQuickPick = sandbox.stub(vscode.window, 'showQuickPick');
+    showQuickPick.onFirstCall().callsFake(items => {
+        assert.ok(items instanceof Array);
+        assert.equal(items[0].label, '$(git-branch) trunk');
+        return Promise.resolve(items[0]);
+    });
+    showQuickPick.onSecondCall().callsFake(items => {
+        assert.ok(items instanceof Array);
+        assert.equal(items[1].label, '$(tag) Current');
+        return Promise.resolve(items[1]);
+    });
+    showQuickPick.onThirdCall().callsFake(items => {
+        assert.ok(items instanceof Array);
+        assert.equal(items[1].label, '$(edit) Edit commit message');
+        return Promise.resolve(items[1]);
+    });
+    const showInputBoxstub = sandbox.stub(vscode.window, 'showInputBox');
+    showInputBoxstub.resolves('updated commit message');
+
+    await vscode.commands.executeCommand('fossil.log');
+
+    const stdout = (await executable.exec(cwd, ['info'])).stdout;
+    assert.ok(stdout.match(/updated commit message/m));
 }
