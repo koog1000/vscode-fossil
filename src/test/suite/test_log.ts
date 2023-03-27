@@ -11,13 +11,18 @@ async function add(
     executable: FossilExecutable,
     filename: string,
     content: string,
-    message: string
+    message: string,
+    action: 'ADDED' | 'SKIP' = 'ADDED'
 ): Promise<vscode.Uri> {
     const rootUri = vscode.workspace.workspaceFolders![0].uri;
     const cwd = rootUri.fsPath as FossilCWD;
     const fileUri = vscode.Uri.joinPath(rootUri, filename);
     await fs.writeFile(fileUri.fsPath, content);
-    await executable.exec(cwd, ['add', filename]);
+    const addRes = await executable.exec(cwd, ['add', filename]);
+    assert.match(
+        addRes.stdout.trimEnd(),
+        new RegExp(`${action}\\s+${filename}`)
+    );
     await executable.exec(cwd, ['commit', filename, '-m', message]);
     return fileUri;
 }
@@ -32,20 +37,34 @@ export async function fossil_file_log_can_diff_files(
     await executable.exec(cwd, ['revert']);
     await executable.exec(cwd, ['clean']);
     await add(executable, 'file1.txt', 'line1\n', 'file1.txt: first');
-    await add(executable, 'file1.txt', 'line1\nline2\n', 'file1.txt: second');
+    await add(
+        executable,
+        'file1.txt',
+        'line1\nline2\n',
+        'file1.txt: second',
+        'SKIP'
+    );
     await add(
         executable,
         'file1.txt',
         'line1\nline2\nline3\n',
-        'file1.txt: third'
+        'file1.txt: third',
+        'SKIP'
     );
     await add(executable, 'file2.txt', 'line1\n', 'file2.txt: first');
-    await add(executable, 'file2.txt', 'line1\nline2\n', 'file2.txt: second');
+    await add(
+        executable,
+        'file2.txt',
+        'line1\nline2\n',
+        'file2.txt: second',
+        'SKIP'
+    );
     const file2uri = await add(
         executable,
         'file2.txt',
         'line1\nline2\nline3\n',
-        'file2.txt: third'
+        'file2.txt: third',
+        'SKIP'
     );
     const showQuickPick = sandbox.stub(vscode.window, 'showQuickPick');
     showQuickPick.onFirstCall().callsFake(items => {
