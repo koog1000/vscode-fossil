@@ -20,6 +20,7 @@ import {
     fossil_rename_a_directory,
     fossil_rename_a_file,
     fossil_revert_change,
+    fossil_revert_single_resource,
 } from './test_commands';
 import {
     fossil_can_amend_commit_message,
@@ -158,6 +159,10 @@ suite('Fossil.OpenedRepo', function () {
 
     test('fossil can amend commit message', () =>
         fossil_can_amend_commit_message(sandbox, executable)).timeout(5000);
+
+    test('fossil revert single resource', () =>
+        fossil_revert_single_resource(sandbox, executable)
+    ).timeout(12000);
 
     afterEach(() => {
         sandbox.restore();
