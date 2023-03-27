@@ -1,7 +1,7 @@
 import * as vscode from 'vscode';
 import * as sinon from 'sinon';
 import { FossilExecutable, FossilCWD } from '../../fossilExecutable';
-import { fossilInit, fossilOpen } from './common';
+import { add, fossilInit, fossilOpen } from './common';
 import * as assert from 'assert/strict';
 import * as fs from 'fs/promises';
 import { existsSync } from 'fs';
@@ -366,4 +366,32 @@ export async function fossil_pull_with_autoUpdate_off(
     execStub.callThrough();
     await vscode.commands.executeCommand('fossil.pull');
     assert.ok(updateCall.calledOnce);
+}
+
+export async function fossil_revert_single_resource(
+    sandbox: sinon.SinonSandbox,
+    executable: FossilExecutable
+): Promise<void> {
+    const url = await add(
+        executable,
+        'revert_me.txt',
+        'Some original text\n',
+        'add revert_me.txt'
+    );
+    await fs.writeFile(url.fsPath, 'something new');
+    const model = vscode.extensions.getExtension('koog1000.fossil')!
+        .exports as Model;
+    const repository = model.repositories[0];
+    await repository.updateModelState();
+    const resource = repository.workingGroup.getResource(url);
+
+    const showWarningMessage: sinon.SinonStub = sandbox.stub(
+        vscode.window,
+        'showWarningMessage'
+    );
+    showWarningMessage.onFirstCall().resolves('&&Discard Changes');
+
+    await vscode.commands.executeCommand('fossil.revert', resource);
+    const newContext = await fs.readFile(url.fsPath);
+    assert.equal(newContext.toString('utf-8'), 'Some original text\n');
 }
