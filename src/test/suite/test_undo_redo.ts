@@ -3,7 +3,7 @@ import { Uri } from 'vscode';
 import * as sinon from 'sinon';
 import * as assert from 'assert/strict';
 import * as fs from 'fs';
-import { Model } from '../../model';
+import { getRepository } from './common';
 
 export async function fossil_undo_and_redo_warning(
     sandbox: sinon.SinonSandbox
@@ -34,9 +34,7 @@ export async function fossil_undo_and_redo_working(
     const undoTxtPath = Uri.joinPath(rootUri, 'undo-fuarw.txt').fsPath;
     await fs.promises.writeFile(undoTxtPath, 'line\n');
 
-    const model = vscode.extensions.getExtension('koog1000.fossil')!
-        .exports as Model;
-    const repository = model.repositories[0];
+    const repository = getRepository();
     await repository.updateModelState();
     assert.ok(repository.untrackedGroup.resourceStates.length == 1);
 

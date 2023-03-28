@@ -3,10 +3,10 @@ import { Uri } from 'vscode';
 import * as sinon from 'sinon';
 import { FossilExecutable, FossilCWD } from '../../fossilExecutable';
 import * as fs from 'fs';
-import { Model } from '../../model';
 import { Repository, Status } from '../../repository';
 import { FossilResourceGroup } from '../../resourceGroups';
 import * as assert from 'assert/strict';
+import { getRepository } from './common';
 
 export function assertGroups(
     repository: Repository,
@@ -40,9 +40,7 @@ export async function status_missing_is_visible_in_source_control_panel(
         '--no-warnings',
     ]);
     await fs.promises.unlink(fooPath);
-    const model = vscode.extensions.getExtension('koog1000.fossil')!
-        .exports as Model;
-    const repository = model.repositories[0];
+    const repository = getRepository();
     await repository.updateModelState();
     assertGroups(repository, new Map([[fooPath, Status.MISSING]]), new Map());
 }
@@ -60,9 +58,7 @@ export async function status_rename_is_visible_in_source_control_panel(
     await fs.promises.writeFile(fooPath, 'test\n');
     const addRes = await executable.exec(cwd, ['add', oldFilename]);
     assert.equal(addRes.stdout, `ADDED  ${oldFilename}\n`);
-    const model = vscode.extensions.getExtension('koog1000.fossil')!
-        .exports as Model;
-    const repository = model.repositories[0];
+    const repository = getRepository();
     await repository.updateModelState();
     assertGroups(repository, new Map([[fooPath, Status.ADDED]]), new Map());
 
@@ -113,9 +109,7 @@ export async function status_merge_integrate_is_visible_in_source_control_panel(
 
     await executable.exec(cwd, ['update', 'trunk']);
     await executable.exec(cwd, ['merge', 'test_brunch']);
-    const model = vscode.extensions.getExtension('koog1000.fossil')!
-        .exports as Model;
-    const repository = model.repositories[0];
+    const repository = getRepository();
     await repository.updateModelState();
     assertGroups(
         repository,

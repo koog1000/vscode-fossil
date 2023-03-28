@@ -4,6 +4,8 @@ import * as vscode from 'vscode';
 import * as sinon from 'sinon';
 import * as fs from 'fs';
 import { FossilExecutable, FossilCWD } from '../../fossilExecutable';
+import { Model } from '../../model';
+import { Repository } from '../../repository';
 
 export async function fossilInit(
     sandbox: sinon.SinonSandbox,
@@ -45,6 +47,13 @@ export async function fossilInit(
     );
     assert.ok(showInformationMessage.calledOnce);
     sandbox.restore();
+}
+
+export function getRepository(): Repository {
+    const extension = vscode.extensions.getExtension('koog1000.fossil');
+    assert.ok(extension);
+    const model = extension.exports as Model;
+    return model.repositories[0];
 }
 
 export async function fossilOpen(
