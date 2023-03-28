@@ -407,5 +407,23 @@ export async function fossil_open_resource(
 
     assert.ok(diffCall.calledOnce);
 
-    await vscode.commands.executeCommand('fossil.openResource', undefined);
+    await vscode.commands.executeCommand('fossil.openResource');
+}
+
+export async function fossil_add(): Promise<void> {
+    const root = vscode.workspace.workspaceFolders![0].uri;
+    const uri = vscode.Uri.joinPath(root, 'add.txt');
+    await fs.writeFile(uri.fsPath, 'fossil_add');
+
+    const repository = getRepository();
+    await repository.updateModelState();
+    const resource = repository.untrackedGroup.getResource(uri);
+    assert.ok(resource);
+
+    await vscode.commands.executeCommand('fossil.add', resource);
+    await repository.updateModelState();
+    assert(!repository.untrackedGroup.includesUri(uri));
+    assert(repository.stagingGroup.includesUri(uri));
+    await vscode.commands.executeCommand('fossil.add');
+    await vscode.commands.executeCommand('fossil.add', undefined);
 }

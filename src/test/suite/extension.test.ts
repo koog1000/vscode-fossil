@@ -11,6 +11,7 @@ import {
     status_rename_is_visible_in_source_control_panel,
 } from './test_status';
 import {
+    fossil_add,
     fossil_close,
     fossil_ignore,
     fossil_merge,
@@ -166,6 +167,8 @@ suite('Fossil.OpenedRepo', function () {
 
     test('fossil open resource', () =>
         fossil_open_resource(sandbox, executable)).timeout(12000);
+
+    test('fossil add', () => fossil_add()).timeout(5000);
 
     afterEach(() => {
         sandbox.restore();
