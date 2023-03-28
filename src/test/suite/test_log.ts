@@ -3,9 +3,8 @@ import * as sinon from 'sinon';
 import { FossilExecutable } from '../../fossilExecutable';
 import * as assert from 'assert/strict';
 import { toFossilUri } from '../../uri';
-import { Model } from '../../model';
 import { FossilCWD } from '../../fossilExecutable';
-import { add } from './common';
+import { add, getRepository } from './common';
 
 export async function fossil_file_log_can_diff_files(
     sandbox: sinon.SinonSandbox,
@@ -58,9 +57,7 @@ export async function fossil_file_log_can_diff_files(
         return Promise.resolve(items[0]);
     });
 
-    const model = vscode.extensions.getExtension('koog1000.fossil')!
-        .exports as Model;
-    const repository = model.repositories[0];
+    const repository = getRepository();
 
     const executeCommand = sandbox.stub(vscode.commands, 'executeCommand');
     executeCommand
