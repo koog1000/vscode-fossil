@@ -384,6 +384,7 @@ export async function fossil_revert_single_resource(
     const repository = model.repositories[0];
     await repository.updateModelState();
     const resource = repository.workingGroup.getResource(url);
+    assert.ok(resource);
 
     const showWarningMessage: sinon.SinonStub = sandbox.stub(
         vscode.window,
@@ -394,4 +395,34 @@ export async function fossil_revert_single_resource(
     await vscode.commands.executeCommand('fossil.revert', resource);
     const newContext = await fs.readFile(url.fsPath);
     assert.equal(newContext.toString('utf-8'), 'Some original text\n');
+}
+
+export async function fossil_open_resource(
+    sandbox: sinon.SinonSandbox,
+    executable: FossilExecutable
+): Promise<void> {
+    const url = await add(
+        executable,
+        'open_resource.txt',
+        'Some original text\n',
+        'add open_resource.txt'
+    );
+    await fs.writeFile(url.fsPath, 'something new');
+
+    const model = vscode.extensions.getExtension('koog1000.fossil')!
+        .exports as Model;
+    const repository = model.repositories[0];
+    await repository.updateModelState();
+    const resource = repository.workingGroup.getResource(url);
+    assert.ok(resource);
+
+    const execStub = sandbox.stub(vscode.commands, 'executeCommand');
+    const diffCall = execStub.withArgs('vscode.diff');
+    execStub.callThrough();
+
+    await vscode.commands.executeCommand('fossil.openResource', resource);
+
+    assert.ok(diffCall.calledOnce);
+
+    await vscode.commands.executeCommand('fossil.openResource', undefined);
 }
