@@ -23,8 +23,8 @@ export function run(): Promise<void> {
             try {
                 // Run the mocha test
                 mocha.run(failures => {
+                    /* c8 ignore next 2 */
                     if (failures > 0) {
-                        /* c8 ignore next */
                         e(new Error(`${failures} tests failed.`));
                     } else {
                         c();
