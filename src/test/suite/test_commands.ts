@@ -427,3 +427,53 @@ export async function fossil_add(): Promise<void> {
     await vscode.commands.executeCommand('fossil.add');
     await vscode.commands.executeCommand('fossil.add', undefined);
 }
+
+export async function fossil_change_branch_to_trunk(
+    sandbox: sinon.SinonSandbox
+): Promise<void> {
+    const repository = getRepository();
+    const openedRepository: OpenedRepository = (repository as any).repository;
+    const execStub = sandbox.stub(openedRepository, 'exec');
+    const updateCall = execStub.withArgs(['update', 'trunk']);
+    updateCall.resolves(undefined);
+    execStub.callThrough();
+
+    const showQuickPick = sandbox.stub(vscode.window, 'showQuickPick');
+    showQuickPick.onFirstCall().callsFake(items => {
+        assert.ok(items instanceof Array);
+        assert.equal(items[2].label, '$(git-branch) trunk');
+        return Promise.resolve(items[2]);
+    });
+
+    await vscode.commands.executeCommand('fossil.branchChange');
+
+    assert.ok(updateCall.calledOnce);
+}
+
+export async function fossil_change_branch_to_hash(
+    sandbox: sinon.SinonSandbox,
+    executable: FossilExecutable
+): Promise<void> {
+    const cwd = vscode.workspace.workspaceFolders![0].uri.fsPath as FossilCWD;
+    await executable.exec(cwd, ['revert']);
+    await executable.exec(cwd, ['clean']);
+
+    const repository = getRepository();
+    const openedRepository: OpenedRepository = (repository as any).repository;
+    const execStub = sandbox.stub(openedRepository, 'exec');
+    const updateCall = execStub.withArgs(['update', '1234567890']);
+    updateCall.resolves(undefined);
+    execStub.callThrough();
+
+    const showQuickPick = sandbox.stub(vscode.window, 'showQuickPick');
+    showQuickPick.onFirstCall().callsFake(items => {
+        assert.ok(items instanceof Array);
+        assert.equal(items[0].label, '$(pencil) Checkout by hash');
+        return Promise.resolve(items[0]);
+    });
+    const showInputBox = sandbox.stub(vscode.window, 'showInputBox');
+    showInputBox.onFirstCall().resolves('1234567890');
+    await vscode.commands.executeCommand('fossil.branchChange');
+
+    assert.ok(updateCall.calledOnce);
+}
