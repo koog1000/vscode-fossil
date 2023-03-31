@@ -163,7 +163,9 @@ async function exec(
         }
         const stringThatMightBePrompt = buffers[buffers.length - 1].toString();
         if (/[:?]\s?$/.test(stringThatMightBePrompt)) {
-            const stdout = Buffer.concat(buffers).toString('utf8');
+            const stdout = Buffer.concat(buffers).toString(
+                'utf8'
+            ) as FossilStdOut;
             buffers.length = 0;
             const resp = await interaction.inputPrompt(stdout, args);
             child.stdin.write(resp + '\n');

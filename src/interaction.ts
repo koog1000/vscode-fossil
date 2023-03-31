@@ -40,7 +40,7 @@ import { humanise } from './humanise';
 import { Repository, LogEntriesOptions } from './repository';
 import typedConfig from './config';
 import { localize } from './main';
-import { FossilArgs, FossilCWD } from './fossilExecutable';
+import { FossilArgs, FossilCWD, FossilStdOut } from './fossilExecutable';
 
 const SHORT_HASH_LENGTH = 12;
 const LONG_HASH_LENGTH = SHORT_HASH_LENGTH * 2;
@@ -356,7 +356,7 @@ export namespace interaction {
     }
 
     export async function inputPrompt(
-        stdout: string,
+        stdout: FossilStdOut,
         args: FossilArgs
     ): Promise<string | undefined> {
         const title = 'Fossil Request';
