@@ -1143,8 +1143,6 @@ export class CommandCenter {
 
     @command('fossil.branchChange', { repository: true })
     async branchChange(repository: Repository): Promise<void> {
-        const unclean = false;
-
         // branches/tags
         if (await interaction.checkThenWarnOutstandingMerge(repository)) {
             this.focusScm();
@@ -1153,10 +1151,9 @@ export class CommandCenter {
         await interaction.checkThenWarnUnclean(repository, WarnScenario.Update);
         const refs = await repository.getBranchesAndTags();
 
-        const choice = await interaction.pickUpdateRevision(refs, unclean);
-
-        if (choice) {
-            await choice.run(repository);
+        const checkin = await interaction.pickUpdateCheckin(refs);
+        if (checkin) {
+            repository.update(checkin);
         }
     }
 
