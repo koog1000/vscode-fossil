@@ -405,7 +405,7 @@ ${escapeHtml(stdout)}
             | 'repourl'
             | 'project name'
             | 'project description'
-            | 'tecknote comment'
+            | 'technote comment'
             | 'wiki entry',
         message: string,
         extra: InputBoxOptions = {}
@@ -449,7 +449,7 @@ ${escapeHtml(stdout)}
         switch (what) {
             case 'Technote':
                 return inputCommon(
-                    'tecknote comment',
+                    'technote comment',
                     'Timeline comment of the technote'
                 );
             case 'Wiki':
@@ -883,7 +883,7 @@ ${escapeHtml(stdout)}
             new LiteralRunnableQuickPickItem(
                 `$(arrow-left)${NBSP}${NBSP}Go back`,
                 '',
-                'Selct first commit',
+                'Select first commit',
                 backAction
             ),
             {
@@ -1323,7 +1323,7 @@ interface LogSourcePickItem extends QuickPickItem {
 }
 
 /**
- * Simples possible `RunnableQuickPickItem`
+ * Simplest possible `RunnableQuickPickItem`
  */
 export class LiteralRunnableQuickPickItem extends RunnableQuickPickItem {
     constructor(
