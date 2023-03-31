@@ -23,6 +23,8 @@ about cloning from the extension.
 
 * Branch, merge, resolve files.
 
+* Praise
+
 * Quickly switch branches, push and pull via status bar.
 
 * Supports named-branches workflows.
@@ -55,6 +57,41 @@ about cloning from the extension.
 
   * The current branch name is shown in the bottom-left corner.
   * Click it to see a list of branches and tags that you can update to.
+
+# How to
+
+## How to
+
+* **Checkout by hash?**
+
+  Use branch menu in the status bar.
+
+* **Create a new branch?**
+
+  Create a branch with "Commit Creating New Branch..." action in SCM menu or in command palette.
+
+* **Modify commit message?**
+
+  Use "Fossil log" from command palette and navigate the options till specific checkout.
+
+* **Get current checkout hash?**
+
+  Not possible yet using UI.
+
+* **Close/reopen a branch?**
+
+  Use 'Close branch...' and 'Reopen branch...' actions from command palette.
+
+* **Commit partially**
+
+  1. Run `Stash Snapshot` command
+  2. Manually remove lines that you don't want in the commit
+  3. Make a commit
+  4. Run `Stash Pop`
+
+* **Blame**
+
+  Use `Fossil: praise` command from command palette
 
 # Settings
 
@@ -109,21 +146,15 @@ Reference that documentation as much as possible.
 [pull requests](https://github.com/koog1000/vscode-fossil/pulls).
 
 
-# Building Extension from Source
-**Note:** The official way to install vscode-fossil is from within
-[VSCode Extensions](https://code.visualstudio.com/docs/editor/extension-gallery#_browse-for-extensions)
+### For developers
 
-### Dependencies
-You will need to install [Node.js](https://nodejs.org/en/download/)
-on your computer and add it to your `$PATH`.
-
-### Build Steps
-1. `git clone` repository anywhere on your filesystem.
-2. `npm install` from clone directory to install local dependencies.
-3. `npm run compile` to build extension.
-4. press `F5` to run the extension.
+* [Building and debugging](docs/dev/build.md)
+* [Api behavior](docs/dev/api.md)
+* [Releasing](docs/dev/release.md)
 
 # Acknowledgements
 
 [Ben Crowl](https://github.com/mrcrowl),
+[koog1000](https://github.com/koog1000),
+[senyai](https://github.com/senyai),
 [ajansveld](https://github.com/ajansveld), [hoffmael](https://github.com/hoffmael), [nioh-wiki](https://github.com/nioh-wiki), [joaomoreno](https://github.com/joaomoreno), [nsgundy](https://github.com/nsgundy)
