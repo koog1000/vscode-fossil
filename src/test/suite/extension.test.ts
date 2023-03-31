@@ -12,6 +12,8 @@ import {
 } from './test_status';
 import {
     fossil_add,
+    fossil_change_branch_to_hash,
+    fossil_change_branch_to_trunk,
     fossil_close,
     fossil_ignore,
     fossil_merge,
@@ -169,6 +171,11 @@ suite('Fossil.OpenedRepo', function () {
         fossil_open_resource(sandbox, executable)).timeout(12000);
 
     test('fossil add', () => fossil_add()).timeout(5000);
+
+    test('fossil change branch to trunk', () =>
+        fossil_change_branch_to_trunk(sandbox)).timeout(5000);
+    test('fossil_change_branch_to_hash', () =>
+        fossil_change_branch_to_hash(sandbox, executable)).timeout(5000);
 
     afterEach(() => {
         sandbox.restore();
