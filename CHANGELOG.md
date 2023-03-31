@@ -1,5 +1,13 @@
 # Changelog
 
+# v0.2.4
+
+### What's New
+
+- "Praise" (blame) command
+- "Checkout by hash" command in branch change menu (see statusbar)
+
+
 # v0.2.3
 
 ### Bug Fixes
