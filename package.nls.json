@@ -21,7 +21,7 @@
     "command.commitBranch": "Commit Creating New Branch...",
     "command.undo": "Undo",
     "command.redo": "Redo",
-    "command.update": "Update to...",
+    "command.branchChange": "Change Branch / Update to...",
     "command.branch": "Create Branch...",
     "command.pull": "Pull",
     "command.push": "Push",

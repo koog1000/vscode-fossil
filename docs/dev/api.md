@@ -63,5 +63,4 @@ _Work in progress_.
 | fossil.undo | Undo | •&nbsp;Main SCM menu<br>•&nbsp;Command palette | execute `fossil undo`
 | fossil.unstage | Unstage Changes |
 | fossil.unstageAll | Unstage All Changes |
-| fossil.update | Update to... |
 | fossil.wikiCreate | Publish as Fossil Wiki or Technote |

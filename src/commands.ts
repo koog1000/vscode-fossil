@@ -1141,30 +1141,6 @@ export class CommandCenter {
         return this.stashApplyOrDrop(repository, 'drop');
     }
 
-    @command('fossil.update', { repository: true })
-    async update(repository: Repository): Promise<void> {
-        const unclean = false;
-
-        // branches/tags
-        if (
-            (await interaction.checkThenWarnOutstandingMerge(repository)) ||
-            (await interaction.checkThenErrorUnclean(
-                repository,
-                WarnScenario.Update
-            ))
-        ) {
-            this.focusScm();
-            return;
-        }
-        const refs = await repository.getBranchesAndTags();
-
-        const choice = await interaction.pickUpdateRevision(refs, unclean);
-
-        if (choice) {
-            await choice.run(repository);
-        }
-    }
-
     @command('fossil.branchChange', { repository: true })
     async branchChange(repository: Repository): Promise<void> {
         const unclean = false;

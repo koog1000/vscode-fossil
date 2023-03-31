@@ -300,8 +300,8 @@
                 "icon": "$(remove)"
             },
             {
-                "command": "fossil.update",
-                "title": "%command.update%",
+                "command": "fossil.branchChange",
+                "title": "%command.branchChange%",
                 "category": "Fossil"
             },
             {
@@ -453,7 +453,7 @@
                     "when": "fossilOpenRepositoryCount"
                 },
                 {
-                    "command": "fossil.update",
+                    "command": "fossil.branchChange",
                     "when": "fossilOpenRepositoryCount"
                 },
                 {
