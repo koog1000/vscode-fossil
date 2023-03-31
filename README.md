@@ -60,8 +60,6 @@ about cloning from the extension.
 
 # How to
 
-## How to
-
 * **Checkout by hash?**
 
   Use branch menu in the status bar.
