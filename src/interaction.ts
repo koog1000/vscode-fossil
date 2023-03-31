@@ -399,14 +399,15 @@ ${escapeHtml(stdout)}
         return resp;
     }
 
-    async function inputCommon(
+    export async function inputCommon(
         this: void,
         key:
             | 'repourl'
             | 'project name'
             | 'project description'
             | 'technote comment'
-            | 'wiki entry',
+            | 'wiki entry'
+            | 'commit hash',
         message: string,
         extra: InputBoxOptions = {}
     ): Promise<string | undefined> {
@@ -568,31 +569,44 @@ ${escapeHtml(stdout)}
         branches: BranchDetails[],
         placeHolder: string
     ): Promise<FossilBranch | undefined> {
-        const headChoices = branches.map(head => new UpdateBranchItem(head));
+        const headChoices = branches.map(head => new BranchItem(head));
         const choice = await window.showQuickPick(headChoices, { placeHolder });
         return choice?.checkin;
     }
 
-    export async function pickUpdateRevision(
-        refs: [BranchDetails[], FossilTag[]],
-        unclean = false
-    ): Promise<
-        UpdatingItem<FossilBranch> | UpdatingItem<FossilTag> | undefined
-    > {
-        const branches = refs[0].map(ref => new UpdateBranchItem(ref));
-        const tags = refs[1].map(ref => new UpdateTagItem(ref));
-        const picks = [...branches, ...tags];
-        const revType = 'branch/tag';
+    export async function pickUpdateCheckin(
+        refs: [BranchDetails[], FossilTag[]]
+    ): Promise<FossilCheckin | undefined> {
+        const branches = refs[0].map(ref => new BranchItem(ref));
+        const tags = refs[1].map(ref => new TagItem(ref));
+        const picks = [
+            new UserInputItem(),
+            {
+                kind: QuickPickItemKind.Separator,
+                label: '',
+                run: () => {
+                    /* separator action */
+                },
+                description: '',
+            } as RunnableQuickPickItem,
+            ...branches,
+            ...tags,
+        ];
 
-        const placeHolder = `Select a ${revType} to update to: ${
-            unclean
-                ? '(only showing local branches while working directory unclean)'
-                : ''
-        }`;
-        const choice = await window.showQuickPick(picks, {
-            placeHolder,
+        let result:
+            | CheckinItem<FossilCheckin>
+            | RunnableQuickPickItem
+            | undefined = await window.showQuickPick(picks, {
+            placeHolder: 'Select a branch/tag to update to:',
+            matchOnDescription: true,
         });
-        return choice;
+        while (result) {
+            if (result instanceof CheckinItem) {
+                return result.checkin;
+            }
+            result = await result.run();
+        }
+        return undefined;
     }
 
     function describeLogEntrySource(kind: CommitSources): string {
@@ -1196,7 +1210,6 @@ ${escapeHtml(stdout)}
 
 abstract class RunnableQuickPickItem implements QuickPickItem {
     abstract get label(): string;
-    abstract get description(): string;
     abstract run(): RunnableReturnType;
 }
 
@@ -1253,18 +1266,11 @@ class RunnableTimelineEntryItem extends TimelineEntryItem {
     }
 }
 
-abstract class UpdatingItem<T extends FossilCheckin> {
-    constructor(public checkin: T) {}
-
-    async run(repository: Repository): Promise<void> {
-        await repository.update(this.checkin);
-    }
+class CheckinItem<T extends FossilCheckin> {
+    constructor(public readonly checkin: T) {}
 }
 
-class UpdateBranchItem
-    extends UpdatingItem<FossilBranch>
-    implements QuickPickItem
-{
+class BranchItem extends CheckinItem<FossilBranch> implements QuickPickItem {
     get label(): string {
         return `$(git-branch) ${this.checkin}`;
     }
@@ -1279,7 +1285,7 @@ class UpdateBranchItem
     }
 }
 
-class UpdateTagItem extends UpdatingItem<FossilTag> implements QuickPickItem {
+class TagItem extends CheckinItem<FossilTag> implements QuickPickItem {
     get label(): string {
         return `$(tag) ${this.checkin}`;
     }
@@ -1325,7 +1331,7 @@ interface LogSourcePickItem extends QuickPickItem {
 /**
  * Simplest possible `RunnableQuickPickItem`
  */
-export class LiteralRunnableQuickPickItem extends RunnableQuickPickItem {
+class LiteralRunnableQuickPickItem extends RunnableQuickPickItem {
     constructor(
         public readonly label: string,
         public readonly description: string,
@@ -1337,6 +1343,22 @@ export class LiteralRunnableQuickPickItem extends RunnableQuickPickItem {
 
     run(): RunnableReturnType {
         return this._action();
+    }
+}
+
+class UserInputItem extends RunnableQuickPickItem implements QuickPickItem {
+    readonly alwaysShow = true;
+    readonly label = '$(pencil) Checkout by hash';
+
+    async run(): Promise<CheckinItem<FossilCheckin> | undefined> {
+        const userInput = await interaction.inputCommon(
+            'commit hash',
+            'Commit hash to checkout'
+        );
+        if (userInput) {
+            return new CheckinItem(userInput as FossilCheckin);
+        }
+        return undefined;
     }
 }
 
