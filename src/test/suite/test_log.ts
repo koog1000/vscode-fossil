@@ -122,5 +122,5 @@ export async function fossil_can_amend_commit_message(
     await vscode.commands.executeCommand('fossil.log');
 
     const stdout = (await executable.exec(cwd, ['info'])).stdout;
-    assert.ok(stdout.match(/updated commit message/m));
+    assert.match(stdout, /updated commit message/m);
 }
