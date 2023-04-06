@@ -538,13 +538,15 @@ export class OpenedRepository {
         await this.exec(['stash', operation, stashId.toString()]);
     }
 
-    getSummary(summary: string): IRepoStatus {
+    getSummary(summary: StatusString): IRepoStatus {
         const parent = this.parseParentLines(summary);
         const isMerge = /^(MERGED_WITH|CHERRYPICK)\b/m.test(summary);
         return { isMerge, parent };
     }
 
-    private parseParentLines(parentLines: string): FossilHash | undefined {
+    private parseParentLines(
+        parentLines: StatusString
+    ): FossilHash | undefined {
         const match = parentLines.match(/parent:\s+([a-f0-9]+)/);
         if (match) {
             return match[1] as FossilHash;
