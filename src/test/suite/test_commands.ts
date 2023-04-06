@@ -10,6 +10,7 @@ import { FossilBranch, OpenedRepository } from '../../openedRepository';
 import { Status } from '../../repository';
 import { eventToPromise } from '../../util';
 import { LineChange } from '../../revert';
+import { Suite, afterEach } from 'mocha';
 
 export async function fossil_close(
     sandbox: sinon.SinonSandbox,
@@ -319,7 +320,7 @@ export async function fossil_revert_change(
     assert.equal(revertedContent, content);
     await document.save();
 
-    await vscode.commands.executeCommand('fossil.revertChange'); // ranch coverage
+    await vscode.commands.executeCommand('fossil.revertChange'); // better coverage
 }
 
 export async function fossil_pull_with_autoUpdate_on(
@@ -475,5 +476,130 @@ export async function fossil_change_branch_to_hash(
     showInputBox.onFirstCall().resolves('1234567890');
     await vscode.commands.executeCommand('fossil.branchChange');
 
+    assert.ok(showInputBox.calledOnce);
     assert.ok(updateCall.calledOnce);
+}
+
+export function fossil_stash_suite(sandbox: sinon.SinonSandbox): void {
+    suite('Stash', function (this: Suite) {
+        afterEach(() => {
+            sandbox.restore();
+        });
+
+        this.timeout(12000);
+        test('Save', async () => {
+            const repository = getRepository();
+            const openedRepository: OpenedRepository = (repository as any)
+                .repository;
+            const uri = vscode.Uri.joinPath(
+                vscode.workspace.workspaceFolders![0].uri,
+                'stash.txt'
+            );
+            await fs.writeFile(uri.fsPath, 'stash me');
+
+            const showInputBox = sandbox.stub(vscode.window, 'showInputBox');
+            showInputBox.onFirstCall().resolves('stashSave commit message');
+
+            const execStub = sandbox.stub(openedRepository, 'exec');
+            const stashSave = execStub.withArgs([
+                'stash',
+                'save',
+                '-m',
+                'stashSave commit message',
+                'stash.txt',
+            ]);
+            execStub.callThrough();
+            await repository.updateModelState();
+            const resource = repository.untrackedGroup.getResource(uri);
+            assert.ok(resource);
+            await vscode.commands.executeCommand('fossil.add', resource);
+            await vscode.commands.executeCommand('fossil.stashSave');
+            assert.ok(stashSave.calledOnce);
+        });
+        test('Apply', async () => {
+            const repository = getRepository();
+            const openedRepository: OpenedRepository = (repository as any)
+                .repository;
+
+            const execStub = sandbox.stub(openedRepository, 'exec');
+            const stashApply = execStub.withArgs(['stash', 'apply', '1']);
+            const showQuickPick = sandbox.stub(vscode.window, 'showQuickPick');
+            showQuickPick.onFirstCall().callsFake(items => {
+                assert.ok(items instanceof Array);
+                assert.match(
+                    items[0].label,
+                    /\$\(circle-outline\) 1 • [a-f0-9]{12}/
+                );
+                return Promise.resolve(items[0]);
+            });
+            execStub.callThrough();
+            await vscode.commands.executeCommand('fossil.stashApply');
+            assert.ok(stashApply.calledOnce);
+        });
+        test('Drop', async () => {
+            const repository = getRepository();
+            const openedRepository: OpenedRepository = (repository as any)
+                .repository;
+
+            const execStub = sandbox.stub(openedRepository, 'exec');
+            const stashApply = execStub.withArgs(['stash', 'drop', '1']);
+            const showQuickPick = sandbox.stub(vscode.window, 'showQuickPick');
+            showQuickPick.onFirstCall().callsFake(items => {
+                assert.ok(items instanceof Array);
+                assert.match(
+                    items[0].label,
+                    /\$\(circle-outline\) 1 • [a-f0-9]{12}/
+                );
+                return Promise.resolve(items[0]);
+            });
+            execStub.callThrough();
+            await vscode.commands.executeCommand('fossil.stashDrop');
+            assert.ok(stashApply.calledOnce);
+        });
+        test('Pop', async () => {
+            const repository = getRepository();
+            const openedRepository: OpenedRepository = (repository as any)
+                .repository;
+
+            await openedRepository.exec([
+                'stash',
+                'save',
+                '-m',
+                'in test',
+                'stash.txt',
+            ]);
+            const execStub = sandbox.stub(openedRepository, 'exec');
+            const stashApply = execStub.withArgs(['stash', 'pop']);
+            execStub.callThrough();
+            await vscode.commands.executeCommand('fossil.stashPop');
+            assert.ok(stashApply.calledOnce);
+        });
+        test('Snapshot', async () => {
+            sandbox.restore();
+            const repository = getRepository();
+            const openedRepository: OpenedRepository = (repository as any)
+                .repository;
+
+            const execStub = sandbox.stub(openedRepository, 'exec');
+            const stashSnapshot = execStub.withArgs([
+                'stash',
+                'snapshot',
+                '-m',
+                'stashSnapshot commit message',
+                'stash.txt',
+            ]);
+            execStub.callThrough();
+            const showInputBox = sandbox.stub(vscode.window, 'showInputBox');
+            showInputBox.resolves('stashSnapshot commit message');
+
+            const showWarningMessage: sinon.SinonStub = sandbox.stub(
+                vscode.window,
+                'showWarningMessage'
+            );
+            showWarningMessage.onFirstCall().resolves('C&&onfirm');
+
+            await vscode.commands.executeCommand('fossil.stashSnapshot');
+            assert.ok(stashSnapshot.calledOnce);
+        });
+    });
 }

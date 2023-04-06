@@ -25,6 +25,7 @@ import {
     fossil_rename_a_file,
     fossil_revert_change,
     fossil_revert_single_resource,
+    fossil_stash_suite,
 } from './test_commands';
 import {
     fossil_can_amend_commit_message,
@@ -174,8 +175,10 @@ suite('Fossil.OpenedRepo', function () {
 
     test('fossil change branch to trunk', () =>
         fossil_change_branch_to_trunk(sandbox)).timeout(5000);
-    test('fossil_change_branch_to_hash', () =>
+    test('fossil change branch to hash', () =>
         fossil_change_branch_to_hash(sandbox, executable)).timeout(5000);
+
+    fossil_stash_suite(sandbox);
 
     afterEach(() => {
         sandbox.restore();
