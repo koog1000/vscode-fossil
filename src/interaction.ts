@@ -1235,10 +1235,8 @@ class TimelineEntryItem extends RunnableQuickPickItem {
     }
 }
 
-class StashEntryItem extends RunnableQuickPickItem {
-    constructor(public item: StashItem) {
-        super();
-    }
+class StashEntryItem implements QuickPickItem {
+    constructor(public item: StashItem) {}
     protected get age(): string {
         return humanise.ageFromNow(this.item.date);
     }
@@ -1251,9 +1249,6 @@ class StashEntryItem extends RunnableQuickPickItem {
     }
     get detail(): string {
         return this.item.comment;
-    }
-    run() {
-        // do nothing.
     }
 }
 
