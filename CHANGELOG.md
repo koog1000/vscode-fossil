@@ -1,5 +1,12 @@
 # Changelog
 
+# v0.2.5
+
+### Bug Fixes
+
+- Support fossil 2.21 new 'check-out' spelling
+
+
 # v0.2.4
 
 ### What's New
