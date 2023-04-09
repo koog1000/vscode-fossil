@@ -402,7 +402,7 @@ export class FossilExecutable {
                 if (/Authentication failed/.test(result.stderr)) {
                     return 'AuthenticationFailed';
                 } else if (
-                    /(not within an open checkout|specify the repository database|cannot find current working directory)/.test(
+                    /(not within an open check-?out|specify the repository database|cannot find current working directory)/.test(
                         result.stderr
                     ) ||
                     result.exitCode == Inline.ENOENT
