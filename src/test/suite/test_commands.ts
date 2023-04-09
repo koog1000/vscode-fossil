@@ -24,7 +24,7 @@ export async function fossil_close(
     await vscode.commands.executeCommand('fossil.close');
     const res_promise = executable.exec(cwd, ['status']);
     await assert.rejects(res_promise, (thrown: any): boolean => {
-        return /^current directory is not within an open checkout\s*$/.test(
+        return /^current directory is not within an open check-?out\s*$/.test(
             thrown.stderr
         );
     });
