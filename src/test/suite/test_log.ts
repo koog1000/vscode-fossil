@@ -15,31 +15,12 @@ export async function fossil_file_log_can_diff_files(
 
     await executable.exec(cwd, ['revert']);
     await executable.exec(cwd, ['clean']);
-    await add(executable, 'file1.txt', 'line1\n', 'file1.txt: first');
-    await add(
-        executable,
-        'file1.txt',
-        'line1\nline2\n',
-        'file1.txt: second',
-        'SKIP'
-    );
-    await add(
-        executable,
-        'file1.txt',
-        'line1\nline2\nline3\n',
-        'file1.txt: third',
-        'SKIP'
-    );
-    await add(executable, 'file2.txt', 'line1\n', 'file2.txt: first');
-    await add(
-        executable,
-        'file2.txt',
-        'line1\nline2\n',
-        'file2.txt: second',
-        'SKIP'
-    );
+    await add('file1.txt', 'line1\n', 'file1.txt: first');
+    await add('file1.txt', 'line1\nline2\n', 'file1.txt: second', 'SKIP');
+    await add('file1.txt', 'line1\nline2\nline3\n', 'file1.txt: third', 'SKIP');
+    await add('file2.txt', 'line1\n', 'file2.txt: first');
+    await add('file2.txt', 'line1\nline2\n', 'file2.txt: second', 'SKIP');
     const file2uri = await add(
-        executable,
         'file2.txt',
         'line1\nline2\nline3\n',
         'file2.txt: third',
@@ -98,7 +79,7 @@ export async function fossil_can_amend_commit_message(
 
     await executable.exec(cwd, ['revert']);
     await executable.exec(cwd, ['clean']);
-    await add(executable, 'amend.txt', '\n', 'message to amend');
+    await add('amend.txt', '\n', 'message to amend');
 
     const showQuickPick = sandbox.stub(vscode.window, 'showQuickPick');
     showQuickPick.onFirstCall().callsFake(items => {

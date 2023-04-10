@@ -360,7 +360,6 @@ export async function fossil_revert_single_resource(
     executable: FossilExecutable
 ): Promise<void> {
     const url = await add(
-        executable,
         'revert_me.txt',
         'Some original text\n',
         'add revert_me.txt'
@@ -384,11 +383,9 @@ export async function fossil_revert_single_resource(
 }
 
 export async function fossil_open_resource(
-    sandbox: sinon.SinonSandbox,
-    executable: FossilExecutable
+    sandbox: sinon.SinonSandbox
 ): Promise<void> {
     const url = await add(
-        executable,
         'open_resource.txt',
         'Some original text\n',
         'add open_resource.txt'

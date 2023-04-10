@@ -168,8 +168,9 @@ suite('Fossil.OpenedRepo', function () {
     test('fossil revert single resource', () =>
         fossil_revert_single_resource(sandbox, executable)).timeout(12000);
 
-    test('fossil open resource', () =>
-        fossil_open_resource(sandbox, executable)).timeout(12000);
+    test('fossil open resource', () => fossil_open_resource(sandbox)).timeout(
+        12000
+    );
 
     test('fossil add', () => fossil_add()).timeout(5000);
 
