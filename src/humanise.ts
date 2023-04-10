@@ -43,10 +43,10 @@ export namespace humanise {
         if (extraCount > 1) {
             const andNOthers = localize(
                 'and n others',
-                'and ${0} others',
+                'and {0} others',
                 extraCount
             );
-            formatted += `\n ${BULLET} ${andNOthers}`;
+            formatted += `\n${andNOthers}`;
         }
 
         return formatted;

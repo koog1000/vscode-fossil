@@ -11,6 +11,7 @@ import { Status } from '../../repository';
 import { eventToPromise } from '../../util';
 import { LineChange } from '../../revert';
 import { Suite, afterEach } from 'mocha';
+import { IExecutionResult } from '../../fossilExecutable';
 
 export async function fossil_close(
     sandbox: sinon.SinonSandbox,
@@ -355,31 +356,81 @@ export async function fossil_pull_with_autoUpdate_off(
     assert.ok(updateCall.calledOnce);
 }
 
-export async function fossil_revert_single_resource(
-    sandbox: sinon.SinonSandbox,
-    executable: FossilExecutable
-): Promise<void> {
-    const url = await add(
-        'revert_me.txt',
-        'Some original text\n',
-        'add revert_me.txt'
-    );
-    await fs.writeFile(url.fsPath, 'something new');
+export function fossil_revert_suite(sandbox: sinon.SinonSandbox): void {
+    suite('Revert', function (this: Suite) {
+        test('Single source', async () => {
+            const url = await add(
+                'revert_me.txt',
+                'Some original text\n',
+                'add revert_me.txt'
+            );
+            await fs.writeFile(url.fsPath, 'something new');
 
-    const repository = getRepository();
-    await repository.updateModelState();
-    const resource = repository.workingGroup.getResource(url);
-    assert.ok(resource);
+            const repository = getRepository();
+            await repository.updateModelState();
+            const resource = repository.workingGroup.getResource(url);
+            assert.ok(resource);
 
-    const showWarningMessage: sinon.SinonStub = sandbox.stub(
-        vscode.window,
-        'showWarningMessage'
-    );
-    showWarningMessage.onFirstCall().resolves('&&Discard Changes');
+            const showWarningMessage: sinon.SinonStub = sandbox.stub(
+                vscode.window,
+                'showWarningMessage'
+            );
+            showWarningMessage.onFirstCall().resolves('&&Discard Changes');
 
-    await vscode.commands.executeCommand('fossil.revert', resource);
-    const newContext = await fs.readFile(url.fsPath);
-    assert.equal(newContext.toString('utf-8'), 'Some original text\n');
+            await vscode.commands.executeCommand('fossil.revert', resource);
+            const newContext = await fs.readFile(url.fsPath);
+            assert.equal(newContext.toString('utf-8'), 'Some original text\n');
+        });
+        test('Dialog has no typos', async () => {
+            const repository = getRepository();
+            const rootUri = vscode.workspace.workspaceFolders![0].uri;
+            const fake_status = [];
+            const openedRepository: OpenedRepository = (repository as any)
+                .repository;
+            const execStub = sandbox.stub(openedRepository, 'exec');
+            const fileUris: vscode.Uri[] = [];
+            for (const filename of 'abcdefghijklmn') {
+                const fileUri = vscode.Uri.joinPath(rootUri, 'added', filename);
+                fake_status.push(`EDITED     added/${filename}`);
+                fileUris.push(fileUri);
+            }
+            execStub.callThrough();
+            const statusCall = execStub.withArgs(['status']).resolves({
+                fossilPath: '',
+                exitCode: 0,
+                stdout: fake_status.join('\n'),
+                stderr: '',
+                args: ['status'],
+                cwd: '',
+            } as unknown as IExecutionResult);
+            await repository.updateModelState();
+            assert.ok(statusCall.calledOnce);
+            const resources = fileUris.map(uri => {
+                const resource = repository.workingGroup.getResource(uri);
+                assert.ok(resource);
+                return resource;
+            });
+            const showWarningMessage: sinon.SinonStub = sandbox.stub(
+                vscode.window,
+                'showWarningMessage'
+            );
+            await vscode.commands.executeCommand('fossil.revert', ...resources);
+            assert.ok(
+                showWarningMessage.firstCall.calledWith(
+                    'Are you sure you want to discard changes to 14 files?\n\n • a\n • b\n • c\n • d\n • e\n • f\n • g\n • h\nand 6 others'
+                )
+            );
+            await vscode.commands.executeCommand(
+                'fossil.revert',
+                ...resources.slice(0, 3)
+            );
+            assert.ok(
+                showWarningMessage.secondCall.calledWith(
+                    'Are you sure you want to discard changes to 3 files?\n\n • a\n • b\n • c'
+                )
+            );
+        });
+    });
 }
 
 export async function fossil_open_resource(
@@ -572,7 +623,6 @@ export function fossil_stash_suite(sandbox: sinon.SinonSandbox): void {
             assert.ok(stashApply.calledOnce);
         });
         test('Snapshot', async () => {
-            sandbox.restore();
             const repository = getRepository();
             const openedRepository: OpenedRepository = (repository as any)
                 .repository;
