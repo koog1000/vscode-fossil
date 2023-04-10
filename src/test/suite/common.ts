@@ -6,6 +6,7 @@ import * as fs from 'fs';
 import { FossilExecutable, FossilCWD } from '../../fossilExecutable';
 import { Model } from '../../model';
 import { Repository } from '../../repository';
+import { OpenedRepository } from '../../openedRepository';
 
 export async function fossilInit(
     sandbox: sinon.SinonSandbox,
@@ -78,21 +79,22 @@ export async function fossilOpen(
 }
 
 export async function add(
-    executable: FossilExecutable,
     filename: string,
     content: string,
     commitMessage: string,
     action: 'ADDED' | 'SKIP' = 'ADDED'
 ): Promise<vscode.Uri> {
+    const repository = getRepository();
+    const openedRepository: OpenedRepository = (repository as any).repository;
+
     const rootUri = vscode.workspace.workspaceFolders![0].uri;
-    const cwd = rootUri.fsPath as FossilCWD;
     const fileUri = vscode.Uri.joinPath(rootUri, filename);
     await fs.promises.writeFile(fileUri.fsPath, content);
-    const addRes = await executable.exec(cwd, ['add', filename]);
+    const addRes = await openedRepository.exec(['add', filename]);
     assert.match(
         addRes.stdout.trimEnd(),
         new RegExp(`${action}\\s+${filename}`)
     );
-    await executable.exec(cwd, ['commit', filename, '-m', commitMessage]);
+    await openedRepository.exec(['commit', filename, '-m', commitMessage]);
     return fileUri;
 }
