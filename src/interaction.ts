@@ -41,6 +41,8 @@ import { Repository, LogEntriesOptions } from './repository';
 import typedConfig from './config';
 import { localize } from './main';
 import { FossilArgs, FossilCWD, FossilStdOut } from './fossilExecutable';
+import { ThemeIcon } from 'vscode';
+import { QuickInputButton } from 'vscode';
 
 const SHORT_HASH_LENGTH = 12;
 const LONG_HASH_LENGTH = SHORT_HASH_LENGTH * 2;
@@ -67,6 +69,12 @@ export const enum CommitSources {
     File,
     Branch,
     Repo,
+}
+
+export interface NewBranchOptions {
+    readonly branch: FossilBranch;
+    readonly color: string;
+    readonly isPrivate: boolean;
 }
 
 export namespace interaction {
@@ -551,18 +559,133 @@ ${escapeHtml(stdout)}
         return BranchExistsAction.None;
     }
 
-    export async function inputNewBranchName(
+    export async function inputNewBranchOptions(
         this: void
-    ): Promise<FossilBranch | undefined> {
-        const input = await window.showInputBox({
-            placeHolder: localize('branch name', 'Branch name'),
-            prompt: localize(
+    ): Promise<NewBranchOptions | undefined> {
+        const inputBox = window.createInputBox();
+        inputBox.ignoreFocusOut = true;
+        const colorBtn: QuickInputButton = {
+            iconPath: new ThemeIcon('symbol-color'),
+            tooltip: 'Set Branch Color',
+        };
+        const privateBtn: QuickInputButton = {
+            iconPath: new ThemeIcon('eye'),
+            tooltip: 'Make Branch Private',
+        };
+        const publicBtn: QuickInputButton = {
+            iconPath: new ThemeIcon('eye-closed'),
+            tooltip: 'Make Branch public',
+        };
+        let color = '';
+        let curBranch = '';
+        const askBranch = () => {
+            inputBox.value = curBranch;
+            inputBox.placeholder = localize('branch name', 'Branch name');
+            inputBox.prompt = localize(
                 'provide branch name',
                 'Please provide a branch name'
-            ),
-            ignoreFocusOut: true,
+            );
+            inputBox.validationMessage = '';
+            inputBox.buttons = [colorBtn, privateBtn];
+        };
+        askBranch();
+        const cssColors = (
+            'aqua|black|blue|fuchsia|gray|green|lime|' +
+            'maroon|navy|olive|orange|purple|red' +
+            '|silver|teal|white|yellow|aliceblue' +
+            '|antiquewhite|aquamarine|azure|beige' +
+            '|bisque|blanchedalmond|blueviolet|brown' +
+            '|burlywood|cadetblue|chartreuse|chocolate' +
+            '|coral|cornflowerblue|cornsilk|crimson' +
+            '|cyan|darkblue|darkcyan|darkgoldenrod' +
+            '|darkgray|darkgreen|darkgrey|darkkhaki' +
+            '|darkmagenta|darkolivegreen|darkorange' +
+            '|darkorchid|darkred|darksalmon|darkseagreen' +
+            '|darkslateblue|darkslategray|darkslategrey' +
+            '|darkturquoise|darkviolet|deeppink' +
+            '|deepskyblue|dimgray|dimgrey|dodgerblue' +
+            '|firebrick|floralwhite|forestgreen' +
+            '|gainsboro|ghostwhite|gold|goldenrod' +
+            '|greenyellow|grey|honeydew|hotpink|indianred' +
+            '|indigo|ivory|khaki|lavender|lavenderblush' +
+            '|lawngreen|lemonchiffon|lightblue|lightcoral' +
+            '|lightcyan|lightgoldenrodyellow|lightgray' +
+            '|lightgreen|lightgrey|lightpink|lightsalmon' +
+            '|lightseagreen|lightskyblue|lightslategray' +
+            '|lightslategrey|lightsteelblue|lightyellow' +
+            '|limegreen|linen|magenta|mediumaquamarine' +
+            '|mediumblue|mediumorchid|mediumpurple' +
+            '|mediumseagreen|mediumslateblue' +
+            '|mediumspringgreen|mediumturquoise' +
+            '|mediumvioletred|midnightblue|mintcream' +
+            '|mistyrose|moccasin|navajowhite|oldlace' +
+            '|olivedrab|orangered|orchid|palegoldenrod' +
+            '|palegreen|paleturquoise|palevioletred' +
+            '|papayawhip|peachpuff|peru|pink|plum' +
+            '|powderblue|rebeccapurple|rosybrown' +
+            '|royalblue|saddlebrown|salmon|sandybrown' +
+            '|seagreen|seashell|sienna|skyblue|slateblue' +
+            '|slategray|slategrey|snow|springgreen' +
+            '|steelblue|tan|thistle|tomato|transparent' +
+            '|turquoise|violet|wheat|whitesmoke' +
+            '|yellowgreen'
+        ).split('|');
+        const isValidColor = (value: string) =>
+            !value ||
+            /^#[0-9a-f]{6}$/i.test(value) ||
+            cssColors.includes(value.toLowerCase());
+
+        const branch = await new Promise<FossilBranch | undefined>(resolve => {
+            inputBox.onDidChangeValue(value => {
+                inputBox.validationMessage =
+                    inputBox.buttons.length || isValidColor(value)
+                        ? ''
+                        : 'color format: #RRGGBB';
+            });
+            inputBox.onDidAccept(() => {
+                if (!inputBox.buttons.length) {
+                    const value = inputBox.value;
+                    color = isValidColor(value) ? value : '';
+                    askBranch();
+                } else {
+                    resolve(inputBox.value as FossilBranch);
+                }
+            });
+            inputBox.onDidHide(() => resolve(undefined));
+            inputBox.onDidTriggerButton(btn => {
+                switch (btn) {
+                    case colorBtn:
+                        curBranch = inputBox.value;
+                        inputBox.value = color || '';
+                        inputBox.prompt = localize(
+                            'provide color',
+                            'Please color in #RRGGBB format'
+                        );
+                        inputBox.placeholder = localize(
+                            'branch color',
+                            'Branch color'
+                        );
+                        inputBox.buttons = [];
+                        break;
+                    case privateBtn:
+                        inputBox.buttons = [colorBtn, publicBtn];
+                        break;
+                    case publicBtn:
+                        inputBox.buttons = [colorBtn, privateBtn];
+                        break;
+                }
+            });
+            inputBox.show();
         });
-        return input as FossilBranch | undefined;
+        inputBox.dispose();
+        if (branch) {
+            return {
+                branch,
+                color,
+                isPrivate: inputBox.buttons.includes(publicBtn),
+            };
+        }
+        return;
     }
 
     export async function pickBranch(
