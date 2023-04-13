@@ -27,7 +27,6 @@ import {
     MergeAction,
     FossilHash,
     FossilSpecialTags,
-    FossilBranch,
     FossilCommitMessage,
     FossilPassword,
     FossilUsername,
@@ -953,9 +952,9 @@ export class CommandCenter {
         if (scope === undefined) {
             return false;
         }
-        const branch: FossilBranch | undefined =
+        const newBranch =
             (opts.useBranch || undefined) &&
-            (await interaction.inputNewBranchName());
+            (await interaction.inputNewBranchOptions());
 
         const message = await getCommitMessage();
 
@@ -963,7 +962,7 @@ export class CommandCenter {
             return false;
         }
 
-        await repository.commit(message, scope, branch);
+        await repository.commit(message, scope, newBranch);
 
         return true;
     }
@@ -1159,24 +1158,24 @@ export class CommandCenter {
 
     @command('fossil.branch', { repository: true })
     async branch(repository: Repository): Promise<void> {
-        const fossilBranch = await interaction.inputNewBranchName();
-        if (!fossilBranch) {
+        const newBranch = await interaction.inputNewBranchOptions();
+        if (!newBranch) {
             return;
         }
         try {
-            await repository.newBranch(fossilBranch);
+            await repository.newBranch(newBranch);
         } catch (e) {
             if (
                 e instanceof FossilError &&
                 e.fossilErrorCode === 'BranchAlreadyExists'
             ) {
                 const action = await interaction.warnBranchAlreadyExists(
-                    fossilBranch
+                    newBranch.branch
                 );
                 if (action === BranchExistsAction.Reopen) {
-                    await repository.newBranch(fossilBranch);
+                    await repository.newBranch(newBranch);
                 } else if (action === BranchExistsAction.UpdateTo) {
-                    await repository.update(fossilBranch);
+                    await repository.update(newBranch.branch);
                 }
             }
         }

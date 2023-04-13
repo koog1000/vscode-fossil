@@ -18,6 +18,7 @@ import {
     FossilArgs,
     FossilStdOut,
 } from './fossilExecutable';
+import { NewBranchOptions } from './interaction';
 
 export type Distinct<T, DistinctName> = T & { __TYPE__: DistinctName };
 /** path to .fossil */
@@ -193,21 +194,29 @@ export class OpenedRepository {
     }
 
     async commit(
-        message: string,
-        opts: {
-            fileList: string[];
-            user: FossilUsername | null;
-            branch: FossilBranch | undefined;
-        }
+        message: FossilCommitMessage,
+        fileList: RelativePath[],
+        user: FossilUsername | null,
+        newBranch: NewBranchOptions | undefined
     ): Promise<void> {
         try {
             // always pass a message, otherwise fossil
             // internal editor will spawn
             await this.exec([
                 'commit',
-                ...(opts.user ? ['--user-override', opts.user] : []),
-                ...(opts.branch ? ['--branch', opts.branch] : []),
-                ...opts.fileList,
+                ...(user ? ['--user-override', user] : []),
+                ...(newBranch
+                    ? [
+                          ...(newBranch.branch
+                              ? ['--branch', newBranch.branch]
+                              : []),
+                          ...(newBranch.color
+                              ? ['--branchcolor', newBranch.color]
+                              : []),
+                          ...(newBranch.isPrivate ? ['--private'] : []),
+                      ]
+                    : []),
+                ...fileList,
                 '-m',
                 message,
             ]);
@@ -233,26 +242,23 @@ export class OpenedRepository {
         }
     }
 
-    async newBranch(name: FossilBranch): Promise<void> {
-        const currBranch = await this.getCurrentBranch();
-
+    async newBranch(newBranch: NewBranchOptions): Promise<void> {
         try {
             await this.exec([
                 'branch',
                 'new',
-                name,
-                ...(currBranch ? [currBranch] : []),
+                newBranch.branch,
+                'current',
+                ...(newBranch.isPrivate ? ['--private'] : []),
+                ...(newBranch.color ? ['--bgcolor', newBranch.color] : []),
             ]);
         } catch (err) {
             if (
                 err instanceof FossilError &&
-                /a branch of the same name already exists/.test(
-                    err.stderr || ''
-                )
+                /a branch of the same name already exists/.test(err.stderr)
             ) {
                 err.fossilErrorCode = 'BranchAlreadyExists';
             }
-
             throw err;
         }
     }
@@ -495,7 +501,7 @@ export class OpenedRepository {
     async stash(
         message: FossilCommitMessage,
         operation: 'save' | 'snapshot',
-        paths: string[]
+        paths: RelativePath[]
     ): Promise<void> {
         await this.exec(['stash', operation, '-m', message, ...paths]);
     }

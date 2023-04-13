@@ -68,6 +68,7 @@ import {
 import {
     interaction,
     InteractionAPI,
+    NewBranchOptions,
     PushCreatesNewHeadAction,
 } from './interaction';
 import { FossilUriParams, toFossilUri } from './uri';
@@ -760,9 +761,9 @@ export class Repository implements IDisposable, InteractionAPI {
         this._onDidChangeResources.fire();
     }
 
-    scopeToFileList(
+    private scopeToFileList(
         scope: Exclude<CommitScope, CommitScope.UNKNOWN>
-    ): string[] {
+    ): RelativePath[] {
         if (scope === CommitScope.STAGING_GROUP) {
             return this.stagingGroup.resourceStates.map(r =>
                 this.mapResourceToRepoRelativePath(r)
@@ -779,13 +780,12 @@ export class Repository implements IDisposable, InteractionAPI {
     async commit(
         message: FossilCommitMessage,
         scope: Exclude<CommitScope, CommitScope.UNKNOWN>,
-        branch: FossilBranch | undefined
+        newBranch: NewBranchOptions | undefined
     ): Promise<void> {
         await this.runWithProgress(Operation.Commit, async () => {
             const user = typedConfig.username;
             const fileList = this.scopeToFileList(scope);
-            await this.repository.commit(message, { fileList, user, branch });
-            return;
+            await this.repository.commit(message, fileList, user, newBranch);
         });
     }
 
@@ -831,9 +831,9 @@ export class Repository implements IDisposable, InteractionAPI {
     }
 
     @throttle
-    async newBranch(name: FossilBranch): Promise<void> {
+    async newBranch(newBranch: NewBranchOptions): Promise<void> {
         await this.runWithProgress(Operation.Branch, () =>
-            this.repository.newBranch(name)
+            this.repository.newBranch(newBranch)
         );
     }
 
