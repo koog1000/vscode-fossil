@@ -650,3 +650,176 @@ export function fossil_stash_suite(sandbox: sinon.SinonSandbox): void {
         });
     });
 }
+
+export function fossil_branch_suite(sandbox: sinon.SinonSandbox): void {
+    suite('Branch', function (this: Suite) {
+        test('Create public branch', async () => {
+            const createInputBox = sandbox.stub(
+                vscode.window,
+                'createInputBox'
+            );
+            createInputBox.onFirstCall().callsFake(() => {
+                const inputBox: vscode.InputBox =
+                    createInputBox.wrappedMethod();
+                const stub = sinon.stub(inputBox);
+                stub.show.callsFake(() => {
+                    stub.value = 'hello branch';
+                    const onDidAccept = stub.onDidAccept.getCall(0).args[0];
+                    const onDidChangeValue =
+                        stub.onDidChangeValue.getCall(0).args[0];
+                    const onDidTriggerButton =
+                        stub.onDidTriggerButton.getCall(0).args[0];
+                    onDidTriggerButton(stub.buttons[1]); // private on
+                    onDidTriggerButton(stub.buttons[1]); // private off
+                    onDidChangeValue(stub.value);
+                    assert.equal(stub.validationMessage, '');
+                    onDidAccept();
+                });
+                return stub;
+            });
+
+            const repository = getRepository();
+            const openedRepository: OpenedRepository = (repository as any)
+                .repository;
+
+            const execStub = sandbox.stub(openedRepository, 'exec');
+            execStub.callThrough();
+            const creation = execStub
+                .withArgs(['branch', 'new', 'hello branch', 'current'])
+                .resolves();
+            await vscode.commands.executeCommand('fossil.branch');
+            assert.ok(creation.calledOnce);
+        });
+        test('Create private branch', async () => {
+            const createInputBox = sandbox.stub(
+                vscode.window,
+                'createInputBox'
+            );
+            createInputBox.onFirstCall().callsFake(() => {
+                const inputBox: vscode.InputBox =
+                    createInputBox.wrappedMethod();
+                const stub = sinon.stub(inputBox);
+                stub.show.callsFake(() => {
+                    stub.value = 'hello branch';
+                    const onDidAccept = stub.onDidAccept.getCall(0).args[0];
+                    const onDidTriggerButton =
+                        stub.onDidTriggerButton.getCall(0).args[0];
+                    onDidTriggerButton(stub.buttons[1]); // private on
+                    onDidAccept();
+                });
+                return stub;
+            });
+
+            const repository = getRepository();
+            const openedRepository: OpenedRepository = (repository as any)
+                .repository;
+
+            const execStub = sandbox.stub(openedRepository, 'exec');
+            execStub.callThrough();
+            const creation = execStub
+                .withArgs([
+                    'branch',
+                    'new',
+                    'hello branch',
+                    'current',
+                    '--private',
+                ])
+                .resolves();
+            await vscode.commands.executeCommand('fossil.branch');
+            assert.ok(creation.calledOnce);
+        });
+        test('Create branch with color', async () => {
+            const createInputBox = sandbox.stub(
+                vscode.window,
+                'createInputBox'
+            );
+            createInputBox.onFirstCall().callsFake(() => {
+                const inputBox: vscode.InputBox =
+                    createInputBox.wrappedMethod();
+                const stub = sinon.stub(inputBox);
+                stub.show.callsFake(() => {
+                    const onDidAccept = stub.onDidAccept.getCall(0).args[0];
+                    const onDidTriggerButton =
+                        stub.onDidTriggerButton.getCall(0).args[0];
+                    onDidTriggerButton(stub.buttons[0]);
+                    stub.value = '#aabbcc';
+                    onDidAccept();
+                    stub.value = 'color branch';
+                    onDidAccept();
+                });
+                return stub;
+            });
+
+            const repository = getRepository();
+            const openedRepository: OpenedRepository = (repository as any)
+                .repository;
+
+            const execStub = sandbox.stub(openedRepository, 'exec');
+            execStub.callThrough();
+            const creation = execStub
+                .withArgs([
+                    'branch',
+                    'new',
+                    'color branch',
+                    'current',
+                    '--bgcolor',
+                    '#aabbcc',
+                ])
+                .resolves();
+            await vscode.commands.executeCommand('fossil.branch');
+            assert.ok(creation.calledOnce);
+        });
+    });
+}
+
+export function fossil_commit_suite(sandbox: sinon.SinonSandbox): void {
+    suite('Commit', function (this: Suite) {
+        test('Commit creating new branch', async () => {
+            const rootUri = vscode.workspace.workspaceFolders![0].uri;
+            const branchPath = vscode.Uri.joinPath(rootUri, 'branch.txt');
+            await fs.writeFile(branchPath.fsPath, 'branch content\n');
+
+            const repository = getRepository();
+            repository.sourceControl.inputBox.value = 'creating new branch';
+            await repository.updateModelState();
+            const resource = repository.untrackedGroup.getResource(branchPath);
+            assert.ok(resource);
+            await vscode.commands.executeCommand('fossil.add', resource);
+
+            const createInputBox = sandbox.stub(
+                vscode.window,
+                'createInputBox'
+            );
+            createInputBox.onFirstCall().callsFake(() => {
+                const inputBox: vscode.InputBox =
+                    createInputBox.wrappedMethod();
+                const stub = sinon.stub(inputBox);
+                stub.show.callsFake(() => {
+                    stub.value = 'commit branch';
+                    const onDidAccept = stub.onDidAccept.getCall(0).args[0];
+                    onDidAccept();
+                });
+                return stub;
+            });
+
+            const openedRepository: OpenedRepository = (repository as any)
+                .repository;
+
+            const execStub = sandbox.stub(openedRepository, 'exec');
+            execStub.callThrough();
+            const commitSub = execStub
+                .withArgs([
+                    'commit',
+                    '--branch',
+                    'commit branch',
+                    'branch.txt',
+                    '-m',
+                    'creating new branch',
+                ])
+                .resolves();
+
+            await vscode.commands.executeCommand('fossil.commitBranch');
+            assert(commitSub.calledOnce);
+        });
+    });
+}

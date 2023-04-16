@@ -12,9 +12,11 @@ import {
 } from './test_status';
 import {
     fossil_add,
+    fossil_branch_suite,
     fossil_change_branch_to_hash,
     fossil_change_branch_to_trunk,
     fossil_close,
+    fossil_commit_suite,
     fossil_ignore,
     fossil_merge,
     fossil_open_files,
@@ -179,6 +181,8 @@ suite('Fossil.OpenedRepo', function () {
         fossil_change_branch_to_hash(sandbox, executable)).timeout(5000);
 
     fossil_stash_suite(sandbox);
+    fossil_branch_suite(sandbox);
+    fossil_commit_suite(sandbox);
 
     afterEach(() => {
         sandbox.restore();
