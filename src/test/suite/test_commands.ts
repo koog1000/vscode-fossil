@@ -823,3 +823,50 @@ export function fossil_commit_suite(sandbox: sinon.SinonSandbox): void {
         });
     });
 }
+
+export function fossil_patch_suite(sandbox: sinon.SinonSandbox): void {
+    suite('Patch', function (this: Suite) {
+        test('Create', async () => {
+            const patchPath = vscode.Uri.file('patch.patch');
+            const showSaveDialogstub = sandbox
+                .stub(vscode.window, 'showSaveDialog')
+                .resolves(patchPath);
+
+            const repository = getRepository();
+            const openedRepository: OpenedRepository = (repository as any)
+                .repository;
+            const execStub = sandbox.stub(openedRepository, 'exec');
+            const patchStub = execStub
+                .withArgs(['patch', 'create', patchPath.fsPath])
+                .resolves(undefined);
+            execStub.callThrough();
+            await vscode.commands.executeCommand('fossil.patchCreate');
+            sinon.assert.calledOnceWithMatch(showSaveDialogstub, {
+                saveLabel: 'Create',
+                title: 'Create binary patch',
+            });
+            assert.ok(patchStub.calledOnce);
+        });
+        test('Apply', async () => {
+            const patchPath = vscode.Uri.file('patch.patch');
+            const showOpenDialogstub = sandbox
+                .stub(vscode.window, 'showOpenDialog')
+                .resolves([patchPath]);
+
+            const repository = getRepository();
+            const openedRepository: OpenedRepository = (repository as any)
+                .repository;
+            const execStub = sandbox.stub(openedRepository, 'exec');
+            const patchStub = execStub
+                .withArgs(['patch', 'apply', patchPath.fsPath])
+                .resolves(undefined);
+            execStub.callThrough();
+            await vscode.commands.executeCommand('fossil.patchApply');
+            sinon.assert.calledOnceWithMatch(showOpenDialogstub, {
+                openLabel: 'Apply',
+                title: 'Apply binary patch',
+            });
+            assert.ok(patchStub.calledOnce);
+        });
+    });
+}

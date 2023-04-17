@@ -21,6 +21,7 @@ import {
     fossil_merge,
     fossil_open_files,
     fossil_open_resource,
+    fossil_patch_suite,
     fossil_pull_with_autoUpdate_off,
     fossil_pull_with_autoUpdate_on,
     fossil_rename_a_directory,
@@ -183,6 +184,7 @@ suite('Fossil.OpenedRepo', function () {
     fossil_stash_suite(sandbox);
     fossil_branch_suite(sandbox);
     fossil_commit_suite(sandbox);
+    fossil_patch_suite(sandbox);
 
     afterEach(() => {
         sandbox.restore();
