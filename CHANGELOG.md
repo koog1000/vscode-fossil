@@ -1,5 +1,17 @@
 # Changelog
 
+# v0.2.6
+
+### What's New
+
+- Ability to create a private branch
+- Custom color for new branch
+
+### Bug Fixes
+
+- Two typos
+
+
 # v0.2.5
 
 ### Bug Fixes
