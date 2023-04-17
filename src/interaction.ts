@@ -482,7 +482,8 @@ ${escapeHtml(stdout)}
         const uris = await window.showOpenDialog({
             defaultUri: Uri.file('patch.fossilpatch'),
             canSelectMany: false,
-            title: localize('new patch path', 'Create a patch'),
+            openLabel: localize('Apply', 'Apply'),
+            title: localize('apply binary patch', 'Apply binary patch'),
         });
         if (uris?.length == 1) {
             return uris[0].fsPath;
