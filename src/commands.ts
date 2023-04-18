@@ -41,12 +41,8 @@ import {
     Repository,
 } from './repository';
 import { FossilResourceGroup, isResourceGroup } from './resourceGroups';
-import {
-    interaction,
-    BranchExistsAction,
-    WarnScenario,
-    CommitSources,
-} from './interaction';
+import * as interaction from './interaction';
+import { WarnScenario, BranchExistsAction, CommitSources } from './interaction';
 import { humanise } from './humanise';
 import { partition } from './util';
 import { toFossilUri } from './uri';

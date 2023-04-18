@@ -26,7 +26,7 @@ import typedConfig from './config';
 import { Repository, RepositoryState } from './repository';
 
 import { localize } from './main';
-import { interaction } from './interaction';
+import * as interaction from './interaction';
 
 class RepositoryPick implements QuickPickItem {
     @memoize get label(): string {
