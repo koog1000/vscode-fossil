@@ -65,8 +65,8 @@ import {
     AutoInOutStatuses,
     AutoIncomingOutgoing,
 } from './autoinout';
+import * as interaction from './interaction';
 import {
-    interaction,
     InteractionAPI,
     NewBranchOptions,
     PushCreatesNewHeadAction,

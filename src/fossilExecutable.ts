@@ -16,7 +16,7 @@ import {
 } from 'vscode';
 import * as cp from 'child_process';
 import { dispose, IDisposable, toDisposable } from './util';
-import { interaction } from './interaction';
+import * as interaction from './interaction';
 
 /** usually two numbers like [2,19] */
 export type FossilVersion = Distinct<number[], 'fossil version'>;
