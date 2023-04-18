@@ -43,7 +43,7 @@ import {
 import { FossilResourceGroup, isResourceGroup } from './resourceGroups';
 import * as interaction from './interaction';
 import { WarnScenario, BranchExistsAction, CommitSources } from './interaction';
-import { humanise } from './humanise';
+import * as humanise from './humanise';
 import { partition } from './util';
 import { toFossilUri } from './uri';
 import { FossilPreviewManager } from './preview';
