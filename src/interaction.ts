@@ -36,7 +36,7 @@ import {
     FossilPassword,
     StashItem,
 } from './openedRepository';
-import { humanise } from './humanise';
+import * as humanise from './humanise';
 import { Repository, LogEntriesOptions } from './repository';
 import typedConfig from './config';
 import { localize } from './main';
