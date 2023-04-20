@@ -1265,7 +1265,7 @@ export class Repository implements IDisposable, InteractionAPI {
         // this._onDidChangeRepository.fire()
     }
 
-    get count(): number {
+    private get count(): number {
         return (
             this.mergeGroup.resourceStates.length +
             this.stagingGroup.resourceStates.length +
