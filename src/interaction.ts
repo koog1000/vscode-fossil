@@ -392,7 +392,7 @@ ${escapeHtml(stdout)}
         </html>`;
     const lines = stdout.split('\n');
     const resp = await window.showInputBox({
-        prompt: localize('inputprompt', lines[lines.length - 1]),
+        prompt: lines[lines.length - 1],
         ignoreFocusOut: true,
     });
     panel.dispose();
