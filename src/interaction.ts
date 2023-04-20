@@ -378,18 +378,16 @@ export async function inputPrompt(
         });
     }
     panel.webview.html = `<!DOCTYPE html>
-        <html lang="en">
-        <head>
-            <meta charset="UTF-8">
-            <meta name="viewport" content="width=device-width, initial-scale=1.0">
-            <title>${title}</title>
-        </head>
-        <body style="padding-top:3em">
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>${title}</title>
+</head>
+<body style="padding-top:3em">
 <pre><b>${args.map(escapeHtml).join(' ')}</b>:
 ${escapeHtml(stdout)}
-</pre>
-        </body>
-        </html>`;
+</pre></body></html>`;
     const lines = stdout.split('\n');
     const resp = await window.showInputBox({
         prompt: lines[lines.length - 1],
