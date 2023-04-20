@@ -356,6 +356,20 @@ export async function fossil_pull_with_autoUpdate_off(
     assert.ok(updateCall.calledOnce);
 }
 
+function fakeFossilStatus<T extends sinon.SinonStub>(
+    execStub: T,
+    status: string
+) {
+    return execStub.withArgs(['status']).resolves({
+        fossilPath: '',
+        exitCode: 0,
+        stdout: status, // fake_status.join('\n'),
+        stderr: '',
+        args: ['status'],
+        cwd: '',
+    } as unknown as IExecutionResult);
+}
+
 export function fossil_revert_suite(sandbox: sinon.SinonSandbox): void {
     suite('Revert', function (this: Suite) {
         test('Single source', async () => {
@@ -395,14 +409,10 @@ export function fossil_revert_suite(sandbox: sinon.SinonSandbox): void {
                 fileUris.push(fileUri);
             }
             execStub.callThrough();
-            const statusCall = execStub.withArgs(['status']).resolves({
-                fossilPath: '',
-                exitCode: 0,
-                stdout: fake_status.join('\n'),
-                stderr: '',
-                args: ['status'],
-                cwd: '',
-            } as unknown as IExecutionResult);
+            const statusCall = fakeFossilStatus(
+                execStub,
+                fake_status.join('\n')
+            );
             await repository.updateModelState();
             assert.ok(statusCall.calledOnce);
             const resources = fileUris.map(uri => {
@@ -774,6 +784,100 @@ export function fossil_branch_suite(sandbox: sinon.SinonSandbox): void {
 
 export function fossil_commit_suite(sandbox: sinon.SinonSandbox): void {
     suite('Commit', function (this: Suite) {
+        this.timeout(30000);
+        test('Commit using input box', async () => {
+            const repository = getRepository();
+            const openedRepository: OpenedRepository = (repository as any)
+                .repository;
+
+            const execStub = sandbox
+                .stub(openedRepository, 'exec')
+                .callThrough();
+            const statusStub = fakeFossilStatus(execStub, 'ADDED fake.txt\n');
+            await repository.updateModelState();
+            sinon.assert.calledOnce(statusStub);
+            assert.equal(repository.workingGroup.resourceStates.length, 1);
+            const commitStub = execStub
+                .withArgs(['commit', 'fake.txt', '-m', 'non empty message'])
+                .resolves(undefined);
+
+            const showWarningMessage: sinon.SinonStub = sandbox.stub(
+                vscode.window,
+                'showWarningMessage'
+            );
+            showWarningMessage.onFirstCall().resolves('C&&onfirm');
+            repository.sourceControl.inputBox.value = 'non empty message';
+            await vscode.commands.executeCommand('fossil.commitWithInput');
+            sinon.assert.calledOnceWithMatch(
+                showWarningMessage,
+                'There are no staged changes, do you want to commit working changes?\n'
+            );
+            sinon.assert.calledOnce(commitStub);
+            assert.equal(repository.sourceControl.inputBox.value, '');
+        });
+
+        test('Commit nothing', async () => {
+            const repository = getRepository();
+            const openedRepository: OpenedRepository = (repository as any)
+                .repository;
+
+            const execStub = sandbox
+                .stub(openedRepository, 'exec')
+                .callThrough();
+            const statusStub = fakeFossilStatus(execStub, '\n');
+            await repository.updateModelState();
+            sinon.assert.calledOnce(statusStub);
+            assert.equal(repository.workingGroup.resourceStates.length, 0);
+
+            const showInformationMessage: sinon.SinonStub = sandbox
+                .stub(vscode.window, 'showInformationMessage')
+                .resolves(undefined);
+            repository.sourceControl.inputBox.value = 'non empty message';
+            await vscode.commands.executeCommand('fossil.commitWithInput');
+            sinon.assert.calledOnceWithMatch(
+                showInformationMessage,
+                'There are no changes to commit.'
+            );
+        });
+
+        test('Commit empty message', async () => {
+            const repository = getRepository();
+            const openedRepository: OpenedRepository = (repository as any)
+                .repository;
+            const uri = vscode.Uri.joinPath(
+                vscode.workspace.workspaceFolders![0].uri,
+                'empty_commit.txt'
+            );
+            await fs.writeFile(uri.fsPath, 'content');
+
+            const execStub = sandbox
+                .stub(openedRepository, 'exec')
+                .callThrough();
+            await repository.updateModelState();
+            const resource = repository.untrackedGroup.getResource(uri);
+            //assert.equal(repository.untrackedGroup.resourceStates.length, 1);
+
+            await vscode.commands.executeCommand('fossil.add', resource);
+            assert.equal(repository.stagingGroup.resourceStates.length, 1);
+            const commitStub = execStub.withArgs([
+                'commit',
+                'empty_commit.txt',
+                '-m',
+                '',
+            ]);
+
+            repository.sourceControl.inputBox.value = '';
+            const showInputBoxstub = sandbox
+                .stub(vscode.window, 'showInputBox')
+                .resolves('Y');
+            await vscode.commands.executeCommand('fossil.commitWithInput');
+            sinon.assert.calledOnceWithMatch(showInputBoxstub, {
+                prompt: 'empty check-in comment.  continue (y/N)? ',
+                ignoreFocusOut: true,
+            });
+            sinon.assert.calledOnce(commitStub);
+        });
+
         test('Commit creating new branch', async () => {
             const rootUri = vscode.workspace.workspaceFolders![0].uri;
             const branchPath = vscode.Uri.joinPath(rootUri, 'branch.txt');
