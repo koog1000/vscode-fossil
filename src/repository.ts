@@ -589,7 +589,7 @@ export class Repository implements IDisposable, InteractionAPI {
         } else {
             resources = this.mapResources(uris);
         }
-        const relativePaths: string[] = resources.map(r =>
+        const relativePaths = resources.map(r =>
             this.mapResourceToRepoRelativePath(r)
         );
         await this.runWithProgress(Operation.Add, () =>
@@ -610,7 +610,7 @@ export class Repository implements IDisposable, InteractionAPI {
         } else {
             resources = this.mapResources(uris);
         }
-        const relativePaths: string[] = resources.map(r =>
+        const relativePaths = resources.map(r =>
             this.mapResourceToRepoRelativePath(r)
         );
         await this.runWithProgress(Operation.Remove, () =>
@@ -672,7 +672,7 @@ export class Repository implements IDisposable, InteractionAPI {
             );
 
             if (missingResources[0].length) {
-                const relativePaths: string[] = missingResources[0].map(r =>
+                const relativePaths = missingResources[0].map(r =>
                     this.mapResourceToRepoRelativePath(r)
                 );
                 await this.runWithProgress(Operation.Remove, () =>
@@ -686,7 +686,7 @@ export class Repository implements IDisposable, InteractionAPI {
             );
 
             if (untrackedResources[0].length) {
-                const relativePaths: string[] = untrackedResources[0].map(r =>
+                const relativePaths = untrackedResources[0].map(r =>
                     this.mapResourceToRepoRelativePath(r)
                 );
                 await this.runWithProgress(Operation.Remove, () =>
@@ -793,7 +793,7 @@ export class Repository implements IDisposable, InteractionAPI {
     async revert(...uris: Uri[]): Promise<void> {
         const resources = this.mapResources(uris);
         await this.runWithProgress(Operation.Revert, async () => {
-            const toRevert: string[] = [];
+            const toRevert: RelativePath[] = [];
 
             for (const r of resources) {
                 switch (r.status) {
@@ -1008,7 +1008,7 @@ export class Repository implements IDisposable, InteractionAPI {
         return this.runWithProgress(Operation.Show, async () => {
             const relativePath = path
                 .relative(this.repository.root, params.path)
-                .replace(/\\/g, '/');
+                .replace(/\\/g, '/') as RelativePath;
             try {
                 return this.repository.cat(relativePath, params.checkin);
             } catch (e) {
