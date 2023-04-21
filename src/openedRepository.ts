@@ -17,6 +17,7 @@ import {
     IExecutionResult,
     FossilArgs,
     FossilStdOut,
+    FossilStdErr,
 } from './fossilExecutable';
 import { NewBranchOptions } from './interaction';
 
@@ -150,7 +151,7 @@ export class OpenedRepository {
         return this.executable.exec(this.root, args, reason, options);
     }
 
-    async add(paths?: string[]): Promise<void> {
+    async add(paths?: RelativePath[]): Promise<void> {
         await this.exec(['add', ...(paths || [])]);
     }
 
@@ -160,7 +161,7 @@ export class OpenedRepository {
     }
 
     async cat(
-        relativePath: string,
+        relativePath: RelativePath,
         checkin: FossilCheckin
     ): Promise<FossilStdOut> {
         const result = await this.exec(
@@ -323,7 +324,7 @@ export class OpenedRepository {
         return praises;
     }
 
-    async revert(paths: string[]): Promise<void> {
+    async revert(paths: RelativePath[]): Promise<void> {
         const pathsByGroup = groupBy(paths, p => path.dirname(p));
         const groups = Object.keys(pathsByGroup).map(k => pathsByGroup[k]);
         const tasks = groups.map(
@@ -335,7 +336,7 @@ export class OpenedRepository {
         }
     }
 
-    async remove(paths: string[]): Promise<void> {
+    async remove(paths: RelativePath[]): Promise<void> {
         const pathsByGroup = groupBy(paths, p => path.dirname(p));
         const groups = Object.keys(pathsByGroup).map(k => pathsByGroup[k]);
         const tasks = groups.map(paths => () => this.exec(['rm', ...paths]));
@@ -345,7 +346,7 @@ export class OpenedRepository {
         }
     }
 
-    async rename(oldPath: string, newPath: string): Promise<void> {
+    async rename(oldPath: RelativePath, newPath: RelativePath): Promise<void> {
         await this.exec(['rename', oldPath, newPath]);
     }
 
@@ -364,15 +365,16 @@ export class OpenedRepository {
     }
 
     async ignore(paths: RelativePath[]): Promise<void> {
-        const ignore_file = this.root + '/.fossil-settings/ignore-glob';
-        if (existsSync(ignore_file)) {
-            appendFileSync(ignore_file, paths.join('\n') + '\n');
+        const path = '.fossil-settings/ignore-glob' as RelativePath;
+        const ignorePath = this.root + '/' + path;
+        if (existsSync(ignorePath)) {
+            appendFileSync(ignorePath, paths.join('\n') + '\n');
         } else {
             await fs.mkdir(this.root + '/.fossil-settings/');
-            writeFileSync(ignore_file, paths.join('\n') + '\n');
-            this.add([ignore_file]);
+            writeFileSync(ignorePath, paths.join('\n') + '\n');
+            this.add([path]);
         }
-        const document = await workspace.openTextDocument(ignore_file);
+        const document = await workspace.openTextDocument(ignorePath);
         window.showTextDocument(document);
     }
 
@@ -436,7 +438,7 @@ export class OpenedRepository {
         }
     }
 
-    private parseUntrackedFilenames(stderr: string): string[] {
+    private parseUntrackedFilenames(stderr: FossilStdErr): string[] {
         const untrackedFilesPattern = /([^:]+): untracked file differs\n/g;
         let match: RegExpExecArray | null;
         const files: string[] = [];
