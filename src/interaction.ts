@@ -40,7 +40,12 @@ import * as humanise from './humanise';
 import { Repository, LogEntriesOptions } from './repository';
 import typedConfig from './config';
 import { localize } from './main';
-import { FossilArgs, FossilCWD, FossilStdOut } from './fossilExecutable';
+import {
+    FossilArgs,
+    FossilCWD,
+    FossilError,
+    FossilStdOut,
+} from './fossilExecutable';
 import { ThemeIcon } from 'vscode';
 import { QuickInputButton } from 'vscode';
 
@@ -265,7 +270,7 @@ export function warnNoUndoOrRedo(
     );
 }
 
-export async function errorPromptOpenLog(err: any): Promise<boolean> {
+export async function errorPromptOpenLog(err: FossilError): Promise<boolean> {
     const hint = (err.stderr || err.message || String(err))
         .replace(/^abort: /im, '')
         .split(/[\r\n]/)
