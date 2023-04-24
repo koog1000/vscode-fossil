@@ -17,6 +17,7 @@ import {
     ViewColumn,
     Selection,
     ExtensionContext,
+    SourceControl,
 } from 'vscode';
 import { LineChange, revertChanges } from './revert';
 import * as path from 'path';
@@ -1498,7 +1499,9 @@ export class CommandCenter {
         );
     }
 
-    public guessRepository(arg: any): Promise<Repository | undefined> {
+    public guessRepository(
+        arg: Uri | SourceControl | Repository
+    ): Promise<Repository | undefined> {
         const repository = this.model.getRepository(arg);
         let repositoryPromise: Promise<Repository | undefined>;
 
