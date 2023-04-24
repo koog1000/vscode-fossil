@@ -472,7 +472,6 @@ export class OpenedRepository {
         } catch (e) {
             if (
                 e instanceof FossilError &&
-                e.stderr &&
                 e.stderr.match(/untracked files in working directory differ/)
             ) {
                 e.fossilErrorCode = 'UntrackedFilesDiffer';
@@ -480,7 +479,7 @@ export class OpenedRepository {
             }
 
             if (e instanceof FossilError && e.exitCode === 1) {
-                const match = (e.stdout || '').match(/(\d+) files unresolved/);
+                const match = e.stdout.match(/(\d+) files unresolved/);
                 if (match) {
                     return {
                         unresolvedCount: parseInt(match[1]),
