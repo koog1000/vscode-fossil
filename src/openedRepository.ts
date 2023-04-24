@@ -280,7 +280,7 @@ export class OpenedRepository {
     }
 
     async praise(path: string): Promise<Praise[]> {
-        const diffPromise = this.exec(['diff' as any, '--json', path]);
+        const diffPromise = this.exec(['diff', '--json', path]);
         const praiseRes = await this.exec(['praise', path]);
         const praises = praiseRes.stdout
             .split('\n')
