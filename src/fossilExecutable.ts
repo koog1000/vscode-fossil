@@ -85,6 +85,7 @@ type FossilCommand =
     | 'clone'
     | 'close'
     | 'commit'
+    | 'diff'
     | 'extras'
     | 'info'
     | 'init'
