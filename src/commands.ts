@@ -465,9 +465,7 @@ export class CommandCenter {
             const [resourceGroup] = resources;
             if (isResourceGroup(resourceGroup)) {
                 // const groupId = resourceGroup.id
-                const resources =
-                    resourceGroup.resourceStates as FossilResource[];
-                return this.openFile(...resources);
+                resources = resourceGroup.resourceStates as FossilResource[];
             }
         }
 

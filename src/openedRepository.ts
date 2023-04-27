@@ -80,8 +80,8 @@ export interface LogEntryOptions {
 }
 
 export interface PullOptions {
-    readonly branch?: string;
-    readonly revs?: string[];
+    //readonly branch?: FossilBranch;
+    //readonly revs?: FossilCheckin[];
     readonly autoUpdate: boolean; // run an update after the pull?
 }
 
