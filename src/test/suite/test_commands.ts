@@ -925,6 +925,64 @@ export function fossil_commit_suite(sandbox: sinon.SinonSandbox): void {
             await vscode.commands.executeCommand('fossil.commitBranch');
             assert(commitSub.calledOnce);
         });
+
+        test('Unsaved files warning', async () => {
+            const uri1 = await add('warning1.txt', 'data', 'warning test');
+            const uri2 = await add('warning2.txt', 'data', 'warning test');
+            await fs.writeFile(uri1.fsPath, 'warning test');
+            await fs.writeFile(uri2.fsPath, 'warning test');
+            const repository = getRepository();
+            await repository.updateModelState();
+            const resource1 = repository.workingGroup.getResource(uri1);
+            assert.ok(resource1);
+            await vscode.commands.executeCommand('fossil.stage', resource1);
+            await vscode.commands.executeCommand('fossil.openFiles', resource1);
+            const editor1 = vscode.window.visibleTextEditors.find(
+                e => e.document.uri.toString() == uri1.toString()
+            );
+            assert.ok(editor1);
+            await editor1.edit(eb =>
+                eb.insert(new vscode.Position(0, 0), 'edits\n')
+            );
+            repository.sourceControl.inputBox.value = 'my message';
+            const showWarningMessage: sinon.SinonStub = sandbox.stub(
+                vscode.window,
+                'showWarningMessage'
+            );
+            showWarningMessage.onFirstCall().resolves(undefined);
+            showWarningMessage.onSecondCall().resolves('Save All & Commit');
+
+            await vscode.commands.executeCommand('fossil.commitWithInput');
+            sinon.assert.calledWithExactly(
+                showWarningMessage.firstCall,
+                "The following file has unsaved changes which won't be included in the commit if you proceed: warning1.txt.\n\nWould you like to save it before committing?",
+                { modal: true },
+                'Save All & Commit',
+                'C&&ommit Staged Changes'
+            );
+
+            const resource2 = repository.workingGroup.getResource(uri2);
+            assert.ok(resource2);
+            await vscode.commands.executeCommand('fossil.stage', resource2);
+            await vscode.commands.executeCommand('fossil.openFiles', resource2);
+
+            const editor2 = vscode.window.visibleTextEditors.find(
+                e => e.document.uri.toString() == uri2.toString()
+            );
+            assert.ok(editor2);
+            await editor2.edit(eb =>
+                eb.insert(new vscode.Position(0, 0), 'edits\n')
+            );
+
+            await vscode.commands.executeCommand('fossil.commitWithInput');
+            sinon.assert.calledWithExactly(
+                showWarningMessage.secondCall,
+                'There are 2 unsaved files.\n\nWould you like to save them before committing?',
+                { modal: true },
+                'Save All & Commit',
+                'C&&ommit Staged Changes'
+            );
+        });
     });
 }
 
