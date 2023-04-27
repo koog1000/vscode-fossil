@@ -226,19 +226,19 @@ export class Model implements Disposable {
 
         const activeRepositoriesList = window.visibleTextEditors
             .map(editor => this.getRepository(editor.document.uri))
-            .filter(repository => !!repository) as Repository[];
+            .filter(Boolean);
 
         const activeRepositories = new Set<Repository>(activeRepositoriesList);
         const openRepositoriesToDispose = removed
             .map(folder => this.getOpenRepository(folder.uri))
-            .filter(r => !!r)
-            .filter(r => !activeRepositories.has(r!.repository))
+            .filter(Boolean)
+            .filter(r => !activeRepositories.has(r.repository))
             .filter(
                 r =>
                     !(workspace.workspaceFolders || []).some(f =>
-                        isParent(f.uri.fsPath, r!.repository.root)
+                        isParent(f.uri.fsPath, r.repository.root)
                     )
-            ) as OpenRepository[];
+            );
 
         possibleRepositoryFolders.forEach(p =>
             this.tryOpenRepository(p.uri.fsPath)
