@@ -357,7 +357,7 @@ export class OpenedRepository {
     }
 
     /**
-     * make this method differ from `clean` because cleaning empty
+     * this method differs from `clean` because cleaning empty
      * paths[] will cause damage
      */
     async cleanAll(): Promise<void> {
