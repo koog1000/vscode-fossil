@@ -29,6 +29,7 @@ import {
     fossil_revert_change,
     fossil_revert_suite,
     fossil_stash_suite,
+    fossil_utilities_suite,
 } from './test_commands';
 import {
     fossil_can_amend_commit_message,
@@ -185,6 +186,7 @@ suite('Fossil.OpenedRepo', function () {
     fossil_branch_suite(sandbox);
     fossil_commit_suite(sandbox);
     fossil_patch_suite(sandbox);
+    fossil_utilities_suite(sandbox);
 
     afterEach(() => {
         sandbox.restore();
