@@ -153,20 +153,20 @@ export class CommandCenter {
     @setProtoArray
     register!: Command[];
 
-    private disposables: Disposable[];
-    private previewManager: FossilPreviewManager;
+    private readonly disposables: Disposable[];
+    private readonly previewManager: FossilPreviewManager;
 
     constructor(
         private readonly executable: FossilExecutable,
         private readonly model: Model,
         private readonly outputChannel: OutputChannel,
-        private readonly context: ExtensionContext
+        context: ExtensionContext
     ) {
         this.previewManager = new FossilPreviewManager(context, executable);
 
-        this.disposables = this.register.map(command => {
-            return commands.registerCommand(command.id, command.method, this);
-        });
+        this.disposables = this.register.map(command =>
+            commands.registerCommand(command.id, command.method, this)
+        );
     }
 
     @command('fossil.refresh', { repository: true })
