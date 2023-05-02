@@ -645,12 +645,11 @@ export class Repository implements IDisposable, InteractionAPI {
         const { conflict, merge, working, untracked, staging } = this._groups;
         const groups = [working, staging, merge, untracked, conflict];
         for (const uri of resourceUris) {
-            let found = false;
             for (const group of groups) {
                 const resource = group.getResource(uri);
-                if (resource && !found) {
+                if (resource) {
                     resources.push(resource);
-                    found = true;
+                    break;
                 }
             }
         }
