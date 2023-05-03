@@ -1217,7 +1217,7 @@ export class Repository implements IDisposable, InteractionAPI {
 
     @throttle
     public getLogEntries(options: LogEntriesOptions = {}): Promise<Commit[]> {
-        let filePath: string | undefined = undefined;
+        let filePath: RelativePath | undefined;
         if (options.fileUri) {
             filePath = this.mapFileUriToRepoRelativePath(options.fileUri);
         }
