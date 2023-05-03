@@ -64,7 +64,7 @@ export type FossilPassword = Distinct<string, 'fossil password'>;
 
 export interface TimelineOptions extends LogEntryOptions {
     /** Output items affecting filePath only */
-    readonly filePath?: string;
+    readonly filePath?: RelativePath;
     /**
      * If `limit` is positive, output the first N entries. If
      * N is negative, output the first -N lines. If `limit` is
