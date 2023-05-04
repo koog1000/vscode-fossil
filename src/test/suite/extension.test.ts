@@ -146,8 +146,9 @@ suite('Fossil.OpenedRepo', function () {
     test('fossil undo and redo working', () =>
         fossil_undo_and_redo_working(sandbox)).timeout(15000);
 
-    test('fossil rename a file', () =>
-        fossil_rename_a_file(sandbox, executable)).timeout(15000);
+    test('fossil rename a file', () => fossil_rename_a_file(sandbox)).timeout(
+        15000
+    );
 
     test('fossil rename a directory', () =>
         fossil_rename_a_directory(sandbox, executable)).timeout(20000);
