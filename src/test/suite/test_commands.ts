@@ -84,28 +84,17 @@ export async function fossil_merge(
 }
 
 export async function fossil_rename_a_file(
-    sandbox: sinon.SinonSandbox,
-    executable: FossilExecutable
+    sandbox: sinon.SinonSandbox
 ): Promise<void> {
     const oldFilename = 'not_renamed.txt';
     const newFilename = 'renamed.txt';
     const rootUri = vscode.workspace.workspaceFolders![0].uri;
-    const fooPath = vscode.Uri.joinPath(rootUri, oldFilename).fsPath;
-    await fs.writeFile(fooPath, 'foo content\n');
-    const cwd = rootUri.fsPath as FossilCWD;
-    await executable.exec(cwd, ['add', oldFilename]);
-    await executable.exec(cwd, [
-        'commit',
-        '-m',
-        `add: ${oldFilename}`,
-        '--no-warnings',
-    ]);
+    await add(oldFilename, 'foo content\n', `add: ${oldFilename}`, 'ADDED');
 
     const showInformationMessage: sinon.SinonStub = sandbox.stub(
         vscode.window,
         'showInformationMessage'
     );
-
     const answeredYes = showInformationMessage.onFirstCall().resolves('Yes');
 
     const edit = new vscode.WorkspaceEdit();
