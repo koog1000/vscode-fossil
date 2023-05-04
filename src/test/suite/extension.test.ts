@@ -19,6 +19,7 @@ import {
     fossil_commit_suite,
     fossil_ignore,
     fossil_merge,
+    fossil_merge_suite,
     fossil_open_files,
     fossil_open_resource,
     fossil_patch_suite,
@@ -187,6 +188,7 @@ suite('Fossil.OpenedRepo', function () {
     fossil_commit_suite(sandbox);
     fossil_patch_suite(sandbox);
     fossil_utilities_suite(sandbox);
+    fossil_merge_suite(sandbox);
 
     afterEach(() => {
         sandbox.restore();

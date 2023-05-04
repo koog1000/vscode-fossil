@@ -784,7 +784,6 @@ export function fossil_branch_suite(sandbox: sinon.SinonSandbox): void {
 
 export function fossil_commit_suite(sandbox: sinon.SinonSandbox): void {
     suite('Commit', function (this: Suite) {
-        this.timeout(30000);
         test('Commit using input box', async () => {
             const repository = getRepository();
             const openedRepository: OpenedRepository = (repository as any)
@@ -982,6 +981,74 @@ export function fossil_commit_suite(sandbox: sinon.SinonSandbox): void {
                 'Save All & Commit',
                 'C&&ommit Staged Changes'
             );
+        });
+    });
+}
+
+export function fossil_merge_suite(sandbox: sinon.SinonSandbox): void {
+    suite('Merge', function (this: Suite) {
+        test('Integrate', async () => {
+            const repository = getRepository();
+            const openedRepository: OpenedRepository = (repository as any)
+                .repository;
+            await openedRepository.exec(['revert']);
+            await openedRepository.exec(['clean']);
+            await repository.updateModelState();
+            const execStub = sandbox
+                .stub(openedRepository, 'exec')
+                .callThrough();
+            execStub.withArgs(['branch', 'ls', '-t']).resolves({
+                fossilPath: '',
+                exitCode: 0,
+                stdout: ' * a\n   b\n   c\n',
+                stderr: '',
+                args: ['status'],
+                cwd: '',
+            } as unknown as IExecutionResult);
+            const mergeStub = execStub
+                .withArgs(['merge', 'c', '--integrate'])
+                .resolves();
+            sandbox
+                .stub(vscode.window, 'showQuickPick')
+                .onFirstCall()
+                .callsFake(items => {
+                    assert.ok(items instanceof Array);
+                    assert.equal(items[2].label, '$(git-branch) c');
+                    return Promise.resolve(items[2]);
+                });
+
+            await vscode.commands.executeCommand('fossil.integrate');
+            sinon.assert.calledOnce(mergeStub);
+        });
+        test('Cherrypick', async () => {
+            const repository = getRepository();
+            const openedRepository: OpenedRepository = (repository as any)
+                .repository;
+            const execStub = sandbox
+                .stub(openedRepository, 'exec')
+                .callThrough();
+            let hash = '';
+            const mergeCallStub = execStub
+                .withArgs(sinon.match.array.startsWith(['merge']))
+                .resolves();
+
+            sandbox
+                .stub(vscode.window, 'showQuickPick')
+                .onFirstCall()
+                .callsFake(items => {
+                    assert.ok(items instanceof Array);
+                    hash = (items[0] as unknown as { commit: { hash: string } })
+                        .commit.hash;
+                    assert.ok(hash);
+                    return Promise.resolve(items[0]);
+                });
+
+            await vscode.commands.executeCommand('fossil.cherrypick');
+            sinon.assert.calledOnceWithMatch(mergeCallStub, [
+                'merge',
+                hash,
+                '--cherrypick',
+            ]);
         });
     });
 }
