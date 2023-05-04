@@ -953,7 +953,7 @@ export async function editCommitMessage(
         newCommitMessage
     );
     await window.showInformationMessage(
-        localize('updated message', 'Commit message was update.')
+        localize('updated message', 'Commit message was updated.')
     );
 }
 
