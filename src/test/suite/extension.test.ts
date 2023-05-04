@@ -18,7 +18,6 @@ import {
     fossil_close,
     fossil_commit_suite,
     fossil_ignore,
-    fossil_merge,
     fossil_merge_suite,
     fossil_open_files,
     fossil_open_resource,
@@ -118,10 +117,6 @@ suite('Fossil.OpenedRepo', function () {
     test('fossil undo and redo warning', () =>
         // this test requires just initialized state
         fossil_undo_and_redo_warning(sandbox)).timeout(5000);
-
-    test('fossil.merge', () => fossil_merge(sandbox, executable)).timeout(
-        14000
-    );
 
     test('fossil missing is visible in Source Control panel', async () =>
         status_missing_is_visible_in_source_control_panel(

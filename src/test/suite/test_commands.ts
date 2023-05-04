@@ -31,58 +31,6 @@ export async function fossil_close(
     });
 }
 
-export async function fossil_merge(
-    sandbox: sinon.SinonSandbox,
-    executable: FossilExecutable
-): Promise<void> {
-    const fooFilename = 'foo-merge.txt';
-    const barFilename = 'bar-merge.txt';
-    const rootUri = vscode.workspace.workspaceFolders![0].uri;
-    const fooPath = vscode.Uri.joinPath(rootUri, fooFilename).fsPath;
-    await fs.writeFile(fooPath, 'foo content\n');
-    const cwd = rootUri.fsPath as FossilCWD;
-    await executable.exec(cwd, ['add', fooFilename]);
-    await executable.exec(cwd, [
-        'commit',
-        '-m',
-        `add: ${fooFilename}`,
-        '--no-warnings',
-    ]);
-    const barPath = vscode.Uri.joinPath(rootUri, fooFilename).fsPath;
-    await fs.writeFile(barPath, 'bar content\n');
-    await executable.exec(cwd, ['add', barFilename]);
-    await fs.appendFile(fooPath, 'foo content 2\n');
-    await executable.exec(cwd, [
-        'commit',
-        '-m',
-        `add: ${barFilename}; mod`,
-        '--no-warnings',
-        '--branch',
-        'fossil-merge',
-    ]);
-    await executable.exec(cwd, ['update', 'trunk']);
-
-    const repository = getRepository();
-    await vscode.commands.executeCommand('fossil.refresh');
-    await repository.updateModelState();
-    assertGroups(repository, new Map(), new Map());
-
-    const showQuickPickstub = sandbox.stub(
-        vscode.window,
-        'showQuickPick'
-    ) as sinon.SinonStub;
-    showQuickPickstub.resolves({ checkin: 'fossil-merge' as FossilBranch });
-    const showInputBoxstub = sandbox.stub(vscode.window, 'showInputBox');
-    showInputBoxstub.resolves('test merge message');
-
-    await vscode.commands.executeCommand('fossil.merge');
-    assert.ok(showQuickPickstub.calledOnce);
-    assert.ok(showInputBoxstub.calledOnce);
-
-    await repository.updateModelState();
-    assertGroups(repository, new Map(), new Map());
-}
-
 export async function fossil_rename_a_file(
     sandbox: sinon.SinonSandbox
 ): Promise<void> {
@@ -976,6 +924,61 @@ export function fossil_commit_suite(sandbox: sinon.SinonSandbox): void {
 
 export function fossil_merge_suite(sandbox: sinon.SinonSandbox): void {
     suite('Merge', function (this: Suite) {
+        test('Merge', async () => {
+            const repository = getRepository();
+            const openedRepository: OpenedRepository = (repository as any)
+                .repository;
+
+            const fooFilename = 'foo-merge.txt';
+            const barFilename = 'bar-merge.txt';
+            const rootUri = vscode.workspace.workspaceFolders![0].uri;
+            const fooPath = vscode.Uri.joinPath(rootUri, fooFilename).fsPath;
+            await fs.writeFile(fooPath, 'foo content\n');
+            await openedRepository.exec(['add', fooFilename]);
+            await openedRepository.exec([
+                'commit',
+                '-m',
+                `add: ${fooFilename}`,
+                '--no-warnings',
+            ]);
+            const barPath = vscode.Uri.joinPath(rootUri, fooFilename).fsPath;
+            await fs.writeFile(barPath, 'bar content\n');
+            await openedRepository.exec(['add', barFilename]);
+            await fs.appendFile(fooPath, 'foo content 2\n');
+            await openedRepository.exec([
+                'commit',
+                '-m',
+                `add: ${barFilename}; mod`,
+                '--no-warnings',
+                '--branch',
+                'fossil-merge',
+            ]);
+            await openedRepository.exec(['update', 'trunk']);
+
+            await vscode.commands.executeCommand('fossil.refresh');
+            await repository.updateModelState();
+            assertGroups(repository, new Map(), new Map());
+
+            const showQuickPickstub = sandbox.stub(
+                vscode.window,
+                'showQuickPick'
+            ) as sinon.SinonStub;
+            showQuickPickstub.resolves({
+                checkin: 'fossil-merge' as FossilBranch,
+            });
+            const showInputBoxstub = sandbox.stub(
+                vscode.window,
+                'showInputBox'
+            );
+            showInputBoxstub.resolves('test merge message');
+
+            await vscode.commands.executeCommand('fossil.merge');
+            assert.ok(showQuickPickstub.calledOnce);
+            assert.ok(showInputBoxstub.calledOnce);
+
+            await repository.updateModelState();
+            assertGroups(repository, new Map(), new Map());
+        });
         test('Integrate', async () => {
             const repository = getRepository();
             const openedRepository: OpenedRepository = (repository as any)
