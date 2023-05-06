@@ -1,7 +1,13 @@
 import * as vscode from 'vscode';
 import * as sinon from 'sinon';
 import { FossilExecutable, FossilCWD } from '../../fossilExecutable';
-import { add, fossilInit, fossilOpen, getRepository } from './common';
+import {
+    add,
+    cleanupFossil,
+    fossilInit,
+    fossilOpen,
+    getRepository,
+} from './common';
 import * as assert from 'assert/strict';
 import * as fs from 'fs/promises';
 import { existsSync } from 'fs';
@@ -447,14 +453,10 @@ export async function fossil_change_branch_to_trunk(
 }
 
 export async function fossil_change_branch_to_hash(
-    sandbox: sinon.SinonSandbox,
-    executable: FossilExecutable
+    sandbox: sinon.SinonSandbox
 ): Promise<void> {
-    const cwd = vscode.workspace.workspaceFolders![0].uri.fsPath as FossilCWD;
-    await executable.exec(cwd, ['revert']);
-    await executable.exec(cwd, ['clean']);
-
     const repository = getRepository();
+    await cleanupFossil(repository);
     const openedRepository: OpenedRepository = (repository as any).repository;
     const execStub = sandbox.stub(openedRepository, 'exec');
     const updateCall = execStub.withArgs(['update', '1234567890']);
@@ -983,9 +985,7 @@ export function fossil_merge_suite(sandbox: sinon.SinonSandbox): void {
             const repository = getRepository();
             const openedRepository: OpenedRepository = (repository as any)
                 .repository;
-            await openedRepository.exec(['revert']);
-            await openedRepository.exec(['clean']);
-            await repository.updateModelState();
+            await cleanupFossil(repository);
             const execStub = sandbox
                 .stub(openedRepository, 'exec')
                 .callThrough();
