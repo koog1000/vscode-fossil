@@ -1112,3 +1112,60 @@ export function fossil_utilities_suite(sandbox: sinon.SinonSandbox): void {
         });
     });
 }
+
+export function fossil_tag_suite(sandbox: sinon.SinonSandbox): void {
+    suite('Tag', function (this: Suite) {
+        test('Close branch', async () => {
+            const showQuickPick = sandbox.stub(vscode.window, 'showQuickPick');
+            showQuickPick.onFirstCall().callsFake(items => {
+                assert.ok(items instanceof Array);
+                assert.equal(items[0].label, '$(git-branch) trunk');
+                return Promise.resolve(items[0]);
+            });
+
+            const repository = getRepository();
+            const openedRepository: OpenedRepository = (repository as any)
+                .repository;
+            const execStub = sandbox
+                .stub(openedRepository, 'exec')
+                .callThrough();
+            const tagCallStub = execStub.withArgs(
+                sinon.match.array.startsWith(['tag'])
+            );
+            await vscode.commands.executeCommand('fossil.closeBranch');
+            sinon.assert.calledOnceWithExactly(tagCallStub, [
+                'tag',
+                'add',
+                '--raw',
+                'closed',
+                'trunk',
+            ]);
+        });
+        test('Reopen branch', async () => {
+            const showQuickPick = sandbox.stub(vscode.window, 'showQuickPick');
+            showQuickPick.onFirstCall().callsFake(items => {
+                assert.ok(items instanceof Array);
+                assert.equal(items[0].label, '$(git-branch) trunk');
+                return Promise.resolve(items[0]);
+            });
+
+            const repository = getRepository();
+            const openedRepository: OpenedRepository = (repository as any)
+                .repository;
+            const execStub = sandbox
+                .stub(openedRepository, 'exec')
+                .callThrough();
+            const tagCallStub = execStub.withArgs(
+                sinon.match.array.startsWith(['tag'])
+            );
+            await vscode.commands.executeCommand('fossil.reopenBranch');
+            sinon.assert.calledOnceWithExactly(tagCallStub, [
+                'tag',
+                'cancel',
+                '--raw',
+                'closed',
+                'trunk',
+            ]);
+        });
+    });
+}

@@ -29,6 +29,7 @@ import {
     fossil_revert_change,
     fossil_revert_suite,
     fossil_stash_suite,
+    fossil_tag_suite,
     fossil_utilities_suite,
 } from './test_commands';
 import {
@@ -185,6 +186,7 @@ suite('Fossil.OpenedRepo', function () {
     fossil_patch_suite(sandbox);
     fossil_utilities_suite(sandbox);
     fossil_merge_suite(sandbox);
+    fossil_tag_suite(sandbox);
 
     afterEach(() => {
         sandbox.restore();
