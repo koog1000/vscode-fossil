@@ -477,6 +477,27 @@ export async function fossil_change_branch_to_hash(
     assert.ok(updateCall.calledOnce);
 }
 
+export async function fossil_clean(sandbox: sinon.SinonSandbox): Promise<void> {
+    const showWarningMessage: sinon.SinonStub = sandbox.stub(
+        vscode.window,
+        'showWarningMessage'
+    );
+    showWarningMessage.onFirstCall().resolves('&&Delete Extras');
+
+    const repository = getRepository();
+    const openedRepository: OpenedRepository = (repository as any).repository;
+    const execStub = sandbox.stub(openedRepository, 'exec').callThrough();
+    const tagCallStub = execStub.withArgs(['clean']);
+    await vscode.commands.executeCommand('fossil.clean');
+    sinon.assert.calledOnce(tagCallStub);
+    sinon.assert.calledOnceWithExactly(
+        showWarningMessage,
+        'Are you sure you want to delete untracked and unignored files?',
+        { modal: true },
+        '&&Delete Extras'
+    );
+}
+
 export function fossil_stash_suite(sandbox: sinon.SinonSandbox): void {
     suite('Stash', function (this: Suite) {
         afterEach(() => {
