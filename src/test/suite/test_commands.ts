@@ -383,6 +383,41 @@ export function fossil_revert_suite(sandbox: sinon.SinonSandbox): void {
                 )
             );
         });
+        test('Revert all', async () => {
+            const showWarningMessage: sinon.SinonStub = sandbox.stub(
+                vscode.window,
+                'showWarningMessage'
+            );
+            showWarningMessage.onFirstCall().resolves('&&Discard Changes');
+
+            const repository = getRepository();
+            const openedRepository: OpenedRepository = (repository as any)
+                .repository;
+            const execStub = sandbox
+                .stub(openedRepository, 'exec')
+                .callThrough();
+            const statusStub = fakeFossilStatus(
+                execStub,
+                'EDITED a.txt\nEDITED b.txt'
+            );
+            const revertStub = execStub
+                .withArgs(sinon.match.array.startsWith(['revert']))
+                .resolves();
+            await repository.updateModelState();
+            sinon.assert.calledOnce(statusStub);
+            await vscode.commands.executeCommand('fossil.revertAll');
+            sinon.assert.calledOnceWithExactly(
+                showWarningMessage,
+                'Are you sure you want to discard ALL changes?',
+                { modal: true },
+                '&&Discard Changes'
+            );
+            sinon.assert.calledOnceWithExactly(revertStub, [
+                'revert',
+                'a.txt',
+                'b.txt',
+            ]);
+        });
     });
 }
 
