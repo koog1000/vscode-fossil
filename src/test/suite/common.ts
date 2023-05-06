@@ -98,3 +98,21 @@ export async function add(
     await openedRepository.exec(['commit', filename, '-m', commitMessage]);
     return fileUri;
 }
+
+export async function cleanupFossil(repository: Repository): Promise<void> {
+    const openedRepository: OpenedRepository = (repository as any).repository;
+    if (
+        repository.workingGroup.resourceStates.length ||
+        repository.stagingGroup.resourceStates.length
+    ) {
+        await openedRepository.exec(['clean']);
+        await openedRepository.exec(['revert']);
+        await repository.updateModelState();
+        assert.equal(repository.workingGroup.resourceStates.length, 0);
+        assert.equal(repository.stagingGroup.resourceStates.length, 0);
+    }
+    for (const group of vscode.window.tabGroups.all) {
+        const allClosed = await vscode.window.tabGroups.close(group);
+        assert.ok(allClosed);
+    }
+}
