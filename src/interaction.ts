@@ -1133,7 +1133,7 @@ export async function confirmDiscardAllChanges(this: void): Promise<boolean> {
 export async function confirmDeleteExtras(this: void): Promise<boolean> {
     const message = localize(
         'confirm delete extras',
-        'Are you sure you want to delete untracked and uningnored files?'
+        'Are you sure you want to delete untracked and unignored files?'
     );
     const discard = localize('discard', '&&Delete Extras');
     const choice = await window.showWarningMessage(

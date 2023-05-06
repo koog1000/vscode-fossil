@@ -15,6 +15,7 @@ import {
     fossil_branch_suite,
     fossil_change_branch_to_hash,
     fossil_change_branch_to_trunk,
+    fossil_clean,
     fossil_close,
     fossil_commit_suite,
     fossil_ignore,
@@ -179,6 +180,8 @@ suite('Fossil.OpenedRepo', function () {
         fossil_change_branch_to_trunk(sandbox)).timeout(5000);
     test('fossil change branch to hash', () =>
         fossil_change_branch_to_hash(sandbox)).timeout(5000);
+
+    test('fossil clean', () => fossil_clean(sandbox)).timeout(5000);
 
     fossil_stash_suite(sandbox);
     fossil_branch_suite(sandbox);
