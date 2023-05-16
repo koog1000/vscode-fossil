@@ -691,7 +691,6 @@ export class CommandCenter {
             s =>
                 s instanceof FossilResource &&
                 (s.resourceGroup.is('working') ||
-                    s.resourceGroup.is('merge') ||
                     s.resourceGroup.is('untracked'))
         );
 
@@ -1537,7 +1536,6 @@ export class CommandCenter {
                 repository.workingGroup.getResource(uri) ||
                 repository.stagingGroup.getResource(uri) ||
                 repository.untrackedGroup.getResource(uri) ||
-                repository.mergeGroup.getResource(uri) ||
                 repository.conflictGroup.getResource(uri)
             );
         }
