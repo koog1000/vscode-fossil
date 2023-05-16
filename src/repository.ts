@@ -352,9 +352,6 @@ export class Repository implements IDisposable, InteractionAPI {
     }
 
     private _groups: IStatusGroups;
-    get mergeGroup(): FossilResourceGroup {
-        return this._groups.merge;
-    }
     get conflictGroup(): FossilResourceGroup {
         return this._groups.conflict;
     }
@@ -405,7 +402,6 @@ export class Repository implements IDisposable, InteractionAPI {
     get isClean(): boolean {
         const groups = [
             this.workingGroup,
-            this.mergeGroup,
             this.conflictGroup,
             this.stagingGroup,
         ];
@@ -426,7 +422,6 @@ export class Repository implements IDisposable, InteractionAPI {
 
         this._currentBranch = undefined;
         this._groups.conflict.updateResources([]);
-        this._groups.merge.updateResources([]);
         this._groups.staging.updateResources([]);
         this._groups.untracked.updateResources([]);
         this._groups.working.updateResources([]);
@@ -642,8 +637,8 @@ export class Repository implements IDisposable, InteractionAPI {
 
     mapResources(resourceUris: Uri[]): FossilResource[] {
         const resources: FossilResource[] = [];
-        const { conflict, merge, working, untracked, staging } = this._groups;
-        const groups = [working, staging, merge, untracked, conflict];
+        const { conflict, working, untracked, staging } = this._groups;
+        const groups = [working, staging, untracked, conflict];
         for (const uri of resourceUris) {
             for (const group of groups) {
                 const resource = group.getResource(uri);
@@ -876,12 +871,9 @@ export class Repository implements IDisposable, InteractionAPI {
     private _isInAnyGroup(
         check: (group: FossilResourceGroup) => boolean
     ): boolean {
-        return [
-            this.workingGroup,
-            this.stagingGroup,
-            this.mergeGroup,
-            this.conflictGroup,
-        ].some(check);
+        return [this.workingGroup, this.stagingGroup, this.conflictGroup].some(
+            check
+        );
     }
 
     public isInAnyGroup(uri: Uri): boolean {
@@ -1266,7 +1258,6 @@ export class Repository implements IDisposable, InteractionAPI {
 
     private get count(): number {
         return (
-            this.mergeGroup.resourceStates.length +
             this.stagingGroup.resourceStates.length +
             this.workingGroup.resourceStates.length +
             this.conflictGroup.resourceStates.length +

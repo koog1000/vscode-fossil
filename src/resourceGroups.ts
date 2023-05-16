@@ -22,7 +22,6 @@ export interface IGroupStatusesParams {
 export interface IStatusGroups {
     conflict: FossilResourceGroup;
     staging: FossilResourceGroup;
-    merge: FossilResourceGroup;
     working: FossilResourceGroup;
     untracked: FossilResourceGroup;
 }
@@ -40,11 +39,6 @@ export function createEmptyStatusGroups(scm: SourceControl): IStatusGroups {
         'staging',
         localize('staged changes', 'Staged Changes')
     ) as FossilResourceGroup;
-    const mergeGroup = new FossilResourceGroup(
-        scm,
-        'merge',
-        localize('merged changes', 'Merged Changes')
-    ) as FossilResourceGroup;
     const workingGroup = new FossilResourceGroup(
         scm,
         'working',
@@ -59,7 +53,6 @@ export function createEmptyStatusGroups(scm: SourceControl): IStatusGroups {
     return {
         conflict: conflictGroup,
         staging: stagingGroup,
-        merge: mergeGroup,
         working: workingGroup,
         untracked: untrackedGroup,
     };
@@ -146,7 +139,7 @@ export class FossilResourceGroup {
 
 export function groupStatuses({
     repositoryRoot,
-    statusGroups: { conflict, staging, merge, working, untracked },
+    statusGroups: { conflict, staging, working, untracked },
     fileStatuses,
     // repoStatus,
     resolveStatuses,
@@ -154,7 +147,6 @@ export function groupStatuses({
     const workingDirectoryResources: FossilResource[] = [];
     const stagingResources: FossilResource[] = [];
     const conflictResources: FossilResource[] = [];
-    const mergeResources: FossilResource[] = [];
     const untrackedResources: FossilResource[] = [];
 
     const chooseResourcesAndGroup = (
@@ -262,7 +254,6 @@ export function groupStatuses({
         }
     }
     conflict.updateResources(conflictResources);
-    merge.updateResources(mergeResources);
     staging.updateResources(stagingResources);
     working.updateResources(workingDirectoryResources);
     untracked.updateResources(untrackedResources);
