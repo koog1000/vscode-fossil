@@ -38,7 +38,6 @@ import {
     Status,
     CommitOptions,
     CommitScope,
-    MergeStatus,
     Repository,
 } from './repository';
 import { FossilResourceGroup, isResourceGroup } from './resourceGroups';
@@ -246,14 +245,6 @@ export class CommandCenter {
     }
 
     private getRightResource(resource: FossilResource): Uri {
-        if (
-            resource.mergeStatus === MergeStatus.UNRESOLVED &&
-            resource.status !== Status.MISSING &&
-            resource.status !== Status.DELETED
-        ) {
-            return resource.resourceUri.with({ scheme: 'fossil' });
-        }
-
         switch (resource.status) {
             case Status.DELETED:
             case Status.MISSING:
@@ -276,13 +267,6 @@ export class CommandCenter {
 
     private getTitle(resource: FossilResource): string {
         const basename = path.basename(resource.resourceUri.fsPath);
-        if (
-            resource.mergeStatus === MergeStatus.UNRESOLVED &&
-            resource.status !== Status.MISSING &&
-            resource.status !== Status.DELETED
-        ) {
-            return `${basename} (local <-> other)`;
-        }
 
         switch (resource.status) {
             case Status.MODIFIED:
