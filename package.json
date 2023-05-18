@@ -171,12 +171,6 @@
                 "category": "Fossil"
             },
             {
-                "command": "fossil.markResolved",
-                "title": "%command.markResolved%",
-                "category": "Fossil",
-                "icon": "$(check)"
-            },
-            {
                 "command": "fossil.openChange",
                 "title": "%command.openChange%",
                 "category": "Fossil",
@@ -250,12 +244,6 @@
                 "icon": "$(refresh)"
             },
             {
-                "command": "fossil.resolveAgain",
-                "title": "%command.resolveAgain%",
-                "category": "Fossil",
-                "icon": "$(refresh)"
-            },
-            {
                 "command": "fossil.showOutput",
                 "title": "%command.showOutput%",
                 "category": "Fossil"
@@ -280,11 +268,6 @@
             {
                 "command": "fossil.redo",
                 "title": "%command.redo%",
-                "category": "Fossil"
-            },
-            {
-                "command": "fossil.unresolve",
-                "title": "%command.unresolve%",
                 "category": "Fossil"
             },
             {
@@ -557,10 +540,6 @@
                     "when": "fossilOpenRepositoryCount"
                 },
                 {
-                    "command": "fossil.resolveAgain",
-                    "when": "fossilOpenRepositoryCount"
-                },
-                {
                     "command": "fossil.reopenBranch",
                     "when": "fossilOpenRepositoryCount"
                 },
@@ -571,14 +550,6 @@
                 {
                     "command": "fossil.render",
                     "when": "fossilOpenRepositoryCount && !isInDiffEditor && resourceExtname =~ /^\\.(md|wiki)$/ || config.fossil.enabled && resourceScheme == untitled"
-                },
-                {
-                    "command": "fossil.markResolved",
-                    "when": "fossilOpenRepositoryCount"
-                },
-                {
-                    "command": "fossil.unresolve",
-                    "when": "fossilOpenRepositoryCount"
                 },
                 {
                     "command": "fossil.deleteFiles",
@@ -836,11 +807,6 @@
                 }
             ],
             "scm/resourceState/context": [
-                {
-                    "command": "fossil.unresolve",
-                    "when": "config.fossil.enabled && scmProvider == fossil && scmResourceGroup == merge",
-                    "group": "1_modification"
-                },
                 {
                     "command": "fossil.openChange",
                     "when": "config.fossil.enabled && scmProvider == fossil && scmResourceGroup == staging",

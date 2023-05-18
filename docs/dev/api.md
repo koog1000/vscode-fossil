@@ -37,8 +37,6 @@ _Work in progress_.
 | fossil.openFiles | Open Files |
 | fossil.openResource| _not needed_ |
 | fossil.openUI | Open web UI | •&nbsp;Command palette | execute `fossil ui` in VSCode terminal |
-| fossil.markResolved | <span style="color: darkred">what is this command?</span>
-| fossil.resolveAgain | <span style="color: darkred">what is this command?</span>
 | fossil.patchApply | Apply Patch | •&nbsp;Main SCM menu<br>•&nbsp;Command palette | 1. Select path<br>2. Execute `fossil patch apply $(path)`
 | fossil.patchCreate | Create Patch | •&nbsp;Main SCM menu<br>•&nbsp;Command palette | 1. Select path<br>2. Execute `fossil patch create $(path)`
 | fossil.pull | Pull | •&nbsp;Main SCM menu<br>•&nbsp;Command palette | Execute `fossil pull` or `fossil update` depending on `autoUpdate` configuration option
