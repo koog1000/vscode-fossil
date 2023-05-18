@@ -117,12 +117,6 @@ export const enum Status {
 
 type ThemeName = 'light' | 'dark';
 
-export const enum MergeStatus {
-    NONE,
-    UNRESOLVED,
-    RESOLVED,
-}
-
 export class FossilResource implements SourceControlResourceState {
     @memoize
     get command(): Command {
@@ -180,9 +174,6 @@ export class FossilResource implements SourceControlResourceState {
     get status(): Status {
         return this._status;
     }
-    get mergeStatus(): MergeStatus {
-        return this._mergeStatus;
-    }
 
     private static Icons: { [key in ThemeName]: { [key in Status]: Uri } } = {
         light: {
@@ -210,14 +201,6 @@ export class FossilResource implements SourceControlResourceState {
     };
 
     private getIconPath(theme: ThemeName): Uri {
-        if (
-            this.mergeStatus === MergeStatus.UNRESOLVED &&
-            this.status !== Status.MISSING &&
-            this.status !== Status.DELETED
-        ) {
-            return FossilResource.Icons[theme][Status.CONFLICT];
-        }
-
         return FossilResource.Icons[theme][this.status];
     }
 
@@ -241,7 +224,6 @@ export class FossilResource implements SourceControlResourceState {
         private _resourceGroup: FossilResourceGroup,
         private _resourceUri: Uri,
         private _status: Status,
-        private _mergeStatus: MergeStatus,
         private _renameResourceUri?: Uri
     ) {}
 }

@@ -7,7 +7,7 @@ import {
 } from 'vscode';
 import * as path from 'path';
 import * as fs from 'fs';
-import { FossilResource, Status, MergeStatus } from './repository';
+import { FossilResource, Status } from './repository';
 
 import { localize } from './main';
 
@@ -152,7 +152,6 @@ export function groupStatuses({
     const chooseResourcesAndGroup = (
         uriString: Uri,
         rawStatus: IFileStatus['status'],
-        mergeStatus: MergeStatus,
         renamed: boolean
     ): [FossilResource[], FossilResourceGroup, Status] => {
         let status: Status;
@@ -212,21 +211,12 @@ export function groupStatuses({
         const renameUri = raw.rename
             ? Uri.file(path.join(repositoryRoot, raw.rename))
             : undefined;
-        const resolveFile =
-            resolveStatuses &&
-            resolveStatuses.filter(res => res.path === raw.path)[0];
-        const mergeStatus = resolveFile
-            ? toMergeStatus(resolveFile.status)
-            : MergeStatus.NONE;
         const [resources, group, status] = chooseResourcesAndGroup(
             uri,
             raw.status,
-            mergeStatus,
             !!raw.rename
         );
-        resources.push(
-            new FossilResource(group, uri, status, mergeStatus, renameUri)
-        );
+        resources.push(new FossilResource(group, uri, status, renameUri));
     }
 
     // it is possible for a clean file to need resolved
@@ -238,7 +228,6 @@ export function groupStatuses({
             if (seenUriStrings.has(uriString)) {
                 continue; // dealt with by the fileStatuses (this is the norm)
             }
-            const mergeStatus = toMergeStatus(raw.status);
             const inferredStatus: IFileStatus['status'] = fs.existsSync(
                 uri.fsPath
             )
@@ -247,27 +236,15 @@ export function groupStatuses({
             const [resources, group, status] = chooseResourcesAndGroup(
                 uri,
                 inferredStatus,
-                mergeStatus,
                 !!raw.rename
             );
-            resources.push(new FossilResource(group, uri, status, mergeStatus));
+            resources.push(new FossilResource(group, uri, status));
         }
     }
     conflict.updateResources(conflictResources);
     staging.updateResources(stagingResources);
     working.updateResources(workingDirectoryResources);
     untracked.updateResources(untrackedResources);
-}
-
-function toMergeStatus(status: string): MergeStatus {
-    switch (status) {
-        case 'R':
-            return MergeStatus.RESOLVED;
-        case 'U':
-            return MergeStatus.UNRESOLVED;
-        default:
-            return MergeStatus.NONE;
-    }
 }
 
 export const isResourceGroup = (obj: any): obj is SourceControlResourceGroup =>
