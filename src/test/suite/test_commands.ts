@@ -12,8 +12,11 @@ import * as assert from 'assert/strict';
 import * as fs from 'fs/promises';
 import { existsSync } from 'fs';
 import { assertGroups } from './test_status';
-import { FossilBranch, OpenedRepository } from '../../openedRepository';
-import { Status } from '../../repository';
+import {
+    FossilBranch,
+    OpenedRepository,
+    ResourceStatus,
+} from '../../openedRepository';
 import { eventToPromise } from '../../util';
 import { LineChange } from '../../revert';
 import { Suite, afterEach } from 'mocha';
@@ -65,7 +68,7 @@ export async function fossil_rename_a_file(
 
     assertGroups(
         repository,
-        new Map([[newFilePath.fsPath, Status.RENAMED]]),
+        new Map([[newFilePath.fsPath, ResourceStatus.RENAMED]]),
         new Map()
     );
 }
@@ -118,9 +121,9 @@ export async function fossil_rename_a_directory(
     await eventToPromise(repository.onDidRunOperation);
     await repository.updateModelState();
 
-    const ref: [string, Status][] = newUris.map((url: vscode.Uri) => [
+    const ref: [string, ResourceStatus][] = newUris.map((url: vscode.Uri) => [
         url.fsPath,
-        Status.RENAMED,
+        ResourceStatus.RENAMED,
     ]);
     assertGroups(repository, new Map(ref), new Map());
 }
