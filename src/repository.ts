@@ -1212,8 +1212,6 @@ export class Repository implements IDisposable, InteractionAPI {
         const groupInput: IGroupStatusesParams = {
             repositoryRoot: this.repository.root,
             fileStatuses: fileStat,
-            // repoStatus: this._repoStatus,
-            resolveStatuses: undefined,
             statusGroups: this._groups,
         };
 

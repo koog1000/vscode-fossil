@@ -14,8 +14,6 @@ export interface IGroupStatusesParams {
     repositoryRoot: FossilRoot;
     statusGroups: IStatusGroups;
     fileStatuses: IFileStatus[];
-    // repoStatus: IRepoStatus,
-    resolveStatuses: IFileStatus[] | undefined;
 }
 
 export interface IStatusGroups {
