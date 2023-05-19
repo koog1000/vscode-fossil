@@ -1,4 +1,4 @@
-import { FossilRoot, IFileStatus } from './openedRepository';
+import { FossilRoot, IFileStatus, ResourceStatus } from './openedRepository';
 import {
     Uri,
     SourceControlResourceGroup,
@@ -6,8 +6,7 @@ import {
     Disposable,
 } from 'vscode';
 import * as path from 'path';
-import * as fs from 'fs';
-import { FossilResource, Status } from './repository';
+import { FossilResource } from './repository';
 
 import { localize } from './main';
 
@@ -141,8 +140,6 @@ export function groupStatuses({
     repositoryRoot,
     statusGroups: { conflict, staging, working, untracked },
     fileStatuses,
-    // repoStatus,
-    resolveStatuses,
 }: IGroupStatusesParams): void {
     const workingDirectoryResources: FossilResource[] = [];
     const stagingResources: FossilResource[] = [];
@@ -151,55 +148,18 @@ export function groupStatuses({
 
     const chooseResourcesAndGroup = (
         uriString: Uri,
-        rawStatus: IFileStatus['status'],
-        renamed: boolean
-    ): [FossilResource[], FossilResourceGroup, Status] => {
-        let status: Status;
-        switch (rawStatus) {
-            case 'M':
-                status = Status.MODIFIED;
-                break;
-            case 'R':
-                status = Status.DELETED;
-                break;
-            // case 'I':
-            //     status = Status.IGNORED;
-            //     break;
-            case '?':
-                status = Status.UNTRACKED;
-                break;
-            case '!':
-                status = Status.MISSING;
-                break;
-            case 'A':
-                status = renamed ? Status.RENAMED : Status.ADDED;
-                break;
-            case 'C':
-                status = Status.CONFLICT;
-                break;
-            default:
-                throw new Error('Unknown rawStatus: ' + rawStatus);
+        status: ResourceStatus
+    ): [FossilResource[], FossilResourceGroup] => {
+        if (status === ResourceStatus.EXTRA) {
+            return [untrackedResources, untracked];
         }
 
-        if (status === Status.UNTRACKED) {
-            return [untrackedResources, untracked, status];
+        if (status === ResourceStatus.CONFLICT) {
+            return [conflictResources, conflict];
         }
-
-        // if (repoStatus.isMerge) {
-        //     if (mergeStatus === MergeStatus.UNRESOLVED) {
-        //         return [conflictResources, conflict, status];
-        //     }
-        //     return [mergeResources, merge, status];
-        // }
-        if (status === Status.CONFLICT) {
-            return [conflictResources, conflict, status];
-        }
-        const isStaged = staging.includesUri(uriString) ? true : false;
-        const targetResources: FossilResource[] = isStaged
-            ? stagingResources
-            : workingDirectoryResources;
-        const targetGroup: FossilResourceGroup = isStaged ? staging : working;
-        return [targetResources, targetGroup, status];
+        return staging.includesUri(uriString)
+            ? [stagingResources, staging]
+            : [workingDirectoryResources, working];
     };
 
     const seenUriStrings: Map<string, boolean> = new Map();
@@ -211,36 +171,10 @@ export function groupStatuses({
         const renameUri = raw.rename
             ? Uri.file(path.join(repositoryRoot, raw.rename))
             : undefined;
-        const [resources, group, status] = chooseResourcesAndGroup(
-            uri,
-            raw.status,
-            !!raw.rename
-        );
-        resources.push(new FossilResource(group, uri, status, renameUri));
+        const [resources, group] = chooseResourcesAndGroup(uri, raw.status);
+        resources.push(new FossilResource(group, uri, raw.status, renameUri));
     }
 
-    // it is possible for a clean file to need resolved
-    // e.g. when local changed and other deleted
-    if (resolveStatuses) {
-        for (const raw of resolveStatuses) {
-            const uri = Uri.file(path.join(repositoryRoot, raw.path));
-            const uriString = uri.toString();
-            if (seenUriStrings.has(uriString)) {
-                continue; // dealt with by the fileStatuses (this is the norm)
-            }
-            const inferredStatus: IFileStatus['status'] = fs.existsSync(
-                uri.fsPath
-            )
-                ? 'C'
-                : 'R';
-            const [resources, group, status] = chooseResourcesAndGroup(
-                uri,
-                inferredStatus,
-                !!raw.rename
-            );
-            resources.push(new FossilResource(group, uri, status));
-        }
-    }
     conflict.updateResources(conflictResources);
     staging.updateResources(stagingResources);
     working.updateResources(workingDirectoryResources);

@@ -35,6 +35,7 @@ import {
     FossilUsername,
     FossilPassword,
     StashItem,
+    ResourceStatus,
 } from './openedRepository';
 import * as humanise from './humanise';
 import { Repository, LogEntriesOptions } from './repository';
@@ -1375,11 +1376,11 @@ class FileStatusQuickPickItem extends RunnableQuickPickItem {
     }
     get icon(): string {
         switch (this.status.status) {
-            case 'A':
+            case ResourceStatus.ADDED:
                 return 'Ａ'; //'$(diff-added)';
-            case 'M':
+            case ResourceStatus.MODIFIED:
                 return 'Ｍ'; //'$(diff-modified)';
-            case 'R':
+            case ResourceStatus.DELETED:
                 return 'Ｒ'; //'$(diff-removed)';
             default:
                 return '';

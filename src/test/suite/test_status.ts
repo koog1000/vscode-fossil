@@ -3,18 +3,19 @@ import { Uri } from 'vscode';
 import * as sinon from 'sinon';
 import { FossilExecutable, FossilCWD } from '../../fossilExecutable';
 import * as fs from 'fs';
-import { Repository, Status } from '../../repository';
+import { Repository } from '../../repository';
 import { FossilResourceGroup } from '../../resourceGroups';
 import * as assert from 'assert/strict';
 import { getRepository } from './common';
+import { ResourceStatus } from '../../openedRepository';
 
 export function assertGroups(
     repository: Repository,
-    working: Map<string, Status>,
-    staging: Map<string, Status>
+    working: Map<string, ResourceStatus>,
+    staging: Map<string, ResourceStatus>
 ): void {
     const to_map = (grp: FossilResourceGroup) => {
-        return new Map<string, Status>(
+        return new Map<string, ResourceStatus>(
             grp.resourceStates.map(res => [res.resourceUri.fsPath, res.status])
         );
     };
@@ -42,7 +43,11 @@ export async function status_missing_is_visible_in_source_control_panel(
     await fs.promises.unlink(fooPath);
     const repository = getRepository();
     await repository.updateModelState();
-    assertGroups(repository, new Map([[fooPath, Status.MISSING]]), new Map());
+    assertGroups(
+        repository,
+        new Map([[fooPath, ResourceStatus.MISSING]]),
+        new Map()
+    );
 }
 
 export async function status_rename_is_visible_in_source_control_panel(
@@ -60,7 +65,11 @@ export async function status_rename_is_visible_in_source_control_panel(
     assert.equal(addRes.stdout, `ADDED  ${oldFilename}\n`);
     const repository = getRepository();
     await repository.updateModelState();
-    assertGroups(repository, new Map([[fooPath, Status.ADDED]]), new Map());
+    assertGroups(
+        repository,
+        new Map([[fooPath, ResourceStatus.ADDED]]),
+        new Map()
+    );
 
     await executable.exec(cwd, [
         'commit',
@@ -74,7 +83,11 @@ export async function status_rename_is_visible_in_source_control_panel(
     await executable.exec(cwd, ['mv', oldFilename, newFilename, '--hard']);
     await repository.updateModelState();
     const barPath = Uri.joinPath(rootUri, newFilename).fsPath;
-    assertGroups(repository, new Map([[barPath, Status.RENAMED]]), new Map());
+    assertGroups(
+        repository,
+        new Map([[barPath, ResourceStatus.RENAMED]]),
+        new Map()
+    );
 }
 
 export async function status_merge_integrate_is_visible_in_source_control_panel(
@@ -114,8 +127,8 @@ export async function status_merge_integrate_is_visible_in_source_control_panel(
     assertGroups(
         repository,
         new Map([
-            [barPath, Status.ADDED],
-            [fooPath, Status.MODIFIED],
+            [barPath, ResourceStatus.ADDED],
+            [fooPath, ResourceStatus.MODIFIED],
         ]),
         new Map()
     );

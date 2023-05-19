@@ -94,8 +94,18 @@ export interface IRepoStatus {
     readonly parent?: FossilHash;
 }
 
+export const enum ResourceStatus {
+    MODIFIED,
+    ADDED,
+    DELETED,
+    EXTRA,
+    MISSING,
+    RENAMED,
+    CONFLICT,
+}
+
 export interface IFileStatus {
-    readonly status: 'M' | 'A' | 'R' | 'C' | '!' | '?';
+    readonly status: ResourceStatus;
     readonly path: string;
     // `rename` is a valid field since fossil 2.19
     // field should contain the new path and `path` must contain original path
@@ -587,22 +597,22 @@ export class OpenedRepository {
             case 'EXECUTABLE':
             case 'UPDATED_BY_INTEGRATE':
             case 'UPDATED_BY_MERGE':
-                return { status: 'M', path };
+                return { status: ResourceStatus.MODIFIED, path };
             case 'ADDED_BY_INTEGRATE':
             case 'ADDED_BY_MERGE':
             case 'ADDED':
-                return { status: 'A', path };
+                return { status: ResourceStatus.ADDED, path };
             case 'DELETED':
-                return { status: 'R', path };
+                return { status: ResourceStatus.DELETED, path };
             case 'MISSING':
-                return { status: '!', path };
+                return { status: ResourceStatus.MISSING, path };
             case 'CONFLICT':
-                return { status: 'C', path };
+                return { status: ResourceStatus.CONFLICT, path };
             case 'RENAMED': {
                 // since fossil 2.19 there's '  ->  '
                 const [from_path, to_path] = path.split('  ->  ');
                 return {
-                    status: 'A',
+                    status: ResourceStatus.RENAMED,
                     path: from_path,
                     rename: to_path ?? from_path,
                 };
@@ -635,7 +645,7 @@ export class OpenedRepository {
         lines.forEach(line => {
             if (line.length > 0) {
                 const fileUri: string = line.trim();
-                result.push({ status: '?', path: fileUri });
+                result.push({ status: ResourceStatus.EXTRA, path: fileUri });
             }
         });
         return result;

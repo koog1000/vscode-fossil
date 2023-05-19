@@ -31,11 +31,11 @@ import {
     FossilCommitMessage,
     FossilPassword,
     FossilUsername,
+    ResourceStatus,
 } from './openedRepository';
 import { Model } from './model';
 import {
     FossilResource,
-    Status,
     CommitOptions,
     CommitScope,
     Repository,
@@ -223,22 +223,20 @@ export class CommandCenter {
 
     private getLeftResource(resource: FossilResource): Uri | undefined {
         switch (resource.status) {
-            case Status.RENAMED:
+            case ResourceStatus.RENAMED:
                 if (resource.renameResourceUri) {
                     return toFossilUri(resource.original);
                 }
                 return undefined;
 
-            case Status.ADDED:
-            case Status.IGNORED:
-            case Status.UNTRACKED:
-            case Status.UNMODIFIED:
+            case ResourceStatus.ADDED:
+            case ResourceStatus.EXTRA:
                 return undefined;
 
-            case Status.MODIFIED:
-            case Status.CONFLICT:
-            case Status.DELETED:
-            case Status.MISSING:
+            case ResourceStatus.MODIFIED:
+            case ResourceStatus.CONFLICT:
+            case ResourceStatus.DELETED:
+            case ResourceStatus.MISSING:
             default:
                 return toFossilUri(resource.original);
         }
@@ -246,20 +244,18 @@ export class CommandCenter {
 
     private getRightResource(resource: FossilResource): Uri {
         switch (resource.status) {
-            case Status.DELETED:
-            case Status.MISSING:
+            case ResourceStatus.DELETED:
+            case ResourceStatus.MISSING:
                 return resource.resourceUri.with({
                     scheme: 'fossil',
                     query: 'empty',
                 });
 
-            case Status.ADDED:
-            case Status.IGNORED:
-            case Status.MODIFIED:
-            case Status.RENAMED:
-            case Status.UNTRACKED:
-            case Status.UNMODIFIED:
-            case Status.CONFLICT:
+            case ResourceStatus.ADDED:
+            case ResourceStatus.MODIFIED:
+            case ResourceStatus.RENAMED:
+            case ResourceStatus.EXTRA:
+            case ResourceStatus.CONFLICT:
             default:
                 return resource.resourceUri;
         }
@@ -269,18 +265,18 @@ export class CommandCenter {
         const basename = path.basename(resource.resourceUri.fsPath);
 
         switch (resource.status) {
-            case Status.MODIFIED:
-            case Status.ADDED:
-            case Status.CONFLICT:
+            case ResourceStatus.MODIFIED:
+            case ResourceStatus.ADDED:
+            case ResourceStatus.CONFLICT:
                 return `${basename} (Working Directory)`;
 
-            case Status.RENAMED:
+            case ResourceStatus.RENAMED:
                 return `${basename} (Renamed)`;
 
-            case Status.DELETED:
+            case ResourceStatus.DELETED:
                 return `${basename} (Deleted)`;
 
-            case Status.MISSING:
+            case ResourceStatus.MISSING:
                 return `${basename} (Missing)`;
         }
 
@@ -754,7 +750,7 @@ export class CommandCenter {
 
         const [discardResources, addedResources] = partition(
             scmResources,
-            s => s.status !== Status.ADDED
+            s => s.status !== ResourceStatus.ADDED
         );
         if (discardResources.length > 0) {
             const confirmFilenames = discardResources.map(r =>
@@ -871,7 +867,7 @@ export class CommandCenter {
         if (scope === CommitScope.WORKING_GROUP) {
             const missingResources =
                 repository.workingGroup.resourceStates.filter(
-                    r => r.status === Status.MISSING
+                    r => r.status === ResourceStatus.MISSING
                 );
             if (missingResources.length > 0) {
                 const missingFilenames = missingResources.map(r =>

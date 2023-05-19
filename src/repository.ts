@@ -38,6 +38,7 @@ import {
     StashItem,
     RelativePath,
     Praise,
+    ResourceStatus,
 } from './openedRepository';
 import {
     anyEvent,
@@ -103,18 +104,6 @@ export const enum RepositoryState {
     Disposed,
 }
 
-export const enum Status {
-    MODIFIED,
-    ADDED,
-    DELETED,
-    UNTRACKED,
-    IGNORED,
-    MISSING,
-    RENAMED,
-    UNMODIFIED,
-    CONFLICT,
-}
-
 type ThemeName = 'light' | 'dark';
 
 export class FossilResource implements SourceControlResourceState {
@@ -129,16 +118,15 @@ export class FossilResource implements SourceControlResourceState {
 
     get isDirtyStatus(): boolean {
         switch (this._status) {
-            case Status.UNTRACKED:
-            case Status.IGNORED:
+            case ResourceStatus.EXTRA:
                 return false;
 
-            case Status.ADDED:
-            case Status.DELETED:
-            case Status.MISSING:
-            case Status.MODIFIED:
-            case Status.RENAMED:
-            case Status.CONFLICT:
+            case ResourceStatus.ADDED:
+            case ResourceStatus.DELETED:
+            case ResourceStatus.MISSING:
+            case ResourceStatus.MODIFIED:
+            case ResourceStatus.RENAMED:
+            case ResourceStatus.CONFLICT:
             default:
                 return true;
         }
@@ -154,10 +142,10 @@ export class FossilResource implements SourceControlResourceState {
     get resourceUri(): Uri {
         if (this.renameResourceUri) {
             if (
-                this._status === Status.MODIFIED ||
-                this._status === Status.RENAMED ||
-                this._status === Status.ADDED ||
-                this._status === Status.CONFLICT
+                this._status === ResourceStatus.MODIFIED ||
+                this._status === ResourceStatus.RENAMED ||
+                this._status === ResourceStatus.ADDED ||
+                this._status === ResourceStatus.CONFLICT
             ) {
                 return this.renameResourceUri;
             }
@@ -171,32 +159,30 @@ export class FossilResource implements SourceControlResourceState {
     get resourceGroup(): FossilResourceGroup {
         return this._resourceGroup;
     }
-    get status(): Status {
+    get status(): ResourceStatus {
         return this._status;
     }
 
-    private static Icons: { [key in ThemeName]: { [key in Status]: Uri } } = {
+    private static Icons: {
+        [key in ThemeName]: { [key in ResourceStatus]: Uri };
+    } = {
         light: {
-            [Status.MODIFIED]: getIconUri('status-modified', 'light'),
-            [Status.MISSING]: getIconUri('status-missing', 'light'),
-            [Status.ADDED]: getIconUri('status-added', 'light'),
-            [Status.DELETED]: getIconUri('status-deleted', 'light'),
-            [Status.RENAMED]: getIconUri('status-renamed', 'light'),
-            [Status.UNTRACKED]: getIconUri('status-untracked', 'light'),
-            [Status.IGNORED]: getIconUri('status-ignored', 'light'),
-            [Status.CONFLICT]: getIconUri('status-conflict', 'light'),
-            [Status.UNMODIFIED]: getIconUri('status-clean', 'light'),
+            [ResourceStatus.MODIFIED]: getIconUri('status-modified', 'light'),
+            [ResourceStatus.MISSING]: getIconUri('status-missing', 'light'),
+            [ResourceStatus.ADDED]: getIconUri('status-added', 'light'),
+            [ResourceStatus.DELETED]: getIconUri('status-deleted', 'light'),
+            [ResourceStatus.RENAMED]: getIconUri('status-renamed', 'light'),
+            [ResourceStatus.EXTRA]: getIconUri('status-untracked', 'light'),
+            [ResourceStatus.CONFLICT]: getIconUri('status-conflict', 'light'),
         },
         dark: {
-            [Status.MODIFIED]: getIconUri('status-modified', 'dark'),
-            [Status.MISSING]: getIconUri('status-missing', 'dark'),
-            [Status.ADDED]: getIconUri('status-added', 'dark'),
-            [Status.DELETED]: getIconUri('status-deleted', 'dark'),
-            [Status.RENAMED]: getIconUri('status-renamed', 'dark'),
-            [Status.UNTRACKED]: getIconUri('status-untracked', 'dark'),
-            [Status.IGNORED]: getIconUri('status-ignored', 'dark'),
-            [Status.CONFLICT]: getIconUri('status-conflict', 'dark'),
-            [Status.UNMODIFIED]: getIconUri('status-clean', 'dark'),
+            [ResourceStatus.MODIFIED]: getIconUri('status-modified', 'dark'),
+            [ResourceStatus.MISSING]: getIconUri('status-missing', 'dark'),
+            [ResourceStatus.ADDED]: getIconUri('status-added', 'dark'),
+            [ResourceStatus.DELETED]: getIconUri('status-deleted', 'dark'),
+            [ResourceStatus.RENAMED]: getIconUri('status-renamed', 'dark'),
+            [ResourceStatus.EXTRA]: getIconUri('status-untracked', 'dark'),
+            [ResourceStatus.CONFLICT]: getIconUri('status-conflict', 'dark'),
         },
     };
 
@@ -206,7 +192,7 @@ export class FossilResource implements SourceControlResourceState {
 
     private get strikeThrough(): boolean {
         switch (this.status) {
-            case Status.DELETED:
+            case ResourceStatus.DELETED:
                 return true;
             default:
                 return false;
@@ -223,7 +209,7 @@ export class FossilResource implements SourceControlResourceState {
     constructor(
         private _resourceGroup: FossilResourceGroup,
         private _resourceUri: Uri,
-        private _status: Status,
+        private _status: ResourceStatus,
         private _renameResourceUri?: Uri
     ) {}
 }
@@ -644,7 +630,7 @@ export class Repository implements IDisposable, InteractionAPI {
 
             const missingResources = partition(
                 resources,
-                r => r.status === Status.MISSING
+                r => r.status === ResourceStatus.MISSING
             );
 
             if (missingResources[0].length) {
@@ -658,7 +644,7 @@ export class Repository implements IDisposable, InteractionAPI {
 
             const untrackedResources = partition(
                 resources,
-                r => r.status === Status.UNTRACKED
+                r => r.status === ResourceStatus.EXTRA
             );
 
             if (untrackedResources[0].length) {
@@ -773,8 +759,7 @@ export class Repository implements IDisposable, InteractionAPI {
 
             for (const r of resources) {
                 switch (r.status) {
-                    case Status.UNTRACKED:
-                    case Status.IGNORED:
+                    case ResourceStatus.EXTRA:
                         break;
                     default:
                         toRevert.push(this.mapResourceToRepoRelativePath(r));
