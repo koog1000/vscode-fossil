@@ -104,7 +104,7 @@ export const enum ResourceStatus {
     CONFLICT,
 }
 
-export interface IFileStatus {
+export interface FileStatus {
     readonly status: ResourceStatus;
     readonly path: string;
     // `rename` is a valid field since fossil 2.19
@@ -142,7 +142,7 @@ export interface Commit extends Revision {
 }
 
 export interface CommitDetails extends Commit {
-    files: IFileStatus[];
+    files: FileStatus[];
 }
 
 export type Praise = [FossilHash, string, FossilUsername];
@@ -581,7 +581,7 @@ export class OpenedRepository {
     /**
      * @param line: line from `fossil status` of `fossil timeline --verbose`
      */
-    private parseStatusLine(line: string): IFileStatus | undefined {
+    private parseStatusLine(line: string): FileStatus | undefined {
         // regexp:
         // 1) (?:\s{3})? at the start of the line there are 0 or 3 spaces
         // 2) ([A-Z_]+) single uppercase word
@@ -621,8 +621,8 @@ export class OpenedRepository {
         return;
     }
 
-    parseStatusLines(status: StatusString): IFileStatus[] {
-        const result: IFileStatus[] = [];
+    parseStatusLines(status: StatusString): FileStatus[] {
+        const result: FileStatus[] = [];
 
         status.split('\n').forEach(line => {
             const match = this.parseStatusLine(line);
@@ -634,13 +634,13 @@ export class OpenedRepository {
         return result;
     }
 
-    async getExtras(): Promise<IFileStatus[]> {
+    async getExtras(): Promise<FileStatus[]> {
         const executionResult = await this.exec(['extras']);
         return this.parseExtrasLines(executionResult.stdout);
     }
 
-    private parseExtrasLines(extraString: FossilStdOut): IFileStatus[] {
-        const result: IFileStatus[] = [];
+    private parseExtrasLines(extraString: FossilStdOut): FileStatus[] {
+        const result: FileStatus[] = [];
         const lines = extraString.split('\n');
         lines.forEach(line => {
             if (line.length > 0) {

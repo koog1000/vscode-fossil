@@ -20,7 +20,7 @@ import {
     Commit,
     LogEntryOptions,
     CommitDetails,
-    IFileStatus,
+    FileStatus,
     FossilPath,
     FossilRoot,
     FossilURI,
@@ -905,7 +905,7 @@ export async function presentCommitDetails(
     commands: InteractionAPI
 ): Promise<RunnableQuickPickItem | undefined> {
     const placeHolder = describeCommitOneLine(details);
-    const fileActionFactory = (f: IFileStatus) => () => {
+    const fileActionFactory = (f: FileStatus) => () => {
         return commands.diffToParent(f.path, details.hash);
     };
     const filePickItems = details.files.map(
@@ -1387,7 +1387,7 @@ class FileStatusQuickPickItem extends RunnableQuickPickItem {
         }
     }
 
-    constructor(private status: IFileStatus, private action: RunnableAction) {
+    constructor(private status: FileStatus, private action: RunnableAction) {
         super();
     }
 
