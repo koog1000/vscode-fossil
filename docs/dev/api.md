@@ -33,7 +33,7 @@ _Work in progress_.
 | fossil.openChange | Open Changes |
 | fossil.openChangeFromUri | Open Changes |
 | fossil.openFile | Open File |
-| fossil.openFileFromUri | Open File |
+| fossil.openFileFromUri | Open File | •&nbsp;Command palette<br>•&nbsp;Editor bar | When in diff view, there's a special button to show local file
 | fossil.openFiles | Open Files |
 | fossil.openResource| _not needed_ |
 | fossil.openUI | Open web UI | •&nbsp;Command palette | execute `fossil ui` in VSCode terminal |
