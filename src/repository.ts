@@ -496,7 +496,7 @@ export class Repository implements IDisposable, InteractionAPI {
     @throttle
     private async updateWhenIdleAndWait(): Promise<void> {
         await this.whenIdleAndFocused();
-        await this.status('idle update');
+        await this.updateModelState('idle update');
         await delay(5000);
     }
 
