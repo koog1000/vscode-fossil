@@ -27,6 +27,7 @@ import { Repository, RepositoryState } from './repository';
 
 import { localize } from './main';
 import * as interaction from './interaction';
+import { OpenedRepository } from './openedRepository';
 
 class RepositoryPick implements QuickPickItem {
     @memoize get label(): string {
@@ -300,21 +301,25 @@ export class Model implements Disposable {
         }
 
         try {
-            const repositoryRoot = await this.executable.getRepositoryRoot(
+            const openedRepository = await OpenedRepository.tryOpen(
+                this.executable,
                 path
             );
+            if (!openedRepository) {
+                return false;
+            }
 
             // This can happen whenever `path` has the wrong case sensitivity in
             // case insensitive file systems
             // https://github.com/Microsoft/vscode/issues/33498
+            // the above comment is here from git extension and
+            // might not be relevant for fossil
 
-            if (this.getRepository(Uri.file(repositoryRoot))) {
+            if (this.getRepository(Uri.file(openedRepository.root))) {
                 return true;
             }
 
-            const repository = new Repository(
-                this.executable.open(repositoryRoot)
-            );
+            const repository = new Repository(openedRepository);
 
             this.open(repository);
             return true;

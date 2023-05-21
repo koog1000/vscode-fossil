@@ -20,6 +20,7 @@ import {
     FossilStdErr,
 } from './fossilExecutable';
 import { NewBranchOptions } from './interaction';
+import { FossilCWD } from './fossilExecutable';
 
 export type Distinct<T, DistinctName> = T & { __TYPE__: DistinctName };
 /** path to .fossil */
@@ -182,10 +183,28 @@ function toStatus(klass: FossilClass, value: string): FileStatus {
 }
 
 export class OpenedRepository {
-    constructor(
+    private constructor(
         private readonly executable: FossilExecutable,
         public readonly root: FossilRoot
     ) {}
+
+    static async tryOpen(
+        executable: FossilExecutable,
+        anypath: string
+    ): Promise<OpenedRepository | undefined> {
+        const isFile = (await fs.stat(anypath)).isFile();
+        const cwd = (isFile ? path.dirname(anypath) : anypath) as FossilCWD;
+        const result = await executable.exec(
+            cwd,
+            ['info'],
+            `getting root for '${anypath}'`
+        );
+        const root = result.stdout.match(/local-root:\s*(.+)\/\s/);
+        if (root) {
+            return new OpenedRepository(executable, root[1] as FossilRoot);
+        }
+        return;
+    }
 
     async exec(
         args: FossilArgs,
