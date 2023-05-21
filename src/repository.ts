@@ -39,6 +39,7 @@ import {
     Praise,
     ResourceStatus,
     FossilStatus,
+    FossilClass,
 } from './openedRepository';
 import {
     anyEvent,
@@ -190,26 +191,23 @@ export class FossilResource implements SourceControlResourceState {
         return FossilResource.Icons[theme][this.status];
     }
 
-    private get strikeThrough(): boolean {
-        switch (this.status) {
-            case ResourceStatus.DELETED:
-                return true;
-            default:
-                return false;
-        }
-    }
-
     get decorations(): SourceControlResourceDecorations {
         const light = { iconPath: this.getIconPath('light') };
         const dark = { iconPath: this.getIconPath('dark') };
 
-        return { strikeThrough: this.strikeThrough, light, dark };
+        return {
+            strikeThrough: this.status == ResourceStatus.DELETED,
+            light,
+            dark,
+            tooltip: this._tooltip,
+        };
     }
 
     constructor(
         private _resourceGroup: FossilResourceGroup,
         private _resourceUri: Uri,
         private _status: ResourceStatus,
+        private _tooltip: FossilClass,
         private _renameResourceUri?: Uri
     ) {}
 }

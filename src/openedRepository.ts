@@ -101,7 +101,7 @@ export const enum ResourceStatus {
 
 export interface FileStatus {
     readonly status: ResourceStatus;
-    readonly klass?: FossilClass;
+    readonly klass: FossilClass;
     readonly path: string;
     // `rename` is a valid field since fossil 2.19
     // field should contain the new path and `path` must contain original path
@@ -164,7 +164,7 @@ const classes = {
     RENAMED: ResourceStatus.RENAMED,
     EXTRA: ResourceStatus.EXTRA,
 } as const;
-type FossilClass = keyof typeof classes;
+export type FossilClass = keyof typeof classes;
 
 function toStatus(klass: FossilClass, value: string): FileStatus {
     if (klass !== 'RENAMED') {
