@@ -905,9 +905,7 @@ export class CommandCenter {
             await interaction.warnResolveConflicts();
             return;
         }
-        const isMergeCommit = repository.repoStatus?.isMerge;
-
-        if (isMergeCommit) {
+        if (repository.fossilStatus?.isMerge) {
             return CommitScope.ALL;
         } else {
             return this.confirmCommitScope(repository, scope);

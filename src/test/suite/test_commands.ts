@@ -306,12 +306,13 @@ function fakeFossilStatus<T extends sinon.SinonStub>(
     execStub: T,
     status: string
 ) {
-    return execStub.withArgs(['status']).resolves({
+    const args = ['status', '--differ', '--merge'] as const;
+    return execStub.withArgs(args).resolves({
         fossilPath: '',
         exitCode: 0,
         stdout: status, // fake_status.join('\n'),
         stderr: '',
-        args: ['status'],
+        args: args,
         cwd: '',
     } as unknown as IExecutionResult);
 }

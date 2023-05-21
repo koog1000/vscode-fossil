@@ -159,8 +159,7 @@ export function informNoChangesToCommit(
 export async function checkThenWarnOutstandingMerge(
     repository: Repository
 ): Promise<boolean> {
-    const { repoStatus } = repository;
-    if (repoStatus && repoStatus.isMerge) {
+    if (repository.fossilStatus?.isMerge) {
         window.showErrorMessage(
             localize(
                 'outstanding merge',
@@ -1387,7 +1386,10 @@ class FileStatusQuickPickItem extends RunnableQuickPickItem {
         }
     }
 
-    constructor(private status: FileStatus, private action: RunnableAction) {
+    constructor(
+        private readonly status: FileStatus,
+        private readonly action: RunnableAction
+    ) {
         super();
     }
 

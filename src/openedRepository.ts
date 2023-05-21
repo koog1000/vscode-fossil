@@ -89,11 +89,6 @@ export interface IMergeResult {
     readonly unresolvedCount: number;
 }
 
-export interface IRepoStatus {
-    readonly isMerge: boolean;
-    readonly parent?: FossilHash;
-}
-
 export const enum ResourceStatus {
     MODIFIED,
     ADDED,
@@ -106,10 +101,18 @@ export const enum ResourceStatus {
 
 export interface FileStatus {
     readonly status: ResourceStatus;
+    readonly klass?: FossilClass;
     readonly path: string;
     // `rename` is a valid field since fossil 2.19
     // field should contain the new path and `path` must contain original path
     readonly rename?: string;
+}
+
+// parsed `fossil status ...` output
+export interface FossilStatus {
+    readonly statuses: FileStatus[];
+    readonly isMerge: boolean;
+    readonly info: Map<string, string>;
 }
 
 export interface BranchDetails {
@@ -146,6 +149,37 @@ export interface CommitDetails extends Commit {
 }
 
 export type Praise = [FossilHash, string, FossilUsername];
+
+const classes = {
+    EDITED: ResourceStatus.MODIFIED,
+    EXECUTABLE: ResourceStatus.MODIFIED,
+    UPDATED_BY_INTEGRATE: ResourceStatus.MODIFIED,
+    UPDATED_BY_MERGE: ResourceStatus.MODIFIED,
+    ADDED_BY_INTEGRATE: ResourceStatus.ADDED,
+    ADDED_BY_MERGE: ResourceStatus.ADDED,
+    ADDED: ResourceStatus.ADDED,
+    DELETED: ResourceStatus.DELETED,
+    MISSING: ResourceStatus.MISSING,
+    CONFLICT: ResourceStatus.CONFLICT,
+    RENAMED: ResourceStatus.RENAMED,
+    EXTRA: ResourceStatus.EXTRA,
+} as const;
+type FossilClass = keyof typeof classes;
+
+function toStatus(klass: FossilClass, value: string): FileStatus {
+    if (klass !== 'RENAMED') {
+        return { klass, status: classes[klass], path: value as RelativePath };
+    } else {
+        // since fossil 2.19 there's '  ->  '
+        const [from_path, to_path] = value.split('  ->  ');
+        return {
+            klass,
+            status: ResourceStatus.RENAMED,
+            path: from_path as RelativePath,
+            rename: to_path ?? from_path,
+        };
+    }
+}
 
 export class OpenedRepository {
     constructor(
@@ -555,100 +589,43 @@ export class OpenedRepository {
         await this.exec(['stash', operation, stashId.toString()]);
     }
 
-    getSummary(summary: StatusString): IRepoStatus {
-        const parent = this.parseParentLines(summary);
-        const isMerge = /^(MERGED_WITH|CHERRYPICK)\b/m.test(summary);
-        return { isMerge, parent };
-    }
-
-    private parseParentLines(
-        parentLines: StatusString
-    ): FossilHash | undefined {
-        const match = parentLines.match(/parent:\s+([a-f0-9]+)/);
-        if (match) {
-            return match[1] as FossilHash;
-        }
-        return undefined;
-    }
-
     /** Report the change status of files in the current checkout */
     @throttle
     async getStatus(reason: string): Promise<StatusString> {
         // quiet, include renames/copies of current checkout
-        const executionResult = await this.exec(['status'], reason);
+        const executionResult = await this.exec(
+            ['status', '--differ', '--merge'],
+            reason
+        );
         return executionResult.stdout as StatusString;
     }
-    /**
-     * @param line: line from `fossil status` of `fossil timeline --verbose`
-     */
-    private parseStatusLine(line: string): FileStatus | undefined {
-        // regexp:
-        // 1) (?:\s{3})? at the start of the line there are 0 or 3 spaces
-        // 2) ([A-Z_]+) single uppercase word
-        // 3) (?<=[^:]) not ending with ':' (see `fossil status` for idea)
-        // 4) \s+(.+)$ everything to the end of the line
-        const match = line.match(/^(?:\s{3})?([A-Z_]+)(?<=[^:])\s+(.+)$/);
-        if (!match) {
-            return undefined;
-        }
-        const [_, rawStatus, path] = match;
-        switch (rawStatus) {
-            case 'EDITED':
-            case 'EXECUTABLE':
-            case 'UPDATED_BY_INTEGRATE':
-            case 'UPDATED_BY_MERGE':
-                return { status: ResourceStatus.MODIFIED, path };
-            case 'ADDED_BY_INTEGRATE':
-            case 'ADDED_BY_MERGE':
-            case 'ADDED':
-                return { status: ResourceStatus.ADDED, path };
-            case 'DELETED':
-                return { status: ResourceStatus.DELETED, path };
-            case 'MISSING':
-                return { status: ResourceStatus.MISSING, path };
-            case 'CONFLICT':
-                return { status: ResourceStatus.CONFLICT, path };
-            case 'RENAMED': {
-                // since fossil 2.19 there's '  ->  '
-                const [from_path, to_path] = path.split('  ->  ');
-                return {
-                    status: ResourceStatus.RENAMED,
-                    path: from_path,
-                    rename: to_path ?? from_path,
-                };
-            }
-        }
-        return;
-    }
 
-    parseStatusLines(status: StatusString): FileStatus[] {
-        const result: FileStatus[] = [];
+    parseStatusString(status: StatusString): FossilStatus {
+        const statuses: FileStatus[] = [];
+        const info = new Map<string, string>();
 
-        status.split('\n').forEach(line => {
-            const match = this.parseStatusLine(line);
+        for (const line of status.split('\n')) {
+            const match = line.match(/^(\S+?):?\s+(.+)$/);
             if (!match) {
-                return;
+                continue;
             }
-            result.push(match);
-        });
-        return result;
-    }
-
-    async getExtras(): Promise<FileStatus[]> {
-        const executionResult = await this.exec(['extras']);
-        return this.parseExtrasLines(executionResult.stdout);
-    }
-
-    private parseExtrasLines(extraString: FossilStdOut): FileStatus[] {
-        const result: FileStatus[] = [];
-        const lines = extraString.split('\n');
-        lines.forEach(line => {
-            if (line.length > 0) {
-                const fileUri: string = line.trim();
-                result.push({ status: ResourceStatus.EXTRA, path: fileUri });
+            const [, key, value] = match;
+            if (key in classes) {
+                statuses.push(toStatus(key as FossilClass, value));
+            } else {
+                info.set(key, value);
             }
-        });
-        return result;
+        }
+        const isMerge =
+            info.has('CHERRYPICK') ||
+            info.has('BACKOUT') ||
+            info.has('INTEGRATE') ||
+            info.has('MERGED_WITH');
+        return {
+            statuses,
+            isMerge,
+            info,
+        };
     }
 
     async getLogEntries({
@@ -673,9 +650,9 @@ export class OpenedRepository {
         let lastFiles: CommitDetails['files'] = [];
         for (const line of result.stdout.split('\n')) {
             if (verbose && line.startsWith('   ')) {
-                const status = this.parseStatusLine(line);
-                if (status) {
-                    lastFiles.push(status);
+                const [, key, value] = line.match(/^\s*(\S+?)\s+(.+)$/) || [];
+                if (key in classes) {
+                    lastFiles.push(toStatus(key as FossilClass, value));
                 }
             }
             const parts = line.split('+++', 5);

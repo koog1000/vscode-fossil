@@ -17,7 +17,6 @@ import {
 import {
     OpenedRepository,
     Commit,
-    IRepoStatus,
     PullOptions,
     IMergeResult,
     CommitDetails,
@@ -39,6 +38,7 @@ import {
     RelativePath,
     Praise,
     ResourceStatus,
+    FossilStatus,
 } from './openedRepository';
 import {
     anyEvent,
@@ -338,9 +338,10 @@ export class Repository implements IDisposable, InteractionAPI {
         return this._currentBranch;
     }
 
-    private _repoStatus: IRepoStatus | undefined;
-    get repoStatus(): IRepoStatus | undefined {
-        return this._repoStatus;
+    // ToDo: rename and possibly make non optional
+    private _fossilStatus: FossilStatus | undefined;
+    get fossilStatus(): FossilStatus | undefined {
+        return this._fossilStatus;
     }
 
     private _operations = new Set<Operation>();
@@ -1197,21 +1198,16 @@ export class Repository implements IDisposable, InteractionAPI {
         const statusString = await this.repository.getStatus(
             'model state is updating'
         );
-        this._repoStatus = this.repository.getSummary(statusString);
-
         const currentBranchPromise = this.repository.getCurrentBranch();
 
-        const fileStat = this.repository
-            .parseStatusLines(statusString)
-            .concat(await this.repository.getExtras());
+        const fossilStatus = (this._fossilStatus =
+            this.repository.parseStatusString(statusString));
 
-        const currentRef = await currentBranchPromise;
-
-        this._currentBranch = currentRef;
+        this._currentBranch = await currentBranchPromise;
 
         const groupInput: IGroupStatusesParams = {
             repositoryRoot: this.repository.root,
-            fileStatuses: fileStat,
+            fileStatuses: fossilStatus.statuses,
             statusGroups: this._groups,
         };
 
