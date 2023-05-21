@@ -456,7 +456,7 @@ export class Repository implements IDisposable, InteractionAPI {
         );
         this._sourceControl.statusBarCommands = statusBar.commands;
 
-        this.updateModelState();
+        this.updateModelState('opening repository');
 
         this.disposables.push(new AutoIncomingOutgoing(this));
     }
@@ -1192,10 +1192,10 @@ export class Repository implements IDisposable, InteractionAPI {
      * `UpdateModelState` is called after every non read only operation run
      */
     @throttle
-    public async updateModelState(): Promise<void> {
-        const statusString = await this.repository.getStatus(
-            'model state is updating'
-        );
+    public async updateModelState(
+        reason = 'model state is updating'
+    ): Promise<void> {
+        const statusString = await this.repository.getStatus(reason);
         const currentBranchPromise = this.repository.getCurrentBranch();
 
         const fossilStatus = (this._fossilStatus =
