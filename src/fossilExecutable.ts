@@ -3,7 +3,6 @@ import {
     FossilPath,
     FossilRoot,
     FossilURI,
-    OpenedRepository,
 } from './openedRepository';
 import * as path from 'path';
 import * as fs from 'fs/promises';
@@ -266,7 +265,6 @@ export class FossilExecutable {
     private readonly fossilPath: FossilExecutablePath;
     private readonly outputChannel: OutputChannel;
     public readonly version: FossilVersion;
-    private openRepository: OpenedRepository | undefined;
     private readonly _onOutput = new EventEmitter<string>();
     get onOutput(): Event<string> {
         return this._onOutput.event;
@@ -276,11 +274,6 @@ export class FossilExecutable {
         this.fossilPath = options.fossilPath;
         this.outputChannel = options.outputChannel;
         this.version = options.version;
-    }
-
-    open(repository: FossilRoot): OpenedRepository {
-        this.openRepository = new OpenedRepository(this, repository);
-        return this.openRepository;
     }
 
     async init(
@@ -326,26 +319,6 @@ export class FossilExecutable {
         fossilCwd: FossilCWD
     ): Promise<void> {
         await this.exec(fossilCwd, ['open', fossilPath, '--force']);
-    }
-
-    /**
-     *
-     * @param path any path inside opened repository
-     * @returns path's root directory
-     */
-    async getRepositoryRoot(anypath: string): Promise<FossilRoot> {
-        const isFile = (await fs.stat(anypath)).isFile();
-        const cwd = (isFile ? path.dirname(anypath) : anypath) as FossilCWD;
-        const result = await this.exec(
-            cwd,
-            ['status'],
-            `getting root for '${anypath}'`
-        );
-        const root = result.stdout.match(/local-root:\s*(.+)\/\s/);
-        if (root) {
-            return root[1] as FossilRoot;
-        }
-        return '' as FossilRoot;
     }
 
     async exec(
