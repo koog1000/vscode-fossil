@@ -1173,6 +1173,66 @@ export function fossil_utilities_suite(sandbox: sinon.SinonSandbox): void {
     });
 }
 
+export function fossil_stage_suite(sandbox: sinon.SinonSandbox): void {
+    suite('Stage', function (this: Suite) {
+        async function statusSetup(status: string) {
+            const repository = getRepository();
+            repository.stagingGroup.resourceStates.length = 0;
+            repository.workingGroup.resourceStates.length = 0;
+            const openedRepository: OpenedRepository = (repository as any)
+                .repository;
+            const execStub = sandbox
+                .stub(openedRepository, 'exec')
+                .callThrough();
+            await fakeFossilStatus(execStub, status);
+            await repository.updateModelState();
+        }
+
+        test('Stage from working group', async () => {
+            vscode.commands.executeCommand('fossil.unstageAll');
+            await statusSetup('ADDED a.txt\nEDITED b.txt\nEDITED c.txt');
+            const repository = getRepository();
+            assert.equal(repository.workingGroup.resourceStates.length, 3);
+            assert.equal(repository.stagingGroup.resourceStates.length, 0);
+            await vscode.commands.executeCommand(
+                'fossil.stage',
+                repository.workingGroup.resourceStates[0],
+                repository.workingGroup.resourceStates[1]
+            );
+            assert.equal(repository.workingGroup.resourceStates.length, 1);
+            assert.equal(repository.stagingGroup.resourceStates.length, 2);
+        });
+        test('Stage all', async () => {
+            vscode.commands.executeCommand('fossil.unstageAll');
+            await statusSetup('ADDED a.txt\nEDITED b.txt\nEDITED c.txt');
+            const repository = getRepository();
+            await repository.updateModelState();
+            assert.equal(repository.workingGroup.resourceStates.length, 3);
+            assert.equal(repository.stagingGroup.resourceStates.length, 0);
+            await vscode.commands.executeCommand('fossil.stageAll');
+            assert.equal(repository.workingGroup.resourceStates.length, 0);
+            assert.equal(repository.stagingGroup.resourceStates.length, 3);
+        });
+        test('Unstage', async () => {
+            vscode.commands.executeCommand('fossil.unstageAll');
+            await statusSetup('ADDED a.txt\nEDITED b.txt\nEDITED c.txt');
+            const repository = getRepository();
+            await repository.updateModelState();
+            assert.equal(repository.workingGroup.resourceStates.length, 3);
+            assert.equal(repository.stagingGroup.resourceStates.length, 0);
+            await vscode.commands.executeCommand('fossil.stageAll');
+            assert.equal(repository.workingGroup.resourceStates.length, 0);
+            assert.equal(repository.stagingGroup.resourceStates.length, 3);
+            await vscode.commands.executeCommand(
+                'fossil.unstage',
+                repository.stagingGroup.resourceStates[1]
+            );
+            assert.equal(repository.workingGroup.resourceStates.length, 1);
+            assert.equal(repository.stagingGroup.resourceStates.length, 2);
+        });
+    });
+}
+
 export function fossil_tag_suite(sandbox: sinon.SinonSandbox): void {
     suite('Tag', function (this: Suite) {
         test('Close branch', async () => {
