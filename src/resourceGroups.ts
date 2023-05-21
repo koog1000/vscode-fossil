@@ -170,7 +170,9 @@ export function groupStatuses({
             ? Uri.file(path.join(repositoryRoot, raw.rename))
             : undefined;
         const [resources, group] = chooseResourcesAndGroup(uri, raw.status);
-        resources.push(new FossilResource(group, uri, raw.status, renameUri));
+        resources.push(
+            new FossilResource(group, uri, raw.status, raw.klass, renameUri)
+        );
     }
 
     conflict.updateResources(conflictResources);
