@@ -33,11 +33,11 @@ class ScopeStatusBar {
     }
 
     get command(): Command | undefined {
-        const { currentBranch, repoStatus } = this.repository;
+        const { currentBranch, fossilStatus } = this.repository;
         if (!currentBranch) {
             return undefined;
         }
-        const icon = repoStatus?.isMerge ? '$(git-merge)' : '$(git-branch)';
+        const icon = fossilStatus?.isMerge ? '$(git-merge)' : '$(git-branch)';
         const title =
             icon +
             ' ' +

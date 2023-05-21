@@ -86,7 +86,7 @@ type FossilCommand =
     | 'close'
     | 'commit'
     | 'diff'
-    | 'extras'
+    // | 'extras' - we get it from `fossil status --differ`
     | 'info'
     | 'init'
     | 'ls'
