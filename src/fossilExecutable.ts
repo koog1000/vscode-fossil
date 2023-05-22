@@ -101,6 +101,7 @@ type FossilCommand =
     | 'rename'
     | 'revert'
     | 'rm'
+    | 'settings'
     | 'stash'
     | 'status'
     | 'tag'

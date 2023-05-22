@@ -19,7 +19,7 @@ import {
 } from '../../openedRepository';
 import { eventToPromise } from '../../util';
 import { LineChange } from '../../revert';
-import { Suite, afterEach } from 'mocha';
+import { Suite, afterEach, Func, Test } from 'mocha';
 import { IExecutionResult } from '../../fossilExecutable';
 
 export async function fossil_close(
@@ -39,6 +39,20 @@ export async function fossil_close(
         );
     });
 }
+
+declare module 'mocha' {
+    interface TestFunction {
+        if: (condition: boolean, title: string, fn: Func) => Test;
+    }
+}
+
+test.if = function (condition: boolean, title: string, fn: Func): Test {
+    if (condition) {
+        return this(title, fn);
+    } else {
+        return this.skip(title);
+    }
+};
 
 export async function fossil_rename_a_file(
     sandbox: sinon.SinonSandbox
@@ -1173,12 +1187,108 @@ export function fossil_utilities_suite(sandbox: sinon.SinonSandbox): void {
     });
 }
 
+export function fossil_status_suite(): void {
+    suite('Status', function (this: Suite) {
+        test.if(process.platform != 'win32', 'Meta', async () => {
+            const uri = vscode.workspace.workspaceFolders![0].uri;
+
+            // enable symlinks
+            const repository = getRepository();
+            const openedRepository: OpenedRepository = (repository as any)
+                .repository;
+            await openedRepository.exec(['settings', 'allow-symlinks', 'on']);
+
+            // EXECUTABLE
+            const executable_path = vscode.Uri.joinPath(
+                uri,
+                'executable'
+            ).fsPath;
+            await fs.writeFile(executable_path, 'executable_path');
+            await openedRepository.exec(['add', executable_path]);
+            await openedRepository.exec([
+                'commit',
+                executable_path,
+                '-m',
+                'added executable',
+            ]);
+            await fs.chmod(executable_path, 0o744);
+
+            // UNEXEC
+            const unexec_path = vscode.Uri.joinPath(
+                uri,
+                'status_unexec'
+            ).fsPath;
+            await fs.writeFile(unexec_path, 'unexec_path');
+            await fs.chmod(unexec_path, 0o744);
+            await openedRepository.exec(['add', unexec_path]);
+            await openedRepository.exec([
+                'commit',
+                unexec_path,
+                '-m',
+                'added status_unexec',
+            ]);
+            await fs.chmod(unexec_path, 0o444);
+
+            // SYMLINK
+            const symlink_path = vscode.Uri.joinPath(uri, 'symlink').fsPath;
+            await fs.writeFile(symlink_path, 'symlink_path');
+            await openedRepository.exec(['add', symlink_path]);
+            await openedRepository.exec([
+                'commit',
+                symlink_path,
+                '-m',
+                'added symlink',
+            ]);
+            await fs.unlink(symlink_path);
+            await fs.symlink('/etc/passwd', symlink_path);
+
+            // UNLINK
+            const unlink_path = vscode.Uri.joinPath(uri, 'unlink').fsPath;
+            await fs.symlink('/etc/passwd', unlink_path);
+            await openedRepository.exec(['add', unlink_path]);
+            await openedRepository.exec([
+                'commit',
+                unlink_path,
+                '-m',
+                'added unlink',
+            ]);
+            await fs.rm(unlink_path);
+            await fs.writeFile(unlink_path, '/etc/passwd');
+
+            // NOT A FILE
+            const not_file_path = vscode.Uri.joinPath(uri, 'not_file').fsPath;
+            await fs.writeFile(not_file_path, 'not_file_path');
+            await openedRepository.exec(['add', not_file_path]);
+            await openedRepository.exec([
+                'commit',
+                not_file_path,
+                '-m',
+                'added not_file',
+            ]);
+            await fs.unlink(not_file_path);
+            await fs.mkdir(not_file_path);
+
+            await repository.updateModelState();
+            assertGroups(
+                repository,
+                new Map([
+                    [executable_path, ResourceStatus.MODIFIED],
+                    [unexec_path, ResourceStatus.MODIFIED],
+                    [symlink_path, ResourceStatus.MODIFIED],
+                    [unlink_path, ResourceStatus.MODIFIED],
+                    [not_file_path, ResourceStatus.MISSING],
+                ]),
+                new Map()
+            );
+            new Map();
+        }).timeout(20000);
+    });
+}
+
 export function fossil_stage_suite(sandbox: sinon.SinonSandbox): void {
     suite('Stage', function (this: Suite) {
         async function statusSetup(status: string) {
             const repository = getRepository();
-            repository.stagingGroup.resourceStates.length = 0;
-            repository.workingGroup.resourceStates.length = 0;
             const openedRepository: OpenedRepository = (repository as any)
                 .repository;
             const execStub = sandbox
