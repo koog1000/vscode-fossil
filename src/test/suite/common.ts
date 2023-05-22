@@ -6,7 +6,8 @@ import * as fs from 'fs';
 import { FossilExecutable, FossilCWD } from '../../fossilExecutable';
 import { Model } from '../../model';
 import { Repository } from '../../repository';
-import { OpenedRepository } from '../../openedRepository';
+import { OpenedRepository, ResourceStatus } from '../../openedRepository';
+import { FossilResourceGroup } from '../../resourceGroups';
 
 export async function fossilInit(
     sandbox: sinon.SinonSandbox,
@@ -115,4 +116,18 @@ export async function cleanupFossil(repository: Repository): Promise<void> {
         const allClosed = await vscode.window.tabGroups.close(group);
         assert.ok(allClosed);
     }
+}
+
+export function assertGroups(
+    repository: Repository,
+    working: Map<string, ResourceStatus>,
+    staging: Map<string, ResourceStatus>
+): void {
+    const to_map = (grp: FossilResourceGroup) => {
+        return new Map<string, ResourceStatus>(
+            grp.resourceStates.map(res => [res.resourceUri.fsPath, res.status])
+        );
+    };
+    assert.deepStrictEqual(to_map(repository.workingGroup), working);
+    assert.deepStrictEqual(to_map(repository.stagingGroup), staging);
 }
