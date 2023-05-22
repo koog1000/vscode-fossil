@@ -31,6 +31,7 @@ import {
     fossil_revert_suite,
     fossil_stage_suite,
     fossil_stash_suite,
+    fossil_status_suite,
     fossil_tag_suite,
     fossil_utilities_suite,
 } from './test_commands';
@@ -191,6 +192,7 @@ suite('Fossil.OpenedRepo', function () {
     fossil_utilities_suite(sandbox);
     fossil_merge_suite(sandbox);
     fossil_tag_suite(sandbox);
+    fossil_status_suite();
     fossil_stage_suite(sandbox);
 
     afterEach(() => {
