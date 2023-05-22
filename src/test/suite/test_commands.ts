@@ -3,6 +3,7 @@ import * as sinon from 'sinon';
 import { FossilExecutable, FossilCWD } from '../../fossilExecutable';
 import {
     add,
+    assertGroups,
     cleanupFossil,
     fossilInit,
     fossilOpen,
@@ -11,7 +12,6 @@ import {
 import * as assert from 'assert/strict';
 import * as fs from 'fs/promises';
 import { existsSync } from 'fs';
-import { assertGroups } from './test_status';
 import {
     FossilBranch,
     OpenedRepository,
@@ -1189,6 +1189,95 @@ export function fossil_utilities_suite(sandbox: sinon.SinonSandbox): void {
 
 export function fossil_status_suite(): void {
     suite('Status', function (this: Suite) {
+        test('Missing is visible in Source Control panel', async () => {
+            const filename = 'smiviscp.txt';
+            const path = await add(
+                'smiviscp.txt',
+                'test\n',
+                `ADDED  ${filename}\n`
+            );
+            await fs.unlink(path.fsPath);
+            const repository = getRepository();
+            await repository.updateModelState();
+            assertGroups(
+                repository,
+                new Map([[path.fsPath, ResourceStatus.MISSING]]),
+                new Map()
+            );
+        }).timeout(5000);
+
+        test('Rename is visible in Source Control panel', async () => {
+            const repository = getRepository();
+            await cleanupFossil(repository);
+            const oldFilename = 'sriciscp-new.txt';
+            const newFilename = 'sriciscp-renamed.txt';
+            const oldUri = await add(
+                oldFilename,
+                'test\n',
+                `add ${oldFilename}`
+            );
+            await repository.updateModelState();
+            assertGroups(repository, new Map(), new Map());
+
+            const openedRepository: OpenedRepository = (repository as any)
+                .repository;
+
+            await openedRepository.exec([
+                'mv',
+                oldFilename,
+                newFilename,
+                '--hard',
+            ]);
+            await repository.updateModelState();
+            const barPath = vscode.Uri.joinPath(
+                oldUri,
+                '..',
+                newFilename
+            ).fsPath;
+            assertGroups(
+                repository,
+                new Map([[barPath, ResourceStatus.RENAMED]]),
+                new Map()
+            );
+        }).timeout(15000);
+
+        test('Merge is visible in Source Control panel', async () => {
+            const repository = getRepository();
+            await cleanupFossil(repository);
+            const openedRepository: OpenedRepository = (repository as any)
+                .repository;
+
+            const rootUri = vscode.workspace.workspaceFolders![0].uri;
+            const fooPath = (await add('foo-xa.txt', '', 'add: foo-xa.txt'))
+                .fsPath;
+
+            const barPath = vscode.Uri.joinPath(rootUri, 'bar-xa.txt').fsPath;
+            await fs.writeFile(barPath, 'test bar\n');
+            await fs.appendFile(fooPath, 'appended\n');
+            await openedRepository.exec(['add', 'bar-xa.txt']);
+            console.log;
+            await openedRepository.exec([
+                'commit',
+                '-m',
+                'add: bar-xa.txt, mod foo-xa.txt',
+                '--branch',
+                'test_brunch',
+                '--no-warnings',
+            ]);
+
+            await openedRepository.exec(['update', 'trunk']);
+            await openedRepository.exec(['merge', 'test_brunch']);
+            await repository.updateModelState();
+            assertGroups(
+                repository,
+                new Map([
+                    [barPath, ResourceStatus.ADDED],
+                    [fooPath, ResourceStatus.MODIFIED],
+                ]),
+                new Map()
+            );
+        }).timeout(10000);
+
         test.if(process.platform != 'win32', 'Meta', async () => {
             const uri = vscode.workspace.workspaceFolders![0].uri;
 
@@ -1197,6 +1286,8 @@ export function fossil_status_suite(): void {
             const openedRepository: OpenedRepository = (repository as any)
                 .repository;
             await openedRepository.exec(['settings', 'allow-symlinks', 'on']);
+
+            await cleanupFossil(repository);
 
             // EXECUTABLE
             const executable_path = vscode.Uri.joinPath(

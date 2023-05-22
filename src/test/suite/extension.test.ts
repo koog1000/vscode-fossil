@@ -6,11 +6,6 @@ import * as fs from 'fs';
 import { FossilExecutable } from '../../fossilExecutable';
 import { findFossil } from '../../fossilFinder';
 import {
-    status_merge_integrate_is_visible_in_source_control_panel,
-    status_missing_is_visible_in_source_control_panel,
-    status_rename_is_visible_in_source_control_panel,
-} from './test_status';
-import {
     fossil_add,
     fossil_branch_suite,
     fossil_change_branch_to_hash,
@@ -122,23 +117,6 @@ suite('Fossil.OpenedRepo', function () {
         // this test requires just initialized state
         fossil_undo_and_redo_warning(sandbox)).timeout(5000);
 
-    test('fossil missing is visible in Source Control panel', async () =>
-        status_missing_is_visible_in_source_control_panel(
-            sandbox,
-            executable
-        )).timeout(5000);
-
-    test('fossil rename is visible in Source Control panel', () =>
-        status_rename_is_visible_in_source_control_panel(
-            sandbox,
-            executable
-        )).timeout(15000);
-
-    test('fossil integrate is visible in Source Control panel', () =>
-        status_merge_integrate_is_visible_in_source_control_panel(
-            sandbox,
-            executable
-        )).timeout(10000);
     test('fossil file log can differ files', () =>
         fossil_file_log_can_diff_files(sandbox, executable)).timeout(10000);
 
