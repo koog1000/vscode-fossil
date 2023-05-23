@@ -1,5 +1,20 @@
 # Changelog
 
+# v0.3.0
+
+### What's New
+
+- Speedup: collect all file statuses using `fossil status` instead of
+  combination of `fossil status` and `fossil extras`
+- Show file status in resource tooltip:
+  ![status tooltip](https://user-images.githubusercontent.com/76137/239752643-3b01f331-c729-41ea-a836-ffaa96b89fb5.png)
+- support rare `UNEXEC`, `SYMLINK`, `UNLINK` and `NOT_A_FILE` statuses
+
+### Bug Fixes
+
+- Another two typos
+
+
 # v0.2.6
 
 ### What's New
