@@ -1318,7 +1318,7 @@ export function fossil_status_suite(): void {
                 '-m',
                 'added status_unexec',
             ]);
-            await fs.chmod(unexec_path, 0o444);
+            await fs.chmod(unexec_path, 0o644);
 
             // SYMLINK
             const symlink_path = vscode.Uri.joinPath(uri, 'symlink').fsPath;
