@@ -697,17 +697,6 @@ export class Repository implements IDisposable, InteractionAPI {
         return relativePath;
     }
 
-    // repo-relative path --> workspace-relative path
-    private mapRepositoryRelativePathToWorkspaceRelativePath(
-        repoRelativeFilepath: string
-    ): string {
-        const fsPath = path.join(this.repository.root, repoRelativeFilepath);
-        const relativePath = path
-            .relative(this.repository.root, fsPath)
-            .replace(/[/\\]/g, path.sep);
-        return relativePath;
-    }
-
     @throttle
     async unstage(...uris: Uri[]): Promise<void> {
         let resources = this.mapResources(uris);
@@ -916,22 +905,7 @@ export class Repository implements IDisposable, InteractionAPI {
         mergeAction: MergeAction
     ): Promise<IMergeResult> {
         return this.runWithProgress(Operation.Merge, async () => {
-            try {
-                return this.repository.merge(checkin, mergeAction);
-            } catch (e) {
-                if (
-                    e instanceof FossilError &&
-                    e.fossilErrorCode === 'UntrackedFilesDiffer' &&
-                    e.untrackedFilenames
-                ) {
-                    e.untrackedFilenames = e.untrackedFilenames.map(filename =>
-                        this.mapRepositoryRelativePathToWorkspaceRelativePath(
-                            filename
-                        )
-                    );
-                }
-                throw e;
-            }
+            return this.repository.merge(checkin, mergeAction);
         });
     }
 

@@ -1275,16 +1275,6 @@ export async function inputWikiType(): Promise<
     return choice as 'Technote' | 'Wiki' | undefined;
 }
 
-export function errorUntrackedFilesDiffer(filenames: string[]): void {
-    const fileList = humanise.formatFilesAsBulletedList(filenames);
-    const message = localize(
-        'untracked files differ',
-        'Merge failed!\n\nUntracked files in your working directory would be overwritten by files of the same name from the merge revision:\n\n{0}\n\nEither track these files, move them, or delete them before merging.',
-        fileList
-    );
-    window.showErrorMessage(message, { modal: true });
-}
-
 abstract class RunnableQuickPickItem implements QuickPickItem {
     abstract get label(): string;
     abstract run(): RunnableReturnType;

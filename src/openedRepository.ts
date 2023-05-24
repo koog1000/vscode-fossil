@@ -17,7 +17,6 @@ import {
     IExecutionResult,
     FossilArgs,
     FossilStdOut,
-    FossilStdErr,
 } from './fossilExecutable';
 import { NewBranchOptions } from './interaction';
 import { FossilCWD } from './fossilExecutable';
@@ -505,18 +504,6 @@ export class OpenedRepository {
         }
     }
 
-    private parseUntrackedFilenames(stderr: FossilStdErr): string[] {
-        const untrackedFilesPattern = /([^:]+): untracked file differs\n/g;
-        let match: RegExpExecArray | null;
-        const files: string[] = [];
-        while ((match = untrackedFilesPattern.exec(stderr))) {
-            if (match !== null) {
-                files.push(match[1]);
-            }
-        }
-        return files;
-    }
-
     async merge(
         checkin: FossilCheckin,
         integrate: MergeAction
@@ -537,14 +524,6 @@ export class OpenedRepository {
                 unresolvedCount: 0,
             };
         } catch (e) {
-            if (
-                e instanceof FossilError &&
-                e.stderr.match(/untracked files in working directory differ/)
-            ) {
-                e.fossilErrorCode = 'UntrackedFilesDiffer';
-                e.untrackedFilenames = this.parseUntrackedFilenames(e.stderr);
-            }
-
             if (e instanceof FossilError && e.exitCode === 1) {
                 const match = e.stdout.match(/(\d+) files unresolved/);
                 if (match) {
