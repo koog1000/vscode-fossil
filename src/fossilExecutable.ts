@@ -66,7 +66,6 @@ export type FossilErrorCode =
     | 'NoSuchFile'
     | 'BranchAlreadyExists'
     | 'NoUndoInformationAvailable'
-    | 'UntrackedFilesDiffer'
     | 'DefaultRepositoryNotConfigured'
     | 'OperationMustBeForced'
     | 'unknown';
@@ -226,7 +225,6 @@ export class FossilError implements IFossilErrorData {
     readonly exitCode: number;
     fossilErrorCode: FossilErrorCode;
     readonly args: FossilArgs;
-    untrackedFilenames?: string[];
     readonly cwd: FossilCWD;
 
     constructor(data: IFossilErrorData) {

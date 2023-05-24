@@ -1234,40 +1234,25 @@ export class CommandCenter {
         otherRevision: FossilCheckin,
         mergeAction: MergeAction
     ) {
-        try {
-            const result = await repository.merge(otherRevision, mergeAction);
-            const { currentBranch } = repository;
+        const result = await repository.merge(otherRevision, mergeAction);
+        const { currentBranch } = repository;
 
-            if (result.unresolvedCount > 0) {
-                interaction.warnUnresolvedFiles(result.unresolvedCount);
-            } else if (currentBranch) {
-                const defaultMergeMessage = humanise.describeMerge(
-                    currentBranch,
-                    otherRevision
-                );
-                const didCommit = await this.smartCommit(
-                    repository,
-                    async () =>
-                        await interaction.inputCommitMessage(
-                            defaultMergeMessage
-                        )
-                );
+        if (result.unresolvedCount > 0) {
+            interaction.warnUnresolvedFiles(result.unresolvedCount);
+        } else if (currentBranch) {
+            const defaultMergeMessage = humanise.describeMerge(
+                currentBranch,
+                otherRevision
+            );
+            const didCommit = await this.smartCommit(
+                repository,
+                async () =>
+                    await interaction.inputCommitMessage(defaultMergeMessage)
+            );
 
-                if (didCommit) {
-                    repository.sourceControl.inputBox.value = '';
-                }
+            if (didCommit) {
+                repository.sourceControl.inputBox.value = '';
             }
-        } catch (e) {
-            if (
-                e instanceof FossilError &&
-                e.fossilErrorCode === 'UntrackedFilesDiffer' &&
-                e.untrackedFilenames
-            ) {
-                interaction.errorUntrackedFilesDiffer(e.untrackedFilenames);
-                return;
-            }
-
-            throw e;
         }
     }
 
