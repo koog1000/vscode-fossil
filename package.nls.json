@@ -31,6 +31,7 @@
     "command.addFilePicker": "Select Files to Add",
     "command.ignore": "Add to ignore-glob",
     "command.forget": "Forget Files",
+    "command.relocate": "Select New File Location",
     "command.showOutput": "Show fossil output",
     "command.fileLog": "Show file history...",
     "command.render": "Preview Using Fossil Renderer",

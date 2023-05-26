@@ -19,7 +19,7 @@ import {
 } from '../../openedRepository';
 import { eventToPromise } from '../../util';
 import { LineChange } from '../../revert';
-import { Suite, afterEach, Func, Test } from 'mocha';
+import { Suite, beforeEach, afterEach, Func, Test } from 'mocha';
 import { IExecutionResult } from '../../fossilExecutable';
 
 export async function fossil_close(
@@ -1488,5 +1488,54 @@ export function fossil_tag_suite(sandbox: sinon.SinonSandbox): void {
                 'trunk',
             ]);
         });
+    });
+}
+
+export function fossil_rename_suite(sandbox: sinon.SinonSandbox): void {
+    suite('Rename', function (this: Suite) {
+        beforeEach(() => {
+            sandbox.restore();
+        });
+        test('Relocate', async () => {
+            const oldFilename = 'not_relocated.txt';
+            const newFilename = 'relocated.txt';
+            const rootUri = vscode.workspace.workspaceFolders![0].uri;
+            const newUri = vscode.Uri.joinPath(rootUri, newFilename);
+            const oldUri = await add(
+                oldFilename,
+                'foo content\n',
+                `add: ${oldFilename}`,
+                'ADDED'
+            );
+            await fs.rename(oldUri.fsPath, newUri.fsPath);
+            const repository = getRepository();
+            await repository.updateModelState();
+            assertGroups(
+                repository,
+                new Map([[oldUri.fsPath, ResourceStatus.MISSING]]),
+                new Map()
+            );
+            sandbox
+                .stub(vscode.window, 'showQuickPick')
+                .onFirstCall()
+                .callsFake(items => {
+                    assert.ok(items instanceof Array);
+                    return Promise.resolve(items[0]);
+                });
+
+            const showOpenDialogstub = sandbox
+                .stub(vscode.window, 'showOpenDialog')
+                .resolves([newUri]);
+            await vscode.commands.executeCommand(
+                'fossil.relocate',
+                repository.workingGroup.resourceStates[0]
+            );
+            sinon.assert.calledOnce(showOpenDialogstub);
+            assertGroups(
+                repository,
+                new Map([[newUri.fsPath, ResourceStatus.RENAMED]]),
+                new Map()
+            );
+        }).timeout(10000);
     });
 }

@@ -22,6 +22,7 @@ import {
     fossil_pull_with_autoUpdate_on,
     fossil_rename_a_directory,
     fossil_rename_a_file,
+    fossil_rename_suite,
     fossil_revert_change,
     fossil_revert_suite,
     fossil_stage_suite,
@@ -172,6 +173,7 @@ suite('Fossil.OpenedRepo', function () {
     fossil_tag_suite(sandbox);
     fossil_status_suite();
     fossil_stage_suite(sandbox);
+    fossil_rename_suite(sandbox);
 
     afterEach(() => {
         sandbox.restore();
