@@ -11,6 +11,7 @@ import {
     Event,
     EventEmitter,
     window,
+    TextDocumentContentProvider,
 } from 'vscode';
 import { debounce, throttle } from './decorators';
 import { Model, OriginalResourceChangeEvent } from './model';
@@ -29,7 +30,7 @@ interface Cache {
 const THREE_MINUTES = 1000 * 60 * 3;
 const FIVE_MINUTES = 1000 * 60 * 5;
 
-export class FossilContentProvider {
+export class FossilContentProvider implements TextDocumentContentProvider {
     private _onDidChange = new EventEmitter<Uri>();
     get onDidChange(): Event<Uri> {
         return this._onDidChange.event;
@@ -101,7 +102,7 @@ export class FossilContentProvider {
     async provideTextDocumentContent(uri: Uri): Promise<string> {
         const repository = this.model.getRepository(uri);
 
-        if (!repository) {
+        if (!repository || uri.query == 'empty') {
             return '';
         }
 
