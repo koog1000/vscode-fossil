@@ -27,6 +27,12 @@ export type FossilPath = Distinct<string, 'path to .fossil'>;
 /** local repository root */
 export type FossilRoot = Distinct<string, 'local repository root'>;
 export type RelativePath = Distinct<string, 'path relative to `FossilRoot`'>;
+/** path that came from  `window.showOpenDialog` */
+export type UserPath = Distinct<string, 'user path'>;
+/** path from `SourceControlResourceState.resourceUri.fsPath` */
+export type ResourcePath = Distinct<string, 'resourceUri.fsPath'>;
+export type AnyPath = RelativePath | ResourcePath | UserPath;
+
 /** URI for the close
  *
  * * http[s]://[userid[:password]@]host[:port][/path]
@@ -412,7 +418,10 @@ export class OpenedRepository {
         }
     }
 
-    async rename(oldPath: RelativePath, newPath: RelativePath): Promise<void> {
+    async rename(
+        oldPath: AnyPath,
+        newPath: RelativePath | UserPath
+    ): Promise<void> {
         await this.exec(['rename', oldPath, newPath]);
     }
 

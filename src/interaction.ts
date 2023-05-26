@@ -36,6 +36,8 @@ import {
     FossilPassword,
     StashItem,
     ResourceStatus,
+    UserPath,
+    RelativePath,
 } from './openedRepository';
 import * as humanise from './humanise';
 import { Repository, LogEntriesOptions } from './repository';
@@ -480,6 +482,54 @@ export async function inputPatchApply(this: void): Promise<string | undefined> {
         return uris[0].fsPath;
     }
     return undefined;
+}
+
+class PathPickItem implements QuickPickItem {
+    get label(): string {
+        return `$(symbol-file) ${this.path}`;
+    }
+    constructor(readonly path: RelativePath) {}
+}
+
+export async function selectNewFileLocation(
+    defaultUri: Uri,
+    srcRelativePath: RelativePath,
+    paths: RelativePath[]
+): Promise<UserPath | RelativePath | undefined> {
+    const items = paths.map(res => new PathPickItem(res));
+    const userSelect: QuickPickItem = {
+        label: localize('Open Dialog', '$(folder-opened) Open Dialog'),
+        alwaysShow: true,
+    };
+    const separator: QuickPickItem = {
+        label: 'Extras',
+        kind: QuickPickItemKind.Separator,
+    };
+    const title = localize(
+        'New location for {0}',
+        'New location for {0}',
+        srcRelativePath
+    );
+    const selection = await window.showQuickPick(
+        [userSelect, separator, ...items],
+        { title }
+    );
+    if (selection === userSelect) {
+        const uris = await window.showOpenDialog({
+            defaultUri,
+            canSelectMany: false,
+            openLabel: localize(
+                'Select as new location',
+                'Select as new location'
+            ),
+            title,
+        });
+        if (uris?.length == 1) {
+            return uris[0].fsPath as UserPath;
+        }
+        return undefined;
+    }
+    return (selection as PathPickItem | undefined)?.path;
 }
 
 export async function selectFossilRootPath(

@@ -32,6 +32,7 @@ import {
     FossilPassword,
     FossilUsername,
     ResourceStatus,
+    ResourcePath,
 } from './openedRepository';
 import { Model } from './model';
 import {
@@ -91,6 +92,7 @@ type CommandKey =
     | 'pushTo'
     | 'redo'
     | 'refresh'
+    | 'relocate'
     | 'remove'
     | 'render'
     | 'reopenBranch'
@@ -591,7 +593,29 @@ export class CommandCenter {
             await repository.stage(...resources);
         }
     }
+    @command('fossil.relocate')
+    async relocate(resourceState: SourceControlResourceState): Promise<void> {
+        if (!(resourceState instanceof FossilResource)) {
+            return;
+        }
+        const uri = resourceState.resourceUri;
+        const repository = this.model.getRepository(uri);
 
+        if (repository) {
+            const defaultUri = Uri.file(path.dirname(uri.fsPath));
+            const relativePath = repository.mapFileUriToRepoRelativePath(uri);
+            const newPath = await interaction.selectNewFileLocation(
+                defaultUri,
+                relativePath,
+                repository.untrackedGroup.resourceStates.map(r =>
+                    repository.mapFileUriToRepoRelativePath(r.resourceUri)
+                )
+            );
+            if (newPath) {
+                await repository.rename(uri.fsPath as ResourcePath, newPath);
+            }
+        }
+    }
     @command('fossil.remove')
     async remove(
         ...resourceStates: SourceControlResourceState[]

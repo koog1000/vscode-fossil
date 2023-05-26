@@ -40,6 +40,8 @@ import {
     ResourceStatus,
     FossilStatus,
     FossilClass,
+    AnyPath,
+    UserPath,
 } from './openedRepository';
 import {
     anyEvent,
@@ -189,6 +191,13 @@ export class FossilResource implements SourceControlResourceState {
 
     private getIconPath(theme: ThemeName): Uri {
         return FossilResource.Icons[theme][this.status];
+    }
+
+    get contextValue(): string | undefined {
+        if (this._status == ResourceStatus.MISSING) {
+            return 'MISSING';
+        }
+        return;
     }
 
     get decorations(): SourceControlResourceDecorations {
@@ -580,7 +589,10 @@ export class Repository implements IDisposable, InteractionAPI {
         );
     }
 
-    async rename(oldPath: RelativePath, newPath: RelativePath): Promise<void> {
+    async rename(
+        oldPath: AnyPath,
+        newPath: RelativePath | UserPath
+    ): Promise<void> {
         await this.runWithProgress(Operation.Rename, () =>
             this.repository.rename(oldPath, newPath)
         );
@@ -682,7 +694,7 @@ export class Repository implements IDisposable, InteractionAPI {
     // resource --> workspace-relative path
     public mapResourceToWorkspaceRelativePath(
         resource: FossilResource
-    ): string {
+    ): RelativePath {
         const relativePath = this.mapFileUriToWorkspaceRelativePath(
             resource.resourceUri
         );
@@ -690,11 +702,11 @@ export class Repository implements IDisposable, InteractionAPI {
     }
 
     // file uri --> workspace-relative path
-    public mapFileUriToWorkspaceRelativePath(fileUri: Uri): string {
+    public mapFileUriToWorkspaceRelativePath(fileUri: Uri): RelativePath {
         const relativePath = path
             .relative(this.repository.root, fileUri.fsPath)
             .replace(/[/\\]/g, path.sep);
-        return relativePath;
+        return relativePath as RelativePath;
     }
 
     @throttle

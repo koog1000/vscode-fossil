@@ -138,6 +138,11 @@
                 "category": "Fossil"
             },
             {
+                "command": "fossil.relocate",
+                "title": "%command.relocate%",
+                "category": "Fossil"
+            },
+            {
                 "command": "fossil.init",
                 "title": "%command.init%",
                 "category": "Fossil",
@@ -875,6 +880,11 @@
                 {
                     "command": "fossil.remove",
                     "when": "config.fossil.enabled && scmProvider == fossil && scmResourceGroup == working",
+                    "group": "2_modification"
+                },
+                {
+                    "command": "fossil.relocate",
+                    "when": "config.fossil.enabled && scmProvider == fossil && scmResourceState == MISSING",
                     "group": "2_modification"
                 }
             ],
