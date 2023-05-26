@@ -72,9 +72,9 @@ about cloning from the extension.
 
   Use "Fossil log" from command palette and navigate the options till specific checkout.
 
-* **Get current checkout hash?**
+* **Get current checkout hash or tags?**
 
-  Not possible yet using UI.
+  Hover over current branch name in the status bar
 
 * **Close/reopen a branch?**
 

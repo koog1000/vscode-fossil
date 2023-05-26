@@ -119,6 +119,8 @@ export interface FossilStatus {
     readonly statuses: FileStatus[];
     readonly isMerge: boolean;
     readonly info: Map<string, string>;
+    readonly tags: string[]; // not FossilTag for a reason
+    readonly checkout: { checkin: FossilCheckin; date: string };
 }
 
 export interface BranchDetails {
@@ -627,6 +629,16 @@ export class OpenedRepository {
                 info.set(key, value);
             }
         }
+        const checkoutStr = info.get('checkout')!;
+        const spaceIdx = checkoutStr.indexOf(' ');
+        const checkout = {
+            checkin: checkoutStr.slice(0, spaceIdx) as FossilCheckin,
+            date: checkoutStr.slice(spaceIdx + 1),
+        };
+        const tags = info
+            .get('tags')!
+            .split(',')
+            .map(t => t.trim());
         const isMerge =
             info.has('CHERRYPICK') ||
             info.has('BACKOUT') ||
@@ -636,6 +648,8 @@ export class OpenedRepository {
             statuses,
             isMerge,
             info,
+            checkout,
+            tags,
         };
     }
 

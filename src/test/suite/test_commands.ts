@@ -232,11 +232,15 @@ function fakeFossilStatus<T extends sinon.SinonStub>(
     execStub: T,
     status: string
 ) {
+    const header =
+        'checkout:     0000000000000000000000000000000000000000 2023-05-26 12:43:56 UTC\n' +
+        'parent:       0000000000000000000000000000000000000001 2023-05-26 12:43:56 UTC\n' +
+        'tags:         trunk, this is a test, custom tag\n';
     const args = ['status', '--differ', '--merge'] as const;
     return execStub.withArgs(args).resolves({
         fossilPath: '',
         exitCode: 0,
-        stdout: status, // fake_status.join('\n'),
+        stdout: header + status, // fake_status.join('\n'),
         stderr: '',
         args: args,
         cwd: '',
