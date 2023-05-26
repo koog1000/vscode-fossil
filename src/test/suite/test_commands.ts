@@ -19,7 +19,7 @@ import {
 } from '../../openedRepository';
 import { eventToPromise } from '../../util';
 import { LineChange } from '../../revert';
-import { Suite, beforeEach, afterEach, Func, Test } from 'mocha';
+import { Suite, beforeEach, afterEach, Func, Test, before } from 'mocha';
 import { IExecutionResult } from '../../fossilExecutable';
 
 export async function fossil_close(
@@ -53,94 +53,6 @@ test.if = function (condition: boolean, title: string, fn: Func): Test {
         return this.skip(title);
     }
 };
-
-export async function fossil_rename_a_file(
-    sandbox: sinon.SinonSandbox
-): Promise<void> {
-    const oldFilename = 'not_renamed.txt';
-    const newFilename = 'renamed.txt';
-    const rootUri = vscode.workspace.workspaceFolders![0].uri;
-    await add(oldFilename, 'foo content\n', `add: ${oldFilename}`, 'ADDED');
-
-    const showInformationMessage: sinon.SinonStub = sandbox.stub(
-        vscode.window,
-        'showInformationMessage'
-    );
-    const answeredYes = showInformationMessage.onFirstCall().resolves('Yes');
-
-    const edit = new vscode.WorkspaceEdit();
-    const newFilePath = vscode.Uri.joinPath(rootUri, newFilename);
-    edit.renameFile(vscode.Uri.joinPath(rootUri, oldFilename), newFilePath);
-
-    const success = await vscode.workspace.applyEdit(edit);
-    assert.ok(success);
-
-    const repository = getRepository();
-    await answeredYes;
-    await eventToPromise(repository.onDidRunOperation);
-    await repository.updateModelState();
-
-    assertGroups(
-        repository,
-        new Map([[newFilePath.fsPath, ResourceStatus.RENAMED]]),
-        new Map()
-    );
-}
-
-export async function fossil_rename_a_directory(
-    sandbox: sinon.SinonSandbox,
-    executable: FossilExecutable
-): Promise<void> {
-    const oldDirname = 'not_renamed';
-    const newDirname = 'renamed';
-    const rootUri = vscode.workspace.workspaceFolders![0].uri;
-    const oldDirUrl = vscode.Uri.joinPath(rootUri, oldDirname);
-    const newDirUrl = vscode.Uri.joinPath(rootUri, newDirname);
-    await fs.mkdir(oldDirUrl.fsPath);
-    const filenames = ['mud', 'cabbage', 'brick'];
-    const oldUris = filenames.map(filename =>
-        vscode.Uri.joinPath(oldDirUrl, filename)
-    );
-    const newUris = filenames.map(filename =>
-        vscode.Uri.joinPath(newDirUrl, filename)
-    );
-
-    await Promise.all(
-        oldUris.map(uri => fs.writeFile(uri.fsPath, `foo ${uri}\n`))
-    );
-    const cwd = rootUri.fsPath as FossilCWD;
-    await executable.exec(cwd, ['add', oldDirname]);
-    await executable.exec(cwd, [
-        'commit',
-        '-m',
-        `add directory: ${oldDirname}`,
-        '--no-warnings',
-    ]);
-
-    const showInformationMessage: sinon.SinonStub = sandbox.stub(
-        vscode.window,
-        'showInformationMessage'
-    );
-
-    const answeredYes = showInformationMessage.onFirstCall().resolves('Yes');
-
-    const edit = new vscode.WorkspaceEdit();
-    edit.renameFile(oldDirUrl, newDirUrl);
-
-    const success = await vscode.workspace.applyEdit(edit);
-    assert.ok(success);
-
-    const repository = getRepository();
-    await answeredYes;
-    await eventToPromise(repository.onDidRunOperation);
-    await repository.updateModelState();
-
-    const ref: [string, ResourceStatus][] = newUris.map((url: vscode.Uri) => [
-        url.fsPath,
-        ResourceStatus.RENAMED,
-    ]);
-    assertGroups(repository, new Map(ref), new Map());
-}
 
 export async function fossil_ignore(
     sandbox: sinon.SinonSandbox,
@@ -1372,6 +1284,7 @@ export function fossil_status_suite(): void {
                 new Map()
             );
             new Map();
+            await fs.rmdir(not_file_path);
         }).timeout(20000);
     });
 }
@@ -1493,10 +1406,112 @@ export function fossil_tag_suite(sandbox: sinon.SinonSandbox): void {
 
 export function fossil_rename_suite(sandbox: sinon.SinonSandbox): void {
     suite('Rename', function (this: Suite) {
+        before(async () => {
+            const repository = getRepository();
+            await cleanupFossil(repository);
+        });
         beforeEach(() => {
             sandbox.restore();
         });
+
+        test('Rename a file', async () => {
+            const oldFilename = 'not_renamed.txt';
+            const newFilename = 'renamed.txt';
+            const rootUri = vscode.workspace.workspaceFolders![0].uri;
+            await add(
+                oldFilename,
+                'foo content\n',
+                `add: ${oldFilename}`,
+                'ADDED'
+            );
+
+            const showInformationMessage: sinon.SinonStub = sandbox.stub(
+                vscode.window,
+                'showInformationMessage'
+            );
+            const answeredYes = showInformationMessage
+                .onFirstCall()
+                .resolves('Yes');
+
+            const edit = new vscode.WorkspaceEdit();
+            const newFilePath = vscode.Uri.joinPath(rootUri, newFilename);
+            edit.renameFile(
+                vscode.Uri.joinPath(rootUri, oldFilename),
+                newFilePath
+            );
+
+            const success = await vscode.workspace.applyEdit(edit);
+            assert.ok(success);
+
+            const repository = getRepository();
+            await answeredYes;
+            await eventToPromise(repository.onDidRunOperation);
+            await repository.updateModelState();
+
+            assertGroups(
+                repository,
+                new Map([[newFilePath.fsPath, ResourceStatus.RENAMED]]),
+                new Map()
+            );
+        });
+
+        test('Rename directory', async () => {
+            const oldDirname = 'not_renamed';
+            const newDirname = 'renamed';
+            const rootUri = vscode.workspace.workspaceFolders![0].uri;
+            const oldDirUrl = vscode.Uri.joinPath(rootUri, oldDirname);
+            const newDirUrl = vscode.Uri.joinPath(rootUri, newDirname);
+            await fs.mkdir(oldDirUrl.fsPath);
+            const filenames = ['mud', 'cabbage', 'brick'];
+            const oldUris = filenames.map(filename =>
+                vscode.Uri.joinPath(oldDirUrl, filename)
+            );
+            const newUris = filenames.map(filename =>
+                vscode.Uri.joinPath(newDirUrl, filename)
+            );
+
+            await Promise.all(
+                oldUris.map(uri => fs.writeFile(uri.fsPath, `foo ${uri}\n`))
+            );
+            const repository = getRepository();
+            const openedRepository: OpenedRepository = (repository as any)
+                .repository;
+            await openedRepository.exec(['add', oldDirname]);
+            await openedRepository.exec([
+                'commit',
+                '-m',
+                `add directory: ${oldDirname}`,
+                '--no-warnings',
+            ]);
+
+            const showInformationMessage: sinon.SinonStub = sandbox.stub(
+                vscode.window,
+                'showInformationMessage'
+            );
+
+            const answeredYes = showInformationMessage
+                .onFirstCall()
+                .resolves('Yes');
+
+            const edit = new vscode.WorkspaceEdit();
+            edit.renameFile(oldDirUrl, newDirUrl);
+
+            const success = await vscode.workspace.applyEdit(edit);
+            assert.ok(success);
+
+            await answeredYes;
+            await eventToPromise(repository.onDidRunOperation);
+            await repository.updateModelState();
+
+            const ref: [string, ResourceStatus][] = newUris.map(
+                (url: vscode.Uri) => [url.fsPath, ResourceStatus.RENAMED]
+            );
+            assertGroups(repository, new Map(ref), new Map());
+        });
+
         test('Relocate', async () => {
+            const repository = getRepository();
+            await cleanupFossil(repository);
             const oldFilename = 'not_relocated.txt';
             const newFilename = 'relocated.txt';
             const rootUri = vscode.workspace.workspaceFolders![0].uri;
@@ -1508,7 +1523,6 @@ export function fossil_rename_suite(sandbox: sinon.SinonSandbox): void {
                 'ADDED'
             );
             await fs.rename(oldUri.fsPath, newUri.fsPath);
-            const repository = getRepository();
             await repository.updateModelState();
             assertGroups(
                 repository,

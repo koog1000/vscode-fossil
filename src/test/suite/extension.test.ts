@@ -20,8 +20,6 @@ import {
     fossil_patch_suite,
     fossil_pull_with_autoUpdate_off,
     fossil_pull_with_autoUpdate_on,
-    fossil_rename_a_directory,
-    fossil_rename_a_file,
     fossil_rename_suite,
     fossil_revert_change,
     fossil_revert_suite,
@@ -123,13 +121,6 @@ suite('Fossil.OpenedRepo', function () {
 
     test('fossil undo and redo working', () =>
         fossil_undo_and_redo_working(sandbox)).timeout(15000);
-
-    test('fossil rename a file', () => fossil_rename_a_file(sandbox)).timeout(
-        15000
-    );
-
-    test('fossil rename a directory', () =>
-        fossil_rename_a_directory(sandbox, executable)).timeout(20000);
 
     test('fossil open files', () =>
         fossil_open_files(sandbox, executable)).timeout(6000);
