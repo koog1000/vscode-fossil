@@ -25,7 +25,7 @@ class ScopeStatusBar {
     private disposables: Disposable[] = [];
 
     constructor(private repository: Repository) {
-        repository.onDidChange(
+        repository.onDidChangeStatus(
             this._onDidChange.fire,
             this._onDidChange,
             this.disposables
@@ -43,10 +43,14 @@ class ScopeStatusBar {
             ' ' +
             currentBranch +
             (this.repository.workingGroup.resourceStates.length ? '+' : '');
-
         return {
             command: 'fossil.branchChange',
-            tooltip: localize('branch change', 'Change Branch...'),
+            tooltip: localize(
+                'branch change {0} {1}',
+                '\n{0}\nTags:\n \u2022 {1}\nChange Branch...',
+                fossilStatus?.checkout.checkin,
+                fossilStatus?.tags.join('\n \u2022 ')
+            ),
             title,
             arguments: [this.repository],
         };
