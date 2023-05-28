@@ -18,7 +18,6 @@ import {
     OpenedRepository,
     Commit,
     PullOptions,
-    IMergeResult,
     CommitDetails,
     TimelineOptions,
     FossilRoot,
@@ -239,7 +238,6 @@ export const enum Operation {
     Stage,
     Revert,
     Resolve,
-    Unresolve,
     Parents,
     Remove,
     Rename,
@@ -912,10 +910,7 @@ export class Repository implements IDisposable, InteractionAPI {
     }
 
     @throttle
-    merge(
-        checkin: FossilCheckin,
-        mergeAction: MergeAction
-    ): Promise<IMergeResult> {
+    merge(checkin: FossilCheckin, mergeAction: MergeAction): Promise<void> {
         return this.runWithProgress(Operation.Merge, async () => {
             return this.repository.merge(checkin, mergeAction);
         });
