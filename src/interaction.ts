@@ -1119,21 +1119,6 @@ export async function pickLogSource(
 //     return;
 // }
 
-export function warnUnresolvedFiles(unresolvedCount: number): void {
-    const fileOrFiles =
-        unresolvedCount === 1
-            ? localize('file', 'file')
-            : localize('files', 'files');
-    window.showWarningMessage(
-        localize(
-            'unresolved files',
-            'Merge leaves {0} {1} unresolved.',
-            unresolvedCount,
-            fileOrFiles
-        )
-    );
-}
-
 export function warnUnsavedChanges(msg: string): void {
     window.showWarningMessage(localize('unsaved changes', `Fossil: ${msg}`));
 }

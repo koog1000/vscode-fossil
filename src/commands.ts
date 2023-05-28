@@ -1258,12 +1258,10 @@ export class CommandCenter {
         otherRevision: FossilCheckin,
         mergeAction: MergeAction
     ) {
-        const result = await repository.merge(otherRevision, mergeAction);
+        await repository.merge(otherRevision, mergeAction);
         const { currentBranch } = repository;
 
-        if (result.unresolvedCount > 0) {
-            interaction.warnUnresolvedFiles(result.unresolvedCount);
-        } else if (currentBranch) {
+        if (currentBranch) {
             const defaultMergeMessage = humanise.describeMerge(
                 currentBranch,
                 otherRevision

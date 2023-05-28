@@ -91,10 +91,6 @@ export interface PullOptions {
     readonly autoUpdate: boolean; // run an update after the pull?
 }
 
-export interface IMergeResult {
-    readonly unresolvedCount: number;
-}
-
 export const enum ResourceStatus {
     MODIFIED,
     ADDED,
@@ -515,37 +511,18 @@ export class OpenedRepository {
         }
     }
 
-    async merge(
-        checkin: FossilCheckin,
-        integrate: MergeAction
-    ): Promise<IMergeResult> {
-        try {
-            const extraArgs = (() => {
-                switch (integrate) {
-                    case MergeAction.Cherrypick:
-                        return ['--cherrypick'];
-                    case MergeAction.Integrate:
-                        return ['--integrate'];
-                    default:
-                        return [];
-                }
-            })();
-            await this.exec(['merge', checkin, ...extraArgs]);
-            return {
-                unresolvedCount: 0,
-            };
-        } catch (e) {
-            if (e instanceof FossilError && e.exitCode === 1) {
-                const match = e.stdout.match(/(\d+) files unresolved/);
-                if (match) {
-                    return {
-                        unresolvedCount: parseInt(match[1]),
-                    };
-                }
+    async merge(checkin: FossilCheckin, integrate: MergeAction): Promise<void> {
+        const extraArgs = (() => {
+            switch (integrate) {
+                case MergeAction.Cherrypick:
+                    return ['--cherrypick'];
+                case MergeAction.Integrate:
+                    return ['--integrate'];
+                default:
+                    return [];
             }
-
-            throw e;
-        }
+        })();
+        await this.exec(['merge', checkin, ...extraArgs]);
     }
 
     async patchCreate(path: string): Promise<void> {
