@@ -1,5 +1,18 @@
 # Changelog
 
+# v0.3.1
+
+### What's New
+
+- Rename files after they were relocated.
+  Use "Select New File Location" context menu for missing files.
+- Checkout SHA and tags are now in status bar tooltip.
+
+### Bug Fixes
+
+- Show diff for missing files without JSON error
+
+
 # v0.3.0
 
 ### What's New
