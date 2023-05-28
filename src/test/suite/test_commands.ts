@@ -228,6 +228,12 @@ export async function fossil_pull_with_autoUpdate_off(
     assert.ok(updateCall.calledOnce);
 }
 
+function getExecStub(sandbox: sinon.SinonSandbox) {
+    const repository = getRepository();
+    const openedRepository: OpenedRepository = (repository as any).repository;
+    return sandbox.stub(openedRepository, 'exec').callThrough();
+}
+
 function fakeFossilStatus<T extends sinon.SinonStub>(
     execStub: T,
     status: string
@@ -1555,5 +1561,79 @@ export function fossil_rename_suite(sandbox: sinon.SinonSandbox): void {
                 new Map()
             );
         }).timeout(10000);
+    });
+}
+
+export function fossil_clean_suite(sandbox: sinon.SinonSandbox): void {
+    suite('Clean', function (this: Suite) {
+        test('Delete untracked files', async () => {
+            const repository = getRepository();
+            const execStub = getExecStub(sandbox);
+            const cleanCallStub = execStub
+                .withArgs(sinon.match.array.startsWith(['clean']))
+                .resolves();
+            await fakeFossilStatus(execStub, 'EXTRA a.txt\nEXTRA b.txt');
+            await repository.updateModelState();
+            assert.equal(repository.untrackedGroup.resourceStates.length, 2);
+            const showWarningMessage: sinon.SinonStub = sandbox.stub(
+                vscode.window,
+                'showWarningMessage'
+            );
+            showWarningMessage.onFirstCall().resolves('&&Delete Files');
+
+            await vscode.commands.executeCommand(
+                'fossil.deleteFile',
+                ...repository.untrackedGroup.resourceStates
+            );
+            sinon.assert.calledOnceWithExactly(
+                showWarningMessage,
+                'Are you sure you want to DELETE 2 files?\nThis is IRREVERSIBLE!\nThese files will be FOREVER LOST if you proceed.',
+                { modal: true },
+                '&&Delete Files'
+            );
+            sinon.assert.calledOnceWithExactly;
+            sinon.assert.calledOnceWithMatch(cleanCallStub, [
+                'clean',
+                ...repository.untrackedGroup.resourceStates.map(
+                    r => r.resourceUri.fsPath
+                ),
+            ]);
+        }).timeout(5000);
+        test('Delete All Untracked Files', async () => {
+            const repository = getRepository();
+            const execStub = getExecStub(sandbox);
+            const cleanCallStub = execStub
+                .withArgs(sinon.match.array.startsWith(['clean']))
+                .resolves();
+            await fakeFossilStatus(
+                execStub,
+                'EXTRA a.txt\nEXTRA b.txt\nEXTRA c.txt'
+            );
+            await repository.updateModelState();
+            assert.equal(repository.untrackedGroup.resourceStates.length, 3);
+            const showWarningMessage: sinon.SinonStub = sandbox.stub(
+                vscode.window,
+                'showWarningMessage'
+            );
+            showWarningMessage.onFirstCall().resolves('&&Delete Files');
+
+            await vscode.commands.executeCommand(
+                'fossil.deleteFiles',
+                repository.untrackedGroup
+            );
+            sinon.assert.calledOnceWithExactly(
+                showWarningMessage,
+                'Are you sure you want to DELETE 3 files?\nThis is IRREVERSIBLE!\nThese files will be FOREVER LOST if you proceed.',
+                { modal: true },
+                '&&Delete Files'
+            );
+            sinon.assert.calledOnceWithExactly;
+            sinon.assert.calledOnceWithMatch(cleanCallStub, [
+                'clean',
+                ...repository.untrackedGroup.resourceStates.map(
+                    r => r.resourceUri.fsPath
+                ),
+            ]);
+        }).timeout(5000);
     });
 }

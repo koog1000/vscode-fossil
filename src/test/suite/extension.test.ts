@@ -20,6 +20,7 @@ import {
     fossil_patch_suite,
     fossil_pull_with_autoUpdate_off,
     fossil_pull_with_autoUpdate_on,
+    fossil_clean_suite,
     fossil_rename_suite,
     fossil_revert_change,
     fossil_revert_suite,
@@ -165,6 +166,7 @@ suite('Fossil.OpenedRepo', function () {
     fossil_status_suite();
     fossil_stage_suite(sandbox);
     fossil_rename_suite(sandbox);
+    fossil_clean_suite(sandbox);
 
     afterEach(() => {
         sandbox.restore();
