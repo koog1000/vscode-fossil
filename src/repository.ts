@@ -220,31 +220,31 @@ export class FossilResource implements SourceControlResourceState {
 }
 
 export const enum Operation {
-    Status,
     Add,
-    RevertFiles,
-    Commit,
-    Clean,
     Branch,
-    Update,
-    Undo,
-    UndoDryRun,
+    Clean,
+    Close,
+    Commit,
+    Forget,
+    Ignore,
+    Init,
+    Merge,
+    Parents,
+    PatchApply,
+    PatchCreate,
     Pull,
     Push,
-    Sync,
-    Init,
+    Rename,
+    Resolve,
+    Revert,
+    RevertFiles,
     Show,
     Stage,
-    Revert,
-    Resolve,
-    Parents,
-    Remove,
-    Rename,
-    Merge,
-    Close,
-    Ignore,
-    PatchCreate,
-    PatchApply,
+    Status,
+    Sync,
+    Undo,
+    UndoDryRun,
+    Update,
 }
 
 function isReadOnly(operation: Operation): boolean {
@@ -571,7 +571,7 @@ export class Repository implements IDisposable, InteractionAPI {
     }
 
     @throttle
-    async remove(...uris: Uri[]): Promise<void> {
+    async forget(...uris: Uri[]): Promise<void> {
         let resources: FossilResource[];
         if (uris.length === 0) {
             resources = this._groups.untracked.resourceStates;
@@ -581,8 +581,8 @@ export class Repository implements IDisposable, InteractionAPI {
         const relativePaths = resources.map(r =>
             this.mapResourceToRepoRelativePath(r)
         );
-        await this.runWithProgress(Operation.Remove, () =>
-            this.repository.remove(relativePaths)
+        await this.runWithProgress(Operation.Forget, () =>
+            this.repository.forget(relativePaths)
         );
     }
 
@@ -644,8 +644,8 @@ export class Repository implements IDisposable, InteractionAPI {
                 const relativePaths = missingResources.map(r =>
                     this.mapResourceToRepoRelativePath(r)
                 );
-                await this.runWithProgress(Operation.Remove, () =>
-                    this.repository.remove(relativePaths)
+                await this.runWithProgress(Operation.Forget, () =>
+                    this.repository.forget(relativePaths)
                 );
             }
 
@@ -657,7 +657,7 @@ export class Repository implements IDisposable, InteractionAPI {
                 const relativePaths = extraResources.map(r =>
                     this.mapResourceToRepoRelativePath(r)
                 );
-                await this.runWithProgress(Operation.Remove, () =>
+                await this.runWithProgress(Operation.Add, () =>
                     this.repository.add(relativePaths)
                 );
             }

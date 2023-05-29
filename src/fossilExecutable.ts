@@ -85,6 +85,7 @@ type FossilCommand =
     | 'commit'
     | 'diff'
     // | 'extras' - we get it from `fossil status --differ`
+    | 'forget'
     | 'info'
     | 'init'
     | 'ls'
@@ -99,7 +100,6 @@ type FossilCommand =
     | 'remote-url'
     | 'rename'
     | 'revert'
-    | 'rm'
     | 'settings'
     | 'stash'
     | 'status'

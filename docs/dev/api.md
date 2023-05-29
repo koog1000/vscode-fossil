@@ -24,6 +24,7 @@ _Work in progress_.
 | fossil.deleteFile | Delete Untracked File |
 | fossil.deleteFiles | Delete All Untracked Files |
 | fossil.fileLog | Show file history... |
+| fossil.forget | Forget Files |
 | fossil.ignore | Add to ignore-glob | •&nbsp;Command palette<br>•&nbsp;Untracked submenu | 1. Modify `/.fossil-settings/ignore-glob`<br>2. Add `ignore-glob` to the current checkout (not staging)<br>3. Show ignore-glob file
 | fossil.init | Initialize Fossil Repository |
 | fossil.integrate | Integrate into working directory... |
@@ -44,7 +45,6 @@ _Work in progress_.
 | fossil.pushTo | Push to... | •&nbsp;Main SCM menu<br>•&nbsp;Command palette | <span style="color: darkred">not implemented correctly</span>
 | fossil.redo | Redo | •&nbsp;Main SCM menu<br>•&nbsp;Command palette | execute `fossil redo`
 | fossil.refresh | Refresh | Source control header | 1. Execute `fossil status`<br>2. Update related information
-| fossil.remove | Forget Files |
 | fossil.render | Preview Using Fossil Renderer |
 | fossil.reopenBranch | Reopen branch... | | 1. Pick branch<br>2. execute `fossil tag cancel --raw closed $(branch-name)`
 | fossil.revert | Discard Changes |

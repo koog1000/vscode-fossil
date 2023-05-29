@@ -133,7 +133,7 @@
                 "icon": "$(cloud-upload)"
             },
             {
-                "command": "fossil.remove",
+                "command": "fossil.forget",
                 "title": "%command.forget%",
                 "category": "Fossil"
             },
@@ -537,7 +537,7 @@
                     "when": "fossilOpenRepositoryCount"
                 },
                 {
-                    "command": "fossil.remove",
+                    "command": "fossil.forget",
                     "when": "fossilOpenRepositoryCount"
                 },
                 {
@@ -878,7 +878,7 @@
                     "group": "navigation"
                 },
                 {
-                    "command": "fossil.remove",
+                    "command": "fossil.forget",
                     "when": "config.fossil.enabled && scmProvider == fossil && scmResourceGroup == working",
                     "group": "2_modification"
                 },

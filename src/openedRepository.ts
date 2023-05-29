@@ -406,10 +406,12 @@ export class OpenedRepository {
         }
     }
 
-    async remove(paths: RelativePath[]): Promise<void> {
+    async forget(paths: RelativePath[]): Promise<void> {
         const pathsByGroup = groupBy(paths, p => path.dirname(p));
         const groups = Object.keys(pathsByGroup).map(k => pathsByGroup[k]);
-        const tasks = groups.map(paths => () => this.exec(['rm', ...paths]));
+        const tasks = groups.map(
+            paths => () => this.exec(['forget', ...paths])
+        );
 
         for (const task of tasks) {
             await task();
@@ -424,7 +426,7 @@ export class OpenedRepository {
     }
 
     async clean(paths: string[]): Promise<void> {
-        if (paths) {
+        if (paths.length) {
             await this.exec(['clean', ...paths]);
         }
     }

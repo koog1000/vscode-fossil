@@ -28,6 +28,7 @@ import {
     fossil_status_suite,
     fossil_tag_suite,
     fossil_utilities_suite,
+    fossil_forget,
 } from './test_commands';
 import {
     fossil_can_amend_commit_message,
@@ -147,6 +148,7 @@ suite('Fossil.OpenedRepo', function () {
     );
 
     test('fossil add', () => fossil_add()).timeout(5000);
+    test('fossil forget', () => fossil_forget(sandbox)).timeout(5000);
 
     test('fossil change branch to trunk', () =>
         fossil_change_branch_to_trunk(sandbox)).timeout(5000);

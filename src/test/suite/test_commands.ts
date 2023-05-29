@@ -196,34 +196,57 @@ export async function fossil_revert_change(
     await vscode.commands.executeCommand('fossil.revertChange'); // better coverage
 }
 
+export async function fossil_forget(
+    sandbox: sinon.SinonSandbox
+): Promise<void> {
+    const repository = getRepository();
+    const execStub = getExecStub(sandbox);
+    const forgetCallStub = execStub
+        .withArgs(sinon.match.array.startsWith(['forget']))
+        .resolves();
+    await fakeFossilStatus(execStub, 'ADDED a.txt\nEDITED b.txt\nEXTRA c.txt');
+    await repository.updateModelState();
+    await vscode.commands.executeCommand(
+        'fossil.forget',
+        ...repository.workingGroup.resourceStates
+    );
+    sinon.assert.calledOnceWithMatch(forgetCallStub, [
+        'forget',
+        'a.txt',
+        'b.txt',
+    ]);
+
+    // better branch coverage
+    await vscode.commands.executeCommand('fossil.forget');
+    assert.equal(repository.untrackedGroup.resourceStates.length, 1);
+    await vscode.commands.executeCommand(
+        'fossil.forget',
+        ...repository.untrackedGroup.resourceStates
+    );
+}
+
 export async function fossil_pull_with_autoUpdate_on(
     sandbox: sinon.SinonSandbox,
     _executable: FossilExecutable
 ): Promise<void> {
-    const repository = getRepository();
-    const openedRepository: OpenedRepository = (repository as any).repository;
-    const execStub = sandbox.stub(openedRepository, 'exec');
+    const execStub = getExecStub(sandbox);
     const updateCall = execStub.withArgs(['update']);
-    execStub.callThrough();
     await vscode.commands.executeCommand('fossil.pull');
-    assert.ok(updateCall.calledOnce);
+    sinon.assert.calledOnce(updateCall);
 }
 
 export async function fossil_pull_with_autoUpdate_off(
     sandbox: sinon.SinonSandbox,
     _executable: FossilExecutable
 ): Promise<void> {
-    const repository = getRepository();
-    const openedRepository: OpenedRepository = (repository as any).repository;
     const fossilConfig = vscode.workspace.getConfiguration(
         'fossil',
         vscode.workspace.workspaceFolders![0].uri
     );
     await fossilConfig.update('autoUpdate', false);
-    const execStub = sandbox.stub(openedRepository, 'exec');
+    const execStub = getExecStub(sandbox);
     const updateCall = execStub.withArgs(['pull']);
     updateCall.resolves(undefined); // stub as 'undefined' as we can't do pull
-    execStub.callThrough();
     await vscode.commands.executeCommand('fossil.pull');
     assert.ok(updateCall.calledOnce);
 }
