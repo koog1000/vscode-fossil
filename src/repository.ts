@@ -49,7 +49,6 @@ import {
     dispose,
     IDisposable,
     delay,
-    partition,
 } from './util';
 import { memoize, throttle, debounce } from './decorators';
 import { StatusBarCommands } from './statusbar';
@@ -637,13 +636,12 @@ export class Repository implements IDisposable, InteractionAPI {
                 resources = this._groups.working.resourceStates;
             }
 
-            const missingResources = partition(
-                resources,
+            const missingResources = resources.filter(
                 r => r.status === ResourceStatus.MISSING
             );
 
-            if (missingResources[0].length) {
-                const relativePaths = missingResources[0].map(r =>
+            if (missingResources.length) {
+                const relativePaths = missingResources.map(r =>
                     this.mapResourceToRepoRelativePath(r)
                 );
                 await this.runWithProgress(Operation.Remove, () =>
@@ -651,13 +649,12 @@ export class Repository implements IDisposable, InteractionAPI {
                 );
             }
 
-            const untrackedResources = partition(
-                resources,
+            const extraResources = resources.filter(
                 r => r.status === ResourceStatus.EXTRA
             );
 
-            if (untrackedResources[0].length) {
-                const relativePaths = untrackedResources[0].map(r =>
+            if (extraResources.length) {
+                const relativePaths = extraResources.map(r =>
                     this.mapResourceToRepoRelativePath(r)
                 );
                 await this.runWithProgress(Operation.Remove, () =>
