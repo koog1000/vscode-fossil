@@ -71,6 +71,7 @@ type CommandKey =
     | 'deleteFile'
     | 'deleteFiles'
     | 'fileLog'
+    | 'forget'
     | 'ignore'
     | 'init'
     | 'integrate'
@@ -93,7 +94,6 @@ type CommandKey =
     | 'redo'
     | 'refresh'
     | 'relocate'
-    | 'remove'
     | 'render'
     | 'reopenBranch'
     | 'revert'
@@ -616,8 +616,8 @@ export class CommandCenter {
             }
         }
     }
-    @command('fossil.remove')
-    async remove(
+    @command('fossil.forget')
+    async forget(
         ...resourceStates: SourceControlResourceState[]
     ): Promise<void> {
         if (resourceStates.length === 0) {
@@ -641,9 +641,8 @@ export class CommandCenter {
         const resources = scmResources.map(r => r.resourceUri);
         const repository = this.model.getRepository(resources[0]);
         if (repository) {
-            await repository.remove(...resources);
+            await repository.forget(...resources);
         }
-        // await this.runByRepository(resources, async (repository, uris) => repository.remove(...uris));
     }
 
     private async deleteResources(
@@ -904,7 +903,7 @@ export class CommandCenter {
                 if (!deleteConfirmed) {
                     return;
                 }
-                await this.remove(...missingResources);
+                await this.forget(...missingResources);
             }
         }
 
@@ -1498,9 +1497,7 @@ export class CommandCenter {
     }
 
     private getSCMResource(uri?: Uri): FossilResource | undefined {
-        uri = uri
-            ? uri
-            : window.activeTextEditor && window.activeTextEditor.document.uri;
+        uri = uri || window.activeTextEditor?.document.uri;
 
         if (!uri) {
             return undefined;
