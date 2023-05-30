@@ -569,7 +569,7 @@ export async function inputClonePassword(
     this: void
 ): Promise<FossilPassword | undefined> {
     const auth = await window.showInputBox({
-        prompt: localize('parent', 'User Authentication'),
+        prompt: localize('user authentication', 'User Authentication'),
         placeHolder: localize('password', 'Password. Leave empty for none'),
         password: true,
         ignoreFocusOut: true,
