@@ -9,10 +9,27 @@ import { Repository } from '../../repository';
 import { OpenedRepository, ResourceStatus } from '../../openedRepository';
 import { FossilResourceGroup } from '../../resourceGroups';
 
-export async function fossilInit(
-    sandbox: sinon.SinonSandbox,
-    executable: FossilExecutable
-): Promise<void> {
+export async function cleanRoot(): Promise<void> {
+    if (!vscode.workspace.workspaceFolders) {
+        throw new Error(
+            'Expected opened workspace. Probably setup issue and `out/test/test_repo` does not exist.'
+        );
+    }
+
+    const rootPath = vscode.workspace.workspaceFolders[0].uri;
+    const entities = await fs.promises.readdir(rootPath.fsPath);
+    await Promise.all(
+        entities.map(name =>
+            fs.promises.rm(Uri.joinPath(rootPath, name).fsPath, {
+                force: true,
+                recursive: true,
+            })
+        )
+    );
+}
+
+export async function fossilInit(sandbox: sinon.SinonSandbox): Promise<void> {
+    const fossilVersion = getExecutable().version;
     assert.ok(vscode.workspace.workspaceFolders);
     const fossilPath = Uri.joinPath(
         vscode.workspace.workspaceFolders![0].uri,
@@ -33,21 +50,21 @@ export async function fossilInit(
     showInformationMessage.resolves(undefined);
 
     const showInputBox = sandbox.stub(window, 'showInputBox');
-    if (executable.version >= [2, 18]) {
+    if (fossilVersion >= [2, 18]) {
         showInputBox.onFirstCall().resolves('Test repo name');
         showInputBox.onSecondCall().resolves('Test repo description');
     }
 
     await vscode.commands.executeCommand('fossil.init');
     assert.ok(showSaveDialogstub.calledOnce);
-    if (executable.version >= [2, 18]) {
+    if (fossilVersion >= [2, 18]) {
         assert.ok(showInputBox.calledTwice);
     }
     assert.ok(
         fs.existsSync(fossilPath.fsPath),
         `Not a file: '${fossilPath.fsPath}' even though 'fossil.init' was successfully executed`
     );
-    assert.ok(showInformationMessage.calledOnce);
+    sinon.assert.calledOnce(showInformationMessage);
     sandbox.restore();
 }
 
@@ -55,6 +72,7 @@ export function getRepository(): Repository {
     const extension = vscode.extensions.getExtension('koog1000.fossil');
     assert.ok(extension);
     const model = extension.exports as Model;
+    assert.ok(model.repositories.length);
     return model.repositories[0];
 }
 
@@ -62,13 +80,12 @@ export function getExecutable(): FossilExecutable {
     const extension = vscode.extensions.getExtension('koog1000.fossil');
     assert.ok(extension);
     const model = extension.exports as Model;
-    return model['executable'];
+    const executable = model['executable'];
+    assert.ok(executable);
+    return executable;
 }
 
-export async function fossilOpen(
-    sandbox: sinon.SinonSandbox,
-    executable: FossilExecutable
-): Promise<void> {
+export async function fossilOpen(sandbox: sinon.SinonSandbox): Promise<void> {
     assert.ok(vscode.workspace.workspaceFolders);
     const rootPath = vscode.workspace.workspaceFolders![0].uri;
     const fossilPath = Uri.joinPath(rootPath, '/test.fossil');
@@ -82,8 +99,9 @@ export async function fossilOpen(
     showInformationMessage.onSecondCall().resolves([rootPath]);
 
     await vscode.commands.executeCommand('fossil.open');
+    const executable = getExecutable();
     const res = await executable.exec(rootPath.fsPath as FossilCWD, ['info']);
-    assert.ok(/check-ins:\s+1\s*$/.test(res.stdout));
+    assert.match(res.stdout, /check-ins:\s+1\s*$/);
 }
 
 export async function add(

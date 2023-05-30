@@ -1,16 +1,10 @@
-import { before, afterEach, beforeEach } from 'mocha';
-import { window, Uri } from 'vscode';
-import * as vscode from 'vscode';
+import { before, afterEach } from 'mocha';
 import * as sinon from 'sinon';
-import * as fs from 'fs';
-import { FossilExecutable } from '../../fossilExecutable';
-import { findFossil } from '../../fossilFinder';
 import {
     fossil_add,
     fossil_branch_suite,
     fossil_change_branch_to_hash,
     fossil_change_branch_to_trunk,
-    fossil_close,
     fossil_commit_suite,
     fossil_ignore,
     fossil_merge_suite,
@@ -34,64 +28,19 @@ import {
     fossil_can_amend_commit_message,
     fossil_file_log_can_diff_files,
 } from './test_log';
-import { fossilInit, fossilOpen } from './common';
+import { cleanRoot, fossilInit, fossilOpen } from './common';
 import {
     fossil_undo_and_redo_warning,
     fossil_undo_and_redo_working,
 } from './test_undo_redo';
 
-async function createFossil(): Promise<FossilExecutable> {
-    const outputChannel = window.createOutputChannel('Fossil.Test');
-    return findFossil(null, outputChannel);
-}
-
-async function cleanRoot() {
-    if (!vscode.workspace.workspaceFolders) {
-        throw new Error(
-            'Expected opened workspace. Probably setup issue and `out/test/test_repo` does not exist.'
-        );
-    }
-
-    const rootPath = vscode.workspace.workspaceFolders[0].uri;
-    const entities = await fs.promises.readdir(rootPath.fsPath);
-    await Promise.all(
-        entities.map(name =>
-            fs.promises.rm(Uri.joinPath(rootPath, name).fsPath, {
-                force: true,
-                recursive: true,
-            })
-        )
-    );
-}
-
-suite('Fossil.EveryTestFromEmptyState', () => {
-    const sandbox = sinon.createSandbox();
-    let executable: FossilExecutable;
-    before(async () => {
-        executable = await createFossil();
-    });
-    beforeEach(cleanRoot);
-
-    afterEach(() => {
-        sandbox.restore();
-    });
-
-    test('fossil.init', async () => {
-        await fossilInit(sandbox, executable);
-    });
-
-    test('fossil.close', () => fossil_close(sandbox, executable)).timeout(5000);
-});
-
 suite('Fossil.OpenedRepo', function () {
     const sandbox = sinon.createSandbox();
-    let executable: FossilExecutable;
     before(async function () {
         this.timeout(5555);
         await cleanRoot();
-        executable = await createFossil();
-        await fossilInit(sandbox, executable);
-        await fossilOpen(sandbox, executable);
+        await fossilInit(sandbox);
+        await fossilOpen(sandbox);
     });
 
     test('fossil undo and redo warning', () =>
@@ -99,28 +48,24 @@ suite('Fossil.OpenedRepo', function () {
         fossil_undo_and_redo_warning(sandbox)).timeout(5000);
 
     test('fossil file log can differ files', () =>
-        fossil_file_log_can_diff_files(sandbox, executable)).timeout(10000);
+        fossil_file_log_can_diff_files(sandbox)).timeout(10000);
 
     test('fossil undo and redo working', () =>
         fossil_undo_and_redo_working(sandbox)).timeout(15000);
 
-    test('fossil open files', () =>
-        fossil_open_files(sandbox, executable)).timeout(6000);
+    test('fossil open files', () => fossil_open_files(sandbox)).timeout(6000);
 
-    test('fossil ignore', () => fossil_ignore(sandbox, executable)).timeout(
-        8000
-    );
-    test('fossil revert change', () =>
-        fossil_revert_change(sandbox, executable)).timeout(11000);
+    test('fossil ignore', () => fossil_ignore(sandbox)).timeout(8000);
+    test('fossil revert change', () => fossil_revert_change()).timeout(11000);
 
     test('fossil pull with autoUpdate on', () =>
-        fossil_pull_with_autoUpdate_on(sandbox, executable)).timeout(5000);
+        fossil_pull_with_autoUpdate_on(sandbox)).timeout(5000);
 
     test('fossil pull with autoUpdate off', () =>
-        fossil_pull_with_autoUpdate_off(sandbox, executable)).timeout(5000);
+        fossil_pull_with_autoUpdate_off(sandbox)).timeout(5000);
 
     test('fossil can amend commit message', () =>
-        fossil_can_amend_commit_message(sandbox, executable)).timeout(5000);
+        fossil_can_amend_commit_message(sandbox)).timeout(5000);
 
     fossil_revert_suite(sandbox);
 

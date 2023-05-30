@@ -1,20 +1,15 @@
 import * as vscode from 'vscode';
 import * as sinon from 'sinon';
-import { FossilExecutable } from '../../fossilExecutable';
 import * as assert from 'assert/strict';
 import { toFossilUri } from '../../uri';
 import { FossilCWD } from '../../fossilExecutable';
-import { add, getRepository } from './common';
+import { add, cleanupFossil, getExecutable, getRepository } from './common';
 
 export async function fossil_file_log_can_diff_files(
-    sandbox: sinon.SinonSandbox,
-    executable: FossilExecutable
+    sandbox: sinon.SinonSandbox
 ): Promise<void> {
-    const rootUri = vscode.workspace.workspaceFolders![0].uri;
-    const cwd = rootUri.fsPath as FossilCWD;
-
-    await executable.exec(cwd, ['revert']);
-    await executable.exec(cwd, ['clean']);
+    const repository = getRepository();
+    await cleanupFossil(repository);
     await add('file1.txt', 'line1\n', 'file1.txt: first');
     await add('file1.txt', 'line1\nline2\n', 'file1.txt: second', 'SKIP');
     await add('file1.txt', 'line1\nline2\nline3\n', 'file1.txt: third', 'SKIP');
@@ -37,8 +32,6 @@ export async function fossil_file_log_can_diff_files(
         assert.equal(items[0].label, '$(circle-outline) Parent');
         return Promise.resolve(items[0]);
     });
-
-    const repository = getRepository();
 
     const executeCommand = sandbox.stub(vscode.commands, 'executeCommand');
     executeCommand
@@ -71,14 +64,13 @@ export async function fossil_file_log_can_diff_files(
 }
 
 export async function fossil_can_amend_commit_message(
-    sandbox: sinon.SinonSandbox,
-    executable: FossilExecutable
+    sandbox: sinon.SinonSandbox
 ): Promise<void> {
     const rootUri = vscode.workspace.workspaceFolders![0].uri;
     const cwd = rootUri.fsPath as FossilCWD;
 
-    await executable.exec(cwd, ['revert']);
-    await executable.exec(cwd, ['clean']);
+    const repository = getRepository();
+    await cleanupFossil(repository);
     await add('amend.txt', '\n', 'message to amend');
 
     const showQuickPick = sandbox.stub(vscode.window, 'showQuickPick');
@@ -102,6 +94,7 @@ export async function fossil_can_amend_commit_message(
 
     await vscode.commands.executeCommand('fossil.log');
 
+    const executable = getExecutable();
     const stdout = (await executable.exec(cwd, ['info'])).stdout;
     assert.match(stdout, /updated commit message/m);
 }
