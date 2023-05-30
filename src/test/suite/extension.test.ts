@@ -39,10 +39,6 @@ import {
     fossil_undo_and_redo_warning,
     fossil_undo_and_redo_working,
 } from './test_undo_redo';
-import {
-    error_is_thrown_when_executing_unknown_command,
-    error_to_string_is_valid,
-} from './test_utils';
 
 async function createFossil(): Promise<FossilExecutable> {
     const outputChannel = window.createOutputChannel('Fossil.Test');
@@ -67,21 +63,6 @@ async function cleanRoot() {
         )
     );
 }
-
-suite('Fossil.NoRepoRequired', () => {
-    const sandbox = sinon.createSandbox();
-    let executable: FossilExecutable;
-    before(async () => {
-        executable = await createFossil();
-    });
-    test('Error is thrown when executing unknown command', async () => {
-        await error_is_thrown_when_executing_unknown_command(
-            sandbox,
-            executable
-        );
-    });
-    test('Error to string is valid', error_to_string_is_valid);
-});
 
 suite('Fossil.EveryTestFromEmptyState', () => {
     const sandbox = sinon.createSandbox();

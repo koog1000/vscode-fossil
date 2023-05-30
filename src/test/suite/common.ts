@@ -58,6 +58,13 @@ export function getRepository(): Repository {
     return model.repositories[0];
 }
 
+export function getExecutable(): FossilExecutable {
+    const extension = vscode.extensions.getExtension('koog1000.fossil');
+    assert.ok(extension);
+    const model = extension.exports as Model;
+    return model['executable'];
+}
+
 export async function fossilOpen(
     sandbox: sinon.SinonSandbox,
     executable: FossilExecutable
