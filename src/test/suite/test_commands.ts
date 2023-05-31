@@ -30,6 +30,7 @@ declare module 'mocha' {
 test.if = function (condition: boolean, title: string, fn: Func): Test {
     if (condition) {
         return this(title, fn);
+        /* c8 ignore next 3 */
     } else {
         return this.skip(title);
     }
