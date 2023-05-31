@@ -40,31 +40,42 @@ export async function fossilInit(sandbox: sinon.SinonSandbox): Promise<void> {
         `repo '${fossilPath.fsPath}' already exists`
     );
 
-    const showSaveDialogstub = sandbox.stub(window, 'showSaveDialog');
-    showSaveDialogstub.resolves(fossilPath);
+    const showSaveDialogstub = sandbox
+        .stub(window, 'showSaveDialog')
+        .withArgs(sinon.match({ title: 'Select New Fossil File Location' }))
+        .resolves(fossilPath);
 
-    const showInformationMessage = sandbox.stub(
+    const showInformationMessage: sinon.SinonStub = sandbox.stub(
         window,
         'showInformationMessage'
-    ); // this one asks to open created repository
-    showInformationMessage.resolves(undefined);
+    );
+    const openRepositoryuestion = showInformationMessage
+        .withArgs(
+            'Would you like to open the cloned repository?',
+            'Open Repository'
+        )
+        .resolves();
 
     const showInputBox = sandbox.stub(window, 'showInputBox');
     if (fossilVersion >= [2, 18]) {
-        showInputBox.onFirstCall().resolves('Test repo name');
-        showInputBox.onSecondCall().resolves('Test repo description');
+        showInputBox
+            .withArgs(sinon.match({ prompt: 'Project Name' }))
+            .resolves('Test repo name');
+        showInputBox
+            .withArgs(sinon.match({ prompt: 'Project Description' }))
+            .resolves('Test repo description');
     }
 
     await vscode.commands.executeCommand('fossil.init');
-    assert.ok(showSaveDialogstub.calledOnce);
+    sinon.assert.calledOnce(showSaveDialogstub);
     if (fossilVersion >= [2, 18]) {
-        assert.ok(showInputBox.calledTwice);
+        sinon.assert.calledTwice(showInputBox);
     }
     assert.ok(
         fs.existsSync(fossilPath.fsPath),
         `Not a file: '${fossilPath.fsPath}' even though 'fossil.init' was successfully executed`
     );
-    sinon.assert.calledOnce(showInformationMessage);
+    sinon.assert.calledOnce(openRepositoryuestion);
     sandbox.restore();
 }
 
