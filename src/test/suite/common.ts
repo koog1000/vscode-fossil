@@ -10,6 +10,7 @@ import { OpenedRepository, ResourceStatus } from '../../openedRepository';
 import { FossilResourceGroup } from '../../resourceGroups';
 
 export async function cleanRoot(): Promise<void> {
+    /* c8 ignore next 5 */
     if (!vscode.workspace.workspaceFolders) {
         throw new Error(
             'Expected opened workspace. Probably setup issue and `out/test/test_repo` does not exist.'
