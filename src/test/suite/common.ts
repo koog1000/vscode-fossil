@@ -3,7 +3,11 @@ import { window, Uri } from 'vscode';
 import * as vscode from 'vscode';
 import * as sinon from 'sinon';
 import * as fs from 'fs';
-import { FossilExecutable, FossilCWD } from '../../fossilExecutable';
+import {
+    FossilExecutable,
+    FossilCWD,
+    IExecutionResult,
+} from '../../fossilExecutable';
 import { Model } from '../../model';
 import { Repository } from '../../repository';
 import { OpenedRepository, ResourceStatus } from '../../openedRepository';
@@ -95,6 +99,29 @@ export function getExecutable(): FossilExecutable {
     const executable = model['executable'];
     assert.ok(executable);
     return executable;
+}
+
+type ExecFunc = OpenedRepository['exec'];
+type ExecStub = sinon.SinonStub<Parameters<ExecFunc>, ReturnType<ExecFunc>>;
+export function getExecStub(sandbox: sinon.SinonSandbox): ExecStub {
+    const repository = getRepository();
+    const openedRepository: OpenedRepository = (repository as any).repository;
+    return sandbox.stub(openedRepository, 'exec').callThrough();
+}
+
+export function fakeFossilStatus(execStub: ExecStub, status: string): ExecStub {
+    const header =
+        'checkout:     0000000000000000000000000000000000000000 2023-05-26 12:43:56 UTC\n' +
+        'parent:       0000000000000000000000000000000000000001 2023-05-26 12:43:56 UTC\n' +
+        'tags:         trunk, this is a test, custom tag\n';
+    return execStub.withArgs(['status', '--differ', '--merge']).resolves({
+        fossilPath: '',
+        exitCode: 0,
+        stdout: header + status, // fake_status.join('\n'),
+        stderr: '',
+        args: ['status', '--differ', '--merge'],
+        cwd: '',
+    } as unknown as IExecutionResult);
 }
 
 export async function fossilOpen(sandbox: sinon.SinonSandbox): Promise<void> {
