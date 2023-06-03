@@ -1,4 +1,5 @@
 import * as vscode from 'vscode';
+import { Uri, window, workspace, commands } from 'vscode';
 import * as sinon from 'sinon';
 import {
     add,
@@ -39,10 +40,10 @@ test.if = function (condition: boolean, title: string, fn: Func): Test {
 };
 
 export async function fossil_revert_change(): Promise<void> {
-    const rootUri = vscode.workspace.workspaceFolders![0].uri;
+    const rootUri = workspace.workspaceFolders![0].uri;
     const filename = 'revert_change.txt';
-    const uriToChange = vscode.Uri.joinPath(rootUri, filename);
-    await vscode.commands.executeCommand('fossil.revertChange', uriToChange); // branch coverage
+    const uriToChange = Uri.joinPath(rootUri, filename);
+    await commands.executeCommand('fossil.revertChange', uriToChange); // branch coverage
 
     const content = [...'abcdefghijklmnopqrstuvwxyz'].join('\n');
     await add(filename, content, `add '${filename}'`);
@@ -51,8 +52,8 @@ export async function fossil_revert_change(): Promise<void> {
     );
     await fs.writeFile(uriToChange.fsPath, content2);
 
-    const document = await vscode.workspace.openTextDocument(uriToChange);
-    await vscode.window.showTextDocument(document);
+    const document = await workspace.openTextDocument(uriToChange);
+    await window.showTextDocument(document);
 
     const line_change: LineChange = {
         modifiedEndLineNumber: 15,
@@ -60,7 +61,7 @@ export async function fossil_revert_change(): Promise<void> {
         originalEndLineNumber: 0,
         originalStartLineNumber: 14,
     };
-    await vscode.commands.executeCommand(
+    await commands.executeCommand(
         'fossil.revertChange',
         uriToChange,
         [line_change],
@@ -70,7 +71,7 @@ export async function fossil_revert_change(): Promise<void> {
     assert.equal(revertedContent, content);
     await document.save();
 
-    await vscode.commands.executeCommand('fossil.revertChange'); // better coverage
+    await commands.executeCommand('fossil.revertChange'); // better coverage
 }
 
 export async function fossil_pull_with_autoUpdate_on(
@@ -78,22 +79,22 @@ export async function fossil_pull_with_autoUpdate_on(
 ): Promise<void> {
     const execStub = getExecStub(sandbox);
     const updateCall = execStub.withArgs(['update']);
-    await vscode.commands.executeCommand('fossil.pull');
+    await commands.executeCommand('fossil.pull');
     sinon.assert.calledOnce(updateCall);
 }
 
 export async function fossil_pull_with_autoUpdate_off(
     sandbox: sinon.SinonSandbox
 ): Promise<void> {
-    const fossilConfig = vscode.workspace.getConfiguration(
+    const fossilConfig = workspace.getConfiguration(
         'fossil',
-        vscode.workspace.workspaceFolders![0].uri
+        workspace.workspaceFolders![0].uri
     );
     await fossilConfig.update('autoUpdate', false);
     const execStub = getExecStub(sandbox);
     const updateCall = execStub.withArgs(['pull']);
     updateCall.resolves(undefined); // stub as 'undefined' as we can't do pull
-    await vscode.commands.executeCommand('fossil.pull');
+    await commands.executeCommand('fossil.pull');
     assert.ok(updateCall.calledOnce);
 }
 
@@ -113,25 +114,25 @@ export function fossil_revert_suite(sandbox: sinon.SinonSandbox): void {
             assert.ok(resource);
 
             const showWarningMessage: sinon.SinonStub = sandbox.stub(
-                vscode.window,
+                window,
                 'showWarningMessage'
             );
             showWarningMessage.onFirstCall().resolves('&&Discard Changes');
 
-            await vscode.commands.executeCommand('fossil.revert', resource);
+            await commands.executeCommand('fossil.revert', resource);
             const newContext = await fs.readFile(url.fsPath);
             assert.equal(newContext.toString('utf-8'), 'Some original text\n');
         });
         test('Dialog has no typos', async () => {
             const repository = getRepository();
-            const rootUri = vscode.workspace.workspaceFolders![0].uri;
+            const rootUri = workspace.workspaceFolders![0].uri;
             const fake_status = [];
             const openedRepository: OpenedRepository = (repository as any)
                 .repository;
             const execStub = sandbox.stub(openedRepository, 'exec');
-            const fileUris: vscode.Uri[] = [];
+            const fileUris: Uri[] = [];
             for (const filename of 'abcdefghijklmn') {
-                const fileUri = vscode.Uri.joinPath(rootUri, 'added', filename);
+                const fileUri = Uri.joinPath(rootUri, 'added', filename);
                 fake_status.push(`EDITED     added/${filename}`);
                 fileUris.push(fileUri);
             }
@@ -148,16 +149,16 @@ export function fossil_revert_suite(sandbox: sinon.SinonSandbox): void {
                 return resource;
             });
             const showWarningMessage: sinon.SinonStub = sandbox.stub(
-                vscode.window,
+                window,
                 'showWarningMessage'
             );
-            await vscode.commands.executeCommand('fossil.revert', ...resources);
+            await commands.executeCommand('fossil.revert', ...resources);
             assert.ok(
                 showWarningMessage.firstCall.calledWith(
                     'Are you sure you want to discard changes to 14 files?\n\n • a\n • b\n • c\n • d\n • e\n • f\n • g\n • h\nand 6 others'
                 )
             );
-            await vscode.commands.executeCommand(
+            await commands.executeCommand(
                 'fossil.revert',
                 ...resources.slice(0, 3)
             );
@@ -169,7 +170,7 @@ export function fossil_revert_suite(sandbox: sinon.SinonSandbox): void {
         });
         test('Revert all', async () => {
             const showWarningMessage: sinon.SinonStub = sandbox.stub(
-                vscode.window,
+                window,
                 'showWarningMessage'
             );
             showWarningMessage.onFirstCall().resolves('&&Discard Changes');
@@ -189,7 +190,7 @@ export function fossil_revert_suite(sandbox: sinon.SinonSandbox): void {
                 .resolves();
             await repository.updateModelState();
             sinon.assert.calledOnce(statusStub);
-            await vscode.commands.executeCommand('fossil.revertAll');
+            await commands.executeCommand('fossil.revertAll');
             sinon.assert.calledOnceWithExactly(
                 showWarningMessage,
                 'Are you sure you want to discard ALL changes?',
@@ -215,14 +216,14 @@ export async function fossil_change_branch_to_trunk(
     updateCall.resolves(undefined);
     execStub.callThrough();
 
-    const showQuickPick = sandbox.stub(vscode.window, 'showQuickPick');
+    const showQuickPick = sandbox.stub(window, 'showQuickPick');
     showQuickPick.onFirstCall().callsFake(items => {
         assert.ok(items instanceof Array);
         assert.equal(items[2].label, '$(git-branch) trunk');
         return Promise.resolve(items[2]);
     });
 
-    await vscode.commands.executeCommand('fossil.branchChange');
+    await commands.executeCommand('fossil.branchChange');
 
     assert.ok(updateCall.calledOnce);
 }
@@ -238,15 +239,15 @@ export async function fossil_change_branch_to_hash(
     updateCall.resolves(undefined);
     execStub.callThrough();
 
-    const showQuickPick = sandbox.stub(vscode.window, 'showQuickPick');
+    const showQuickPick = sandbox.stub(window, 'showQuickPick');
     showQuickPick.onFirstCall().callsFake(items => {
         assert.ok(items instanceof Array);
         assert.equal(items[0].label, '$(pencil) Checkout by hash');
         return Promise.resolve(items[0]);
     });
-    const showInputBox = sandbox.stub(vscode.window, 'showInputBox');
+    const showInputBox = sandbox.stub(window, 'showInputBox');
     showInputBox.onFirstCall().resolves('1234567890');
-    await vscode.commands.executeCommand('fossil.branchChange');
+    await commands.executeCommand('fossil.branchChange');
 
     assert.ok(showInputBox.calledOnce);
     assert.ok(updateCall.calledOnce);
@@ -263,13 +264,13 @@ export function fossil_stash_suite(sandbox: sinon.SinonSandbox): void {
             const repository = getRepository();
             const openedRepository: OpenedRepository = (repository as any)
                 .repository;
-            const uri = vscode.Uri.joinPath(
-                vscode.workspace.workspaceFolders![0].uri,
+            const uri = Uri.joinPath(
+                workspace.workspaceFolders![0].uri,
                 'stash.txt'
             );
             await fs.writeFile(uri.fsPath, 'stash me');
 
-            const showInputBox = sandbox.stub(vscode.window, 'showInputBox');
+            const showInputBox = sandbox.stub(window, 'showInputBox');
             showInputBox.onFirstCall().resolves('stashSave commit message');
 
             const execStub = sandbox.stub(openedRepository, 'exec');
@@ -284,8 +285,8 @@ export function fossil_stash_suite(sandbox: sinon.SinonSandbox): void {
             await repository.updateModelState();
             const resource = repository.untrackedGroup.getResource(uri);
             assert.ok(resource);
-            await vscode.commands.executeCommand('fossil.add', resource);
-            await vscode.commands.executeCommand('fossil.stashSave');
+            await commands.executeCommand('fossil.add', resource);
+            await commands.executeCommand('fossil.stashSave');
             assert.ok(stashSave.calledOnce);
         });
         test('Apply', async () => {
@@ -295,7 +296,7 @@ export function fossil_stash_suite(sandbox: sinon.SinonSandbox): void {
 
             const execStub = sandbox.stub(openedRepository, 'exec');
             const stashApply = execStub.withArgs(['stash', 'apply', '1']);
-            const showQuickPick = sandbox.stub(vscode.window, 'showQuickPick');
+            const showQuickPick = sandbox.stub(window, 'showQuickPick');
             showQuickPick.onFirstCall().callsFake(items => {
                 assert.ok(items instanceof Array);
                 assert.match(
@@ -305,7 +306,7 @@ export function fossil_stash_suite(sandbox: sinon.SinonSandbox): void {
                 return Promise.resolve(items[0]);
             });
             execStub.callThrough();
-            await vscode.commands.executeCommand('fossil.stashApply');
+            await commands.executeCommand('fossil.stashApply');
             assert.ok(stashApply.calledOnce);
         });
         test('Drop', async () => {
@@ -315,7 +316,7 @@ export function fossil_stash_suite(sandbox: sinon.SinonSandbox): void {
 
             const execStub = sandbox.stub(openedRepository, 'exec');
             const stashApply = execStub.withArgs(['stash', 'drop', '1']);
-            const showQuickPick = sandbox.stub(vscode.window, 'showQuickPick');
+            const showQuickPick = sandbox.stub(window, 'showQuickPick');
             showQuickPick.onFirstCall().callsFake(items => {
                 assert.ok(items instanceof Array);
                 assert.match(
@@ -325,7 +326,7 @@ export function fossil_stash_suite(sandbox: sinon.SinonSandbox): void {
                 return Promise.resolve(items[0]);
             });
             execStub.callThrough();
-            await vscode.commands.executeCommand('fossil.stashDrop');
+            await commands.executeCommand('fossil.stashDrop');
             assert.ok(stashApply.calledOnce);
         });
         test('Pop', async () => {
@@ -343,7 +344,7 @@ export function fossil_stash_suite(sandbox: sinon.SinonSandbox): void {
             const execStub = sandbox.stub(openedRepository, 'exec');
             const stashApply = execStub.withArgs(['stash', 'pop']);
             execStub.callThrough();
-            await vscode.commands.executeCommand('fossil.stashPop');
+            await commands.executeCommand('fossil.stashPop');
             assert.ok(stashApply.calledOnce);
         });
         test('Snapshot', async () => {
@@ -360,16 +361,16 @@ export function fossil_stash_suite(sandbox: sinon.SinonSandbox): void {
                 'stash.txt',
             ]);
             execStub.callThrough();
-            const showInputBox = sandbox.stub(vscode.window, 'showInputBox');
+            const showInputBox = sandbox.stub(window, 'showInputBox');
             showInputBox.resolves('stashSnapshot commit message');
 
             const showWarningMessage: sinon.SinonStub = sandbox.stub(
-                vscode.window,
+                window,
                 'showWarningMessage'
             );
             showWarningMessage.onFirstCall().resolves('C&&onfirm');
 
-            await vscode.commands.executeCommand('fossil.stashSnapshot');
+            await commands.executeCommand('fossil.stashSnapshot');
             assert.ok(stashSnapshot.calledOnce);
         });
     });
@@ -378,10 +379,7 @@ export function fossil_stash_suite(sandbox: sinon.SinonSandbox): void {
 export function fossil_branch_suite(sandbox: sinon.SinonSandbox): void {
     suite('Branch', function (this: Suite) {
         test('Create public branch', async () => {
-            const createInputBox = sandbox.stub(
-                vscode.window,
-                'createInputBox'
-            );
+            const createInputBox = sandbox.stub(window, 'createInputBox');
             createInputBox.onFirstCall().callsFake(() => {
                 const inputBox: vscode.InputBox =
                     createInputBox.wrappedMethod();
@@ -411,14 +409,11 @@ export function fossil_branch_suite(sandbox: sinon.SinonSandbox): void {
             const creation = execStub
                 .withArgs(['branch', 'new', 'hello branch', 'current'])
                 .resolves();
-            await vscode.commands.executeCommand('fossil.branch');
+            await commands.executeCommand('fossil.branch');
             assert.ok(creation.calledOnce);
         });
         test('Create private branch', async () => {
-            const createInputBox = sandbox.stub(
-                vscode.window,
-                'createInputBox'
-            );
+            const createInputBox = sandbox.stub(window, 'createInputBox');
             createInputBox.onFirstCall().callsFake(() => {
                 const inputBox: vscode.InputBox =
                     createInputBox.wrappedMethod();
@@ -449,14 +444,11 @@ export function fossil_branch_suite(sandbox: sinon.SinonSandbox): void {
                     '--private',
                 ])
                 .resolves();
-            await vscode.commands.executeCommand('fossil.branch');
+            await commands.executeCommand('fossil.branch');
             assert.ok(creation.calledOnce);
         });
         test('Create branch with color', async () => {
-            const createInputBox = sandbox.stub(
-                vscode.window,
-                'createInputBox'
-            );
+            const createInputBox = sandbox.stub(window, 'createInputBox');
             createInputBox.onFirstCall().callsFake(() => {
                 const inputBox: vscode.InputBox =
                     createInputBox.wrappedMethod();
@@ -490,7 +482,7 @@ export function fossil_branch_suite(sandbox: sinon.SinonSandbox): void {
                     '#aabbcc',
                 ])
                 .resolves();
-            await vscode.commands.executeCommand('fossil.branch');
+            await commands.executeCommand('fossil.branch');
             assert.ok(creation.calledOnce);
         });
     });
@@ -515,12 +507,12 @@ export function fossil_commit_suite(sandbox: sinon.SinonSandbox): void {
                 .resolves(undefined);
 
             const showWarningMessage: sinon.SinonStub = sandbox.stub(
-                vscode.window,
+                window,
                 'showWarningMessage'
             );
             showWarningMessage.onFirstCall().resolves('C&&onfirm');
             repository.sourceControl.inputBox.value = 'non empty message';
-            await vscode.commands.executeCommand('fossil.commitWithInput');
+            await commands.executeCommand('fossil.commitWithInput');
             sinon.assert.calledOnceWithMatch(
                 showWarningMessage,
                 'There are no staged changes, do you want to commit working changes?\n'
@@ -543,10 +535,10 @@ export function fossil_commit_suite(sandbox: sinon.SinonSandbox): void {
             assert.equal(repository.workingGroup.resourceStates.length, 0);
 
             const showInformationMessage: sinon.SinonStub = sandbox
-                .stub(vscode.window, 'showInformationMessage')
+                .stub(window, 'showInformationMessage')
                 .resolves(undefined);
             repository.sourceControl.inputBox.value = 'non empty message';
-            await vscode.commands.executeCommand('fossil.commitWithInput');
+            await commands.executeCommand('fossil.commitWithInput');
             sinon.assert.calledOnceWithMatch(
                 showInformationMessage,
                 'There are no changes to commit.'
@@ -557,8 +549,8 @@ export function fossil_commit_suite(sandbox: sinon.SinonSandbox): void {
             const repository = getRepository();
             const openedRepository: OpenedRepository = (repository as any)
                 .repository;
-            const uri = vscode.Uri.joinPath(
-                vscode.workspace.workspaceFolders![0].uri,
+            const uri = Uri.joinPath(
+                workspace.workspaceFolders![0].uri,
                 'empty_commit.txt'
             );
             await fs.writeFile(uri.fsPath, 'content');
@@ -570,7 +562,7 @@ export function fossil_commit_suite(sandbox: sinon.SinonSandbox): void {
             const resource = repository.untrackedGroup.getResource(uri);
             //assert.equal(repository.untrackedGroup.resourceStates.length, 1);
 
-            await vscode.commands.executeCommand('fossil.add', resource);
+            await commands.executeCommand('fossil.add', resource);
             assert.equal(repository.stagingGroup.resourceStates.length, 1);
             const commitStub = execStub.withArgs([
                 'commit',
@@ -581,9 +573,9 @@ export function fossil_commit_suite(sandbox: sinon.SinonSandbox): void {
 
             repository.sourceControl.inputBox.value = '';
             const showInputBoxstub = sandbox
-                .stub(vscode.window, 'showInputBox')
+                .stub(window, 'showInputBox')
                 .resolves('Y');
-            await vscode.commands.executeCommand('fossil.commitWithInput');
+            await commands.executeCommand('fossil.commitWithInput');
             sinon.assert.calledOnceWithMatch(showInputBoxstub, {
                 prompt: 'empty check-in comment.  continue (y/N)? ',
                 ignoreFocusOut: true,
@@ -592,8 +584,8 @@ export function fossil_commit_suite(sandbox: sinon.SinonSandbox): void {
         });
 
         test('Commit creating new branch', async () => {
-            const rootUri = vscode.workspace.workspaceFolders![0].uri;
-            const branchPath = vscode.Uri.joinPath(rootUri, 'branch.txt');
+            const rootUri = workspace.workspaceFolders![0].uri;
+            const branchPath = Uri.joinPath(rootUri, 'branch.txt');
             await fs.writeFile(branchPath.fsPath, 'branch content\n');
 
             const repository = getRepository();
@@ -601,12 +593,9 @@ export function fossil_commit_suite(sandbox: sinon.SinonSandbox): void {
             await repository.updateModelState();
             const resource = repository.untrackedGroup.getResource(branchPath);
             assert.ok(resource);
-            await vscode.commands.executeCommand('fossil.add', resource);
+            await commands.executeCommand('fossil.add', resource);
 
-            const createInputBox = sandbox.stub(
-                vscode.window,
-                'createInputBox'
-            );
+            const createInputBox = sandbox.stub(window, 'createInputBox');
             createInputBox.onFirstCall().callsFake(() => {
                 const inputBox: vscode.InputBox =
                     createInputBox.wrappedMethod();
@@ -635,7 +624,7 @@ export function fossil_commit_suite(sandbox: sinon.SinonSandbox): void {
                 ])
                 .resolves();
 
-            await vscode.commands.executeCommand('fossil.commitBranch');
+            await commands.executeCommand('fossil.commitBranch');
             assert(commitSub.calledOnce);
         });
 
@@ -648,9 +637,9 @@ export function fossil_commit_suite(sandbox: sinon.SinonSandbox): void {
             await repository.updateModelState();
             const resource1 = repository.workingGroup.getResource(uri1);
             assert.ok(resource1);
-            await vscode.commands.executeCommand('fossil.stage', resource1);
-            await vscode.commands.executeCommand('fossil.openFiles', resource1);
-            const editor1 = vscode.window.visibleTextEditors.find(
+            await commands.executeCommand('fossil.stage', resource1);
+            await commands.executeCommand('fossil.openFiles', resource1);
+            const editor1 = window.visibleTextEditors.find(
                 e => e.document.uri.toString() == uri1.toString()
             );
             assert.ok(editor1);
@@ -659,13 +648,13 @@ export function fossil_commit_suite(sandbox: sinon.SinonSandbox): void {
             );
             repository.sourceControl.inputBox.value = 'my message';
             const showWarningMessage: sinon.SinonStub = sandbox.stub(
-                vscode.window,
+                window,
                 'showWarningMessage'
             );
             showWarningMessage.onFirstCall().resolves(undefined);
             showWarningMessage.onSecondCall().resolves('Save All & Commit');
 
-            await vscode.commands.executeCommand('fossil.commitWithInput');
+            await commands.executeCommand('fossil.commitWithInput');
             sinon.assert.calledWithExactly(
                 showWarningMessage.firstCall,
                 "The following file has unsaved changes which won't be included in the commit if you proceed: warning1.txt.\n\nWould you like to save it before committing?",
@@ -676,10 +665,10 @@ export function fossil_commit_suite(sandbox: sinon.SinonSandbox): void {
 
             const resource2 = repository.workingGroup.getResource(uri2);
             assert.ok(resource2);
-            await vscode.commands.executeCommand('fossil.stage', resource2);
-            await vscode.commands.executeCommand('fossil.openFiles', resource2);
+            await commands.executeCommand('fossil.stage', resource2);
+            await commands.executeCommand('fossil.openFiles', resource2);
 
-            const editor2 = vscode.window.visibleTextEditors.find(
+            const editor2 = window.visibleTextEditors.find(
                 e => e.document.uri.toString() == uri2.toString()
             );
             assert.ok(editor2);
@@ -687,7 +676,7 @@ export function fossil_commit_suite(sandbox: sinon.SinonSandbox): void {
                 eb.insert(new vscode.Position(0, 0), 'edits\n')
             );
 
-            await vscode.commands.executeCommand('fossil.commitWithInput');
+            await commands.executeCommand('fossil.commitWithInput');
             sinon.assert.calledWithExactly(
                 showWarningMessage.secondCall,
                 'There are 2 unsaved files.\n\nWould you like to save them before committing?',
@@ -708,8 +697,8 @@ export function fossil_merge_suite(sandbox: sinon.SinonSandbox): void {
 
             const fooFilename = 'foo-merge.txt';
             const barFilename = 'bar-merge.txt';
-            const rootUri = vscode.workspace.workspaceFolders![0].uri;
-            const fooPath = vscode.Uri.joinPath(rootUri, fooFilename).fsPath;
+            const rootUri = workspace.workspaceFolders![0].uri;
+            const fooPath = Uri.joinPath(rootUri, fooFilename).fsPath;
             await fs.writeFile(fooPath, 'foo content\n');
             await openedRepository.exec(['add', fooFilename]);
             await openedRepository.exec([
@@ -718,7 +707,7 @@ export function fossil_merge_suite(sandbox: sinon.SinonSandbox): void {
                 `add: ${fooFilename}`,
                 '--no-warnings',
             ]);
-            const barPath = vscode.Uri.joinPath(rootUri, fooFilename).fsPath;
+            const barPath = Uri.joinPath(rootUri, fooFilename).fsPath;
             await fs.writeFile(barPath, 'bar content\n');
             await openedRepository.exec(['add', barFilename]);
             await fs.appendFile(fooPath, 'foo content 2\n');
@@ -732,24 +721,21 @@ export function fossil_merge_suite(sandbox: sinon.SinonSandbox): void {
             ]);
             await openedRepository.exec(['update', 'trunk']);
 
-            await vscode.commands.executeCommand('fossil.refresh');
+            await commands.executeCommand('fossil.refresh');
             await repository.updateModelState();
             assertGroups(repository, new Map(), new Map());
 
             const showQuickPickstub = sandbox.stub(
-                vscode.window,
+                window,
                 'showQuickPick'
             ) as sinon.SinonStub;
             showQuickPickstub.resolves({
                 checkin: 'fossil-merge' as FossilBranch,
             });
-            const showInputBoxstub = sandbox.stub(
-                vscode.window,
-                'showInputBox'
-            );
+            const showInputBoxstub = sandbox.stub(window, 'showInputBox');
             showInputBoxstub.resolves('test merge message');
 
-            await vscode.commands.executeCommand('fossil.merge');
+            await commands.executeCommand('fossil.merge');
             assert.ok(showQuickPickstub.calledOnce);
             assert.ok(showInputBoxstub.calledOnce);
 
@@ -776,7 +762,7 @@ export function fossil_merge_suite(sandbox: sinon.SinonSandbox): void {
                 .withArgs(['merge', 'c', '--integrate'])
                 .resolves();
             sandbox
-                .stub(vscode.window, 'showQuickPick')
+                .stub(window, 'showQuickPick')
                 .onFirstCall()
                 .callsFake(items => {
                     assert.ok(items instanceof Array);
@@ -784,7 +770,7 @@ export function fossil_merge_suite(sandbox: sinon.SinonSandbox): void {
                     return Promise.resolve(items[2]);
                 });
 
-            await vscode.commands.executeCommand('fossil.integrate');
+            await commands.executeCommand('fossil.integrate');
             sinon.assert.calledOnce(mergeStub);
         });
         test('Cherrypick', async () => {
@@ -800,7 +786,7 @@ export function fossil_merge_suite(sandbox: sinon.SinonSandbox): void {
                 .resolves();
 
             sandbox
-                .stub(vscode.window, 'showQuickPick')
+                .stub(window, 'showQuickPick')
                 .onFirstCall()
                 .callsFake(items => {
                     assert.ok(items instanceof Array);
@@ -810,7 +796,7 @@ export function fossil_merge_suite(sandbox: sinon.SinonSandbox): void {
                     return Promise.resolve(items[0]);
                 });
 
-            await vscode.commands.executeCommand('fossil.cherrypick');
+            await commands.executeCommand('fossil.cherrypick');
             sinon.assert.calledOnceWithMatch(mergeCallStub, [
                 'merge',
                 hash,
@@ -823,9 +809,9 @@ export function fossil_merge_suite(sandbox: sinon.SinonSandbox): void {
 export function fossil_patch_suite(sandbox: sinon.SinonSandbox): void {
     suite('Patch', function (this: Suite) {
         test('Create', async () => {
-            const patchPath = vscode.Uri.file('patch.patch');
+            const patchPath = Uri.file('patch.patch');
             const showSaveDialogstub = sandbox
-                .stub(vscode.window, 'showSaveDialog')
+                .stub(window, 'showSaveDialog')
                 .resolves(patchPath);
 
             const repository = getRepository();
@@ -836,7 +822,7 @@ export function fossil_patch_suite(sandbox: sinon.SinonSandbox): void {
                 .withArgs(['patch', 'create', patchPath.fsPath])
                 .resolves(undefined);
             execStub.callThrough();
-            await vscode.commands.executeCommand('fossil.patchCreate');
+            await commands.executeCommand('fossil.patchCreate');
             sinon.assert.calledOnceWithMatch(showSaveDialogstub, {
                 saveLabel: 'Create',
                 title: 'Create binary patch',
@@ -844,9 +830,9 @@ export function fossil_patch_suite(sandbox: sinon.SinonSandbox): void {
             assert.ok(patchStub.calledOnce);
         });
         test('Apply', async () => {
-            const patchPath = vscode.Uri.file('patch.patch');
+            const patchPath = Uri.file('patch.patch');
             const showOpenDialogstub = sandbox
-                .stub(vscode.window, 'showOpenDialog')
+                .stub(window, 'showOpenDialog')
                 .resolves([patchPath]);
 
             const repository = getRepository();
@@ -857,7 +843,7 @@ export function fossil_patch_suite(sandbox: sinon.SinonSandbox): void {
                 .withArgs(['patch', 'apply', patchPath.fsPath])
                 .resolves(undefined);
             execStub.callThrough();
-            await vscode.commands.executeCommand('fossil.patchApply');
+            await commands.executeCommand('fossil.patchApply');
             sinon.assert.calledOnceWithMatch(showOpenDialogstub, {
                 openLabel: 'Apply',
                 title: 'Apply binary patch',
@@ -909,11 +895,7 @@ export function fossil_status_suite(): void {
                 '--hard',
             ]);
             await repository.updateModelState();
-            const barPath = vscode.Uri.joinPath(
-                oldUri,
-                '..',
-                newFilename
-            ).fsPath;
+            const barPath = Uri.joinPath(oldUri, '..', newFilename).fsPath;
             assertGroups(
                 repository,
                 new Map([[barPath, ResourceStatus.RENAMED]]),
@@ -927,11 +909,11 @@ export function fossil_status_suite(): void {
             const openedRepository: OpenedRepository = (repository as any)
                 .repository;
 
-            const rootUri = vscode.workspace.workspaceFolders![0].uri;
+            const rootUri = workspace.workspaceFolders![0].uri;
             const fooPath = (await add('foo-xa.txt', '', 'add: foo-xa.txt'))
                 .fsPath;
 
-            const barPath = vscode.Uri.joinPath(rootUri, 'bar-xa.txt').fsPath;
+            const barPath = Uri.joinPath(rootUri, 'bar-xa.txt').fsPath;
             await fs.writeFile(barPath, 'test bar\n');
             await fs.appendFile(fooPath, 'appended\n');
             await openedRepository.exec(['add', 'bar-xa.txt']);
@@ -959,7 +941,7 @@ export function fossil_status_suite(): void {
         }).timeout(10000);
 
         test.if(process.platform != 'win32', 'Meta', async () => {
-            const uri = vscode.workspace.workspaceFolders![0].uri;
+            const uri = workspace.workspaceFolders![0].uri;
 
             // enable symlinks
             const repository = getRepository();
@@ -970,10 +952,7 @@ export function fossil_status_suite(): void {
             await cleanupFossil(repository);
 
             // EXECUTABLE
-            const executable_path = vscode.Uri.joinPath(
-                uri,
-                'executable'
-            ).fsPath;
+            const executable_path = Uri.joinPath(uri, 'executable').fsPath;
             await fs.writeFile(executable_path, 'executable_path');
             await openedRepository.exec(['add', executable_path]);
             await openedRepository.exec([
@@ -985,10 +964,7 @@ export function fossil_status_suite(): void {
             await fs.chmod(executable_path, 0o744);
 
             // UNEXEC
-            const unexec_path = vscode.Uri.joinPath(
-                uri,
-                'status_unexec'
-            ).fsPath;
+            const unexec_path = Uri.joinPath(uri, 'status_unexec').fsPath;
             await fs.writeFile(unexec_path, 'unexec_path');
             await fs.chmod(unexec_path, 0o744);
             await openedRepository.exec(['add', unexec_path]);
@@ -1001,7 +977,7 @@ export function fossil_status_suite(): void {
             await fs.chmod(unexec_path, 0o644);
 
             // SYMLINK
-            const symlink_path = vscode.Uri.joinPath(uri, 'symlink').fsPath;
+            const symlink_path = Uri.joinPath(uri, 'symlink').fsPath;
             await fs.writeFile(symlink_path, 'symlink_path');
             await openedRepository.exec(['add', symlink_path]);
             await openedRepository.exec([
@@ -1014,7 +990,7 @@ export function fossil_status_suite(): void {
             await fs.symlink('/etc/passwd', symlink_path);
 
             // UNLINK
-            const unlink_path = vscode.Uri.joinPath(uri, 'unlink').fsPath;
+            const unlink_path = Uri.joinPath(uri, 'unlink').fsPath;
             await fs.symlink('/etc/passwd', unlink_path);
             await openedRepository.exec(['add', unlink_path]);
             await openedRepository.exec([
@@ -1027,7 +1003,7 @@ export function fossil_status_suite(): void {
             await fs.writeFile(unlink_path, '/etc/passwd');
 
             // NOT A FILE
-            const not_file_path = vscode.Uri.joinPath(uri, 'not_file').fsPath;
+            const not_file_path = Uri.joinPath(uri, 'not_file').fsPath;
             await fs.writeFile(not_file_path, 'not_file_path');
             await openedRepository.exec(['add', not_file_path]);
             await openedRepository.exec([
@@ -1071,12 +1047,12 @@ export function fossil_stage_suite(sandbox: sinon.SinonSandbox): void {
         }
 
         test('Stage from working group', async () => {
-            vscode.commands.executeCommand('fossil.unstageAll');
+            commands.executeCommand('fossil.unstageAll');
             await statusSetup('ADDED a.txt\nEDITED b.txt\nEDITED c.txt');
             const repository = getRepository();
             assert.equal(repository.workingGroup.resourceStates.length, 3);
             assert.equal(repository.stagingGroup.resourceStates.length, 0);
-            await vscode.commands.executeCommand(
+            await commands.executeCommand(
                 'fossil.stage',
                 repository.workingGroup.resourceStates[0],
                 repository.workingGroup.resourceStates[1]
@@ -1085,27 +1061,27 @@ export function fossil_stage_suite(sandbox: sinon.SinonSandbox): void {
             assert.equal(repository.stagingGroup.resourceStates.length, 2);
         });
         test('Stage all', async () => {
-            vscode.commands.executeCommand('fossil.unstageAll');
+            commands.executeCommand('fossil.unstageAll');
             await statusSetup('ADDED a.txt\nEDITED b.txt\nEDITED c.txt');
             const repository = getRepository();
             await repository.updateModelState();
             assert.equal(repository.workingGroup.resourceStates.length, 3);
             assert.equal(repository.stagingGroup.resourceStates.length, 0);
-            await vscode.commands.executeCommand('fossil.stageAll');
+            await commands.executeCommand('fossil.stageAll');
             assert.equal(repository.workingGroup.resourceStates.length, 0);
             assert.equal(repository.stagingGroup.resourceStates.length, 3);
         });
         test('Unstage', async () => {
-            vscode.commands.executeCommand('fossil.unstageAll');
+            commands.executeCommand('fossil.unstageAll');
             await statusSetup('ADDED a.txt\nEDITED b.txt\nEDITED c.txt');
             const repository = getRepository();
             await repository.updateModelState();
             assert.equal(repository.workingGroup.resourceStates.length, 3);
             assert.equal(repository.stagingGroup.resourceStates.length, 0);
-            await vscode.commands.executeCommand('fossil.stageAll');
+            await commands.executeCommand('fossil.stageAll');
             assert.equal(repository.workingGroup.resourceStates.length, 0);
             assert.equal(repository.stagingGroup.resourceStates.length, 3);
-            await vscode.commands.executeCommand(
+            await commands.executeCommand(
                 'fossil.unstage',
                 repository.stagingGroup.resourceStates[1]
             );
@@ -1118,7 +1094,7 @@ export function fossil_stage_suite(sandbox: sinon.SinonSandbox): void {
 export function fossil_tag_suite(sandbox: sinon.SinonSandbox): void {
     suite('Tag', function (this: Suite) {
         test('Close branch', async () => {
-            const showQuickPick = sandbox.stub(vscode.window, 'showQuickPick');
+            const showQuickPick = sandbox.stub(window, 'showQuickPick');
             showQuickPick.onFirstCall().callsFake(items => {
                 assert.ok(items instanceof Array);
                 assert.equal(items[0].label, '$(git-branch) trunk');
@@ -1134,7 +1110,7 @@ export function fossil_tag_suite(sandbox: sinon.SinonSandbox): void {
             const tagCallStub = execStub.withArgs(
                 sinon.match.array.startsWith(['tag'])
             );
-            await vscode.commands.executeCommand('fossil.closeBranch');
+            await commands.executeCommand('fossil.closeBranch');
             sinon.assert.calledOnceWithExactly(tagCallStub, [
                 'tag',
                 'add',
@@ -1144,7 +1120,7 @@ export function fossil_tag_suite(sandbox: sinon.SinonSandbox): void {
             ]);
         });
         test('Reopen branch', async () => {
-            const showQuickPick = sandbox.stub(vscode.window, 'showQuickPick');
+            const showQuickPick = sandbox.stub(window, 'showQuickPick');
             showQuickPick.onFirstCall().callsFake(items => {
                 assert.ok(items instanceof Array);
                 assert.equal(items[0].label, '$(git-branch) trunk');
@@ -1160,7 +1136,7 @@ export function fossil_tag_suite(sandbox: sinon.SinonSandbox): void {
             const tagCallStub = execStub.withArgs(
                 sinon.match.array.startsWith(['tag'])
             );
-            await vscode.commands.executeCommand('fossil.reopenBranch');
+            await commands.executeCommand('fossil.reopenBranch');
             sinon.assert.calledOnceWithExactly(tagCallStub, [
                 'tag',
                 'cancel',
@@ -1185,7 +1161,7 @@ export function fossil_rename_suite(sandbox: sinon.SinonSandbox): void {
         test('Rename a file', async () => {
             const oldFilename = 'not_renamed.txt';
             const newFilename = 'renamed.txt';
-            const rootUri = vscode.workspace.workspaceFolders![0].uri;
+            const rootUri = workspace.workspaceFolders![0].uri;
             await add(
                 oldFilename,
                 'foo content\n',
@@ -1194,7 +1170,7 @@ export function fossil_rename_suite(sandbox: sinon.SinonSandbox): void {
             );
 
             const showInformationMessage: sinon.SinonStub = sandbox.stub(
-                vscode.window,
+                window,
                 'showInformationMessage'
             );
             const answeredYes = showInformationMessage
@@ -1202,13 +1178,10 @@ export function fossil_rename_suite(sandbox: sinon.SinonSandbox): void {
                 .resolves('Yes');
 
             const edit = new vscode.WorkspaceEdit();
-            const newFilePath = vscode.Uri.joinPath(rootUri, newFilename);
-            edit.renameFile(
-                vscode.Uri.joinPath(rootUri, oldFilename),
-                newFilePath
-            );
+            const newFilePath = Uri.joinPath(rootUri, newFilename);
+            edit.renameFile(Uri.joinPath(rootUri, oldFilename), newFilePath);
 
-            const success = await vscode.workspace.applyEdit(edit);
+            const success = await workspace.applyEdit(edit);
             assert.ok(success);
 
             const repository = getRepository();
@@ -1226,16 +1199,16 @@ export function fossil_rename_suite(sandbox: sinon.SinonSandbox): void {
         test('Rename directory', async () => {
             const oldDirname = 'not_renamed';
             const newDirname = 'renamed';
-            const rootUri = vscode.workspace.workspaceFolders![0].uri;
-            const oldDirUrl = vscode.Uri.joinPath(rootUri, oldDirname);
-            const newDirUrl = vscode.Uri.joinPath(rootUri, newDirname);
+            const rootUri = workspace.workspaceFolders![0].uri;
+            const oldDirUrl = Uri.joinPath(rootUri, oldDirname);
+            const newDirUrl = Uri.joinPath(rootUri, newDirname);
             await fs.mkdir(oldDirUrl.fsPath);
             const filenames = ['mud', 'cabbage', 'brick'];
             const oldUris = filenames.map(filename =>
-                vscode.Uri.joinPath(oldDirUrl, filename)
+                Uri.joinPath(oldDirUrl, filename)
             );
             const newUris = filenames.map(filename =>
-                vscode.Uri.joinPath(newDirUrl, filename)
+                Uri.joinPath(newDirUrl, filename)
             );
 
             await Promise.all(
@@ -1253,7 +1226,7 @@ export function fossil_rename_suite(sandbox: sinon.SinonSandbox): void {
             ]);
 
             const showInformationMessage: sinon.SinonStub = sandbox.stub(
-                vscode.window,
+                window,
                 'showInformationMessage'
             );
 
@@ -1264,16 +1237,17 @@ export function fossil_rename_suite(sandbox: sinon.SinonSandbox): void {
             const edit = new vscode.WorkspaceEdit();
             edit.renameFile(oldDirUrl, newDirUrl);
 
-            const success = await vscode.workspace.applyEdit(edit);
+            const success = await workspace.applyEdit(edit);
             assert.ok(success);
 
             await answeredYes;
             await eventToPromise(repository.onDidRunOperation);
             await repository.updateModelState();
 
-            const ref: [string, ResourceStatus][] = newUris.map(
-                (url: vscode.Uri) => [url.fsPath, ResourceStatus.RENAMED]
-            );
+            const ref: [string, ResourceStatus][] = newUris.map((url: Uri) => [
+                url.fsPath,
+                ResourceStatus.RENAMED,
+            ]);
             assertGroups(repository, new Map(ref), new Map());
         });
 
@@ -1282,8 +1256,8 @@ export function fossil_rename_suite(sandbox: sinon.SinonSandbox): void {
             await cleanupFossil(repository);
             const oldFilename = 'not_relocated.txt';
             const newFilename = 'relocated.txt';
-            const rootUri = vscode.workspace.workspaceFolders![0].uri;
-            const newUri = vscode.Uri.joinPath(rootUri, newFilename);
+            const rootUri = workspace.workspaceFolders![0].uri;
+            const newUri = Uri.joinPath(rootUri, newFilename);
             const oldUri = await add(
                 oldFilename,
                 'foo content\n',
@@ -1298,7 +1272,7 @@ export function fossil_rename_suite(sandbox: sinon.SinonSandbox): void {
                 new Map()
             );
             sandbox
-                .stub(vscode.window, 'showQuickPick')
+                .stub(window, 'showQuickPick')
                 .onFirstCall()
                 .callsFake(items => {
                     assert.ok(items instanceof Array);
@@ -1306,9 +1280,9 @@ export function fossil_rename_suite(sandbox: sinon.SinonSandbox): void {
                 });
 
             const showOpenDialogstub = sandbox
-                .stub(vscode.window, 'showOpenDialog')
+                .stub(window, 'showOpenDialog')
                 .resolves([newUri]);
-            await vscode.commands.executeCommand(
+            await commands.executeCommand(
                 'fossil.relocate',
                 repository.workingGroup.resourceStates[0]
             );
@@ -1326,14 +1300,14 @@ export function fossil_clean_suite(sandbox: sinon.SinonSandbox): void {
     suite('Clean', function (this: Suite) {
         test('Clean', async () => {
             const showWarningMessage: sinon.SinonStub = sandbox.stub(
-                vscode.window,
+                window,
                 'showWarningMessage'
             );
             showWarningMessage.onFirstCall().resolves('&&Delete Extras');
 
             const execStub = getExecStub(sandbox);
             const cleanCallStub = execStub.withArgs(['clean']);
-            await vscode.commands.executeCommand('fossil.clean');
+            await commands.executeCommand('fossil.clean');
             sinon.assert.calledOnce(cleanCallStub);
             sinon.assert.calledOnceWithExactly(
                 showWarningMessage,
@@ -1352,12 +1326,12 @@ export function fossil_clean_suite(sandbox: sinon.SinonSandbox): void {
             await repository.updateModelState();
             assert.equal(repository.untrackedGroup.resourceStates.length, 2);
             const showWarningMessage: sinon.SinonStub = sandbox.stub(
-                vscode.window,
+                window,
                 'showWarningMessage'
             );
             showWarningMessage.onFirstCall().resolves('&&Delete Files');
 
-            await vscode.commands.executeCommand(
+            await commands.executeCommand(
                 'fossil.deleteFile',
                 ...repository.untrackedGroup.resourceStates
             );
@@ -1388,12 +1362,12 @@ export function fossil_clean_suite(sandbox: sinon.SinonSandbox): void {
             await repository.updateModelState();
             assert.equal(repository.untrackedGroup.resourceStates.length, 3);
             const showWarningMessage: sinon.SinonStub = sandbox.stub(
-                vscode.window,
+                window,
                 'showWarningMessage'
             );
             showWarningMessage.onFirstCall().resolves('&&Delete Files');
 
-            await vscode.commands.executeCommand(
+            await commands.executeCommand(
                 'fossil.deleteFiles',
                 repository.untrackedGroup
             );
