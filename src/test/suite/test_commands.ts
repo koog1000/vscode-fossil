@@ -24,6 +24,9 @@ declare module 'mocha' {
     interface TestFunction {
         if: (condition: boolean, title: string, fn: Func) => Test;
     }
+    interface Context {
+        sandbox: sinon.SinonSandbox;
+    }
 }
 
 test.if = function (condition: boolean, title: string, fn: Func): Test {
