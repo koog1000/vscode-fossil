@@ -148,12 +148,12 @@ export async function add(
     content: string,
     commitMessage: string,
     action: 'ADDED' | 'SKIP' = 'ADDED'
-): Promise<vscode.Uri> {
+): Promise<Uri> {
     const repository = getRepository();
     const openedRepository: OpenedRepository = (repository as any).repository;
 
     const rootUri = vscode.workspace.workspaceFolders![0].uri;
-    const fileUri = vscode.Uri.joinPath(rootUri, filename);
+    const fileUri = Uri.joinPath(rootUri, filename);
     await fs.promises.writeFile(fileUri.fsPath, content);
     const addRes = await openedRepository.exec(['add', filename]);
     assert.match(
