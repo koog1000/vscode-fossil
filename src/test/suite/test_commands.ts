@@ -1063,27 +1063,6 @@ export function fossil_patch_suite(sandbox: sinon.SinonSandbox): void {
     });
 }
 
-export function fossil_utilities_suite(sandbox: sinon.SinonSandbox): void {
-    suite('Utility', function (this: Suite) {
-        test('Show output', async () => {
-            await vscode.commands.executeCommand('fossil.showOutput');
-            // currently there is no way to validate fossil.showOutput
-        });
-        test('Open UI', async () => {
-            const sendText = sinon.stub();
-            const terminal = {
-                sendText: sendText as unknown,
-            } as vscode.Terminal;
-            const createTerminalstub = sandbox
-                .stub(vscode.window, 'createTerminal')
-                .returns(terminal);
-            await vscode.commands.executeCommand('fossil.openUI');
-            sinon.assert.calledOnce(createTerminalstub);
-            sinon.assert.calledOnceWithExactly(sendText, 'fossil ui', true);
-        });
-    });
-}
-
 export function fossil_status_suite(): void {
     suite('Status', function (this: Suite) {
         test('Missing is visible in Source Control panel', async () => {
