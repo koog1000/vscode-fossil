@@ -1,15 +1,11 @@
 import { before, afterEach, Suite } from 'mocha';
 import * as sinon from 'sinon';
 import {
-    fossil_add,
     fossil_branch_suite,
     fossil_change_branch_to_hash,
     fossil_change_branch_to_trunk,
     fossil_commit_suite,
-    fossil_ignore,
     fossil_merge_suite,
-    fossil_open_files,
-    fossil_open_resource,
     fossil_patch_suite,
     fossil_pull_with_autoUpdate_off,
     fossil_pull_with_autoUpdate_on,
@@ -21,7 +17,6 @@ import {
     fossil_stash_suite,
     fossil_status_suite,
     fossil_tag_suite,
-    fossil_forget,
 } from './test_commands';
 import {
     fossil_can_amend_commit_message,
@@ -29,6 +24,7 @@ import {
 } from './test_log';
 import { cleanRoot, fossilInit, fossilOpen } from './common';
 import { utilitiesSuite } from './utilitiesSuite';
+import { resourceActionsSuite } from './resourceActionsSuite';
 
 suite('Fossil.OpenedRepo', function (this: Suite) {
     const sandbox = sinon.createSandbox();
@@ -53,16 +49,7 @@ suite('Fossil.OpenedRepo', function (this: Suite) {
             fossil_change_branch_to_hash(sandbox)).timeout(5000);
     });
 
-    suite('Resource Actions', function () {
-        test('fossil add', () => fossil_add()).timeout(5000);
-        test('fossil forget', () => fossil_forget(sandbox)).timeout(5000);
-        test('fossil ignore', () => fossil_ignore(sandbox)).timeout(8000);
-        test('fossil open files', () => fossil_open_files(sandbox)).timeout(
-            6000
-        );
-        test('fossil open resource', () =>
-            fossil_open_resource(sandbox)).timeout(12000);
-    });
+    suite('Resource Actions', resourceActionsSuite);
 
     suite('Log', function () {
         test('fossil file log can differ files', () =>
