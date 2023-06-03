@@ -1,4 +1,3 @@
-import { SinonSandbox } from 'sinon';
 import * as vscode from 'vscode';
 import { Uri } from 'vscode';
 import * as sinon from 'sinon';
@@ -8,10 +7,8 @@ import { getRepository } from './common';
 import { Suite } from 'mocha';
 
 function undoSuite(this: Suite) {
-    const sandbox: SinonSandbox = this.ctx.sandbox;
-
     test('Undo and redo warning', async () => {
-        const showWarningMessage: sinon.SinonStub = sandbox.stub(
+        const showWarningMessage: sinon.SinonStub = this.ctx.sandbox.stub(
             vscode.window,
             'showWarningMessage'
         );
@@ -29,7 +26,7 @@ function undoSuite(this: Suite) {
         );
     }).timeout(2000);
     test('Undo and redo working', async () => {
-        const showWarningMessage: sinon.SinonStub = sandbox.stub(
+        const showWarningMessage: sinon.SinonStub = this.ctx.sandbox.stub(
             vscode.window,
             'showWarningMessage'
         );
@@ -51,7 +48,7 @@ function undoSuite(this: Suite) {
         assert.ok(showWarningMessage.calledOnce);
         assert.ok(!fs.existsSync(undoTxtPath));
 
-        const showInformationMessage: sinon.SinonStub = sandbox.stub(
+        const showInformationMessage: sinon.SinonStub = this.ctx.sandbox.stub(
             vscode.window,
             'showInformationMessage'
         );
