@@ -18,13 +18,10 @@ import {
     fossil_status_suite,
     fossil_tag_suite,
 } from './test_commands';
-import {
-    fossil_can_amend_commit_message,
-    fossil_file_log_can_diff_files,
-} from './test_log';
 import { cleanRoot, fossilInit, fossilOpen } from './common';
 import { utilitiesSuite } from './utilitiesSuite';
 import { resourceActionsSuite } from './resourceActionsSuite';
+import { timelineSuite } from './timelineSuite';
 
 suite('Fossil.OpenedRepo', function (this: Suite) {
     const sandbox = sinon.createSandbox();
@@ -51,12 +48,7 @@ suite('Fossil.OpenedRepo', function (this: Suite) {
 
     suite('Resource Actions', resourceActionsSuite);
 
-    suite('Log', function () {
-        test('fossil file log can differ files', () =>
-            fossil_file_log_can_diff_files(sandbox)).timeout(10000);
-        test('fossil can amend commit message', () =>
-            fossil_can_amend_commit_message(sandbox)).timeout(5000);
-    });
+    suite('Timeline', timelineSuite);
 
     test('fossil revert change', () => fossil_revert_change()).timeout(11000);
 
