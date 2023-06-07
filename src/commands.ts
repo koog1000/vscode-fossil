@@ -562,8 +562,10 @@ export class CommandCenter {
 
     @command('fossil.addAll', { repository: true })
     async addAll(repository: Repository): Promise<void> {
-        await repository.add();
-        return repository.stage();
+        const untracked = repository.untrackedGroup.resourceStates;
+        if (untracked.length) {
+            return repository.stage(...untracked.map(r => r.resourceUri));
+        }
     }
 
     @command('fossil.add')

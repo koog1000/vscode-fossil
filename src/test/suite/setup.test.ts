@@ -1,28 +1,17 @@
 import * as vscode from 'vscode';
 import { window, Uri } from 'vscode';
-import { cleanRoot, fossilInit, fossilOpen, getExecutable } from './common';
+import {
+    cleanRoot,
+    fakeExecutionResult,
+    fossilInit,
+    fossilOpen,
+    getExecutable,
+} from './common';
 import * as sinon from 'sinon';
 import * as assert from 'assert/strict';
-import {
-    FossilCWD,
-    FossilExecutablePath,
-    FossilStdErr,
-    FossilStdOut,
-    IExecutionResult,
-} from '../../fossilExecutable';
+import { FossilCWD } from '../../fossilExecutable';
 import { afterEach } from 'mocha';
 import * as os from 'os';
-
-function fakeExecutionResult(stdout = ''): IExecutionResult {
-    return {
-        fossilPath: '' as FossilExecutablePath,
-        exitCode: 0,
-        stdout: stdout as FossilStdOut,
-        stderr: '' as FossilStdErr,
-        args: ['status'],
-        cwd: '' as FossilCWD,
-    };
-}
 
 suite('Setup', () => {
     const sandbox = sinon.createSandbox();

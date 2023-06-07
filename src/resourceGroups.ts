@@ -60,8 +60,8 @@ export interface IFossilResourceGroup extends SourceControlResourceGroup {
 }
 
 export class FossilResourceGroup {
-    private _uriToResource: Map<string, FossilResource>;
-    private _vscode_group: IFossilResourceGroup;
+    private readonly _uriToResource: Map<string, FossilResource>;
+    private readonly _vscode_group: IFossilResourceGroup;
     get disposable(): Disposable {
         return this._vscode_group;
     }
@@ -110,27 +110,24 @@ export class FossilResourceGroup {
     }
 
     intersect(resources: FossilResource[]): void {
-        const newUniqueResources = resources.filter(
-            resource =>
-                !this._uriToResource.has(resource.resourceUri.toString())
-        );
+        // existing resources must be updated
+        // because resource status might change
+        for (const res of resources) {
+            this._uriToResource.delete(res.resourceUri.toString());
+            res.resourceGroup = this;
+        }
         const intersectionResources: FossilResource[] = [
-            ...this.resourceStates,
-            ...newUniqueResources,
+            ...resources,
+            ...this._uriToResource.values(),
         ];
         this.updateResources(intersectionResources);
     }
 
     except(resources_to_exclude: FossilResource[]): void {
-        const uri_to_exclude = new Set<string>(
-            resources_to_exclude.map(resource =>
-                resource.resourceUri.toString()
-            )
-        );
-        const newResources = this.resourceStates.filter(
-            resource => !uri_to_exclude.has(resource.resourceUri.toString())
-        );
-        this.updateResources(newResources);
+        for (const res of resources_to_exclude) {
+            this._uriToResource.delete(res.resourceUri.toString());
+        }
+        this.updateResources([...this._uriToResource.values()]);
     }
 }
 

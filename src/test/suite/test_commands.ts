@@ -917,7 +917,6 @@ export function fossil_status_suite(): void {
             await fs.writeFile(barPath, 'test bar\n');
             await fs.appendFile(fooPath, 'appended\n');
             await openedRepository.exec(['add', 'bar-xa.txt']);
-            console.log;
             await openedRepository.exec([
                 'commit',
                 '-m',
@@ -1035,19 +1034,19 @@ export function fossil_status_suite(): void {
 
 export function fossil_stage_suite(sandbox: sinon.SinonSandbox): void {
     suite('Stage', function (this: Suite) {
-        async function statusSetup(status: string) {
+        before(async () => {
             const repository = getRepository();
-            const openedRepository: OpenedRepository = (repository as any)
-                .repository;
-            const execStub = sandbox
-                .stub(openedRepository, 'exec')
-                .callThrough();
+            await cleanupFossil(repository);
+        });
+        async function statusSetup(status: string) {
+            const execStub = getExecStub(sandbox);
             await fakeFossilStatus(execStub, status);
+            const repository = getRepository();
             await repository.updateModelState();
         }
 
         test('Stage from working group', async () => {
-            commands.executeCommand('fossil.unstageAll');
+            await commands.executeCommand('fossil.unstageAll');
             await statusSetup('ADDED a.txt\nEDITED b.txt\nEDITED c.txt');
             const repository = getRepository();
             assert.equal(repository.workingGroup.resourceStates.length, 3);
@@ -1061,10 +1060,9 @@ export function fossil_stage_suite(sandbox: sinon.SinonSandbox): void {
             assert.equal(repository.stagingGroup.resourceStates.length, 2);
         });
         test('Stage all', async () => {
-            commands.executeCommand('fossil.unstageAll');
+            await commands.executeCommand('fossil.unstageAll');
             await statusSetup('ADDED a.txt\nEDITED b.txt\nEDITED c.txt');
             const repository = getRepository();
-            await repository.updateModelState();
             assert.equal(repository.workingGroup.resourceStates.length, 3);
             assert.equal(repository.stagingGroup.resourceStates.length, 0);
             await commands.executeCommand('fossil.stageAll');
@@ -1072,10 +1070,10 @@ export function fossil_stage_suite(sandbox: sinon.SinonSandbox): void {
             assert.equal(repository.stagingGroup.resourceStates.length, 3);
         });
         test('Unstage', async () => {
-            commands.executeCommand('fossil.unstageAll');
-            await statusSetup('ADDED a.txt\nEDITED b.txt\nEDITED c.txt');
             const repository = getRepository();
-            await repository.updateModelState();
+            await commands.executeCommand('fossil.unstageAll');
+            assert.equal(repository.stagingGroup.resourceStates.length, 0);
+            await statusSetup('ADDED a.txt\nEDITED b.txt\nEDITED c.txt');
             assert.equal(repository.workingGroup.resourceStates.length, 3);
             assert.equal(repository.stagingGroup.resourceStates.length, 0);
             await commands.executeCommand('fossil.stageAll');
