@@ -118,7 +118,7 @@ export class FossilResource implements SourceControlResourceState {
     }
 
     get isDirtyStatus(): boolean {
-        switch (this._status) {
+        switch (this.status) {
             case ResourceStatus.EXTRA:
                 return false;
 
@@ -143,25 +143,19 @@ export class FossilResource implements SourceControlResourceState {
     get resourceUri(): Uri {
         if (this.renameResourceUri) {
             if (
-                this._status === ResourceStatus.MODIFIED ||
-                this._status === ResourceStatus.RENAMED ||
-                this._status === ResourceStatus.ADDED ||
-                this._status === ResourceStatus.CONFLICT
+                this.status === ResourceStatus.MODIFIED ||
+                this.status === ResourceStatus.RENAMED ||
+                this.status === ResourceStatus.ADDED ||
+                this.status === ResourceStatus.CONFLICT
             ) {
                 return this.renameResourceUri;
             }
 
             throw new Error(
-                `Renamed resource with unexpected status: ${this._status}`
+                `Renamed resource with unexpected status: ${this.status}`
             );
         }
         return this._resourceUri;
-    }
-    get resourceGroup(): FossilResourceGroup {
-        return this._resourceGroup;
-    }
-    get status(): ResourceStatus {
-        return this._status;
     }
 
     private static Icons: {
@@ -192,7 +186,7 @@ export class FossilResource implements SourceControlResourceState {
     }
 
     get contextValue(): string | undefined {
-        if (this._status == ResourceStatus.MISSING) {
+        if (this.status == ResourceStatus.MISSING) {
             return 'MISSING';
         }
         return;
@@ -211,11 +205,11 @@ export class FossilResource implements SourceControlResourceState {
     }
 
     constructor(
-        private _resourceGroup: FossilResourceGroup,
-        private _resourceUri: Uri,
-        private _status: ResourceStatus,
-        private _tooltip: FossilClass,
-        private _renameResourceUri?: Uri
+        public resourceGroup: FossilResourceGroup,
+        private readonly _resourceUri: Uri,
+        public readonly status: ResourceStatus,
+        private readonly _tooltip: FossilClass,
+        private readonly _renameResourceUri?: Uri
     ) {}
 }
 
@@ -229,7 +223,6 @@ export const enum Operation {
     Ignore,
     Init,
     Merge,
-    Parents,
     PatchApply,
     PatchCreate,
     Pull,
@@ -252,7 +245,7 @@ function isReadOnly(operation: Operation): boolean {
         Operation.Show,
         // ToDo: make readonly, 'fossil.refresh' doesn't allow it yet...
         // Operation.Status
-        Operation.Parents,
+        Operation.Stage,
         Operation.UndoDryRun,
     ].includes(operation);
 }
@@ -659,6 +652,10 @@ export class Repository implements IDisposable, InteractionAPI {
                 );
                 await this.runWithProgress(Operation.Add, () =>
                     this.repository.add(relativePaths)
+                );
+                // after 'repository.add' resource statuses change, so:
+                resources = this.mapResources(
+                    resources.map(r => r.resourceUri)
                 );
             }
 

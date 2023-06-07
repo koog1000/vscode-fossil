@@ -4,6 +4,8 @@ import * as sinon from 'sinon';
 import { FossilCWD } from '../../fossilExecutable';
 import {
     add,
+    assertGroups,
+    cleanupFossil,
     fakeFossilStatus,
     getExecStub,
     getExecutable,
@@ -13,6 +15,7 @@ import * as assert from 'assert/strict';
 import * as fs from 'fs/promises';
 import { existsSync } from 'fs';
 import { Suite } from 'mocha';
+import { ResourceStatus } from '../../openedRepository';
 
 async function document_was_shown(
     sandbox: sinon.SinonSandbox,
@@ -60,8 +63,51 @@ export function resourceActionsSuite(this: Suite): void {
         await repository.updateModelState();
         assert(!repository.untrackedGroup.includesUri(uri));
         assert(repository.stagingGroup.includesUri(uri));
-        await vscode.commands.executeCommand('fossil.add');
     }).timeout(5000);
+
+    test('fossil add untracked', async () => {
+        let execStub = getExecStub(this.ctx.sandbox);
+        let statusStub = fakeFossilStatus(execStub, 'EXTRA a.txt\nEXTRA b.txt');
+
+        const repository = getRepository();
+        await repository.updateModelState('test');
+        sinon.assert.calledOnce(statusStub);
+        assert.equal(repository.untrackedGroup.resourceStates.length, 2);
+        assertGroups(repository, new Map(), new Map());
+        execStub.restore();
+        execStub = getExecStub(this.ctx.sandbox);
+        statusStub = fakeFossilStatus(execStub, 'ADDED a.txt\nADDED b.txt');
+        const addStub = execStub
+            .withArgs(sinon.match.array.startsWith(['add']))
+            .resolves();
+        await vscode.commands.executeCommand('fossil.addAll');
+        sinon.assert.calledOnce(statusStub);
+        sinon.assert.calledOnceWithExactly(addStub, ['add', 'a.txt', 'b.txt']);
+        const root = workspace.workspaceFolders![0].uri;
+        assertGroups(
+            repository,
+            new Map(),
+            new Map([
+                [Uri.joinPath(root, 'a.txt').fsPath, ResourceStatus.ADDED],
+                [Uri.joinPath(root, 'b.txt').fsPath, ResourceStatus.ADDED],
+            ])
+        );
+    });
+
+    test('fossil add untracked does not add working group', async () => {
+        const repository = getRepository();
+        await cleanupFossil(repository);
+        const execStub = getExecStub(this.ctx.sandbox);
+        const statusStub = fakeFossilStatus(execStub, 'ADDED a\nADDED b');
+        await repository.updateModelState('test');
+        sinon.assert.calledOnce(statusStub);
+        assert.equal(repository.workingGroup.resourceStates.length, 2);
+        assert.equal(repository.stagingGroup.resourceStates.length, 0);
+        await vscode.commands.executeCommand('fossil.addAll');
+        sinon.assert.calledOnce(statusStub);
+        assert.equal(repository.workingGroup.resourceStates.length, 2);
+        assert.equal(repository.stagingGroup.resourceStates.length, 0);
+    });
 
     test('fossil forget', async () => {
         const repository = getRepository();
