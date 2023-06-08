@@ -58,7 +58,7 @@ export async function fossilInit(sandbox: sinon.SinonSandbox): Promise<void> {
         window,
         'showInformationMessage'
     );
-    const openRepositoryuestion = showInformationMessage
+    const openRepositoryQuestion = showInformationMessage
         .withArgs(
             'Would you like to open the cloned repository?',
             'Open Repository'
@@ -84,7 +84,7 @@ export async function fossilInit(sandbox: sinon.SinonSandbox): Promise<void> {
         fs.existsSync(fossilPath.fsPath),
         `Not a file: '${fossilPath.fsPath}' even though 'fossil.init' was successfully executed`
     );
-    sinon.assert.calledOnce(openRepositoryuestion);
+    sinon.assert.calledOnce(openRepositoryQuestion);
     sandbox.restore();
 }
 
