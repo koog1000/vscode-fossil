@@ -147,7 +147,7 @@ export function fakeFossilStatus(execStub: ExecStub, status: string): ExecStub {
 
 export async function fossilOpen(sandbox: sinon.SinonSandbox): Promise<void> {
     assert.ok(vscode.workspace.workspaceFolders);
-    const rootPath = vscode.workspace.workspaceFolders![0].uri;
+    const rootPath = vscode.workspace.workspaceFolders[0].uri;
     const fossilPath = Uri.joinPath(rootPath, '/test.fossil');
     assert.ok(
         fs.existsSync(fossilPath.fsPath),
