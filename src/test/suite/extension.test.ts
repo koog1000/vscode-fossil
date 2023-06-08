@@ -4,7 +4,6 @@ import {
     fossil_branch_suite,
     fossil_change_branch_to_hash,
     fossil_change_branch_to_trunk,
-    fossil_commit_suite,
     fossil_merge_suite,
     fossil_patch_suite,
     fossil_pull_with_autoUpdate_off,
@@ -22,6 +21,7 @@ import { cleanRoot, fossilInit, fossilOpen } from './common';
 import { utilitiesSuite } from './utilitiesSuite';
 import { resourceActionsSuite } from './resourceActionsSuite';
 import { timelineSuite } from './timelineSuite';
+import { CommitSuite } from './commitSuite';
 
 suite('Fossil.OpenedRepo', function (this: Suite) {
     const sandbox = sinon.createSandbox();
@@ -55,7 +55,7 @@ suite('Fossil.OpenedRepo', function (this: Suite) {
     fossil_revert_suite(sandbox);
     fossil_stash_suite();
     fossil_branch_suite(sandbox);
-    fossil_commit_suite(sandbox);
+    suite('Commit', CommitSuite);
     fossil_patch_suite(sandbox);
     fossil_merge_suite(sandbox);
     fossil_tag_suite(sandbox);
