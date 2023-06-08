@@ -10,8 +10,9 @@ import {
 import * as sinon from 'sinon';
 import * as assert from 'assert/strict';
 import { FossilCWD } from '../../fossilExecutable';
-import { afterEach } from 'mocha';
+import { afterEach, before } from 'mocha';
 import * as os from 'os';
+import * as fs from 'fs/promises';
 
 suite('Setup', () => {
     const sandbox = sinon.createSandbox();
@@ -26,17 +27,17 @@ suite('Setup', () => {
             await fossilInit(sandbox);
         }).timeout(2000);
         test('No path selected', async () => {
-            const showSaveDialogstub = sandbox
+            const showSaveDialogStub = sandbox
                 .stub(window, 'showSaveDialog')
                 .withArgs(
                     sinon.match({ title: 'Select New Fossil File Location' })
                 )
                 .resolves();
             await vscode.commands.executeCommand('fossil.init');
-            sinon.assert.calledOnce(showSaveDialogstub);
+            sinon.assert.calledOnce(showSaveDialogStub);
         }).timeout(200);
         test('No project name selected', async () => {
-            const showSaveDialogstub = sandbox
+            const showSaveDialogStub = sandbox
                 .stub(window, 'showSaveDialog')
                 .withArgs(
                     sinon.match({ title: 'Select New Fossil File Location' })
@@ -50,11 +51,11 @@ suite('Setup', () => {
                 .resolves();
 
             await vscode.commands.executeCommand('fossil.init');
-            sinon.assert.calledOnce(showSaveDialogstub);
+            sinon.assert.calledOnce(showSaveDialogStub);
             sinon.assert.calledOnce(showInputBox);
         }).timeout(200);
         test('No description selected', async () => {
-            const showSaveDialogstub = sandbox
+            const showSaveDialogStub = sandbox
                 .stub(window, 'showSaveDialog')
                 .withArgs(
                     sinon.match({ title: 'Select New Fossil File Location' })
@@ -70,7 +71,7 @@ suite('Setup', () => {
                 .withArgs(sinon.match({ prompt: 'Project Description' }))
                 .resolves();
             await vscode.commands.executeCommand('fossil.init');
-            sinon.assert.calledOnce(showSaveDialogstub);
+            sinon.assert.calledOnce(showSaveDialogStub);
             sinon.assert.calledTwice(showInputBox);
         }).timeout(200);
         test('Open after initialization', async () => {
@@ -78,7 +79,7 @@ suite('Setup', () => {
                 Uri.file(os.tmpdir()),
                 'virtual.fossil'
             );
-            const showSaveDialogstub = sandbox
+            const showSaveDialogStub = sandbox
                 .stub(window, 'showSaveDialog')
                 .withArgs(
                     sinon.match({ title: 'Select New Fossil File Location' })
@@ -116,7 +117,7 @@ suite('Setup', () => {
                 .resolves('Open Repository');
 
             await vscode.commands.executeCommand('fossil.init');
-            sinon.assert.calledOnce(showSaveDialogstub);
+            sinon.assert.calledOnce(showSaveDialogStub);
             sinon.assert.calledTwice(showInputBox);
             sinon.assert.calledOnce(showInformationMessage);
             const cwd = os.tmpdir() as FossilCWD;
@@ -131,21 +132,88 @@ suite('Setup', () => {
         }).timeout(6000);
     });
 
-    test('Close', async () => {
-        await cleanRoot();
-        await fossilInit(sandbox);
-        await fossilOpen(sandbox);
-        const cwd = vscode.workspace.workspaceFolders![0].uri
-            .fsPath as FossilCWD;
-        const executable = getExecutable();
-        const res = await executable.exec(cwd, ['info']);
-        assert.match(res.stdout, /check-ins:\s+1\s*$/);
-        await vscode.commands.executeCommand('fossil.close');
-        const res_promise = executable.exec(cwd, ['status']);
-        await assert.rejects(res_promise, (thrown: any): boolean => {
-            return /^current directory is not within an open check-?out\s*$/.test(
-                thrown.stderr
+    suite('Open', () => {
+        before(async () => {
+            await cleanRoot();
+            await fossilInit(sandbox);
+        });
+        test('Open - cancel path', async () => {
+            const sod = sandbox.stub(window, 'showOpenDialog');
+            sod.withArgs(
+                sinon.match({ openLabel: 'Repository Location' })
+            ).resolves();
+            await vscode.commands.executeCommand('fossil.open');
+            sinon.assert.calledOnce(sod);
+        });
+        test('Open - cancel root', async () => {
+            const sod = sandbox.stub(window, 'showOpenDialog');
+            sod.withArgs(
+                sinon.match({ openLabel: 'Repository Location' })
+            ).resolves([Uri.file('test')]);
+            sod.withArgs(
+                sinon.match({ title: 'Select Fossil Root Directory' })
+            ).resolves();
+            await vscode.commands.executeCommand('fossil.open');
+            sinon.assert.calledTwice(sod);
+        });
+        test('Open forced - canceled by user', async () => {
+            assert.ok(vscode.workspace.workspaceFolders);
+            const root = vscode.workspace.workspaceFolders[0].uri;
+            const location = Uri.joinPath(root, '/test.fossil');
+            const sod = sandbox.stub(window, 'showOpenDialog');
+            sod.withArgs(
+                sinon.match({ openLabel: 'Repository Location' })
+            ).resolves([location]);
+            sod.withArgs(
+                sinon.match({ title: 'Select Fossil Root Directory' })
+            ).resolves([root]);
+            const swm: sinon.SinonStub = sandbox.stub(
+                window,
+                'showWarningMessage'
             );
+            swm.withArgs(
+                `The directory ${root.fsPath} is not empty.\n` +
+                    'Open repository here anyway?',
+                { modal: true },
+                '&&Open Repository'
+            ).resolves();
+            await fs.writeFile(Uri.joinPath(root, 'junk').fsPath, '');
+            console.log('before `fossil.open`');
+            const executable = getExecutable();
+            const execStub = sandbox.stub(executable, 'exec').callThrough();
+            await vscode.commands.executeCommand('fossil.open');
+            sinon.assert.calledWithExactly(
+                execStub.firstCall,
+                root.fsPath as FossilCWD,
+                ['open', location.fsPath]
+            );
+            sinon.assert.calledTwice(sod);
+        });
+        test('Open and close', async () => {
+            const cwd = vscode.workspace.workspaceFolders![0].uri
+                .fsPath as FossilCWD;
+            const swm: sinon.SinonStub = sandbox.stub(
+                window,
+                'showWarningMessage'
+            );
+            swm.withArgs(
+                `The directory ${cwd} is not empty.\n` +
+                    'Open repository here anyway?',
+                { modal: true },
+                '&&Open Repository'
+            ).resolves('&&Open Repository');
+
+            await fossilOpen(sandbox);
+            const executable = getExecutable();
+            const res = await executable.exec(cwd, ['info']);
+            assert.match(res.stdout, /check-ins:\s+1\s*$/);
+            await vscode.commands.executeCommand('fossil.close');
+            const res_promise = executable.exec(cwd, ['status']);
+            await assert.rejects(res_promise, (thrown: any): boolean => {
+                return /^current directory is not within an open check-?out\s*$/.test(
+                    thrown.stderr
+                );
+            });
         });
     }).timeout(5000);
     suite('Clone', function () {
@@ -179,7 +247,7 @@ suite('Setup', () => {
                 )
                 .resolves();
 
-            const showSaveDialogstub = sandbox
+            const showSaveDialogStub = sandbox
                 .stub(vscode.window, 'showSaveDialog')
                 .withArgs(
                     sinon.match({ title: 'Select New Fossil File Location' })
@@ -194,7 +262,7 @@ suite('Setup', () => {
             sinon.assert.calledOnce(inputURI);
             sinon.assert.calledOnce(inputUsername);
             sinon.assert.calledOnce(inputPassword);
-            sinon.assert.calledOnce(showSaveDialogstub);
+            sinon.assert.calledOnce(showSaveDialogStub);
             sinon.assert.calledOnce(showInformationMessage);
             sinon.assert.calledOnceWithExactly(
                 execStub,
@@ -224,7 +292,7 @@ suite('Setup', () => {
                 )
                 .resolves();
 
-            const showSaveDialogstub = sandbox
+            const showSaveDialogStub = sandbox
                 .stub(vscode.window, 'showSaveDialog')
                 .withArgs(
                     sinon.match({ title: 'Select New Fossil File Location' })
@@ -237,7 +305,7 @@ suite('Setup', () => {
 
             await vscode.commands.executeCommand('fossil.clone');
             sinon.assert.calledOnce(inputURI);
-            sinon.assert.calledOnce(showSaveDialogstub);
+            sinon.assert.calledOnce(showSaveDialogStub);
             sinon.assert.calledOnce(showInformationMessage);
             sinon.assert.calledOnceWithExactly(
                 execStub,
@@ -270,7 +338,7 @@ suite('Setup', () => {
                 )
                 .resolves();
 
-            const showSaveDialogstub = sandbox
+            const showSaveDialogStub = sandbox
                 .stub(vscode.window, 'showSaveDialog')
                 .withArgs(
                     sinon.match({ title: 'Select New Fossil File Location' })
@@ -284,7 +352,7 @@ suite('Setup', () => {
             await vscode.commands.executeCommand('fossil.clone');
             sinon.assert.calledOnce(inputURI);
             sinon.assert.calledOnce(inputPassword);
-            sinon.assert.calledOnce(showSaveDialogstub);
+            sinon.assert.calledOnce(showSaveDialogStub);
             sinon.assert.calledOnce(showInformationMessage);
             sinon.assert.calledOnceWithExactly(
                 execStub,
@@ -332,7 +400,7 @@ suite('Setup', () => {
                 )
                 .resolves();
 
-            const showSaveDialogstub = sandbox
+            const showSaveDialogStub = sandbox
                 .stub(vscode.window, 'showSaveDialog')
                 .withArgs(
                     sinon.match({ title: 'Select New Fossil File Location' })
@@ -347,7 +415,7 @@ suite('Setup', () => {
             sinon.assert.calledOnce(inputURI);
             sinon.assert.calledOnce(inputUsername);
             sinon.assert.calledOnce(inputPassword);
-            sinon.assert.calledOnce(showSaveDialogstub);
+            sinon.assert.calledOnce(showSaveDialogStub);
             sinon.assert.calledOnce(showInformationMessage);
             sinon.assert.calledOnceWithExactly(
                 execStub,
@@ -365,7 +433,7 @@ suite('Setup', () => {
             const inputURI = showInputBox
                 .withArgs(sinon.match({ prompt: 'Repository URI' }))
                 .resolves('https://testuser:testpsw@example.com/fossil');
-            const showSaveDialogstub = sandbox
+            const showSaveDialogStub = sandbox
                 .stub(vscode.window, 'showSaveDialog')
                 .withArgs(
                     sinon.match({ title: 'Select New Fossil File Location' })
@@ -377,7 +445,7 @@ suite('Setup', () => {
 
             await vscode.commands.executeCommand('fossil.clone');
             sinon.assert.calledOnce(inputURI);
-            sinon.assert.calledOnce(showSaveDialogstub);
+            sinon.assert.calledOnce(showSaveDialogStub);
             sinon.assert.notCalled(execStub);
         });
     });
