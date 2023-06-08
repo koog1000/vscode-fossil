@@ -113,16 +113,23 @@ export function getExecStub(sandbox: sinon.SinonSandbox): ExecStub {
     return sandbox.stub(openedRepository, 'exec').callThrough();
 }
 
-export function fakeExecutionResult(
-    stdout = '',
-    args: FossilArgs = ['status']
-): IExecutionResult {
+export function fakeExecutionResult({
+    stdout,
+    stderr,
+    args,
+    exitCode,
+}: {
+    stdout?: string;
+    stderr?: string;
+    args?: FossilArgs;
+    exitCode?: number;
+} = {}): IExecutionResult {
     return {
         fossilPath: '' as FossilExecutablePath,
-        exitCode: 0,
-        stdout: stdout as FossilStdOut,
-        stderr: '' as FossilStdErr,
-        args: args,
+        exitCode: exitCode ?? 0,
+        stdout: (stdout ?? '') as FossilStdOut,
+        stderr: (stderr ?? '') as FossilStdErr,
+        args: args ?? ['status'],
         cwd: '' as FossilCWD,
     };
 }
@@ -135,7 +142,7 @@ export function fakeFossilStatus(execStub: ExecStub, status: string): ExecStub {
     const args: FossilArgs = ['status', '--differ', '--merge'];
     return execStub
         .withArgs(args)
-        .resolves(fakeExecutionResult(header + status, args));
+        .resolves(fakeExecutionResult({ stdout: header + status, args }));
 }
 
 export async function fossilOpen(sandbox: sinon.SinonSandbox): Promise<void> {
