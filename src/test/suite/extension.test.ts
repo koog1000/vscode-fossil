@@ -53,7 +53,7 @@ suite('Fossil.OpenedRepo', function (this: Suite) {
     test('fossil revert change', () => fossil_revert_change()).timeout(11000);
 
     fossil_revert_suite(sandbox);
-    fossil_stash_suite(sandbox);
+    fossil_stash_suite();
     fossil_branch_suite(sandbox);
     fossil_commit_suite(sandbox);
     fossil_patch_suite(sandbox);

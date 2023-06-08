@@ -18,7 +18,7 @@ import {
 } from '../../openedRepository';
 import { eventToPromise } from '../../util';
 import { LineChange } from '../../revert';
-import { Suite, beforeEach, afterEach, Func, Test, before } from 'mocha';
+import { Suite, beforeEach, Func, Test, before } from 'mocha';
 import { IExecutionResult } from '../../fossilExecutable';
 
 declare module 'mocha' {
@@ -253,51 +253,38 @@ export async function fossil_change_branch_to_hash(
     assert.ok(updateCall.calledOnce);
 }
 
-export function fossil_stash_suite(sandbox: sinon.SinonSandbox): void {
+export function fossil_stash_suite(): void {
     suite('Stash', function (this: Suite) {
-        afterEach(() => {
-            sandbox.restore();
-        });
-
-        this.timeout(12000);
         test('Save', async () => {
             const repository = getRepository();
-            const openedRepository: OpenedRepository = (repository as any)
-                .repository;
             const uri = Uri.joinPath(
                 workspace.workspaceFolders![0].uri,
                 'stash.txt'
             );
             await fs.writeFile(uri.fsPath, 'stash me');
 
-            const showInputBox = sandbox.stub(window, 'showInputBox');
-            showInputBox.onFirstCall().resolves('stashSave commit message');
+            const siw = this.ctx.sandbox.stub(window, 'showInputBox');
+            siw.onFirstCall().resolves('stashSave commit message');
 
-            const execStub = sandbox.stub(openedRepository, 'exec');
-            const stashSave = execStub.withArgs([
+            const stashSave = getExecStub(this.ctx.sandbox).withArgs([
                 'stash',
                 'save',
                 '-m',
                 'stashSave commit message',
                 'stash.txt',
             ]);
-            execStub.callThrough();
             await repository.updateModelState();
             const resource = repository.untrackedGroup.getResource(uri);
             assert.ok(resource);
             await commands.executeCommand('fossil.add', resource);
             await commands.executeCommand('fossil.stashSave');
-            assert.ok(stashSave.calledOnce);
+            sinon.assert.calledOnce(stashSave);
         });
         test('Apply', async () => {
-            const repository = getRepository();
-            const openedRepository: OpenedRepository = (repository as any)
-                .repository;
-
-            const execStub = sandbox.stub(openedRepository, 'exec');
+            const execStub = getExecStub(this.ctx.sandbox);
             const stashApply = execStub.withArgs(['stash', 'apply', '1']);
-            const showQuickPick = sandbox.stub(window, 'showQuickPick');
-            showQuickPick.onFirstCall().callsFake(items => {
+            const sqp = this.ctx.sandbox.stub(window, 'showQuickPick');
+            sqp.onFirstCall().callsFake(items => {
                 assert.ok(items instanceof Array);
                 assert.match(
                     items[0].label,
@@ -305,19 +292,14 @@ export function fossil_stash_suite(sandbox: sinon.SinonSandbox): void {
                 );
                 return Promise.resolve(items[0]);
             });
-            execStub.callThrough();
             await commands.executeCommand('fossil.stashApply');
-            assert.ok(stashApply.calledOnce);
+            sinon.assert.calledOnce(stashApply);
         });
         test('Drop', async () => {
-            const repository = getRepository();
-            const openedRepository: OpenedRepository = (repository as any)
-                .repository;
-
-            const execStub = sandbox.stub(openedRepository, 'exec');
+            const execStub = getExecStub(this.ctx.sandbox);
             const stashApply = execStub.withArgs(['stash', 'drop', '1']);
-            const showQuickPick = sandbox.stub(window, 'showQuickPick');
-            showQuickPick.onFirstCall().callsFake(items => {
+            const sqp = this.ctx.sandbox.stub(window, 'showQuickPick');
+            sqp.onFirstCall().callsFake(items => {
                 assert.ok(items instanceof Array);
                 assert.match(
                     items[0].label,
@@ -325,15 +307,14 @@ export function fossil_stash_suite(sandbox: sinon.SinonSandbox): void {
                 );
                 return Promise.resolve(items[0]);
             });
-            execStub.callThrough();
             await commands.executeCommand('fossil.stashDrop');
-            assert.ok(stashApply.calledOnce);
+            sinon.assert.calledOnce(stashApply);
         });
         test('Pop', async () => {
+            const execStub = getExecStub(this.ctx.sandbox);
             const repository = getRepository();
             const openedRepository: OpenedRepository = (repository as any)
                 .repository;
-
             await openedRepository.exec([
                 'stash',
                 'save',
@@ -341,18 +322,12 @@ export function fossil_stash_suite(sandbox: sinon.SinonSandbox): void {
                 'in test',
                 'stash.txt',
             ]);
-            const execStub = sandbox.stub(openedRepository, 'exec');
-            const stashApply = execStub.withArgs(['stash', 'pop']);
-            execStub.callThrough();
+            const stashPop = execStub.withArgs(['stash', 'pop']);
             await commands.executeCommand('fossil.stashPop');
-            assert.ok(stashApply.calledOnce);
+            sinon.assert.calledOnce(stashPop);
         });
         test('Snapshot', async () => {
-            const repository = getRepository();
-            const openedRepository: OpenedRepository = (repository as any)
-                .repository;
-
-            const execStub = sandbox.stub(openedRepository, 'exec');
+            const execStub = getExecStub(this.ctx.sandbox);
             const stashSnapshot = execStub.withArgs([
                 'stash',
                 'snapshot',
@@ -360,18 +335,17 @@ export function fossil_stash_suite(sandbox: sinon.SinonSandbox): void {
                 'stashSnapshot commit message',
                 'stash.txt',
             ]);
-            execStub.callThrough();
-            const showInputBox = sandbox.stub(window, 'showInputBox');
-            showInputBox.resolves('stashSnapshot commit message');
+            const sib = this.ctx.sandbox.stub(window, 'showInputBox');
+            sib.resolves('stashSnapshot commit message');
 
-            const showWarningMessage: sinon.SinonStub = sandbox.stub(
+            const swm: sinon.SinonStub = this.ctx.sandbox.stub(
                 window,
                 'showWarningMessage'
             );
-            showWarningMessage.onFirstCall().resolves('C&&onfirm');
+            swm.onFirstCall().resolves('C&&onfirm');
 
             await commands.executeCommand('fossil.stashSnapshot');
-            assert.ok(stashSnapshot.calledOnce);
+            sinon.assert.calledOnce(stashSnapshot);
         });
     });
 }
