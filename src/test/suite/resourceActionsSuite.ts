@@ -234,7 +234,7 @@ export function resourceActionsSuite(this: Suite): void {
 
         await vscode.commands.executeCommand('fossil.openResource', resource);
 
-        assert.ok(diffCall.calledOnce);
+        sinon.assert.calledOnce(diffCall);
 
         await vscode.commands.executeCommand('fossil.openResource');
     }).timeout(12000);
