@@ -45,7 +45,7 @@ function undoSuite(this: Suite) {
             'fossil.deleteFiles',
             repository.untrackedGroup
         );
-        assert.ok(showWarningMessage.calledOnce);
+        sinon.assert.calledOnce(showWarningMessage);
         assert.ok(!fs.existsSync(undoTxtPath));
 
         const showInformationMessage: sinon.SinonStub = this.ctx.sandbox.stub(

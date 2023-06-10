@@ -95,7 +95,7 @@ export async function fossil_pull_with_autoUpdate_off(
     const updateCall = execStub.withArgs(['pull']);
     updateCall.resolves(undefined); // stub as 'undefined' as we can't do pull
     await commands.executeCommand('fossil.pull');
-    assert.ok(updateCall.calledOnce);
+    sinon.assert.calledOnce(updateCall);
 }
 
 export function fossil_revert_suite(sandbox: sinon.SinonSandbox): void {
@@ -127,22 +127,19 @@ export function fossil_revert_suite(sandbox: sinon.SinonSandbox): void {
             const repository = getRepository();
             const rootUri = workspace.workspaceFolders![0].uri;
             const fake_status = [];
-            const openedRepository: OpenedRepository = (repository as any)
-                .repository;
-            const execStub = sandbox.stub(openedRepository, 'exec');
+            const execStub = getExecStub(this.ctx.sandbox);
             const fileUris: Uri[] = [];
             for (const filename of 'abcdefghijklmn') {
                 const fileUri = Uri.joinPath(rootUri, 'added', filename);
                 fake_status.push(`EDITED     added/${filename}`);
                 fileUris.push(fileUri);
             }
-            execStub.callThrough();
             const statusCall = fakeFossilStatus(
                 execStub,
                 fake_status.join('\n')
             );
             await repository.updateModelState();
-            assert.ok(statusCall.calledOnce);
+            sinon.assert.calledOnce(statusCall);
             const resources = fileUris.map(uri => {
                 const resource = repository.workingGroup.getResource(uri);
                 assert.ok(resource);
@@ -176,11 +173,7 @@ export function fossil_revert_suite(sandbox: sinon.SinonSandbox): void {
             showWarningMessage.onFirstCall().resolves('&&Discard Changes');
 
             const repository = getRepository();
-            const openedRepository: OpenedRepository = (repository as any)
-                .repository;
-            const execStub = sandbox
-                .stub(openedRepository, 'exec')
-                .callThrough();
+            const execStub = getExecStub(this.ctx.sandbox);
             const statusStub = fakeFossilStatus(
                 execStub,
                 'EDITED a.txt\nEDITED b.txt'
@@ -209,12 +202,8 @@ export function fossil_revert_suite(sandbox: sinon.SinonSandbox): void {
 export async function fossil_change_branch_to_trunk(
     sandbox: sinon.SinonSandbox
 ): Promise<void> {
-    const repository = getRepository();
-    const openedRepository: OpenedRepository = (repository as any).repository;
-    const execStub = sandbox.stub(openedRepository, 'exec');
-    const updateCall = execStub.withArgs(['update', 'trunk']);
-    updateCall.resolves(undefined);
-    execStub.callThrough();
+    const execStub = getExecStub(sandbox);
+    const updateCall = execStub.withArgs(['update', 'trunk']).resolves();
 
     const showQuickPick = sandbox.stub(window, 'showQuickPick');
     showQuickPick.onFirstCall().callsFake(items => {
@@ -225,7 +214,7 @@ export async function fossil_change_branch_to_trunk(
 
     await commands.executeCommand('fossil.branchChange');
 
-    assert.ok(updateCall.calledOnce);
+    sinon.assert.calledOnce(updateCall);
 }
 
 export async function fossil_change_branch_to_hash(
@@ -233,11 +222,8 @@ export async function fossil_change_branch_to_hash(
 ): Promise<void> {
     const repository = getRepository();
     await cleanupFossil(repository);
-    const openedRepository: OpenedRepository = (repository as any).repository;
-    const execStub = sandbox.stub(openedRepository, 'exec');
-    const updateCall = execStub.withArgs(['update', '1234567890']);
-    updateCall.resolves(undefined);
-    execStub.callThrough();
+    const execStub = getExecStub(sandbox);
+    const updateCall = execStub.withArgs(['update', '1234567890']).resolves();
 
     const showQuickPick = sandbox.stub(window, 'showQuickPick');
     showQuickPick.onFirstCall().callsFake(items => {
@@ -249,8 +235,8 @@ export async function fossil_change_branch_to_hash(
     showInputBox.onFirstCall().resolves('1234567890');
     await commands.executeCommand('fossil.branchChange');
 
-    assert.ok(showInputBox.calledOnce);
-    assert.ok(updateCall.calledOnce);
+    sinon.assert.calledOnce(showInputBox);
+    sinon.assert.calledOnce(updateCall);
 }
 
 export function fossil_stash_suite(): void {
@@ -374,17 +360,11 @@ export function fossil_branch_suite(sandbox: sinon.SinonSandbox): void {
                 return stub;
             });
 
-            const repository = getRepository();
-            const openedRepository: OpenedRepository = (repository as any)
-                .repository;
-
-            const execStub = sandbox.stub(openedRepository, 'exec');
-            execStub.callThrough();
-            const creation = execStub
+            const creation = getExecStub(this.ctx.sandbox)
                 .withArgs(['branch', 'new', 'hello branch', 'current'])
                 .resolves();
             await commands.executeCommand('fossil.branch');
-            assert.ok(creation.calledOnce);
+            sinon.assert.calledOnce(creation);
         });
         test('Create private branch', async () => {
             const createInputBox = sandbox.stub(window, 'createInputBox');
@@ -403,12 +383,7 @@ export function fossil_branch_suite(sandbox: sinon.SinonSandbox): void {
                 return stub;
             });
 
-            const repository = getRepository();
-            const openedRepository: OpenedRepository = (repository as any)
-                .repository;
-
-            const execStub = sandbox.stub(openedRepository, 'exec');
-            execStub.callThrough();
+            const execStub = getExecStub(this.ctx.sandbox);
             const creation = execStub
                 .withArgs([
                     'branch',
@@ -419,7 +394,7 @@ export function fossil_branch_suite(sandbox: sinon.SinonSandbox): void {
                 ])
                 .resolves();
             await commands.executeCommand('fossil.branch');
-            assert.ok(creation.calledOnce);
+            sinon.assert.calledOnce(creation);
         });
         test('Create branch with color', async () => {
             const createInputBox = sandbox.stub(window, 'createInputBox');
@@ -439,13 +414,7 @@ export function fossil_branch_suite(sandbox: sinon.SinonSandbox): void {
                 });
                 return stub;
             });
-
-            const repository = getRepository();
-            const openedRepository: OpenedRepository = (repository as any)
-                .repository;
-
-            const execStub = sandbox.stub(openedRepository, 'exec');
-            execStub.callThrough();
+            const execStub = getExecStub(this.ctx.sandbox);
             const creation = execStub
                 .withArgs([
                     'branch',
@@ -457,7 +426,7 @@ export function fossil_branch_suite(sandbox: sinon.SinonSandbox): void {
                 ])
                 .resolves();
             await commands.executeCommand('fossil.branch');
-            assert.ok(creation.calledOnce);
+            sinon.assert.calledOnce(creation);
         });
     });
 }
@@ -510,20 +479,16 @@ export function fossil_merge_suite(sandbox: sinon.SinonSandbox): void {
             showInputBoxstub.resolves('test merge message');
 
             await commands.executeCommand('fossil.merge');
-            assert.ok(showQuickPickstub.calledOnce);
-            assert.ok(showInputBoxstub.calledOnce);
+            sinon.assert.calledOnce(showQuickPickstub);
+            sinon.assert.calledOnce(showInputBoxstub);
 
             await repository.updateModelState();
             assertGroups(repository, new Map(), new Map());
         });
         test('Integrate', async () => {
             const repository = getRepository();
-            const openedRepository: OpenedRepository = (repository as any)
-                .repository;
             await cleanupFossil(repository);
-            const execStub = sandbox
-                .stub(openedRepository, 'exec')
-                .callThrough();
+            const execStub = getExecStub(this.ctx.sandbox);
             execStub.withArgs(['branch', 'ls', '-t']).resolves({
                 fossilPath: '',
                 exitCode: 0,
@@ -548,14 +513,8 @@ export function fossil_merge_suite(sandbox: sinon.SinonSandbox): void {
             sinon.assert.calledOnce(mergeStub);
         });
         test('Cherrypick', async () => {
-            const repository = getRepository();
-            const openedRepository: OpenedRepository = (repository as any)
-                .repository;
-            const execStub = sandbox
-                .stub(openedRepository, 'exec')
-                .callThrough();
             let hash = '';
-            const mergeCallStub = execStub
+            const mergeCallStub = getExecStub(sandbox)
                 .withArgs(sinon.match.array.startsWith(['merge']))
                 .resolves();
 
@@ -588,20 +547,15 @@ export function fossil_patch_suite(sandbox: sinon.SinonSandbox): void {
                 .stub(window, 'showSaveDialog')
                 .resolves(patchPath);
 
-            const repository = getRepository();
-            const openedRepository: OpenedRepository = (repository as any)
-                .repository;
-            const execStub = sandbox.stub(openedRepository, 'exec');
-            const patchStub = execStub
+            const patchStub = getExecStub(this.ctx.sandbox)
                 .withArgs(['patch', 'create', patchPath.fsPath])
-                .resolves(undefined);
-            execStub.callThrough();
+                .resolves();
             await commands.executeCommand('fossil.patchCreate');
             sinon.assert.calledOnceWithMatch(showSaveDialogstub, {
                 saveLabel: 'Create',
                 title: 'Create binary patch',
             });
-            assert.ok(patchStub.calledOnce);
+            sinon.assert.calledOnce(patchStub);
         });
         test('Apply', async () => {
             const patchPath = Uri.file('patch.patch');
@@ -609,20 +563,15 @@ export function fossil_patch_suite(sandbox: sinon.SinonSandbox): void {
                 .stub(window, 'showOpenDialog')
                 .resolves([patchPath]);
 
-            const repository = getRepository();
-            const openedRepository: OpenedRepository = (repository as any)
-                .repository;
-            const execStub = sandbox.stub(openedRepository, 'exec');
-            const patchStub = execStub
+            const patchStub = getExecStub(this.ctx.sandbox)
                 .withArgs(['patch', 'apply', patchPath.fsPath])
-                .resolves(undefined);
-            execStub.callThrough();
+                .resolves();
             await commands.executeCommand('fossil.patchApply');
             sinon.assert.calledOnceWithMatch(showOpenDialogstub, {
                 openLabel: 'Apply',
                 title: 'Apply binary patch',
             });
-            assert.ok(patchStub.calledOnce);
+            sinon.assert.calledOnce(patchStub);
         });
     });
 }
@@ -872,13 +821,7 @@ export function fossil_tag_suite(sandbox: sinon.SinonSandbox): void {
                 assert.equal(items[0].label, '$(git-branch) trunk');
                 return Promise.resolve(items[0]);
             });
-
-            const repository = getRepository();
-            const openedRepository: OpenedRepository = (repository as any)
-                .repository;
-            const execStub = sandbox
-                .stub(openedRepository, 'exec')
-                .callThrough();
+            const execStub = getExecStub(sandbox);
             const tagCallStub = execStub.withArgs(
                 sinon.match.array.startsWith(['tag'])
             );
@@ -898,13 +841,7 @@ export function fossil_tag_suite(sandbox: sinon.SinonSandbox): void {
                 assert.equal(items[0].label, '$(git-branch) trunk');
                 return Promise.resolve(items[0]);
             });
-
-            const repository = getRepository();
-            const openedRepository: OpenedRepository = (repository as any)
-                .repository;
-            const execStub = sandbox
-                .stub(openedRepository, 'exec')
-                .callThrough();
+            const execStub = getExecStub(sandbox);
             const tagCallStub = execStub.withArgs(
                 sinon.match.array.startsWith(['tag'])
             );
