@@ -337,7 +337,9 @@ export class FossilPreview implements IDisposable {
                 return;
             })();
         } else {
-            this.dirname = '.' as FossilCWD;
+            // untitled schema - try our best
+            const cwd = workspace.workspaceFolders?.[0].uri.fsPath ?? '.';
+            this.dirname = cwd as FossilCWD;
             this.renderer = 'markdown';
         }
         this.uri = uri;
