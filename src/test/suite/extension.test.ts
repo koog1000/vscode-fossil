@@ -22,6 +22,7 @@ import { utilitiesSuite } from './utilitiesSuite';
 import { resourceActionsSuite } from './resourceActionsSuite';
 import { timelineSuite } from './timelineSuite';
 import { CommitSuite } from './commitSuite';
+import { QualityOfLifeSuite as QualityOfLifeSuite } from './qualityOfLifeSuite';
 
 suite('Fossil.OpenedRepo', function (this: Suite) {
     const sandbox = sinon.createSandbox();
@@ -63,6 +64,7 @@ suite('Fossil.OpenedRepo', function (this: Suite) {
     fossil_stage_suite(sandbox);
     fossil_rename_suite(sandbox);
     fossil_clean_suite(sandbox);
+    suite('Quality of Life', QualityOfLifeSuite);
 
     afterEach(() => {
         sandbox.restore();
