@@ -790,7 +790,7 @@ export class Repository implements IDisposable, InteractionAPI {
         );
     }
 
-    @throttle
+    // @throttle
     async update(checkin: FossilCheckin): Promise<void> {
         await this.runWithProgress(Operation.Update, () =>
             this.repository.update(checkin)

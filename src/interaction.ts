@@ -827,7 +827,7 @@ export async function presentLogSourcesMenu(
     }
 }
 
-export async function presentLogMenu(
+async function presentLogMenu(
     source: CommitSources,
     logOptions: LogEntryOptions,
     commands: InteractionAPI,
@@ -948,7 +948,7 @@ export async function pickStashItem(
 /**
  * use selected commit in 'fossil.log' command
  */
-export async function presentCommitDetails(
+async function presentCommitDetails(
     details: CommitDetails,
     back: RunnableQuickPickItem,
     commands: InteractionAPI
