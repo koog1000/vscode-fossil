@@ -116,7 +116,7 @@ export async function selectNewFossilPath(
     if (uri) {
         lastUsedNewFossilPath = uri;
     }
-    return uri?.fsPath as FossilPath;
+    return uri?.fsPath as FossilPath | undefined;
 }
 
 /**
@@ -143,7 +143,7 @@ export async function selectExistingFossilPath(): Promise<
     return undefined;
 }
 
-export function statusCloning(clonePromise: Promise<any>): Disposable {
+export function statusCloning(clonePromise: Promise<FossilRoot>): Disposable {
     return window.setStatusBarMessage(
         localize('cloning', 'Cloning fossil repository...'),
         clonePromise
@@ -325,8 +325,8 @@ export async function confirmOpenNotEmpty(
 }
 
 export async function confirmRename(
-    oldPath: string,
-    newPath: string
+    oldPath: RelativePath,
+    newPath: RelativePath
 ): Promise<boolean> {
     const question = localize(
         'rename {0} to {1}',
@@ -461,14 +461,14 @@ export async function inputWikiComment(
     }
 }
 
-export async function inputPatchCreate(): Promise<string | undefined> {
+export async function inputPatchCreate(): Promise<UserPath | undefined> {
     const defaultPatchFile = suggestPath('patch', '.fossilpatch');
     const uri = await window.showSaveDialog({
         defaultUri: defaultPatchFile,
         saveLabel: localize('Create', 'Create'),
         title: localize('new binary path', 'Create binary patch'),
     });
-    return uri?.fsPath;
+    return uri?.fsPath as UserPath | undefined;
 }
 
 export async function inputPatchApply(this: void): Promise<string | undefined> {
