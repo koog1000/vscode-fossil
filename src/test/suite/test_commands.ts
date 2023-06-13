@@ -78,8 +78,10 @@ export async function fossil_pull_with_autoUpdate_on(
     sandbox: sinon.SinonSandbox
 ): Promise<void> {
     const execStub = getExecStub(sandbox);
-    const updateCall = execStub.withArgs(['update']);
+    const sem = sandbox.stub(window, 'showErrorMessage').resolves();
+    const updateCall = execStub.withArgs(['update']).resolves();
     await commands.executeCommand('fossil.pull');
+    sinon.assert.notCalled(sem);
     sinon.assert.calledOnce(updateCall);
 }
 
@@ -90,12 +92,14 @@ export async function fossil_pull_with_autoUpdate_off(
         'fossil',
         workspace.workspaceFolders![0].uri
     );
+    const sem = sandbox.stub(window, 'showErrorMessage').resolves();
     await fossilConfig.update('autoUpdate', false);
     const execStub = getExecStub(sandbox);
-    const updateCall = execStub.withArgs(['pull']);
-    updateCall.resolves(undefined); // stub as 'undefined' as we can't do pull
+    const pullCall = execStub.withArgs(['pull']).resolves();
     await commands.executeCommand('fossil.pull');
-    sinon.assert.calledOnce(updateCall);
+    sinon.assert.notCalled(sem);
+    sinon.assert.calledOnce(pullCall);
+    await fossilConfig.update('autoUpdate', true);
 }
 
 export function fossil_revert_suite(sandbox: sinon.SinonSandbox): void {
