@@ -27,7 +27,7 @@ export type FossilPath = Distinct<string, 'path to .fossil'>;
 /** local repository root */
 export type FossilRoot = Distinct<string, 'local repository root'>;
 export type RelativePath = Distinct<string, 'path relative to `FossilRoot`'>;
-/** path that came from  `window.showOpenDialog` */
+/** path that came from  `showOpenDialog` or `showSaveDialog`*/
 export type UserPath = Distinct<string, 'user path'>;
 /** path from `SourceControlResourceState.resourceUri.fsPath` */
 export type ResourcePath = Distinct<string, 'resourceUri.fsPath'>;
