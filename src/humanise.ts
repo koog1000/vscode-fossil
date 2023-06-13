@@ -22,9 +22,9 @@ class TimeSpan {
     public get totalDays(): number {
         return this.seconds / 86400;
     }
-    public get totalWeeks(): number {
-        return this.seconds / 604800;
-    }
+    // public get totalWeeks(): number {
+    //     return this.seconds / 604800;
+    // }
 }
 
 const BULLET = '\u2022';
