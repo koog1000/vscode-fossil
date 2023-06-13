@@ -9,7 +9,8 @@ import {
 } from '../../fossilExecutable';
 import * as assert from 'assert/strict';
 import { getExecutable } from './common';
-import { afterEach } from 'mocha';
+import { after, afterEach, before } from 'mocha';
+import { ageFromNow } from '../../humanise';
 
 suite('Infrastructure', () => {
     const sandbox = sinon.createSandbox();
@@ -62,5 +63,58 @@ suite('Infrastructure', () => {
             '  "fossilPath": "/bin/fossil"\n' +
             '}';
         assert.equal(TestError.toString(), referenceString);
+    });
+
+    suite('ageFromNow', function () {
+        const N = 1686899727000; // 2023-06-16T07:15:27.000Z friday
+        const minutes = (n: number) => new Date(N + n * 60000);
+        const days = (n: number) => minutes(n * 24 * 60);
+        let fakeTimers: sinon.SinonFakeTimers;
+
+        before(() => {
+            fakeTimers = sinon.useFakeTimers(N);
+        });
+        after(() => {
+            fakeTimers.restore();
+        });
+        test('Now', () => {
+            assert.equal(ageFromNow(new Date()), 'now');
+        });
+        test('Now + 1 day', () => {
+            assert.equal(ageFromNow(days(10)), 'now');
+        });
+        test('Now - 12 seconds', () => {
+            assert.equal(ageFromNow(minutes(-0.2)), 'a few moments ago');
+        });
+        test('Now - 30 seconds', () => {
+            assert.equal(ageFromNow(minutes(-0.5)), '30 seconds ago');
+        });
+        test('Now - 1 minute', () => {
+            assert.equal(ageFromNow(minutes(-1)), '1 minute ago');
+        });
+        test('Now - 10 minute', () => {
+            assert.equal(ageFromNow(minutes(-10)), '10 minutes ago');
+        });
+        test('Now - 1 hour', () => {
+            assert.equal(ageFromNow(minutes(-60)), '1 hour ago');
+        });
+        test('Now - 23.5 hour', () => {
+            assert.equal(ageFromNow(minutes(-23.5 * 60)), 'yesterday');
+        });
+        test('Now - 1 day', () => {
+            assert.equal(ageFromNow(days(-1)), 'yesterday');
+        });
+        test('Now - 2 days', () => {
+            assert.equal(ageFromNow(days(-2)), '2 days ago');
+        });
+        test('Now - 3 days', () => {
+            assert.equal(ageFromNow(days(-3)), '3 days ago');
+        });
+        test('Now - 6 days', () => {
+            assert.equal(ageFromNow(days(-6)), 'last week');
+        });
+        test('Now - 7 day', () => {
+            assert.equal(ageFromNow(days(-7)), '6/9/2023');
+        });
     });
 });
