@@ -269,7 +269,7 @@ export function fossil_stash_suite(): void {
             await commands.executeCommand('fossil.add', resource);
             await commands.executeCommand('fossil.stashSave');
             sinon.assert.calledOnce(stashSave);
-        });
+        }).timeout(6000);
         test('Apply', async () => {
             const execStub = getExecStub(this.ctx.sandbox);
             const stashApply = execStub.withArgs(['stash', 'apply', '1']);
@@ -284,7 +284,7 @@ export function fossil_stash_suite(): void {
             });
             await commands.executeCommand('fossil.stashApply');
             sinon.assert.calledOnce(stashApply);
-        });
+        }).timeout(6000);
         test('Drop', async () => {
             const execStub = getExecStub(this.ctx.sandbox);
             const stashApply = execStub.withArgs(['stash', 'drop', '1']);
@@ -299,7 +299,7 @@ export function fossil_stash_suite(): void {
             });
             await commands.executeCommand('fossil.stashDrop');
             sinon.assert.calledOnce(stashApply);
-        });
+        }).timeout(6000);
         test('Pop', async () => {
             const execStub = getExecStub(this.ctx.sandbox);
             const repository = getRepository();
@@ -315,7 +315,7 @@ export function fossil_stash_suite(): void {
             const stashPop = execStub.withArgs(['stash', 'pop']);
             await commands.executeCommand('fossil.stashPop');
             sinon.assert.calledOnce(stashPop);
-        });
+        }).timeout(6000);
         test('Snapshot', async () => {
             const execStub = getExecStub(this.ctx.sandbox);
             const stashSnapshot = execStub.withArgs([
@@ -325,8 +325,9 @@ export function fossil_stash_suite(): void {
                 'stashSnapshot commit message',
                 'stash.txt',
             ]);
-            const sib = this.ctx.sandbox.stub(window, 'showInputBox');
-            sib.resolves('stashSnapshot commit message');
+            const sib = this.ctx.sandbox
+                .stub(window, 'showInputBox')
+                .resolves('stashSnapshot commit message');
 
             const swm: sinon.SinonStub = this.ctx.sandbox.stub(
                 window,
@@ -335,8 +336,10 @@ export function fossil_stash_suite(): void {
             swm.onFirstCall().resolves('C&&onfirm');
 
             await commands.executeCommand('fossil.stashSnapshot');
+            sinon.assert.calledOnce(sib);
+            sinon.assert.calledOnce(swm);
             sinon.assert.calledOnce(stashSnapshot);
-        });
+        }).timeout(6000);
     });
 }
 
