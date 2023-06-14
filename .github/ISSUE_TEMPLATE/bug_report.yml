@@ -1,0 +1,58 @@
+name: 🕷️ Bug report
+description: Report errors or unexpected behavior.
+labels: [bug]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for reporting issues of fossil-scm vscode extension!
+
+        To make it easier for us to help you please enter detailed information below.
+  - type: dropdown
+    id: desire
+    attributes:
+      label: Desire
+      description: How much do you want this to be fixed?
+      options:
+        - 1
+        - 2
+        - 3
+        - 4
+        - 5
+        - 6
+        - 7
+        - 8
+        - 9
+        - 10
+    validations:
+      required: true
+  - type: checkboxes
+    id: help
+    attributes:
+      label: Help
+      description: How much are you willing to help?. Its okay if you choose none.
+      options:
+        - label: Discuss
+        - label: Test
+        - label: Code
+  - type: textarea
+    attributes:
+      label: Steps to reproduce
+      placeholder: |
+        1.
+        2.
+        3.
+  - type: textarea
+    attributes:
+      label: Description
+    validations:
+      required: true
+  - type: input
+    attributes:
+      label: OS
+  - type: input
+    attributes:
+      label: Fossil version
+  - type: input
+    attributes:
+      label: Vscode/Vscodium version
