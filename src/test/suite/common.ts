@@ -159,6 +159,7 @@ export async function fossilOpen(sandbox: sinon.SinonSandbox): Promise<void> {
     showInformationMessage.onSecondCall().resolves([rootPath]);
 
     await vscode.commands.executeCommand('fossil.open');
+    sinon.assert.calledTwice(showInformationMessage);
     const executable = getExecutable();
     const res = await executable.exec(rootPath.fsPath as FossilCWD, ['info']);
     assert.match(res.stdout, /check-ins:\s+1\s*$/);

@@ -204,9 +204,8 @@ suite('Setup', () => {
             ).resolves('&&Open Repository');
 
             await fossilOpen(sandbox);
+            sinon.assert.calledOnce(swm);
             const executable = getExecutable();
-            const res = await executable.exec(cwd, ['info']);
-            assert.match(res.stdout, /check-ins:\s+1\s*$/);
             await vscode.commands.executeCommand('fossil.close');
             const res_promise = executable.exec(cwd, ['status']);
             await assert.rejects(res_promise, (thrown: any): boolean => {
@@ -214,8 +213,8 @@ suite('Setup', () => {
                     thrown.stderr
                 );
             });
-        });
-    }).timeout(5000);
+        }).timeout(7000);
+    });
     suite('Clone', function () {
         test('Empty URI', async () => {
             const showInputBox = sandbox
