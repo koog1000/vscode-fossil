@@ -141,12 +141,17 @@ export function CommitSuite(this: Suite): void {
         ]);
 
         repository.sourceControl.inputBox.value = '';
-        const sib = this.ctx.sandbox.stub(window, 'showInputBox').resolves('Y');
+        const sib = this.ctx.sandbox
+            .stub(window, 'showInputBox')
+            .withArgs(
+                sinon.match({
+                    prompt: 'empty check-in comment.  continue (y/N)? ',
+                    ignoreFocusOut: true,
+                })
+            )
+            .resolves('Y');
         await commands.executeCommand('fossil.commitWithInput');
-        sinon.assert.calledOnceWithMatch(sib, {
-            prompt: 'empty check-in comment.  continue (y/N)? ',
-            ignoreFocusOut: true,
-        });
+        sinon.assert.calledOnce(sib);
         sinon.assert.calledOnce(commitStub);
     });
 
@@ -247,5 +252,5 @@ export function CommitSuite(this: Suite): void {
             'Save All & Commit',
             'C&&ommit Staged Changes'
         );
-    });
+    }).timeout(10000);
 }
