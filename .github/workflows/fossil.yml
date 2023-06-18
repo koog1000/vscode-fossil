@@ -33,6 +33,8 @@ jobs:
           wait-for-processing: true
 
       - name: Install fossil
+        # we need 'xvfb libnss3-dev libgtk-3-dev libasound2'
+        # when running locally using `gh act` command
         run: sudo apt-get install -y fossil
 
       - name: Run tests and coverage
