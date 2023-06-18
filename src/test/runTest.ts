@@ -23,6 +23,9 @@ async function main() {
             extensionDevelopmentPath,
             extensionTestsPath,
             launchArgs: [testWorkspace, '--disable-extensions'],
+            // Fix version to stop tests failing as time goes by. See:
+            // https://github.com/microsoft/vscode-test/issues/221
+            version: '1.79.2',
         });
         /* c8 ignore next 4 */
     } catch (err) {
