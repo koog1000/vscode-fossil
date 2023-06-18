@@ -826,15 +826,23 @@ export function fossil_stage_suite(sandbox: sinon.SinonSandbox): void {
 
 export function fossil_tag_suite(sandbox: sinon.SinonSandbox): void {
     suite('Tag', function (this: Suite) {
+        function selectTrunk(
+            items:
+                | readonly vscode.QuickPickItem[]
+                | Thenable<readonly vscode.QuickPickItem[]>
+        ) {
+            assert.ok(items instanceof Array);
+            const trunk = items.find(
+                item => item.label === '$(git-branch) trunk'
+            );
+            assert.ok(trunk);
+            return Promise.resolve(trunk);
+        }
+
         test('Close branch', async () => {
             const showQuickPick = sandbox.stub(window, 'showQuickPick');
-            showQuickPick.onFirstCall().callsFake(items => {
-                assert.ok(items instanceof Array);
-                assert.equal(items[0].label, '$(git-branch) trunk');
-                return Promise.resolve(items[0]);
-            });
-            const execStub = getExecStub(sandbox);
-            const tagCallStub = execStub.withArgs(
+            showQuickPick.onFirstCall().callsFake(selectTrunk);
+            const tagCallStub = getExecStub(sandbox).withArgs(
                 sinon.match.array.startsWith(['tag'])
             );
             await commands.executeCommand('fossil.closeBranch');
@@ -848,13 +856,8 @@ export function fossil_tag_suite(sandbox: sinon.SinonSandbox): void {
         });
         test('Reopen branch', async () => {
             const showQuickPick = sandbox.stub(window, 'showQuickPick');
-            showQuickPick.onFirstCall().callsFake(items => {
-                assert.ok(items instanceof Array);
-                assert.equal(items[0].label, '$(git-branch) trunk');
-                return Promise.resolve(items[0]);
-            });
-            const execStub = getExecStub(sandbox);
-            const tagCallStub = execStub.withArgs(
+            showQuickPick.onFirstCall().callsFake(selectTrunk);
+            const tagCallStub = getExecStub(sandbox).withArgs(
                 sinon.match.array.startsWith(['tag'])
             );
             await commands.executeCommand('fossil.reopenBranch');
