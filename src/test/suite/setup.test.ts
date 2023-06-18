@@ -4,7 +4,7 @@ import {
     cleanRoot,
     fakeExecutionResult,
     fossilInit,
-    fossilOpen,
+    fossilOpenForce,
     getExecutable,
 } from './common';
 import * as sinon from 'sinon';
@@ -190,23 +190,12 @@ suite('Setup', () => {
             sinon.assert.calledTwice(sod);
         });
         test('Open and close', async () => {
+            await fossilOpenForce(sandbox);
+            await vscode.commands.executeCommand('fossil.close');
+
             const cwd = vscode.workspace.workspaceFolders![0].uri
                 .fsPath as FossilCWD;
-            const swm: sinon.SinonStub = sandbox.stub(
-                window,
-                'showWarningMessage'
-            );
-            swm.withArgs(
-                `The directory ${cwd} is not empty.\n` +
-                    'Open repository here anyway?',
-                { modal: true },
-                '&&Open Repository'
-            ).resolves('&&Open Repository');
-
-            await fossilOpen(sandbox);
-            sinon.assert.calledOnce(swm);
             const executable = getExecutable();
-            await vscode.commands.executeCommand('fossil.close');
             const res_promise = executable.exec(cwd, ['status']);
             await assert.rejects(res_promise, (thrown: any): boolean => {
                 return /^current directory is not within an open check-?out\s*$/.test(

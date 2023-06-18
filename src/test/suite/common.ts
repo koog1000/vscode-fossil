@@ -145,7 +145,7 @@ export function fakeFossilStatus(execStub: ExecStub, status: string): ExecStub {
         .resolves(fakeExecutionResult({ stdout: header + status, args }));
 }
 
-export async function fossilOpen(sandbox: sinon.SinonSandbox): Promise<void> {
+async function setupFossilOpen(sandbox: sinon.SinonSandbox) {
     assert.ok(vscode.workspace.workspaceFolders);
     const rootPath = vscode.workspace.workspaceFolders[0].uri;
     const fossilPath = Uri.joinPath(rootPath, '/test.fossil');
@@ -154,15 +154,73 @@ export async function fossilOpen(sandbox: sinon.SinonSandbox): Promise<void> {
         `repo '${fossilPath.fsPath}' must exist`
     );
 
-    const showInformationMessage = sandbox.stub(window, 'showOpenDialog');
-    showInformationMessage.onFirstCall().resolves([fossilPath]);
-    showInformationMessage.onSecondCall().resolves([rootPath]);
+    const executable = getExecutable();
+    const execStub = sandbox.stub(executable, 'exec').callThrough();
+    const openStub = execStub.withArgs(
+        rootPath.fsPath as FossilCWD,
+        sinon.match.array.startsWith(['open'])
+    );
+    const sod = sandbox.stub(window, 'showOpenDialog');
+    sod.onFirstCall().resolves([fossilPath]);
+    sod.onSecondCall().resolves([rootPath]);
+    return {
+        rootPath,
+        fossilPath,
+        executable,
+        execStub,
+        openStub,
+        sod,
+    };
+}
+
+export async function fossilOpen(sandbox: sinon.SinonSandbox): Promise<void> {
+    const { rootPath, fossilPath, executable, execStub, openStub, sod } =
+        await setupFossilOpen(sandbox);
 
     await vscode.commands.executeCommand('fossil.open');
-    sinon.assert.calledTwice(showInformationMessage);
-    const executable = getExecutable();
+    sinon.assert.calledTwice(sod);
+    sinon.assert.calledOnceWithExactly(openStub, rootPath.fsPath as FossilCWD, [
+        'open',
+        fossilPath.fsPath,
+    ]);
     const res = await executable.exec(rootPath.fsPath as FossilCWD, ['info']);
     assert.match(res.stdout, /check-ins:\s+1\s*$/);
+    execStub.restore();
+}
+
+export async function fossilOpenForce(
+    sandbox: sinon.SinonSandbox
+): Promise<void> {
+    const { rootPath, fossilPath, executable, execStub, openStub, sod } =
+        await setupFossilOpen(sandbox);
+
+    const swm = (
+        sandbox.stub(window, 'showWarningMessage') as sinon.SinonStub
+    ).resolves('&&Open Repository');
+
+    await vscode.commands.executeCommand('fossil.open');
+    sinon.assert.calledTwice(sod);
+    sinon.assert.calledOnceWithExactly(
+        swm,
+        `The directory ${rootPath.fsPath} is not empty.\n` +
+            'Open repository here anyway?',
+        { modal: true },
+        '&&Open Repository'
+    );
+    sinon.assert.calledTwice(openStub);
+    sinon.assert.calledWithExactly(
+        openStub.firstCall,
+        rootPath.fsPath as FossilCWD,
+        ['open', fossilPath.fsPath]
+    );
+    sinon.assert.calledWithExactly(
+        openStub.secondCall,
+        rootPath.fsPath as FossilCWD,
+        ['open', fossilPath.fsPath, '--force']
+    );
+    const res = await executable.exec(rootPath.fsPath as FossilCWD, ['info']);
+    assert.match(res.stdout, /check-ins:\s+1\s*$/);
+    execStub.restore();
 }
 
 export async function add(
