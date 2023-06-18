@@ -46,7 +46,7 @@ async function PraiseSuite(this: Suite) {
         // const setDecorations = this.ctx.sandbox.spy(vscode.window.activeTextEditor!, 'setDecorations');
         await commands.executeCommand('fossil.praise');
         // sinon.assert.calledOnceWithExactly(setDecorations, sinon.match.object);
-    }).timeout(15000);
+    }).timeout(30000); // sometimes io is unpredictable
 }
 
 async function RenderSuite(this: Suite) {

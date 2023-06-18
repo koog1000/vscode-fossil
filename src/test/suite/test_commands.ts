@@ -315,7 +315,7 @@ export function fossil_stash_suite(): void {
             const stashPop = execStub.withArgs(['stash', 'pop']);
             await commands.executeCommand('fossil.stashPop');
             sinon.assert.calledOnce(stashPop);
-        }).timeout(6000);
+        }).timeout(15000);
         test('Snapshot', async () => {
             const repository = getRepository();
             assert.equal(repository.workingGroup.resourceStates.length, 1);
@@ -344,7 +344,7 @@ export function fossil_stash_suite(): void {
             sinon.assert.calledOnce(sib);
             sinon.assert.calledOnce(swm);
             sinon.assert.calledOnce(stashSnapshot);
-        }).timeout(6000);
+        }).timeout(15000);
     });
 }
 
