@@ -317,6 +317,9 @@ export function fossil_stash_suite(): void {
             sinon.assert.calledOnce(stashPop);
         }).timeout(6000);
         test('Snapshot', async () => {
+            const repository = getRepository();
+            assert.equal(repository.workingGroup.resourceStates.length, 1);
+            assert.equal(repository.stagingGroup.resourceStates.length, 0);
             const execStub = getExecStub(this.ctx.sandbox);
             const stashSnapshot = execStub.withArgs([
                 'stash',
@@ -333,7 +336,9 @@ export function fossil_stash_suite(): void {
                 window,
                 'showWarningMessage'
             );
-            swm.onFirstCall().resolves('C&&onfirm');
+            swm.withArgs(
+                'There are no staged changes, do you want to commit working changes?\n'
+            ).resolves('C&&onfirm');
 
             await commands.executeCommand('fossil.stashSnapshot');
             sinon.assert.calledOnce(sib);
