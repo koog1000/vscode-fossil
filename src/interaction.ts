@@ -966,9 +966,7 @@ async function presentCommitDetails(
         '$(edit) Edit commit message',
         '',
         '',
-        () => {
-            editCommitMessage(details, commands);
-        }
+        () => editCommitMessage(details, commands)
     );
 
     const items = [
@@ -987,7 +985,7 @@ async function presentCommitDetails(
     return choice;
 }
 
-export async function editCommitMessage(
+async function editCommitMessage(
     commitDetails: CommitDetails,
     interactionAPI: InteractionAPI
 ): Promise<void> {
@@ -1002,7 +1000,7 @@ export async function editCommitMessage(
         commitDetails.hash,
         newCommitMessage
     );
-    await window.showInformationMessage(
+    window.showInformationMessage(
         localize('updated message', 'Commit message was updated.')
     );
 }
