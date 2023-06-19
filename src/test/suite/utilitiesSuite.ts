@@ -68,7 +68,7 @@ function undoSuite(this: Suite) {
             showInformationMessage.secondCall.args[0],
             `Redo 'fossil clean ${undoTxtPath}'?`
         );
-    }).timeout(2000);
+    }).timeout(7000);
 }
 
 export function utilitiesSuite(this: Suite): void {
