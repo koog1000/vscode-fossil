@@ -910,10 +910,12 @@ export class CommandCenter {
         }
 
         if (
-            (numWorkingResources === 0 && numStagingResources === 0) || // no changes
-            (scope === CommitScope.STAGING_GROUP &&
-                numStagingResources === 0) || // no staged changes
-            (scope === CommitScope.WORKING_GROUP && numWorkingResources === 0) // no working directory changes
+            !repository.fossilStatus?.isMerge &&
+            ((numWorkingResources === 0 && numStagingResources === 0) || // no changes
+                (scope === CommitScope.STAGING_GROUP &&
+                    numStagingResources === 0) || // no staged changes
+                (scope === CommitScope.WORKING_GROUP &&
+                    numWorkingResources === 0)) // no working directory changes
         ) {
             interaction.informNoChangesToCommit();
             return;
