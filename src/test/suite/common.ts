@@ -16,6 +16,7 @@ import { Model } from '../../model';
 import { Repository } from '../../repository';
 import { OpenedRepository, ResourceStatus } from '../../openedRepository';
 import { FossilResourceGroup } from '../../resourceGroups';
+import { delay } from '../../util';
 
 export async function cleanRoot(): Promise<void> {
     /* c8 ignore next 5 */
@@ -218,8 +219,16 @@ export async function fossilOpenForce(
         rootPath.fsPath as FossilCWD,
         ['open', fossilPath.fsPath, '--force']
     );
-    const res = await executable.exec(rootPath.fsPath as FossilCWD, ['info']);
-    assert.match(res.stdout, /check-ins:\s+1\s*$/);
+    // on some systems 'info' is not available immediately
+    let res: IExecutionResult;
+    for (let i = 0; i < 10; ++i) {
+        res = await executable.exec(rootPath.fsPath as FossilCWD, ['info']);
+        if (/check-ins:\s+1\s*$/.test(res.stdout)) {
+            break;
+        }
+        await delay((i + 1) * 111);
+    }
+    assert.match(res!.stdout, /check-ins:\s+1\s*$/);
     execStub.restore();
 }
 

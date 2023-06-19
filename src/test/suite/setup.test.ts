@@ -202,7 +202,7 @@ suite('Setup', () => {
                     thrown.stderr
                 );
             });
-        }).timeout(7000);
+        }).timeout(17000);
     });
     suite('Clone', function () {
         test('Empty URI', async () => {

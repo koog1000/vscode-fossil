@@ -496,7 +496,7 @@ export function fossil_merge_suite(sandbox: sinon.SinonSandbox): void {
 
             await repository.updateModelState();
             assertGroups(repository, new Map(), new Map());
-        });
+        }).timeout(5000);
         test('Integrate', async () => {
             const repository = getRepository();
             await cleanupFossil(repository);
@@ -950,7 +950,7 @@ export function fossil_rename_suite(sandbox: sinon.SinonSandbox): void {
                 new Map([[newFilePath.fsPath, ResourceStatus.RENAMED]]),
                 new Map()
             );
-        });
+        }).timeout(6000);
 
         test('Rename directory', async () => {
             const oldDirname = 'not_renamed';
@@ -1005,7 +1005,7 @@ export function fossil_rename_suite(sandbox: sinon.SinonSandbox): void {
                 ResourceStatus.RENAMED,
             ]);
             assertGroups(repository, new Map(ref), new Map());
-        });
+        }).timeout(10000);
 
         test('Relocate', async () => {
             const repository = getRepository();

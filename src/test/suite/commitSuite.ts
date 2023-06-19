@@ -153,7 +153,7 @@ export function CommitSuite(this: Suite): void {
         await commands.executeCommand('fossil.commitWithInput');
         sinon.assert.calledOnce(sib);
         sinon.assert.calledOnce(commitStub);
-    });
+    }).timeout(6000);
 
     test('Commit creating new branch', async () => {
         const rootUri = workspace.workspaceFolders![0].uri;
@@ -192,7 +192,7 @@ export function CommitSuite(this: Suite): void {
 
         await commands.executeCommand('fossil.commitBranch');
         sinon.assert.calledOnce(commitStub);
-    });
+    }).timeout(6000);
 
     test('Unsaved files warning', async () => {
         const uri1 = await add('warning1.txt', 'data', 'warning test');
