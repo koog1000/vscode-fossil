@@ -1,9 +1,11 @@
 import * as vscode from 'vscode';
+import { window, Uri } from 'vscode';
 import * as assert from 'assert/strict';
 import { toFossilUri } from '../../uri';
 import { FossilCWD } from '../../fossilExecutable';
 import { add, cleanupFossil, getExecutable, getRepository } from './common';
 import { Suite } from 'mocha';
+import * as sinon from 'sinon';
 
 export function timelineSuite(this: Suite): void {
     test('fossil file log can differ files', async () => {
@@ -25,10 +27,7 @@ export function timelineSuite(this: Suite): void {
             'file2.txt: third',
             'SKIP'
         );
-        const showQuickPick = this.ctx.sandbox.stub(
-            vscode.window,
-            'showQuickPick'
-        );
+        const showQuickPick = this.ctx.sandbox.stub(window, 'showQuickPick');
         showQuickPick.onFirstCall().callsFake(items => {
             assert.ok(items instanceof Array);
             assert.equal(items[0].label, '$(tag) Current');
@@ -49,8 +48,8 @@ export function timelineSuite(this: Suite): void {
             .callsFake(
                 async (
                     command: string,
-                    left: vscode.Uri,
-                    right: vscode.Uri,
+                    left: Uri,
+                    right: Uri,
                     title: string,
                     _opts: unknown
                 ): Promise<unknown> => {
@@ -70,7 +69,7 @@ export function timelineSuite(this: Suite): void {
         executeCommand.callThrough();
 
         await vscode.commands.executeCommand('fossil.fileLog', file2uri);
-        assert.equal(showQuickPick.callCount, 2);
+        sinon.assert.calledTwice(showQuickPick);
     }).timeout(10000);
     test('fossil can amend commit message', async () => {
         const rootUri = vscode.workspace.workspaceFolders![0].uri;
@@ -80,10 +79,7 @@ export function timelineSuite(this: Suite): void {
         await cleanupFossil(repository);
         await add('amend.txt', '\n', 'message to amend');
 
-        const showQuickPick = this.ctx.sandbox.stub(
-            vscode.window,
-            'showQuickPick'
-        );
+        const showQuickPick = this.ctx.sandbox.stub(window, 'showQuickPick');
         showQuickPick.onFirstCall().callsFake(items => {
             assert.ok(items instanceof Array);
             assert.equal(items[0].label, '$(git-branch) trunk');
@@ -99,13 +95,22 @@ export function timelineSuite(this: Suite): void {
             assert.equal(items[1].label, '$(edit) Edit commit message');
             return Promise.resolve(items[1]);
         });
-        const showInputBoxstub = this.ctx.sandbox.stub(
-            vscode.window,
-            'showInputBox'
-        );
-        showInputBoxstub.resolves('updated commit message');
+        const messageStub = this.ctx.sandbox
+            .stub(window, 'showInputBox')
+            .withArgs(sinon.match({ placeHolder: 'Commit message' }))
+            .resolves('updated commit message');
+        const sim: sinon.SinonStub = this.ctx.sandbox
+            .stub(window, 'showInformationMessage')
+            .resolves();
 
         await vscode.commands.executeCommand('fossil.log');
+        sinon.assert.calledOnceWithExactly(messageStub, {
+            value: 'message to amend',
+            placeHolder: 'Commit message',
+            prompt: 'Please provide a commit message',
+            ignoreFocusOut: true,
+        });
+        sinon.assert.calledOnceWithExactly(sim, 'Commit message was updated.');
 
         const executable = getExecutable();
         const stdout = (await executable.exec(cwd, ['info'])).stdout;
