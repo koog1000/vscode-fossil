@@ -5,6 +5,7 @@ import {
     add,
     assertGroups,
     cleanupFossil,
+    fakeExecutionResult,
     fakeFossilStatus,
     getExecStub,
     getRepository,
@@ -19,7 +20,6 @@ import {
 import { eventToPromise } from '../../util';
 import { LineChange } from '../../revert';
 import { Suite, beforeEach, Func, Test, before } from 'mocha';
-import { IExecutionResult } from '../../fossilExecutable';
 
 declare module 'mocha' {
     interface TestFunction {
@@ -480,10 +480,10 @@ export function fossil_merge_suite(sandbox: sinon.SinonSandbox): void {
             await repository.updateModelState();
             assertGroups(repository, new Map(), new Map());
 
-            const showQuickPickstub = sandbox.stub(
+            const showQuickPickstub: sinon.SinonStub = sandbox.stub(
                 window,
                 'showQuickPick'
-            ) as sinon.SinonStub;
+            );
             showQuickPickstub.resolves({
                 checkin: 'fossil-merge' as FossilBranch,
             });
@@ -501,16 +501,17 @@ export function fossil_merge_suite(sandbox: sinon.SinonSandbox): void {
             const repository = getRepository();
             await cleanupFossil(repository);
             const execStub = getExecStub(this.ctx.sandbox);
-            execStub.withArgs(['branch', 'ls', '-t']).resolves({
-                fossilPath: '',
-                exitCode: 0,
-                stdout: ' * a\n   b\n   c\n',
-                stderr: '',
-                args: ['status'],
-                cwd: '',
-            } as unknown as IExecutionResult);
+            execStub
+                .withArgs(['branch', 'ls', '-t'])
+                .resolves(
+                    fakeExecutionResult({ stdout: ' * a\n   b\n   c\n' })
+                );
+            fakeFossilStatus(execStub, 'INTEGRATE 0123456789');
             const mergeStub = execStub
                 .withArgs(['merge', 'c', '--integrate'])
+                .resolves();
+            const commitStub = execStub
+                .withArgs(sinon.match.array.startsWith(['commit']))
                 .resolves();
             sandbox
                 .stub(window, 'showQuickPick')
@@ -520,13 +521,39 @@ export function fossil_merge_suite(sandbox: sinon.SinonSandbox): void {
                     assert.equal(items[2].label, '$(git-branch) c');
                     return Promise.resolve(items[2]);
                 });
+            const sim = sandbox.stub(window, 'showInformationMessage');
+            const sib = sandbox
+                .stub(window, 'showInputBox')
+                .withArgs(sinon.match({ placeHolder: 'Commit message' }))
+                .callsFake(options => Promise.resolve(options!.value));
 
             await commands.executeCommand('fossil.integrate');
+            sinon.assert.notCalled(sim);
+            sinon.assert.calledOnceWithExactly(sib, {
+                value: 'Merge c into trunk',
+                placeHolder: 'Commit message',
+                prompt: 'Please provide a commit message',
+                ignoreFocusOut: true,
+            });
             sinon.assert.calledOnce(mergeStub);
-        });
+            sinon.assert.calledOnceWithExactly(commitStub, [
+                'commit',
+                '-m',
+                'Merge c into trunk',
+            ]);
+        }).timeout(5000);
         test('Cherrypick', async () => {
+            const execStub = getExecStub(this.ctx.sandbox);
+            execStub
+                .withArgs(['branch', 'ls', '-t'])
+                .resolves(
+                    fakeExecutionResult({ stdout: ' * a\n   b\n   c\n' })
+                );
+            fakeFossilStatus(execStub, '');
+            const repository = getRepository();
+            await repository.updateModelState();
             let hash = '';
-            const mergeCallStub = getExecStub(sandbox)
+            const mergeCallStub = execStub
                 .withArgs(sinon.match.array.startsWith(['merge']))
                 .resolves();
 
@@ -540,6 +567,10 @@ export function fossil_merge_suite(sandbox: sinon.SinonSandbox): void {
                     assert.ok(hash);
                     return Promise.resolve(items[0]);
                 });
+            const sim = sandbox
+                .stub(window, 'showInformationMessage')
+                .withArgs('There are no changes to commit.')
+                .resolves();
 
             await commands.executeCommand('fossil.cherrypick');
             sinon.assert.calledOnceWithMatch(mergeCallStub, [
@@ -547,6 +578,7 @@ export function fossil_merge_suite(sandbox: sinon.SinonSandbox): void {
                 hash,
                 '--cherrypick',
             ]);
+            sinon.assert.calledOnce(sim);
         });
     });
 }
