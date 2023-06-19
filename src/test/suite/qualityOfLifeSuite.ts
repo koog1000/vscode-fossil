@@ -74,13 +74,14 @@ async function RenderSuite(this: Suite) {
             panel.webview,
             'postMessage'
         );
-        const prom = await new Promise<any>(c => {
+        const postedMessage = await new Promise<any>(c => {
             postMessageStub.callsFake((message: any): Thenable<boolean> => {
+                const ret = postMessageStub.wrappedMethod(message);
                 c(message);
-                return postMessageStub.wrappedMethod(message);
+                return ret;
             });
         });
-        sinon.assert.match(prom, {
+        sinon.assert.match(postedMessage, {
             html: sinon.match.string,
             uri: sinon.match.string,
         });
