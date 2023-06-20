@@ -197,10 +197,7 @@
                 "command": "fossil.openFile",
                 "title": "%command.openFile%",
                 "category": "Fossil",
-                "icon": {
-                    "light": "resources/icons/light/open-file.svg",
-                    "dark": "resources/icons/dark/open-file.svg"
-                }
+                "icon": "$(go-to-file)"
             },
             {
                 "command": "fossil.openFiles",
@@ -211,10 +208,7 @@
                 "command": "fossil.openFileFromUri",
                 "title": "%command.openFile%",
                 "category": "Fossil",
-                "icon": {
-                    "light": "resources/icons/light/open-file.svg",
-                    "dark": "resources/icons/dark/open-file.svg"
-                }
+                "icon": "$(go-to-file)"
             },
             {
                 "command": "fossil.openUI",
@@ -843,14 +837,19 @@
                     "group": "1_modification"
                 },
                 {
-                    "command": "fossil.revert",
+                    "command": "fossil.openFile",
                     "when": "config.fossil.enabled && scmProvider == fossil && scmResourceGroup != untracked",
                     "group": "inline@0"
                 },
                 {
+                    "command": "fossil.revert",
+                    "when": "config.fossil.enabled && scmProvider == fossil && scmResourceGroup != untracked",
+                    "group": "inline@1"
+                },
+                {
                     "command": "fossil.stage",
                     "when": "config.fossil.enabled && scmProvider == fossil && scmResourceGroup == working",
-                    "group": "inline"
+                    "group": "inline@2"
                 },
                 {
                     "command": "fossil.deleteFile",
@@ -860,7 +859,7 @@
                 {
                     "command": "fossil.add",
                     "when": "config.fossil.enabled && scmProvider == fossil && scmResourceGroup == untracked",
-                    "group": "inline@1"
+                    "group": "inline@2"
                 },
                 {
                     "command": "fossil.stage",
