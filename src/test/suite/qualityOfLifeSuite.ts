@@ -70,16 +70,17 @@ async function RenderSuite(this: Suite) {
         await commands.executeCommand('fossil.render', untitledDocument.uri);
         sinon.assert.calledOnce(cwp);
         const panel = cwp.firstCall.returnValue;
-        const postMessageStub = this.ctx.sandbox.stub(
-            panel.webview,
-            'postMessage'
-        );
+        const postMessageStub = this.ctx.sandbox
+            .stub(panel.webview, 'postMessage')
+            .callThrough();
         const postedMessage = await new Promise<any>(c => {
-            postMessageStub.callsFake((message: any): Thenable<boolean> => {
-                const ret = postMessageStub.wrappedMethod(message);
-                c(message);
-                return ret;
-            });
+            postMessageStub
+                .onFirstCall()
+                .callsFake((message: any): Thenable<boolean> => {
+                    const ret = postMessageStub.wrappedMethod(message);
+                    c(message);
+                    return ret;
+                });
         });
         sinon.assert.match(postedMessage, {
             html: sinon.match.string,
