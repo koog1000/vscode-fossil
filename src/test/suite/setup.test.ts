@@ -191,13 +191,19 @@ suite('Setup', () => {
         });
         test('Open and close', async () => {
             await fossilOpenForce(sandbox);
-            await vscode.commands.executeCommand('fossil.close');
 
             const cwd = vscode.workspace.workspaceFolders![0].uri
                 .fsPath as FossilCWD;
             const executable = getExecutable();
-            const res_promise = executable.exec(cwd, ['status']);
-            await assert.rejects(res_promise, (thrown: any): boolean => {
+            const closeStub = sandbox
+                .stub(executable, 'exec')
+                .callThrough()
+                .withArgs(cwd, sinon.match.array.startsWith(['close']));
+            await vscode.commands.executeCommand('fossil.close');
+            sinon.assert.calledOnce(closeStub);
+
+            const statusResult = executable.exec(cwd, ['status']);
+            await assert.rejects(statusResult, (thrown: any): boolean => {
                 return /^current directory is not within an open check-?out\s*$/.test(
                     thrown.stderr
                 );
