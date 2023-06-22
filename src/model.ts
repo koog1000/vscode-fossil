@@ -391,7 +391,7 @@ export class Model implements Disposable {
         const placeHolder = localize('pick repo', 'Choose a repository');
         const pick = await window.showQuickPick(picks, { placeHolder });
 
-        return pick && pick.repository;
+        return pick?.repository;
     }
 
     getOpenRepositories(): Repository[] {
