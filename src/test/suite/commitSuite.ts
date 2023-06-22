@@ -10,9 +10,13 @@ import {
 } from './common';
 import * as assert from 'assert/strict';
 import * as fs from 'fs/promises';
-import { Suite } from 'mocha';
+import { Suite, afterEach } from 'mocha';
 
 export function CommitSuite(this: Suite): void {
+    afterEach(function () {
+        const repository = getRepository();
+        repository.sourceControl.inputBox.value = '';
+    });
     test('Commit using input box', async () => {
         const repository = getRepository();
         const execStub = getExecStub(this.ctx.sandbox);
@@ -253,4 +257,25 @@ export function CommitSuite(this: Suite): void {
             'C&&ommit Staged Changes'
         );
     }).timeout(10000);
+
+    test('Conflict commit', async () => {
+        const repository = getRepository();
+        const execStub = getExecStub(this.ctx.sandbox);
+        const statusStub = fakeFossilStatus(execStub, 'ADDED a\nCONFLICT b');
+        await repository.updateModelState();
+        sinon.assert.calledOnce(statusStub);
+        repository.sourceControl.inputBox.value = 'must not be committed';
+        const swm: sinon.SinonStub = this.ctx.sandbox
+            .stub(window, 'showWarningMessage')
+            .resolves();
+        await commands.executeCommand('fossil.commitWithInput');
+        sinon.assert.calledOnceWithExactly(
+            swm,
+            'Resolve conflicts before committing.'
+        );
+        assert.equal(
+            repository.sourceControl.inputBox.value,
+            'must not be committed'
+        );
+    });
 }
