@@ -691,7 +691,7 @@ export async function inputNewBranchOptions(
             switch (btn) {
                 case colorBtn:
                     curBranch = inputBox.value;
-                    inputBox.value = color || '';
+                    inputBox.value = color;
                     inputBox.prompt = localize(
                         'provide color',
                         'Please color in #RRGGBB format'

@@ -864,7 +864,7 @@ export class Repository implements IDisposable, InteractionAPI {
                 this.changeAutoInoutState({
                     status: AutoInOutStatuses.Error,
                     error: (
-                        (err.stderr || '').replace(/^abort:\s*/, '') ||
+                        err.stderr.replace(/^abort:\s*/, '') ||
                         err.fossilErrorCode ||
                         err.message
                     ).trim(),

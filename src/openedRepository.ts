@@ -294,7 +294,7 @@ export class OpenedRepository {
         } catch (err) {
             if (
                 err instanceof FossilError &&
-                /partial commit of a merge/.test(err.stderr || '')
+                /partial commit of a merge/.test(err.stderr)
             ) {
                 err.fossilErrorCode = 'UnmergedChanges';
                 throw err;
@@ -502,10 +502,7 @@ export class OpenedRepository {
         try {
             await this.exec(['push']);
         } catch (err) {
-            if (
-                err instanceof FossilError &&
-                /would fork/.test(err.stderr || '')
-            ) {
+            if (err instanceof FossilError && /would fork/.test(err.stderr)) {
                 err.fossilErrorCode = 'PushCreatesNewRemoteHead';
             }
 
