@@ -423,13 +423,6 @@ export async function inputCommon(
     });
 }
 
-export async function inputRepoName(this: void): Promise<string | undefined> {
-    return inputCommon(
-        'repourl',
-        "Repository Name (should end with '.fossil')"
-    );
-}
-
 export async function inputProjectName(
     this: void
 ): Promise<string | undefined> {
