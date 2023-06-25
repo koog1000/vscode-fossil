@@ -150,10 +150,8 @@ export function statusCloning(clonePromise: Promise<FossilRoot>): Disposable {
     );
 }
 
-export function informNoChangesToCommit(
-    this: void
-): Thenable<string | undefined> {
-    return window.showInformationMessage(
+export function informNoChangesToCommit(): void {
+    window.showInformationMessage(
         localize('no changes', 'There are no changes to commit.')
     );
 }
