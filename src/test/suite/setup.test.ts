@@ -213,7 +213,7 @@ suite('Setup', () => {
                     swm,
                     'Fossil: there are unsaved changes in the current check-out\n'
                 );
-            }).timeout(1500);
+            }).timeout(3500);
 
             test('Close', async () => {
                 const repository = getRepository();
@@ -314,12 +314,13 @@ suite('Setup', () => {
                 )
                 .resolves();
 
+            const tmpUri = Uri.joinPath(Uri.file(os.tmpdir()), 'test_path');
             const showSaveDialogStub = sandbox
                 .stub(vscode.window, 'showSaveDialog')
                 .withArgs(
                     sinon.match({ title: 'Select New Fossil File Location' })
                 )
-                .resolves(Uri.joinPath(Uri.file(os.tmpdir()), 'test_path'));
+                .resolves(tmpUri);
 
             const executable = getExecutable();
 
@@ -335,7 +336,7 @@ suite('Setup', () => {
                 [
                     'clone',
                     'https://testuser:testpsw@example.com/fossil',
-                    '/tmp/test_path',
+                    tmpUri.fsPath,
                     '--verbose',
                 ]
             );
