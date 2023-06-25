@@ -156,11 +156,13 @@ async function setupFossilOpen(sandbox: sinon.SinonSandbox) {
     );
 
     const executable = getExecutable();
-    const execStub = sandbox.stub(executable, 'exec').callThrough();
-    const openStub = execStub.withArgs(
-        rootPath.fsPath as FossilCWD,
-        sinon.match.array.startsWith(['open'])
-    );
+    const openStub = sandbox
+        .stub(executable, 'exec')
+        .callThrough()
+        .withArgs(
+            rootPath.fsPath as FossilCWD,
+            sinon.match.array.startsWith(['open'])
+        );
     const sod = sandbox.stub(window, 'showOpenDialog');
     sod.onFirstCall().resolves([fossilPath]);
     sod.onSecondCall().resolves([rootPath]);
@@ -168,14 +170,13 @@ async function setupFossilOpen(sandbox: sinon.SinonSandbox) {
         rootPath,
         fossilPath,
         executable,
-        execStub,
         openStub,
         sod,
     };
 }
 
 export async function fossilOpen(sandbox: sinon.SinonSandbox): Promise<void> {
-    const { rootPath, fossilPath, executable, execStub, openStub, sod } =
+    const { rootPath, fossilPath, executable, openStub, sod } =
         await setupFossilOpen(sandbox);
 
     await vscode.commands.executeCommand('fossil.open');
@@ -186,13 +187,13 @@ export async function fossilOpen(sandbox: sinon.SinonSandbox): Promise<void> {
     ]);
     const res = await executable.exec(rootPath.fsPath as FossilCWD, ['info']);
     assert.match(res.stdout, /check-ins:\s+1\s*$/);
-    execStub.restore();
+    sandbox.restore();
 }
 
 export async function fossilOpenForce(
     sandbox: sinon.SinonSandbox
 ): Promise<void> {
-    const { rootPath, fossilPath, executable, execStub, openStub, sod } =
+    const { rootPath, fossilPath, executable, openStub, sod } =
         await setupFossilOpen(sandbox);
 
     const swm = (
@@ -229,7 +230,7 @@ export async function fossilOpenForce(
         await delay((i + 1) * 111);
     }
     assert.match(res!.stdout, /check-ins:\s+1\s*$/);
-    execStub.restore();
+    sandbox.restore();
 }
 
 export async function add(

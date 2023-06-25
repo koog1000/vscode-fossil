@@ -2,10 +2,12 @@ import * as vscode from 'vscode';
 import { window, Uri } from 'vscode';
 import {
     cleanRoot,
+    cleanupFossil,
     fakeExecutionResult,
     fossilInit,
     fossilOpenForce,
     getExecutable,
+    getRepository,
 } from './common';
 import * as sinon from 'sinon';
 import * as assert from 'assert/strict';
@@ -189,26 +191,52 @@ suite('Setup', () => {
             );
             sinon.assert.calledTwice(sod);
         });
-        test('Open and close', async () => {
-            await fossilOpenForce(sandbox);
+        suite('Open and close', function () {
+            test('Forced open', async () => {
+                await fossilOpenForce(sandbox);
+            }).timeout(7000);
+            test('Check unsaved', async () => {
+                const executable = getExecutable();
+                const uri = vscode.workspace.workspaceFolders![0].uri;
+                const cwd = uri.fsPath as FossilCWD;
+                const filename = Uri.joinPath(uri, 'open_and_close').fsPath;
+                await fs.writeFile(filename, '');
+                const addRes = await executable.exec(cwd, ['add', filename]);
+                assert.match(addRes.stdout, /ADDED/);
 
-            const cwd = vscode.workspace.workspaceFolders![0].uri
-                .fsPath as FossilCWD;
-            const executable = getExecutable();
-            const closeStub = sandbox
-                .stub(executable, 'exec')
-                .callThrough()
-                .withArgs(cwd, sinon.match.array.startsWith(['close']));
-            await vscode.commands.executeCommand('fossil.close');
-            sinon.assert.calledOnce(closeStub);
+                const swm: sinon.SinonStub = sandbox
+                    .stub(vscode.window, 'showWarningMessage')
+                    .resolves();
 
-            const statusResult = executable.exec(cwd, ['status']);
-            await assert.rejects(statusResult, (thrown: any): boolean => {
-                return /^current directory is not within an open check-?out\s*$/.test(
-                    thrown.stderr
+                await vscode.commands.executeCommand('fossil.close');
+                sinon.assert.calledOnceWithExactly(
+                    swm,
+                    'Fossil: there are unsaved changes in the current check-out\n'
                 );
-            });
-        }).timeout(17000);
+            }).timeout(1500);
+
+            test('Close', async () => {
+                const repository = getRepository();
+                const executable = getExecutable();
+                const uri = vscode.workspace.workspaceFolders![0].uri;
+                const cwd = uri.fsPath as FossilCWD;
+                await cleanupFossil(repository);
+                const closeStub = sandbox
+                    .stub(executable, 'exec')
+                    .callThrough()
+                    .withArgs(cwd, sinon.match.array.startsWith(['close']));
+
+                await vscode.commands.executeCommand('fossil.close');
+                sinon.assert.calledOnce(closeStub);
+
+                const statusResult = executable.exec(cwd, ['status']);
+                await assert.rejects(statusResult, (thrown: any): boolean => {
+                    return /^current directory is not within an open check-?out\s*$/.test(
+                        thrown.stderr
+                    );
+                });
+            }).timeout(7000);
+        });
     });
     suite('Clone', function () {
         test('Empty URI', async () => {
