@@ -332,9 +332,12 @@ export class FossilExecutable {
         } catch (err) {
             if (
                 err instanceof FossilError &&
-                err.fossilErrorCode !== 'NoSuchFile' &&
-                err.fossilErrorCode !== 'NotAFossilRepository' &&
-                err.fossilErrorCode !== 'OperationMustBeForced'
+                ![
+                    'NoSuchFile',
+                    'NotAFossilRepository',
+                    'OperationMustBeForced',
+                ].includes(err.fossilErrorCode) &&
+                args[0] !== 'close' // 'close' always shows error as 'showWarningMessage'
             ) {
                 const openLog = await interaction.errorPromptOpenLog(err);
                 if (openLog) {
