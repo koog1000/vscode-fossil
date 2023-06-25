@@ -783,21 +783,18 @@ export class Repository implements IDisposable, InteractionAPI {
         });
     }
 
-    @throttle
     async newBranch(newBranch: NewBranchOptions): Promise<void> {
         await this.runWithProgress(Operation.Branch, () =>
             this.repository.newBranch(newBranch)
         );
     }
 
-    // @throttle
     async update(checkin: FossilCheckin): Promise<void> {
         await this.runWithProgress(Operation.Update, () =>
             this.repository.update(checkin)
         );
     }
 
-    @throttle
     async close(): Promise<boolean> {
         const msg = await this.runWithProgress(Operation.Close, () =>
             this.repository.close()
