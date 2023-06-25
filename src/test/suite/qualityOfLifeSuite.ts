@@ -4,10 +4,11 @@ import * as assert from 'assert/strict';
 import * as fs from 'fs/promises';
 import * as vscode from 'vscode';
 import * as sinon from 'sinon';
-import { getRepository } from './common';
+import { add, getRepository } from './common';
 import { OpenedRepository } from '../../openedRepository';
+import { LineChange } from '../../revert';
 
-async function PraiseSuite(this: Suite) {
+function PraiseSuite(this: Suite) {
     test('Praise nothing', async () => {
         assert.ok(!window.activeTextEditor);
         await commands.executeCommand('fossil.praise');
@@ -49,7 +50,7 @@ async function PraiseSuite(this: Suite) {
     }).timeout(30000); // sometimes io is unpredictable
 }
 
-async function RenderSuite(this: Suite) {
+function RenderSuite(this: Suite) {
     let panel: vscode.WebviewPanel | undefined;
     this.afterAll(() => {
         assert.ok(panel);
@@ -149,7 +150,47 @@ async function RenderSuite(this: Suite) {
     });
 }
 
+function RevertChangeSuite(this: Suite) {
+    test('Revert single change', async () => {
+        const rootUri = workspace.workspaceFolders![0].uri;
+        const filename = 'revert_change.txt';
+        const uriToChange = Uri.joinPath(rootUri, filename);
+        await commands.executeCommand('fossil.revertChange', uriToChange); // branch coverage
+
+        const content = [...'abcdefghijklmnopqrstuvwxyz'].join('\n');
+        await add(filename, content, `add '${filename}'`);
+        const content2 = [...'abcdefghijklmn', 'typo', ...'opqrstuvwxyz'].join(
+            '\n'
+        );
+        await fs.writeFile(uriToChange.fsPath, content2);
+
+        const document = await workspace.openTextDocument(uriToChange);
+        await window.showTextDocument(document);
+
+        const line_change: LineChange = {
+            modifiedEndLineNumber: 15,
+            modifiedStartLineNumber: 15,
+            originalEndLineNumber: 0,
+            originalStartLineNumber: 14,
+        };
+        await commands.executeCommand(
+            'fossil.revertChange',
+            uriToChange,
+            [line_change],
+            0
+        );
+        const revertedContent = document.getText();
+        assert.equal(revertedContent, content);
+        await document.save();
+    }).timeout(11000);
+
+    test('Revert nothing', async () => {
+        await commands.executeCommand('fossil.revertChange');
+    });
+}
+
 export function QualityOfLifeSuite(this: Suite): void {
     suite('Praise', PraiseSuite);
     suite('Render', RenderSuite);
+    suite('Revert change', RevertChangeSuite);
 }
