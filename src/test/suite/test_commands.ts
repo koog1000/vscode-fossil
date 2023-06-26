@@ -17,7 +17,7 @@ import {
     OpenedRepository,
     ResourceStatus,
 } from '../../openedRepository';
-import { eventToPromise } from '../../util';
+import { delay, eventToPromise } from '../../util';
 import { Suite, Func, Test, before } from 'mocha';
 
 declare module 'mocha' {
@@ -605,6 +605,59 @@ export function RenameSuite(this: Suite): void {
             new Map()
         );
     }).timeout(6000);
+
+    test("Don't show again", async () => {
+        const config = () => workspace.getConfiguration('fossil');
+        assert.equal(config().get('enableRenaming'), true, 'contract');
+        const rootUri = workspace.workspaceFolders![0].uri;
+        const execStub = getExecStub(this.ctx.sandbox);
+        const oldFilename = 'do_not_show.txt';
+        await fs.writeFile(Uri.joinPath(rootUri, oldFilename).fsPath, '123');
+        const newFilename = 'test_failed.txt';
+
+        const edit = new vscode.WorkspaceEdit();
+        const newFilePath = Uri.joinPath(rootUri, newFilename);
+        edit.renameFile(Uri.joinPath(rootUri, oldFilename), newFilePath);
+
+        const sim = (
+            this.ctx.sandbox.stub(
+                window,
+                'showInformationMessage'
+            ) as sinon.SinonStub
+        ).resolves("Don't show again");
+
+        const status = await fakeFossilStatus(
+            execStub,
+            `EDITED ${oldFilename}\n`
+        );
+        const success = await workspace.applyEdit(edit);
+        assert.ok(success);
+        sinon.assert.calledOnceWithExactly(
+            status,
+            ['status', '--differ', '--merge'],
+            'file rename event'
+        );
+        sinon.assert.calledOnceWithExactly(
+            sim,
+            '"do_not_show.txt" was renamed to "test_failed.txt" on ' +
+                'filesystem. Rename in fossil repository too?',
+            {
+                modal: false,
+            },
+            'Yes',
+            'Cancel',
+            "Don't show again"
+        );
+
+        for (let i = 1; i < 100; ++i) {
+            if (config().get('enableRenaming') === false) {
+                break;
+            }
+            await delay(i * 11);
+        }
+        assert.equal(config().get('enableRenaming'), false, 'no update');
+        await config().update('enableRenaming', true);
+    }).timeout(3000);
 
     test('Rename directory', async () => {
         const oldDirname = 'not_renamed';

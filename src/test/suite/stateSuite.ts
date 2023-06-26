@@ -24,10 +24,7 @@ export function UpdateSuite(this: Suite): void {
     });
 
     test('pull with autoUpdate_off', async () => {
-        const fossilConfig = workspace.getConfiguration(
-            'fossil',
-            workspace.workspaceFolders![0].uri
-        );
+        const fossilConfig = workspace.getConfiguration('fossil');
         const sem = this.ctx.sandbox
             .stub(window, 'showErrorMessage')
             .resolves();
