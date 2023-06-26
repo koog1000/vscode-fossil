@@ -141,6 +141,9 @@ export function fakeFossilStatus(execStub: ExecStub, status: string): ExecStub {
         'parent:       0000000000000000000000000000000000000001 2023-05-26 12:43:56 UTC\n' +
         'tags:         trunk, this is a test, custom tag\n';
     const args: FossilArgs = ['status', '--differ', '--merge'];
+    execStub
+        .withArgs(['branch', 'current'])
+        .resolves(fakeExecutionResult({ stdout: 'trunk' }));
     return execStub
         .withArgs(args)
         .resolves(fakeExecutionResult({ stdout: header + status, args }));
