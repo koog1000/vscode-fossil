@@ -314,24 +314,14 @@ export class OpenedRepository {
     }
 
     async newBranch(newBranch: NewBranchOptions): Promise<void> {
-        try {
-            await this.exec([
-                'branch',
-                'new',
-                newBranch.branch,
-                'current',
-                ...(newBranch.isPrivate ? ['--private'] : []),
-                ...(newBranch.color ? ['--bgcolor', newBranch.color] : []),
-            ]);
-        } catch (err) {
-            if (
-                err instanceof FossilError &&
-                /a branch of the same name already exists/.test(err.stderr)
-            ) {
-                err.fossilErrorCode = 'BranchAlreadyExists';
-            }
-            throw err;
-        }
+        await this.exec([
+            'branch',
+            'new',
+            newBranch.branch,
+            'current',
+            ...(newBranch.isPrivate ? ['--private'] : []),
+            ...(newBranch.color ? ['--bgcolor', newBranch.color] : []),
+        ]);
     }
 
     async addTag(branch: FossilBranch, tag: FossilTag): Promise<void> {

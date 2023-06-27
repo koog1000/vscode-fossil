@@ -59,14 +59,13 @@ export interface IFossilErrorData extends IExecutionResult {
 }
 
 export type FossilErrorCode =
-    | 'AuthenticationFailed'
-    | 'NotAFossilRepository'
-    | 'UnmergedChanges'
-    | 'PushCreatesNewRemoteHead'
+    | 'AuthenticationFailed' // FIXME: not a real error
+    | 'NotAFossilRepository' // not within an open check-?out
+    | 'UnmergedChanges' // FIXME: unhandled 'partial commit of a merge'
+    | 'PushCreatesNewRemoteHead' // FIXME: at least rename to  'would fork'
     | 'NoSuchFile'
     | 'BranchAlreadyExists'
     | 'NoUndoInformationAvailable'
-    | 'DefaultRepositoryNotConfigured'
     | 'OperationMustBeForced'
     | 'unknown';
 
@@ -332,12 +331,8 @@ export class FossilExecutable {
         } catch (err) {
             if (
                 err instanceof FossilError &&
-                ![
-                    'NoSuchFile',
-                    'NotAFossilRepository',
-                    'OperationMustBeForced',
-                ].includes(err.fossilErrorCode) &&
-                args[0] !== 'close' // 'close' always shows error as 'showWarningMessage'
+                err.fossilErrorCode === 'unknown' &&
+                args[0] !== 'close'
             ) {
                 const openLog = await interaction.errorPromptOpenLog(err);
                 if (openLog) {
@@ -392,7 +387,14 @@ export class FossilExecutable {
                     return 'NoSuchFile';
                 } else if (/--force\b/.test(result.stderr)) {
                     return 'OperationMustBeForced';
+                } else if (
+                    /^(a branch of the same name|an open branch named ".*") already exists/.test(
+                        result.stderr
+                    )
+                ) {
+                    return 'BranchAlreadyExists';
                 }
+
                 return 'unknown';
             })();
 
