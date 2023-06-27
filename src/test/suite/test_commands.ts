@@ -158,12 +158,50 @@ export function BranchSuite(this: Suite): void {
             return stub;
         });
 
-        const creation = getExecStub(this.ctx.sandbox)
-            .withArgs(['branch', 'new', 'hello branch', 'current'])
-            .resolves();
+        const creation = getExecStub(this.ctx.sandbox).withArgs([
+            'branch',
+            'new',
+            'hello branch',
+            'current',
+        ]);
         await commands.executeCommand('fossil.branch');
         sinon.assert.calledOnce(creation);
     });
+
+    test('Already exists warning is shown', async () => {
+        const cib = this.ctx.sandbox.stub(window, 'createInputBox');
+        cib.onFirstCall().callsFake(() => {
+            const inputBox: vscode.InputBox = cib.wrappedMethod();
+            const stub = sinon.stub(inputBox);
+            stub.show.callsFake(() => {
+                stub.value = 'hello branch';
+                stub.onDidAccept.getCall(0).args[0]();
+            });
+            return stub;
+        });
+
+        const swm: sinon.SinonStub = this.ctx.sandbox
+            .stub(window, 'showWarningMessage')
+            .resolves(undefined);
+
+        const creation = getExecStub(this.ctx.sandbox).withArgs([
+            'branch',
+            'new',
+            'hello branch',
+            'current',
+        ]);
+        await commands.executeCommand('fossil.branch');
+        sinon.assert.calledOnce(creation);
+        sinon.assert.calledOnceWithExactly(
+            swm,
+            "Branch 'hello branch' already exists. Update or Re-open?",
+            {
+                modal: true,
+            },
+            '&&Update',
+            '&&Re-open'
+        );
+    }).timeout(4500);
 
     test('Create private branch', async () => {
         const cib = this.ctx.sandbox.stub(window, 'createInputBox');
