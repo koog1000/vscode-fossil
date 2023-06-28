@@ -61,7 +61,6 @@ export interface IFossilErrorData extends IExecutionResult {
 export type FossilErrorCode =
     | 'AuthenticationFailed' // FIXME: not a real error
     | 'NotAFossilRepository' // not within an open check-?out
-    | 'UnmergedChanges' // FIXME: unhandled 'partial commit of a merge'
     | 'PushCreatesNewRemoteHead' // FIXME: at least rename to  'would fork'
     | 'NoSuchFile'
     | 'BranchAlreadyExists'
