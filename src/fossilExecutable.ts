@@ -59,7 +59,6 @@ export interface IFossilErrorData extends IExecutionResult {
 }
 
 export type FossilErrorCode =
-    | 'AuthenticationFailed' // FIXME: not a real error
     | 'NotAFossilRepository' // not within an open check-?out
     | 'PushCreatesNewRemoteHead' // FIXME: at least rename to  'would fork'
     | 'NoSuchFile'
@@ -369,9 +368,7 @@ export class FossilExecutable {
 
         if (result.exitCode) {
             const fossilErrorCode: FossilErrorCode = (() => {
-                if (/Authentication failed/.test(result.stderr)) {
-                    return 'AuthenticationFailed';
-                } else if (
+                if (
                     /(not within an open check-?out|specify the repository database|cannot find current working directory)/.test(
                         result.stderr
                     ) ||

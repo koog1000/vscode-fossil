@@ -100,8 +100,7 @@ export class AutoIncomingOutgoing {
         } catch (err) {
             if (
                 err instanceof FossilError &&
-                (err.fossilErrorCode === 'AuthenticationFailed' ||
-                    err.fossilErrorCode === 'NotAFossilRepository')
+                err.fossilErrorCode === 'NotAFossilRepository'
             ) {
                 this.disable();
             }
