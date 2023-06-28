@@ -270,38 +270,26 @@ export class OpenedRepository {
         user: FossilUsername | null,
         newBranch: NewBranchOptions | undefined
     ): Promise<void> {
-        try {
-            // always pass a message, otherwise fossil
-            // internal editor will spawn
-            await this.exec([
-                'commit',
-                ...(user ? ['--user-override', user] : []),
-                ...(newBranch
-                    ? [
-                          ...(newBranch.branch
-                              ? ['--branch', newBranch.branch]
-                              : []),
-                          ...(newBranch.color
-                              ? ['--branchcolor', newBranch.color]
-                              : []),
-                          ...(newBranch.isPrivate ? ['--private'] : []),
-                      ]
-                    : []),
-                ...fileList,
-                '-m',
-                message,
-            ]);
-        } catch (err) {
-            if (
-                err instanceof FossilError &&
-                /partial commit of a merge/.test(err.stderr)
-            ) {
-                err.fossilErrorCode = 'UnmergedChanges';
-                throw err;
-            }
-
-            throw err;
-        }
+        // always pass a message, otherwise fossil
+        // internal editor will spawn
+        await this.exec([
+            'commit',
+            ...(user ? ['--user-override', user] : []),
+            ...(newBranch
+                ? [
+                      ...(newBranch.branch
+                          ? ['--branch', newBranch.branch]
+                          : []),
+                      ...(newBranch.color
+                          ? ['--branchcolor', newBranch.color]
+                          : []),
+                      ...(newBranch.isPrivate ? ['--private'] : []),
+                  ]
+                : []),
+            ...fileList,
+            '-m',
+            message,
+        ]);
     }
 
     async getCurrentBranch(): Promise<FossilBranch | undefined> {
