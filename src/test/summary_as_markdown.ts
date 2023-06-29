@@ -127,4 +127,8 @@ async function main(
     }
     return 0;
 }
-main(...process.argv.slice(2)).then(code => process.exit(code));
+main(...process.argv.slice(2))
+    .then(code => process.exit(code))
+    .catch(reason => {
+        console.log(reason), process.exit(1);
+    });
