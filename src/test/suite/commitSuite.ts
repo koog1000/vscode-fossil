@@ -48,7 +48,7 @@ export function CommitSuite(this: Suite): void {
     ) => {
         const repository = getRepository();
         const execStub = getExecStub(this.ctx.sandbox);
-        fakeFossilStatus(execStub, 'ADDED a\nADDED b\n');
+        const statusStub = fakeFossilStatus(execStub, 'ADDED a\nADDED b\n');
         const commitStub = execStub
             .withArgs(sinon.match.array.startsWith(['commit']))
             .resolves();
@@ -58,7 +58,13 @@ export function CommitSuite(this: Suite): void {
             .stub(window, 'showInputBox')
             .resolves('test message');
         await commands.executeCommand(command);
-        sinon.assert.calledOnce(sib);
+        sinon.assert.calledTwice(statusStub);
+        sinon.assert.calledOnceWithExactly(sib, {
+            value: undefined,
+            placeHolder: 'Commit message',
+            prompt: 'Please provide a commit message',
+            ignoreFocusOut: true,
+        });
         sinon.assert.calledOnceWithExactly(commitStub, [
             'commit',
             'a',
