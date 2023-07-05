@@ -60,7 +60,6 @@ export interface IFossilErrorData extends IExecutionResult {
 
 export type FossilErrorCode =
     | 'NotAFossilRepository' // not within an open check-?out
-    | 'PushCreatesNewRemoteHead' // FIXME: at least rename to  'would fork'
     | 'NoSuchFile'
     | 'BranchAlreadyExists'
     | 'NoUndoInformationAvailable'

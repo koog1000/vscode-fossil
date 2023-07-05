@@ -65,10 +65,6 @@ export const enum BranchExistsAction {
     Reopen,
     UpdateTo,
 }
-export const enum PushCreatesNewHeadAction {
-    None,
-    Pull,
-}
 export const enum WarnScenario {
     Merge,
     Update,
@@ -229,21 +225,6 @@ export async function checkThenWarnUnclean(
             )
         );
     }
-}
-
-export async function warnPushCreatesNewHead(
-    this: void
-): Promise<PushCreatesNewHeadAction> {
-    const warningMessage = localize(
-        'pullandmerge',
-        'Push would create new head. Try Pull and Merge first.'
-    );
-    const pullOption = localize('pull', 'Pull');
-    const choice = await window.showErrorMessage(warningMessage, pullOption);
-    if (choice === pullOption) {
-        return PushCreatesNewHeadAction.Pull;
-    }
-    return PushCreatesNewHeadAction.None;
 }
 
 export async function warnNoPaths(type: 'pull' | 'push'): Promise<void> {

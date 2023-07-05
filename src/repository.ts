@@ -68,11 +68,7 @@ import {
     AutoIncomingOutgoing,
 } from './autoinout';
 import * as interaction from './interaction';
-import {
-    InteractionAPI,
-    NewBranchOptions,
-    PushCreatesNewHeadAction,
-} from './interaction';
+import { InteractionAPI, NewBranchOptions } from './interaction';
 import { FossilUriParams, toFossilUri } from './uri';
 import { FossilError } from './fossilExecutable';
 
@@ -881,22 +877,7 @@ export class Repository implements IDisposable, InteractionAPI {
     @throttle
     async push(_path: FossilURI | undefined): Promise<void> {
         return this.runWithProgress(Operation.Push, async () => {
-            try {
-                await this.repository.push();
-            } catch (e) {
-                if (
-                    e instanceof FossilError &&
-                    e.fossilErrorCode === 'PushCreatesNewRemoteHead'
-                ) {
-                    const action = await interaction.warnPushCreatesNewHead();
-                    if (action === PushCreatesNewHeadAction.Pull) {
-                        commands.executeCommand('fossil.pull');
-                    }
-                    return;
-                }
-
-                throw e;
-            }
+            await this.repository.push();
         });
     }
 

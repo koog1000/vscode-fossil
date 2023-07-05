@@ -477,15 +477,7 @@ export class OpenedRepository {
     }
 
     async push(): Promise<void> {
-        try {
-            await this.exec(['push']);
-        } catch (err) {
-            if (err instanceof FossilError && /would fork/.test(err.stderr)) {
-                err.fossilErrorCode = 'PushCreatesNewRemoteHead';
-            }
-
-            throw err;
-        }
+        await this.exec(['push']);
     }
 
     async merge(checkin: FossilCheckin, integrate: MergeAction): Promise<void> {
