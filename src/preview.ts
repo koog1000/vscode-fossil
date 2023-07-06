@@ -31,16 +31,10 @@ export class FossilPreviewManager
         context: ExtensionContext,
         private readonly executable: FossilExecutable
     ) {
-        // super();
         this.previews = new Set();
         this.mediaDir = Uri.joinPath(context.extensionUri, 'media');
         this._disposables = [];
         this._register(window.registerWebviewPanelSerializer(viewType, this));
-        // this._register(
-        //     window.onDidChangeActiveTextEditor(editor => {
-        //         console.log(`onDidChangeActiveTextEditor: ${editor}`);
-        //     })
-        // );
     }
     public dispose(): void {
         dispose(this.previews);
@@ -62,16 +56,6 @@ export class FossilPreviewManager
             this.mediaDir
         );
         this.registerPreview(preview);
-        // await preview.initializeFromUri(uri);
-    }
-
-    public getPreviewByPreviewUri(uri: Uri): FossilPreview | undefined {
-        for (const pv of this.previews) {
-            if (pv.uri == uri) {
-                return pv;
-            }
-        }
-        return undefined;
     }
 
     get activePreview(): FossilPreview | undefined {
@@ -90,7 +74,6 @@ export class FossilPreviewManager
             this.mediaDir
         );
         this.registerPreview(preview);
-        // await preview.initializeFromUri(uri);
     }
 
     private registerPreview(preview: FossilPreview): void {
@@ -128,8 +111,6 @@ export class FossilPreview implements IDisposable {
         new EventEmitter<void>()
     );
     public readonly onDispose = this._onDisposeEmitter.event;
-
-    // public currently_rendered_content?: string; // currently visible text before it was rendered
 
     public static create(
         executable: FossilExecutable,
@@ -207,11 +188,10 @@ export class FossilPreview implements IDisposable {
         this._disposables.push(value);
         return value;
     }
+
     public dispose(): void {
         this._onDisposeEmitter.fire();
-        // this._onDisposeEmitter.dispose();
         dispose(this._disposables);
-        this._disposables.length = 0;
     }
 
     public reveal(): void {
@@ -270,7 +250,6 @@ export class FossilPreview implements IDisposable {
                 '',
                 { stdin_data: this.current_content }
             );
-            // this.currently_rendered_content = this.current_content;
             const html = (await res).stdout as RenderedHTML;
 
             const current_item = awaiting_callback.pop();
