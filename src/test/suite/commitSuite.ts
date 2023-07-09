@@ -17,6 +17,7 @@ export function CommitSuite(this: Suite): void {
         const repository = getRepository();
         repository.sourceControl.inputBox.value = '';
     });
+
     test('Commit using input box', async () => {
         const repository = getRepository();
         const execStub = getExecStub(this.ctx.sandbox);
@@ -43,7 +44,7 @@ export function CommitSuite(this: Suite): void {
         assert.equal(repository.sourceControl.inputBox.value, '');
     });
 
-    const commit_staged_test = async (
+    const commitStagedTest = async (
         command: 'fossil.commit' | 'fossil.commitStaged'
     ) => {
         const repository = getRepository();
@@ -80,11 +81,11 @@ export function CommitSuite(this: Suite): void {
     };
 
     test('Commit command - commit staging group with dialog', async () => {
-        await commit_staged_test('fossil.commit');
+        await commitStagedTest('fossil.commit');
     });
 
     test('CommitStaged command - commit staging group with dialog', async () => {
-        await commit_staged_test('fossil.commitStaged');
+        await commitStagedTest('fossil.commitStaged');
     });
 
     test('CommitAll command - commit staging group with dialog', async () => {
@@ -126,7 +127,7 @@ export function CommitSuite(this: Suite): void {
         const sim: sinon.SinonStub = this.ctx.sandbox
             .stub(window, 'showInformationMessage')
             .resolves();
-        repository.sourceControl.inputBox.value = 'non empty message';
+        repository.sourceControl.inputBox.value = 'not committed message';
         await commands.executeCommand('fossil.commitWithInput');
         sinon.assert.calledOnceWithMatch(
             sim,
