@@ -3,7 +3,6 @@ import { Uri, workspace } from 'vscode';
 import * as sinon from 'sinon';
 import { FossilCWD } from '../../fossilExecutable';
 import {
-    add,
     assertGroups,
     cleanupFossil,
     fakeFossilStatus,
@@ -212,30 +211,60 @@ export function resourceActionsSuite(this: Suite): void {
             () => vscode.commands.executeCommand('fossil.openFiles', resource)
         );
     }).timeout(6000);
-    test('fossil open resource', async () => {
-        const url = await add(
-            'open_resource.txt',
-            'Some original text\n',
-            'add open_resource.txt'
-        );
-        await fs.writeFile(url.fsPath, 'something new');
 
+    test('Open resource: nothing', async () => {
+        await vscode.commands.executeCommand('fossil.openResource');
+    }).timeout(100);
+
+    const diffCheck = async (status: string, caption: string) => {
         const repository = getRepository();
+        const root = workspace.workspaceFolders![0].uri;
+        const uri = Uri.joinPath(root, 'open_resource.txt');
+        const execStub = getExecStub(this.ctx.sandbox);
+        const statusStub = fakeFossilStatus(
+            execStub,
+            `${status} open_resource.txt`
+        );
         await repository.updateModelState();
-        const resource = repository.workingGroup.getResource(url);
+        sinon.assert.calledOnce(statusStub);
+        const resource = repository.workingGroup.getResource(uri);
         assert.ok(resource);
 
-        const execStub = this.ctx.sandbox.stub(
-            vscode.commands,
-            'executeCommand'
-        );
-        const diffCall = execStub.withArgs('vscode.diff');
-        execStub.callThrough();
+        const diffCall = this.ctx.sandbox
+            .stub(vscode.commands, 'executeCommand')
+            .callThrough()
+            .withArgs('vscode.diff')
+            .resolves();
 
         await vscode.commands.executeCommand('fossil.openResource', resource);
 
-        sinon.assert.calledOnce(diffCall);
+        sinon.assert.calledOnceWithExactly(
+            diffCall,
+            'vscode.diff',
+            sinon.match({ path: uri.fsPath }),
+            sinon.match({ path: uri.fsPath }),
+            `open_resource.txt (${caption})`,
+            {
+                preserveFocus: true,
+                preview: undefined,
+                viewColumn: -1,
+            }
+        );
+    };
 
-        await vscode.commands.executeCommand('fossil.openResource');
-    }).timeout(12000);
+    test('Open resource (Working Directory)', async () => {
+        await diffCheck('EDITED', 'Working Directory');
+    });
+
+    test('Open resource (Deleted)', async () => {
+        await diffCheck('DELETED', 'Deleted');
+    });
+
+    test('Open resource (Missing)', async () => {
+        await diffCheck('MISSING', 'Missing');
+    });
+
+    test('Open resource (Renamed)', async () => {
+        await diffCheck('RENAMED', 'Renamed');
+    });
 }
