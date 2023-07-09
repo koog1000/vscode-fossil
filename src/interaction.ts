@@ -1328,7 +1328,7 @@ class RunnableTimelineEntryItem extends TimelineEntryItem {
     constructor(commit: Commit, private action: RunnableAction) {
         super(commit);
     }
-    run() {
+    override run() {
         return this.action();
     }
 }

@@ -6,6 +6,7 @@
             "es6",
             "es2018"
         ],
+        "noImplicitOverride": true,
         "noImplicitThis": true,
         "module": "commonjs",
         "outDir": "out",
