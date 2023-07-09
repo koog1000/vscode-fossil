@@ -32,7 +32,7 @@ _Work in progress_.
 | fossil.merge | Merge into working directory... |
 | fossil.open | Open Fossil Repository |
 | fossil.openChange | Open Changes |
-| fossil.openChangeFromUri | Open Changes |
+| fossil.openChangeFromUri | Open Changes | •&nbsp;Editor bar | Switch editor to diff mode
 | fossil.openFile | Open File |
 | fossil.openFileFromUri | Open File | •&nbsp;Command palette<br>•&nbsp;Editor bar | When in diff view, there's a special button to show local file
 | fossil.openFiles | Open Files |
