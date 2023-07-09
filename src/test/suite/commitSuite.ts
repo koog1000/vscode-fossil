@@ -47,6 +47,7 @@ export function CommitSuite(this: Suite): void {
         command: 'fossil.commit' | 'fossil.commitStaged'
     ) => {
         const repository = getRepository();
+        assert.equal(repository.sourceControl.inputBox.value, '', 'empty input box');
         const execStub = getExecStub(this.ctx.sandbox);
         const statusStub = fakeFossilStatus(execStub, 'ADDED a\nADDED b\n');
         const commitStub = execStub
