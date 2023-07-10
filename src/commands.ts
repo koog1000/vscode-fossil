@@ -1383,11 +1383,11 @@ export class CommandCenter {
 
     @command('fossil.revertChange')
     async revertChange(
-        uri: Uri,
-        changes: LineChange[],
+        uri: Uri | undefined,
+        changes: LineChange[] | undefined,
         index: number
     ): Promise<void> {
-        if (!uri) {
+        if (!uri || !changes) {
             return;
         }
         const textEditor = window.visibleTextEditors.find(
