@@ -89,10 +89,6 @@ export async function revertChanges(
     textEditor: TextEditor,
     changes: LineChange[]
 ): Promise<void> {
-    if (!textEditor) {
-        return;
-    }
-
     const modifiedDocument = textEditor.document;
     const modifiedUri = modifiedDocument.uri;
 
