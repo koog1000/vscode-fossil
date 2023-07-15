@@ -114,7 +114,11 @@ export async function revertChanges(
         ),
         result
     );
-    await workspace.applyEdit(edit);
+    const success = await workspace.applyEdit(edit);
+    /* c8 ignore next 3 */
+    if (!success) {
+        throw new Error('failed to revert a range');
+    }
 
     await modifiedDocument.save();
 
