@@ -120,7 +120,5 @@ export async function revertChanges(
         throw new Error('failed to revert a range');
     }
 
-    await modifiedDocument.save();
-
     textEditor.revealRange(visibleRangesBeforeRevert[0]);
 }
