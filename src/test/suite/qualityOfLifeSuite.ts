@@ -7,6 +7,7 @@ import * as sinon from 'sinon';
 import { add, getRepository } from './common';
 import { OpenedRepository } from '../../openedRepository';
 import { LineChange } from '../../revert';
+import { delay } from '../../util';
 
 function PraiseSuite(this: Suite) {
     test('Praise nothing', async () => {
@@ -159,28 +160,70 @@ function RevertChangeSuite(this: Suite) {
 
         const content = [...'abcdefghijklmnopqrstuvwxyz'].join('\n');
         await add(filename, content, `add '${filename}'`);
-        const content2 = [...'abcdefghijklmn', 'typo', ...'opqrstuvwxyz'].join(
-            '\n'
-        );
+        const content2 = [
+            'top',
+            ...'abcdeghijklmn',
+            'typo',
+            ...'opqrstuvwxyz',
+        ].join('\n');
         await fs.writeFile(uriToChange.fsPath, content2);
 
         const document = await workspace.openTextDocument(uriToChange);
         await window.showTextDocument(document);
 
-        const line_change: LineChange = {
-            modifiedEndLineNumber: 15,
-            modifiedStartLineNumber: 15,
-            originalEndLineNumber: 0,
-            originalStartLineNumber: 14,
-        };
+        // to fill this array, debug `fossil.revertChange`
+        const changes: LineChange[] = [
+            {
+                originalStartLineNumber: 0,
+                originalEndLineNumber: 0,
+                modifiedStartLineNumber: 1,
+                modifiedEndLineNumber: 1,
+            },
+            {
+                originalStartLineNumber: 6,
+                originalEndLineNumber: 6,
+                modifiedStartLineNumber: 6,
+                modifiedEndLineNumber: 0,
+            },
+            {
+                originalStartLineNumber: 14,
+                originalEndLineNumber: 0,
+                modifiedStartLineNumber: 15,
+                modifiedEndLineNumber: 15,
+            },
+        ];
+        await delay(150);
         await commands.executeCommand(
             'fossil.revertChange',
             uriToChange,
-            [line_change],
+            changes,
+            2
+        );
+        assert.equal(
+            document.getText(),
+            ['top', ...'abcdeghijklmnopqrstuvwxyz'].join('\n'),
+            'undo 1'
+        );
+        await delay(150);
+        await commands.executeCommand(
+            'fossil.revertChange',
+            uriToChange,
+            changes.slice(0, 2),
+            1
+        );
+        assert.equal(
+            document.getText(),
+            ['top', ...'abcdefghijklmnopqrstuvwxyz'].join('\n'),
+            'undo 2'
+        );
+        await delay(150);
+        await commands.executeCommand(
+            'fossil.revertChange',
+            uriToChange,
+            changes.slice(0, 1),
             0
         );
-        const revertedContent = document.getText();
-        assert.equal(revertedContent, content);
+        assert.equal(document.getText(), content, 'undo 3');
         await document.save();
     }).timeout(11000);
 
