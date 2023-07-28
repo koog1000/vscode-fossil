@@ -93,7 +93,7 @@ export function getRepository(): Repository {
     const extension = vscode.extensions.getExtension('koog1000.fossil');
     assert.ok(extension);
     const model = extension.exports as Model;
-    assert.ok(model.repositories.length);
+    assert.equal(model.repositories.length, 1);
     return model.repositories[0];
 }
 

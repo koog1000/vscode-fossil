@@ -211,7 +211,9 @@ suite('Setup', () => {
                 await vscode.commands.executeCommand('fossil.close');
                 sinon.assert.calledOnceWithExactly(
                     swm,
-                    'Fossil: there are unsaved changes in the current check-out\n'
+                    sinon.match(
+                        /^Fossil: there are unsaved changes in the current check-?out\n$/
+                    )
                 );
             }).timeout(3500);
 
