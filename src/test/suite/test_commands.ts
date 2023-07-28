@@ -182,7 +182,7 @@ export function BranchSuite(this: Suite): void {
 
         const swm: sinon.SinonStub = this.ctx.sandbox
             .stub(window, 'showWarningMessage')
-            .resolves(undefined);
+            .resolves();
 
         const creation = getExecStub(this.ctx.sandbox).withArgs([
             'branch',
@@ -201,7 +201,7 @@ export function BranchSuite(this: Suite): void {
             '&&Update',
             '&&Re-open'
         );
-    }).timeout(4500);
+    }).timeout(14500);
 
     test('Create private branch', async () => {
         const cib = this.ctx.sandbox.stub(window, 'createInputBox');

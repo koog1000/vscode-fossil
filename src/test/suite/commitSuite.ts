@@ -10,13 +10,15 @@ import {
 } from './common';
 import * as assert from 'assert/strict';
 import * as fs from 'fs/promises';
-import { Suite, afterEach } from 'mocha';
+import { Suite, before, beforeEach } from 'mocha';
 
 export function CommitSuite(this: Suite): void {
-    afterEach(function () {
+    const clearInputBox = () => {
         const repository = getRepository();
         repository.sourceControl.inputBox.value = '';
-    });
+    };
+    before(clearInputBox);
+    beforeEach(clearInputBox);
 
     test('Commit using input box', async () => {
         const repository = getRepository();

@@ -383,7 +383,7 @@ export class FossilExecutable {
                 } else if (/--force\b/.test(result.stderr)) {
                     return 'OperationMustBeForced';
                 } else if (
-                    /^(a branch of the same name|an open branch named ".*") already exists/.test(
+                    /^(a branch of the same name|an open branch named ".*"|branch ".*") already exists/.test(
                         result.stderr
                     )
                 ) {
