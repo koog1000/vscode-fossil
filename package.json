@@ -535,6 +535,10 @@
                     "when": "fossilOpenRepositoryCount"
                 },
                 {
+                    "command": "fossil.relocate",
+                    "when": "false"
+                },
+                {
                     "command": "fossil.revertChange",
                     "when": "fossilOpenRepositoryCount"
                 },
