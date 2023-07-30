@@ -1,12 +1,24 @@
 # Changelog
 
+# v0.3.2
+
+### What's New
+
+- Add 'Open File' as inline action (icon like in git extension)
+
+### Bug Fixes
+
+- Don't save document when a range is reverted
+- Fix 8 minor issues
+
+
 # v0.3.1
 
 ### What's New
 
 - Rename files after they were relocated.
   Use "Select New File Location" context menu for missing files.
-- Checkout SHA and tags are now in status bar tooltip.
+- Checkout SHA and tags are now in status bar tooltip
 
 ### Bug Fixes
 
