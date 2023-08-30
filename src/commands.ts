@@ -1245,9 +1245,6 @@ export class CommandCenter {
 
     @command('fossil.cherrypick', { repository: true })
     async cherrypick(repository: Repository): Promise<void> {
-        if (!(await this.isItOkayToMerge(repository))) {
-            return;
-        }
         const logEntries = await repository.getLogEntries();
         const checkin = await interaction.pickCommitToCherrypick(logEntries);
 
