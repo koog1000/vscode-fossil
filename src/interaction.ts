@@ -18,7 +18,6 @@ import {
 } from 'vscode';
 import {
     Commit,
-    LogEntryOptions,
     CommitDetails,
     FileStatus,
     FossilPath,
@@ -136,7 +135,7 @@ export async function selectExistingFossilPath(): Promise<
     if (uri?.length) {
         return uri[0].fsPath as FossilPath;
     }
-    return undefined;
+    return;
 }
 
 export function statusCloning(clonePromise: Promise<FossilRoot>): Disposable {
@@ -788,29 +787,11 @@ function asBackItem(
 export async function presentLogSourcesMenu(
     commands: InteractionAPI
 ): Promise<void> {
-    const branchName = commands.currentBranch;
-    const source = await pickLogSource(branchName);
-    if (source) {
-        const historyScope = localize('history scope', 'history scope');
-        const back = asBackItem(historyScope, () =>
-            presentLogSourcesMenu(commands)
-        );
-        return presentLogMenu(source.source, source.options, commands, back);
-    }
-}
-
-async function presentLogMenu(
-    source: CommitSources,
-    logOptions: LogEntryOptions,
-    commands: InteractionAPI,
-    back?: RunnableQuickPickItem
-): Promise<void> {
-    const entries = await commands.getLogEntries(logOptions);
+    const entries = await commands.getLogEntries({});
     let result = await pickCommitAsShowCommitDetailsRunnable(
-        source,
+        CommitSources.Repo,
         entries,
-        commands,
-        back
+        commands
     );
     while (result) {
         result = await result.run();
@@ -1037,35 +1018,6 @@ export async function pickDiffAction(
     if (choice) {
         await choice.run();
     }
-}
-
-export async function pickLogSource(
-    branchName: FossilBranch | undefined
-): Promise<LogSourcePickItem | undefined> {
-    const branch: LogSourcePickItem = {
-        label: `$(git-branch) ${branchName || '???'}`,
-        source: CommitSources.Branch,
-        options: {},
-    };
-    const default_: LogSourcePickItem = {
-        label: '$(git-branch) default',
-        source: CommitSources.Branch,
-        options: {},
-    };
-    const repo: LogSourcePickItem = {
-        label: '$(repo) entire repo',
-        source: CommitSources.Repo,
-        options: {},
-    };
-
-    const pickItems =
-        branchName !== 'default' ? [branch, default_, repo] : [branch, repo];
-
-    const choice = await window.showQuickPick<LogSourcePickItem>(pickItems, {
-        placeHolder: localize('history for', 'Show history for...'),
-    });
-
-    return choice;
 }
 
 // this function is unused but should be
@@ -1391,11 +1343,6 @@ class FileStatusQuickPickItem extends RunnableQuickPickItem {
     async run(): Promise<void> {
         return this.action();
     }
-}
-
-interface LogSourcePickItem extends QuickPickItem {
-    options: LogEntryOptions;
-    source: CommitSources;
 }
 
 /**

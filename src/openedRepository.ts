@@ -81,7 +81,7 @@ export interface TimelineOptions extends LogEntryOptions {
     readonly verbose?: boolean;
 }
 
-export interface LogEntryOptions {
+interface LogEntryOptions {
     readonly checkin?: FossilCheckin;
 }
 

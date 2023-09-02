@@ -71,7 +71,8 @@ export function timelineSuite(this: Suite): void {
         await vscode.commands.executeCommand('fossil.fileLog', file2uri);
         sinon.assert.calledTwice(showQuickPick);
     }).timeout(10000);
-    test('fossil can amend commit message', async () => {
+
+    test('Amend commit message', async () => {
         const rootUri = vscode.workspace.workspaceFolders![0].uri;
         const cwd = rootUri.fsPath as FossilCWD;
 
@@ -82,15 +83,10 @@ export function timelineSuite(this: Suite): void {
         const showQuickPick = this.ctx.sandbox.stub(window, 'showQuickPick');
         showQuickPick.onFirstCall().callsFake(items => {
             assert.ok(items instanceof Array);
-            assert.equal(items[0].label, '$(git-branch) trunk');
+            assert.equal(items[0].label, '$(tag) Current');
             return Promise.resolve(items[0]);
         });
         showQuickPick.onSecondCall().callsFake(items => {
-            assert.ok(items instanceof Array);
-            assert.equal(items[1].label, '$(tag) Current');
-            return Promise.resolve(items[1]);
-        });
-        showQuickPick.onThirdCall().callsFake(items => {
             assert.ok(items instanceof Array);
             assert.equal(items[1].label, '$(edit) Edit commit message');
             return Promise.resolve(items[1]);
