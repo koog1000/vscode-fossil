@@ -382,7 +382,7 @@ ${escapeHtml(stdout)}
     return resp;
 }
 
-export async function inputCommon(
+async function inputCommon(
     this: void,
     key:
         | 'repourl'
@@ -762,14 +762,6 @@ function describeCommitOneLine(commit: Commit): string {
     }, ${humanise.ageFromNow(commit.date)} ${BULLET} ${commit.message}`;
 }
 
-function asLabelItem(
-    label: string,
-    description = '',
-    action: RunnableAction
-): RunnableQuickPickItem {
-    return new LiteralRunnableQuickPickItem(label, description, '', action);
-}
-
 function asBackItem(
     description: string,
     action: RunnableAction
@@ -907,14 +899,11 @@ async function presentCommitDetails(
     commands: InteractionAPI
 ): Promise<RunnableQuickPickItem | undefined> {
     const placeHolder = describeCommitOneLine(details);
-    const fileActionFactory = (f: FileStatus) => () => {
-        return commands.diffToParent(f.path, details.hash);
-    };
+    const diff = (status: FileStatus) =>
+        commands.diffToParent(status.path, details.hash);
     const filePickItems = details.files.map(
-        f => new FileStatusQuickPickItem(f, fileActionFactory(f))
+        f => new FileStatusQuickPickItem(f, () => diff(f))
     );
-    const backToSelfRunnable = () =>
-        presentCommitDetails(details, back, commands);
     const editCommitMessageItem = new LiteralRunnableQuickPickItem(
         '$(edit) Edit commit message',
         '',
@@ -922,20 +911,40 @@ async function presentCommitDetails(
         () => editCommitMessage(details, commands)
     );
 
+    const openChngesItem = new LiteralRunnableQuickPickItem(
+        '$(go-to-file) Open all changed files',
+        '',
+        '',
+        async () => {
+            for (const status of details.files) {
+                await diff(status);
+            }
+        }
+    );
+
+    const changesLabel = {
+        label: 'Changes',
+        kind: QuickPickItemKind.Separator,
+    } as const;
+
     const items = [
         back,
         editCommitMessageItem,
-        asLabelItem('Files', undefined, backToSelfRunnable),
+        openChngesItem,
+        changesLabel,
         ...filePickItems,
-    ];
+    ] satisfies (
+        | RunnableQuickPickItem
+        | { kind: QuickPickItemKind.Separator }
+    )[];
 
-    const choice = await window.showQuickPick<RunnableQuickPickItem>(items, {
+    const choice = await window.showQuickPick(items, {
         matchOnDescription: true,
         matchOnDetail: true,
         placeHolder,
     });
 
-    return choice;
+    return choice as RunnableQuickPickItem;
 }
 
 async function editCommitMessage(

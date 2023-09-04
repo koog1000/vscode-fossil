@@ -13,6 +13,7 @@ import {
     workspace,
     commands,
     RelativePattern,
+    TextDocumentShowOptions,
 } from 'vscode';
 import {
     OpenedRepository,
@@ -1091,7 +1092,8 @@ export class Repository implements IDisposable, InteractionAPI {
                 'vscode.diff',
                 left,
                 right,
-                title
+                title,
+                { preview: false } as TextDocumentShowOptions
             );
         }
     }
