@@ -1,14 +1,28 @@
 import * as vscode from 'vscode';
-import { window, Uri } from 'vscode';
+import { window } from 'vscode';
 import * as assert from 'assert/strict';
-import { toFossilUri } from '../../uri';
+import { FossilUriParams, toFossilUri } from '../../uri';
 import { FossilCWD } from '../../fossilExecutable';
 import { add, cleanupFossil, getExecutable, getRepository } from './common';
-import { Suite } from 'mocha';
+import { Suite, before } from 'mocha';
 import * as sinon from 'sinon';
+import { FossilCheckin } from '../../openedRepository';
+
+// separate function because hash size is different
+const uriMatch = (uri: vscode.Uri, checkin: FossilCheckin) =>
+    sinon.match((exp: vscode.Uri): boolean => {
+        const exp_q = JSON.parse(exp.query) as FossilUriParams;
+        return (
+            uri.path == exp.path &&
+            uri.fsPath == exp_q.path &&
+            exp_q.checkin.slice(0, 40) == checkin
+        );
+    });
 
 export function timelineSuite(this: Suite): void {
-    test('fossil file log can differ files', async () => {
+    let file2uri: vscode.Uri;
+
+    before(async () => {
         const repository = getRepository();
         await cleanupFossil(repository);
         await add('file1.txt', 'line1\n', 'file1.txt: first');
@@ -21,12 +35,20 @@ export function timelineSuite(this: Suite): void {
         );
         await add('file2.txt', 'line1\n', 'file2.txt: first');
         await add('file2.txt', 'line1\nline2\n', 'file2.txt: second', 'SKIP');
-        const file2uri = await add(
+        file2uri = await add(
             'file2.txt',
             'line1\nline2\nline3\n',
             'file2.txt: third',
             'SKIP'
         );
+    });
+
+    test('`fossil.fileLog` undefined', async () => {
+        await vscode.commands.executeCommand('fossil.fileLog');
+    });
+
+    test('Show diff from `fossil.fileLog`', async () => {
+        const repository = getRepository();
         const showQuickPick = this.ctx.sandbox.stub(window, 'showQuickPick');
         showQuickPick.onFirstCall().callsFake(items => {
             assert.ok(items instanceof Array);
@@ -39,45 +61,88 @@ export function timelineSuite(this: Suite): void {
             return Promise.resolve(items[0]);
         });
 
-        const executeCommand = this.ctx.sandbox.stub(
-            vscode.commands,
-            'executeCommand'
-        );
-        executeCommand
+        const diffCommand = this.ctx.sandbox
+            .stub(vscode.commands, 'executeCommand')
+            .callThrough()
             .withArgs('vscode.diff')
-            .callsFake(
-                async (
-                    command: string,
-                    left: Uri,
-                    right: Uri,
-                    title: string,
-                    _opts: unknown
-                ): Promise<unknown> => {
-                    const parentHash = await repository.getInfo(
-                        'current',
-                        'parent'
-                    );
-                    assert.deepEqual(left, toFossilUri(file2uri, 'current'));
-                    assert.deepEqual(right, toFossilUri(file2uri, parentHash));
-                    assert.equal(
-                        title,
-                        `file2.txt (current vs. ${parentHash.slice(0, 12)})`
-                    );
-                    return Promise.resolve();
-                }
-            );
-        executeCommand.callThrough();
+            .resolves();
 
         await vscode.commands.executeCommand('fossil.fileLog', file2uri);
         sinon.assert.calledTwice(showQuickPick);
-    }).timeout(10000);
+
+        const parentHash = await repository.getInfo('current', 'parent');
+        sinon.assert.calledOnceWithExactly(
+            diffCommand,
+            'vscode.diff',
+            toFossilUri(file2uri, 'current'),
+            toFossilUri(file2uri, parentHash),
+            `file2.txt (current vs. ${parentHash.slice(0, 12)})`
+        );
+    }).timeout(2000);
+
+    const testDiff = async (
+        callback: (
+            items: readonly vscode.QuickPickItem[]
+        ) => Thenable<vscode.QuickPickItem>
+    ) => {
+        const repository = getRepository();
+        const showQuickPick = this.ctx.sandbox.stub(window, 'showQuickPick');
+        showQuickPick.onFirstCall().callsFake(items => {
+            assert.ok(items instanceof Array);
+            assert.equal(items[0].label, '$(tag) Current');
+            return Promise.resolve(items[0]);
+        });
+        showQuickPick.onSecondCall().callsFake(items => {
+            assert.ok(items instanceof Array);
+            return callback(items);
+        });
+
+        const diffCommand = this.ctx.sandbox
+            .stub(vscode.commands, 'executeCommand')
+            .callThrough()
+            .withArgs('vscode.diff')
+            .resolves();
+
+        await vscode.commands.executeCommand('fossil.log');
+        sinon.assert.calledTwice(showQuickPick);
+
+        const currentHash = await repository.getInfo('current', 'hash');
+        const parentHash = await repository.getInfo(currentHash, 'parent');
+
+        sinon.assert.calledOnceWithExactly(
+            diffCommand,
+            'vscode.diff',
+            uriMatch(file2uri, parentHash),
+            uriMatch(file2uri, currentHash),
+            `file2.txt (${parentHash.slice(0, 12)} vs. ${currentHash.slice(
+                0,
+                12
+            )})`,
+            { preview: false }
+        );
+    };
+
+    test('Show diff from `fossil.Log`', async () => {
+        await testDiff(items => {
+            assert.equal(items[4].label, '    Ｍ  file2.txt');
+            return Promise.resolve(items[4]);
+        });
+    });
+
+    test('Show diff all from `fossil.Log`', async () => {
+        await testDiff(items => {
+            assert.equal(
+                items[2].label,
+                '$(go-to-file) Open all changed files'
+            );
+            return Promise.resolve(items[2]);
+        });
+    });
 
     test('Amend commit message', async () => {
         const rootUri = vscode.workspace.workspaceFolders![0].uri;
         const cwd = rootUri.fsPath as FossilCWD;
 
-        const repository = getRepository();
-        await cleanupFossil(repository);
         await add('amend.txt', '\n', 'message to amend');
 
         const showQuickPick = this.ctx.sandbox.stub(window, 'showQuickPick');
@@ -100,6 +165,7 @@ export function timelineSuite(this: Suite): void {
             .resolves();
 
         await vscode.commands.executeCommand('fossil.log');
+        sinon.assert.calledTwice(showQuickPick);
         sinon.assert.calledOnceWithExactly(messageStub, {
             value: 'message to amend',
             placeHolder: 'Commit message',
