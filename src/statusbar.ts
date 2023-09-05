@@ -8,6 +8,7 @@ import { Disposable, Command, EventEmitter, Event } from 'vscode';
 import { anyEvent, dispose } from './util';
 import { AutoInOutStatuses, AutoInOutState } from './autoinout';
 import { Repository, Operation } from './repository';
+import { ageFromNow, Old } from './humanise';
 
 import { localize } from './main';
 
@@ -35,7 +36,7 @@ class ScopeStatusBar {
     get command(): Command | undefined {
         const { currentBranch, fossilStatus } = this.repository;
         if (!currentBranch) {
-            return undefined;
+            return;
         }
         const icon = fossilStatus?.isMerge ? '$(git-merge)' : '$(git-branch)';
         const title =
@@ -43,12 +44,22 @@ class ScopeStatusBar {
             ' ' +
             currentBranch +
             (this.repository.workingGroup.resourceStates.length ? '+' : '');
+        let age = '';
+        if (fossilStatus) {
+            const d = new Date(
+                fossilStatus.checkout.date.replace(' UTC', '.000Z')
+            );
+            age = ageFromNow(d, Old.EMPTY_STRING);
+        }
+
         return {
             command: 'fossil.branchChange',
             tooltip: localize(
-                'branch change {0} {1}',
-                '\n{0}\nTags:\n \u2022 {1}\nChange Branch...',
+                'branch change {0} {1}{2} {3}',
+                '\n{0}\n{1}{2}\nTags:\n \u2022 {3}\nChange Branch...',
                 fossilStatus?.checkout.checkin,
+                fossilStatus?.checkout.date,
+                age && ` (${age})`,
                 fossilStatus?.tags.join('\n \u2022 ')
             ),
             title,

@@ -10,7 +10,7 @@ import {
 import * as assert from 'assert/strict';
 import { getExecutable } from './common';
 import { after, afterEach, before } from 'mocha';
-import { ageFromNow } from '../../humanise';
+import { Old, ageFromNow } from '../../humanise';
 
 suite('Infrastructure', () => {
     const sandbox = sinon.createSandbox();
@@ -90,7 +90,10 @@ suite('Infrastructure', () => {
             assert.equal(ageFromNow(minutes(-0.5)), '30 seconds ago');
         });
         test('Now - 1 minute', () => {
-            assert.equal(ageFromNow(minutes(-1)), '1 minute ago');
+            assert.equal(ageFromNow(minutes(-1)), '60 seconds ago');
+        });
+        test('Now - 2 minutes', () => {
+            assert.equal(ageFromNow(minutes(-2)), '2 minutes ago');
         });
         test('Now - 10 minute', () => {
             assert.equal(ageFromNow(minutes(-10)), '10 minutes ago');
@@ -113,8 +116,11 @@ suite('Infrastructure', () => {
         test('Now - 6 days', () => {
             assert.equal(ageFromNow(days(-6)), 'last week');
         });
-        test('Now - 7 day', () => {
+        test('Now - 7 days', () => {
             assert.equal(ageFromNow(days(-7)), '6/9/2023');
+        });
+        test('Long ago is empty string', () => {
+            assert.equal(ageFromNow(days(-30), Old.EMPTY_STRING), '');
         });
     });
 });
