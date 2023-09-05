@@ -67,20 +67,20 @@ export function describeMerge(
     }
 }
 
-export function ageFromNow(date: Date): string {
+export const enum Old {
+    DATE,
+    EMPTY_STRING,
+}
+
+export function ageFromNow(date: Date, old: Old = Old.DATE): string {
     const elapsedSeconds = timeSince(date) / 1e3;
     const elapsed = new TimeSpan(elapsedSeconds);
     if (elapsed.totalDays > 0) {
         // past
         if (elapsed.totalSeconds < 15) {
             return 'a few moments ago';
-        } else if (elapsed.totalSeconds < 60) {
-            const seconds: string = pluraliseQuantity(
-                'second',
-                Math.floor(elapsed.totalSeconds),
-                's'
-            );
-            return `${seconds} ago`;
+        } else if (elapsed.totalSeconds < 99) {
+            return `${Math.floor(elapsed.totalSeconds)} seconds ago`;
         } else if (elapsed.totalMinutes < 60) {
             const minutes: string = pluraliseQuantity(
                 'minute',
@@ -125,9 +125,13 @@ export function ageFromNow(date: Date): string {
                 }
             }
         } else {
-            return date.toLocaleDateString(undefined, {
-                formatMatcher: 'basic',
-            });
+            if (old == Old.DATE) {
+                return date.toLocaleDateString(undefined, {
+                    formatMatcher: 'basic',
+                });
+            } else {
+                return '';
+            }
         } /*if (elapsed.totalDays < 32) {
                 let weeks: number = Math.round(elapsed.totalWeeks);
                 if (weeks === 1) {
