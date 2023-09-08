@@ -14,12 +14,6 @@
     ],
     "rules": {
         "prettier/prettier": "error",
-        "@typescript-eslint/explicit-module-boundary-types": [
-            "error",
-            {
-                "allowArgumentsExplicitlyTypedAsAny": true
-            }
-        ],
         "@typescript-eslint/no-unused-vars": [
             "error",
             {
@@ -32,7 +26,6 @@
         "no-inner-declarations": 2,
         "no-prototype-builtins": 0,
         "@typescript-eslint/no-explicit-any": 0,
-        "@typescript-eslint/no-namespace": 0,
         "@typescript-eslint/no-non-null-assertion": 0,
         "@typescript-eslint/ban-types": 0
     },

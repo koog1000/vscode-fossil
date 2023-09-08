@@ -178,5 +178,7 @@ export function groupStatuses({
     untracked.updateResources(untrackedResources);
 }
 
-export const isResourceGroup = (obj: any): obj is SourceControlResourceGroup =>
+export const isResourceGroup = (
+    obj: FossilResource | SourceControlResourceGroup
+): obj is SourceControlResourceGroup =>
     (<SourceControlResourceGroup>obj).resourceStates !== undefined;
