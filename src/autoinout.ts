@@ -5,7 +5,6 @@
  *--------------------------------------------------------------------------------------------*/
 
 import { workspace, Disposable } from 'vscode';
-import { FossilError } from './fossilExecutable';
 import { throttle } from './decorators';
 import typedConfig from './config';
 import { Repository, Operation } from './repository';
@@ -94,17 +93,7 @@ export class AutoIncomingOutgoing {
             Date.now() + typedConfig.autoInOutIntervalMs
         );
         this.repository.changeAutoInoutState({ nextCheckTime });
-
-        try {
-            await this.repository.changeInoutAfterDelay();
-        } catch (err) {
-            if (
-                err instanceof FossilError &&
-                err.fossilErrorCode === 'NotAFossilRepository'
-            ) {
-                this.disable();
-            }
-        }
+        await this.repository.changeInoutAfterDelay();
     }
 
     dispose(): void {

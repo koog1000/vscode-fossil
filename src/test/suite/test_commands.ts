@@ -168,7 +168,7 @@ export function BranchSuite(this: Suite): void {
         sinon.assert.calledOnce(creation);
     });
 
-    test('Already exists warning is shown', async () => {
+    test('Branch already exists warning is shown', async () => {
         const cib = this.ctx.sandbox.stub(window, 'createInputBox');
         cib.onFirstCall().callsFake(() => {
             const inputBox: vscode.InputBox = cib.wrappedMethod();
@@ -222,7 +222,7 @@ export function BranchSuite(this: Suite): void {
         const execStub = getExecStub(this.ctx.sandbox);
         const creation = execStub
             .withArgs(['branch', 'new', 'hello branch', 'current', '--private'])
-            .resolves();
+            .resolves(fakeExecutionResult());
         await commands.executeCommand('fossil.branch');
         sinon.assert.calledOnce(creation);
     });
@@ -254,7 +254,7 @@ export function BranchSuite(this: Suite): void {
                 '--bgcolor',
                 '#aabbcc',
             ])
-            .resolves();
+            .resolves(fakeExecutionResult());
         await commands.executeCommand('fossil.branch');
         sinon.assert.calledOnce(creation);
     });

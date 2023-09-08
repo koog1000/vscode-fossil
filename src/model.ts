@@ -17,7 +17,7 @@ import {
     QuickPickItem,
     FileRenameEvent,
 } from 'vscode';
-import { FossilExecutable, FossilError } from './fossilExecutable';
+import { FossilExecutable } from './fossilExecutable';
 import { anyEvent, filterEvent, dispose } from './util';
 import { memoize, debounce, sequentialize } from './decorators';
 import * as path from 'path';
@@ -300,38 +300,28 @@ export class Model implements Disposable {
             return true;
         }
 
-        try {
-            const openedRepository = await OpenedRepository.tryOpen(
-                this.executable,
-                path
-            );
-            if (!openedRepository) {
-                return false;
-            }
-
-            // This can happen whenever `path` has the wrong case sensitivity in
-            // case insensitive file systems
-            // https://github.com/Microsoft/vscode/issues/33498
-            // the above comment is here from git extension and
-            // might not be relevant for fossil
-
-            if (this.getRepository(Uri.file(openedRepository.root))) {
-                return true;
-            }
-
-            const repository = new Repository(openedRepository);
-
-            this.open(repository);
-            return true;
-        } catch (err) {
-            if (
-                !(err instanceof FossilError) ||
-                err.fossilErrorCode !== 'NotAFossilRepository'
-            ) {
-                console.error('Failed to find repository:', err);
-            }
+        const openedRepository = await OpenedRepository.tryOpen(
+            this.executable,
+            path
+        );
+        if (!openedRepository) {
+            return false;
         }
-        return false;
+
+        // This can happen whenever `path` has the wrong case sensitivity in
+        // case insensitive file systems
+        // https://github.com/Microsoft/vscode/issues/33498
+        // the above comment is here from git extension and
+        // might not be relevant for fossil
+
+        if (this.getRepository(Uri.file(openedRepository.root))) {
+            return true;
+        }
+
+        const repository = new Repository(openedRepository);
+
+        this.open(repository);
+        return true;
     }
 
     private open(repository: Repository): void {

@@ -71,9 +71,9 @@ import {
 import * as interaction from './interaction';
 import { InteractionAPI, NewBranchOptions } from './interaction';
 import { FossilUriParams, toFossilUri } from './uri';
-import { FossilError } from './fossilExecutable';
 
 import { localize } from './main';
+import { ExecFailure, ExecResult } from './fossilExecutable';
 const iconsRootPath = path.join(path.dirname(__dirname), 'resources', 'icons');
 
 type AvailableIcons =
@@ -272,11 +272,11 @@ export class Repository implements IDisposable, InteractionAPI {
     readonly onDidChangeStatus: Event<void> = this._onDidChangeStatus.event;
 
     private _onDidChangeInOutState = new EventEmitter<void>();
-    readonly onDidChangeInOutState: Event<void> =
+    private readonly onDidChangeInOutState: Event<void> =
         this._onDidChangeInOutState.event;
 
     private _onDidChangeResources = new EventEmitter<void>();
-    readonly onDidChangeResources: Event<void> =
+    private readonly onDidChangeResources: Event<void> =
         this._onDidChangeResources.event;
 
     @memoize
@@ -293,7 +293,8 @@ export class Repository implements IDisposable, InteractionAPI {
         this._onDidChangeOriginalResource.event;
 
     private _onRunOperation = new EventEmitter<Operation>();
-    readonly onRunOperation: Event<Operation> = this._onRunOperation.event;
+    private readonly onRunOperation: Event<Operation> =
+        this._onRunOperation.event;
 
     private _onDidRunOperation = new EventEmitter<Operation>();
     readonly onDidRunOperation: Event<Operation> =
@@ -356,10 +357,6 @@ export class Repository implements IDisposable, InteractionAPI {
             ...state,
         };
         this._onDidChangeInOutState.fire();
-    }
-
-    get repoName(): string {
-        return path.basename(this.repository.root);
     }
 
     get isClean(): boolean {
@@ -465,7 +462,7 @@ export class Repository implements IDisposable, InteractionAPI {
     }
 
     @throttle
-    async status(reason: string): Promise<StatusString> {
+    async status(reason: string): Promise<ExecResult> {
         const statusPromise = this.repository.getStatus(reason);
         await this.runWithProgress(Operation.Status, () => statusPromise);
         this.updateInputBoxPlaceholder();
@@ -780,8 +777,8 @@ export class Repository implements IDisposable, InteractionAPI {
         });
     }
 
-    async newBranch(newBranch: NewBranchOptions): Promise<void> {
-        await this.runWithProgress(Operation.Branch, () =>
+    async newBranch(newBranch: NewBranchOptions): Promise<ExecResult> {
+        return this.runWithProgress(Operation.Branch, () =>
             this.repository.newBranch(newBranch)
         );
     }
@@ -806,13 +803,13 @@ export class Repository implements IDisposable, InteractionAPI {
     async undoOrRedo<T extends boolean>(
         command: 'undo' | 'redo',
         dryRun: T
-    ): Promise<T extends true ? FossilUndoCommand : undefined>;
+    ): Promise<T extends true ? FossilUndoCommand | 'NoUndo' : undefined>;
 
     @throttle
     async undoOrRedo(
         command: 'undo' | 'redo',
         dryRun: boolean
-    ): Promise<FossilUndoCommand | undefined> {
+    ): Promise<FossilUndoCommand | undefined | 'NoUndo'> {
         const op = dryRun ? Operation.UndoDryRun : Operation.Undo;
         const undo = await this.runWithProgress(op, () =>
             this.repository.undoOrRedo(command, dryRun)
@@ -847,25 +844,11 @@ export class Repository implements IDisposable, InteractionAPI {
     }
 
     async changeInoutAfterDelay(delayMs = 3000): Promise<void> {
-        try {
-            // then confirm after delay
-            if (delayMs) {
-                await delay(delayMs);
-            }
-            this._onDidChangeInOutState.fire();
-        } catch (err) {
-            if (err instanceof FossilError) {
-                this.changeAutoInoutState({
-                    status: AutoInOutStatuses.Error,
-                    error: (
-                        err.stderr.replace(/^abort:\s*/, '') ||
-                        err.fossilErrorCode ||
-                        err.message
-                    ).trim(),
-                });
-            }
-            throw err;
+        // then confirm after delay
+        if (delayMs) {
+            await delay(delayMs);
         }
+        this._onDidChangeInOutState.fire();
     }
 
     @throttle
@@ -920,27 +903,23 @@ export class Repository implements IDisposable, InteractionAPI {
             const relativePath = path
                 .relative(this.repository.root, params.path)
                 .replace(/\\/g, '/') as RelativePath;
-            try {
-                return this.repository.cat(relativePath, params.checkin);
-            } catch (e) {
-                if (e instanceof FossilError) {
-                    if (e.fossilErrorCode === 'NoSuchFile') {
-                        return '';
-                    }
-
-                    if (e.exitCode !== 0) {
-                        throw new FossilError({
-                            ...e,
-                            message: localize(
-                                'cantshow',
-                                'Could not show object'
-                            ),
-                        });
-                    }
+            const result = await this.repository.cat(
+                relativePath,
+                params.checkin
+            );
+            if (result.exitCode) {
+                if (result.fossilErrorCode === 'NoSuchFile') {
+                    return '';
                 }
-
-                throw e;
+                throw new Error(
+                    localize(
+                        'cantshow {1}',
+                        'Could not show object {1}',
+                        String(result)
+                    )
+                );
             }
+            return result.stdout;
         });
     }
 
@@ -1009,30 +988,20 @@ export class Repository implements IDisposable, InteractionAPI {
                     const result = await runOperation();
 
                     if (!isReadOnly(operation)) {
-                        try {
-                            await this.updateModelState();
-                        } catch (err) {
-                            // expected to get here on executing `fossil close` operation
+                        const err = await this.updateModelState();
+                        if (err) {
                             if (
-                                err instanceof FossilError &&
                                 err.fossilErrorCode === 'NotAFossilRepository'
                             ) {
                                 this.state = RepositoryState.Disposed;
                             } else {
-                                throw err;
+                                throw new Error(
+                                    `Unexpected fossil result: ${String(err)}`
+                                );
                             }
                         }
                     }
                     return result;
-                } catch (err) {
-                    // we might get in this catch() when user deleted all files
-                    if (
-                        err instanceof FossilError &&
-                        err.fossilErrorCode === 'NotAFossilRepository'
-                    ) {
-                        this.state = RepositoryState.Disposed;
-                    }
-                    throw err;
                 } finally {
                     this._operations = new Set<Operation>(
                         this._operations.values()
@@ -1149,12 +1118,15 @@ export class Repository implements IDisposable, InteractionAPI {
     @throttle
     public async updateModelState(
         reason = 'model state is updating'
-    ): Promise<void> {
-        const statusString = await this.repository.getStatus(reason);
+    ): Promise<ExecFailure | undefined> {
+        const result = await this.repository.getStatus(reason);
+        if (result.exitCode) {
+            return result;
+        }
         const currentBranchPromise = this.repository.getCurrentBranch();
 
         const fossilStatus = (this._fossilStatus =
-            this.repository.parseStatusString(statusString));
+            this.repository.parseStatusString(result.stdout as StatusString));
 
         this._currentBranch = await currentBranchPromise;
 
@@ -1168,6 +1140,7 @@ export class Repository implements IDisposable, InteractionAPI {
         this._sourceControl.count = this.count;
         this._onDidChangeStatus.fire();
         // this._onDidChangeRepository.fire()
+        return;
     }
 
     private get count(): number {

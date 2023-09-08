@@ -212,7 +212,7 @@ suite('Setup', () => {
                 sinon.assert.calledOnceWithExactly(
                     swm,
                     sinon.match(
-                        /^Fossil: there are unsaved changes in the current check-?out\n$/
+                        /^Fossil: there are unsaved changes in the current check-?out$/
                     )
                 );
             }).timeout(3500);
@@ -231,12 +231,11 @@ suite('Setup', () => {
                 await vscode.commands.executeCommand('fossil.close');
                 sinon.assert.calledOnce(closeStub);
 
-                const statusResult = executable.exec(cwd, ['status']);
-                await assert.rejects(statusResult, (thrown: any): boolean => {
-                    return /^current directory is not within an open check-?out\s*$/.test(
-                        thrown.stderr
-                    );
-                });
+                const statusResult = await executable.exec(cwd, ['status']);
+                await assert.match(
+                    statusResult.stderr,
+                    /^current directory is not within an open check-?out\s*$/
+                );
             }).timeout(7000);
         });
     });

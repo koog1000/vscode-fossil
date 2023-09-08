@@ -6,11 +6,11 @@ import * as fs from 'fs';
 import {
     FossilExecutable,
     FossilCWD,
-    IExecutionResult,
     FossilArgs,
     FossilStdErr,
     FossilStdOut,
     FossilExecutablePath,
+    ExecResult,
 } from '../../fossilExecutable';
 import { Model } from '../../model';
 import { Repository } from '../../repository';
@@ -124,7 +124,7 @@ export function fakeExecutionResult({
     stderr?: string;
     args?: FossilArgs;
     exitCode?: number;
-} = {}): IExecutionResult {
+} = {}): ExecResult {
     return {
         fossilPath: '' as FossilExecutablePath,
         exitCode: exitCode ?? 0,
@@ -132,7 +132,7 @@ export function fakeExecutionResult({
         stderr: (stderr ?? '') as FossilStdErr,
         args: args ?? ['status'],
         cwd: '' as FossilCWD,
-    };
+    } as ExecResult;
 }
 
 export function fakeFossilStatus(execStub: ExecStub, status: string): ExecStub {
@@ -224,7 +224,7 @@ export async function fossilOpenForce(
         ['open', fossilPath.fsPath, '--force']
     );
     // on some systems 'info' is not available immediately
-    let res: IExecutionResult;
+    let res: ExecResult;
     for (let i = 0; i < 10; ++i) {
         res = await executable.exec(rootPath.fsPath as FossilCWD, ['info']);
         if (/check-ins:\s+1\s*$/.test(res.stdout)) {

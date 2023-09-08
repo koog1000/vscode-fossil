@@ -44,25 +44,32 @@ export interface FossilSpawnOptions extends cp.SpawnOptionsWithoutStdio {
     readonly stdin_data?: string; // dump data to stdin
 }
 
-export interface IExecutionResult {
+interface BaseFossilResult {
     readonly fossilPath: FossilExecutablePath;
-    readonly exitCode: number;
+    readonly exitCode: 0 | 1 | Inline.ENOENT;
     readonly stdout: FossilStdOut;
     readonly stderr: FossilStdErr;
     readonly args: FossilArgs;
     readonly cwd: FossilCWD;
 }
 
-export interface IFossilErrorData extends IExecutionResult {
-    message: string;
-    fossilErrorCode: FossilErrorCode;
+interface ExecSuccess extends BaseFossilResult {
+    readonly exitCode: 0;
 }
+
+export interface ExecFailure extends BaseFossilResult {
+    readonly exitCode: 1 | Inline.ENOENT; // use `1` as NonZero type
+    readonly message: string;
+    readonly fossilErrorCode: FossilErrorCode;
+    toString(): string;
+}
+
+export type ExecResult = ExecSuccess | ExecFailure;
 
 export type FossilErrorCode =
     | 'NotAFossilRepository' // not within an open check-?out
     | 'NoSuchFile'
     | 'BranchAlreadyExists'
-    | 'NoUndoInformationAvailable'
     | 'OperationMustBeForced'
     | 'unknown';
 
@@ -113,7 +120,7 @@ async function exec(
     fossilPath: FossilExecutablePath,
     args: FossilArgs,
     options: FossilSpawnOptions
-): Promise<IExecutionResult> {
+): Promise<BaseFossilResult> {
     if (!fossilPath) {
         throw new Error('fossil could not be found in the system.');
     }
@@ -175,7 +182,7 @@ async function exec(
     }
 
     const [exitCode, stdout, stderr] = await Promise.all([
-        new Promise<number>((c, e) => {
+        new Promise<0 | 1 | Inline.ENOENT>((c, e) => {
             once(child, 'error', e);
             once(child, 'exit', c);
         }).catch((e: NodeJS.ErrnoException) => {
@@ -213,47 +220,11 @@ async function exec(
     return { fossilPath, exitCode, stdout, stderr, args, cwd: options.cwd };
 }
 
-export class FossilError implements IFossilErrorData {
-    readonly fossilPath: FossilExecutablePath;
-    readonly message: string;
-    readonly stdout: FossilStdOut;
-    readonly stderr: FossilStdErr;
-    readonly exitCode: number;
-    fossilErrorCode: FossilErrorCode;
-    readonly args: FossilArgs;
-    readonly cwd: FossilCWD;
-
-    constructor(data: IFossilErrorData) {
-        this.fossilPath = data.fossilPath;
-        this.message = data.message;
-        this.stdout = data.stdout;
-        this.stderr = data.stderr;
-        this.exitCode = data.exitCode;
-        this.fossilErrorCode = data.fossilErrorCode;
-        this.args = data.args;
-        this.cwd = data.cwd;
-    }
-
-    toString(): string {
-        const result =
-            this.message +
-            ' ' +
-            JSON.stringify(
-                {
-                    exitCode: this.exitCode,
-                    fossilErrorCode: this.fossilErrorCode,
-                    args: this.args,
-                    stdout: this.stdout,
-                    stderr: this.stderr,
-                    cwd: this.cwd,
-                    fossilPath: this.fossilPath,
-                },
-                null,
-                2
-            );
-
-        return result;
-    }
+export function toString(this: ExecFailure): string {
+    // because https://github.com/github/codeql-action/issues/1230
+    // we ignore `toString` in global `.eslintrc.json`
+    const { message, toString, ...clone } = this;
+    return message + ' ' + JSON.stringify(clone, null, 2);
 }
 
 export class FossilExecutable {
@@ -305,8 +276,8 @@ export class FossilExecutable {
     async openClone(
         fossilPath: FossilPath,
         fossilCwd: FossilCWD
-    ): Promise<void> {
-        await this.exec(fossilCwd, ['open', fossilPath]);
+    ): Promise<ExecResult> {
+        return this.exec(fossilCwd, ['open', fossilPath]);
     }
 
     async openCloneForce(
@@ -320,42 +291,33 @@ export class FossilExecutable {
         cwd: FossilCWD,
         args: FossilArgs,
         reason = '',
-        options: Omit<FossilSpawnOptions, 'cwd'> = {}
-    ): Promise<IExecutionResult> {
-        try {
-            const result = await this._exec(args, reason, { cwd, ...options });
-            return result;
-        } catch (err) {
-            if (
-                err instanceof FossilError &&
-                err.fossilErrorCode === 'unknown' &&
-                args[0] !== 'close'
-            ) {
-                const openLog = await interaction.errorPromptOpenLog(err);
-                if (openLog) {
-                    this.outputChannel.show();
-                }
+        options: Omit<FossilSpawnOptions, 'cwd'> = {} as const
+    ): Promise<ExecResult> {
+        const result = await this._exec(args, reason, { cwd, ...options });
+        if (
+            result.exitCode &&
+            result.fossilErrorCode === 'unknown' &&
+            args[0] != 'close'
+        ) {
+            const openLog = await interaction.errorPromptOpenLog(result);
+            if (openLog) {
+                this.outputChannel.show();
             }
-            throw err;
         }
+        return result;
     }
 
     private async _exec(
         args: FossilArgs,
         reason: string,
         options: FossilSpawnOptions
-    ): Promise<IExecutionResult> {
+    ): Promise<ExecResult> {
         const startTimeHR = process.hrtime();
         const logTimeout = setTimeout(
             () => this.logArgs(args, reason, 'still running'),
             500
         );
-
-        const result: IExecutionResult = await exec(
-            this.fossilPath,
-            args,
-            options
-        );
+        const result = await exec(this.fossilPath, args, options);
         clearTimeout(logTimeout);
 
         const durationHR = process.hrtime(startTimeHR);
@@ -397,16 +359,14 @@ export class FossilExecutable {
                 this.log(`${result.stderr}\n`);
             }
 
-            return Promise.reject<IExecutionResult>(
-                new FossilError({
-                    message: 'Failed to execute fossil',
-                    ...result,
-                    fossilErrorCode,
-                })
-            );
+            return {
+                message: 'Failed to execute fossil',
+                ...result,
+                fossilErrorCode,
+                toString,
+            } as ExecFailure;
         }
-
-        return result;
+        return result as ExecSuccess;
     }
 
     private log(output: string): void {
