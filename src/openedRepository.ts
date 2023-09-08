@@ -12,11 +12,9 @@ import { workspace, window, Uri } from 'vscode';
 import { throttle } from './decorators';
 import {
     FossilExecutable,
-    FossilError,
     FossilSpawnOptions,
-    IExecutionResult,
     FossilArgs,
-    FossilStdOut,
+    ExecResult,
 } from './fossilExecutable';
 import { NewBranchOptions } from './interaction';
 import { FossilCWD } from './fossilExecutable';
@@ -56,7 +54,7 @@ export type FossilCheckin =
     | FossilSpecialTags;
 /** Stdout of `fossil status` command */
 export type StatusString = Distinct<string, 'fossil status stdout'>;
-/** Command returned by `fossil undo --dry-run` */
+/** Command (i.e 'update', 'merge', ) returned by `fossil undo --dry-run` */
 export type FossilUndoCommand = Distinct<string, 'Undo Command'>;
 /** Any commit message */
 export type FossilCommitMessage = Distinct<string, 'Commit Message'>;
@@ -85,6 +83,7 @@ interface LogEntryOptions {
     readonly checkin?: FossilCheckin;
 }
 
+// ToDo: add `uri` to `PullOptions` interface
 export interface PullOptions {
     //readonly branch?: FossilBranch;
     //readonly revs?: FossilCheckin[];
@@ -216,8 +215,8 @@ export class OpenedRepository {
     async exec(
         args: FossilArgs,
         reason = '',
-        options: Omit<FossilSpawnOptions, 'cwd'> = {}
-    ): Promise<IExecutionResult> {
+        options: Omit<FossilSpawnOptions, 'cwd'> = {} as const
+    ): Promise<ExecResult> {
         return this.executable.exec(this.root, args, reason, options);
     }
 
@@ -233,13 +232,12 @@ export class OpenedRepository {
     async cat(
         relativePath: RelativePath,
         checkin: FossilCheckin
-    ): Promise<FossilStdOut> {
-        const result = await this.exec(
+    ): Promise<ExecResult> {
+        return this.exec(
             ['cat', relativePath, ...(checkin ? ['-r', checkin] : [])],
             '',
             { logErrors: false }
         );
-        return result.stdout;
     }
 
     /**
@@ -248,16 +246,8 @@ export class OpenedRepository {
      *           string on success
      */
     async close(): Promise<string> {
-        try {
-            const result = await this.exec(['close']);
-            return result.stdout + result.stderr;
-        } catch (err) {
-            if (err instanceof FossilError && err.stderr) {
-                return err.stdout + err.stderr;
-            } else {
-                return 'Unknown Err';
-            }
-        }
+        const result = await this.exec(['close']);
+        return (result.stdout + result.stderr).trim();
     }
 
     async update(checkin: FossilCheckin): Promise<void> {
@@ -293,16 +283,15 @@ export class OpenedRepository {
     }
 
     async getCurrentBranch(): Promise<FossilBranch | undefined> {
-        try {
-            const res = await this.exec(['branch', 'current']);
-            return res.stdout.trim() as FossilBranch;
-        } catch {
-            return undefined;
+        const result = await this.exec(['branch', 'current']);
+        if (result.exitCode) {
+            return;
         }
+        return result.stdout.trim() as FossilBranch;
     }
 
-    async newBranch(newBranch: NewBranchOptions): Promise<void> {
-        await this.exec([
+    async newBranch(newBranch: NewBranchOptions): Promise<ExecResult> {
+        return await this.exec([
             'branch',
             'new',
             newBranch.branch,
@@ -330,6 +319,9 @@ export class OpenedRepository {
     async praise(path: string): Promise<Praise[]> {
         const diffPromise = this.exec(['diff', '--json', path]);
         const praiseRes = await this.exec(['praise', path]);
+        if (praiseRes.exitCode) {
+            return []; // error should be shown to the user already
+        }
         const praises = praiseRes.stdout
             .split('\n')
             .map(line => line.split(/\s+|:/, 3) as Praise);
@@ -434,11 +426,11 @@ export class OpenedRepository {
     async undoOrRedo<DRY extends boolean>(
         command: 'undo' | 'redo',
         dryRun: DRY
-    ): Promise<FossilUndoCommand | undefined>;
+    ): Promise<FossilUndoCommand | undefined | 'NoUndo'>;
     async undoOrRedo(
         command: 'undo' | 'redo',
         dryRun: boolean
-    ): Promise<FossilUndoCommand | undefined> {
+    ): Promise<FossilUndoCommand | undefined | 'NoUndo'> {
         const result = await this.exec([
             command,
             ...(dryRun ? ['--dry-run'] : []),
@@ -452,21 +444,13 @@ export class OpenedRepository {
             );
 
         if (!match) {
-            const error = new FossilError({
-                message: `Unexpected undo result: ${JSON.stringify(
-                    result.stdout
-                )}`,
-                fossilErrorCode: 'unknown',
-                ...result,
-            });
-            if (
+            const no_undo =
                 /^nothing to undo/.test(result.stderr) || // non dry
-                /^No undo or redo is available/.test(result.stdout) // dry
-            ) {
-                error.fossilErrorCode = 'NoUndoInformationAvailable';
+                /^No undo or redo is available/.test(result.stdout); // dry
+            if (no_undo) {
+                return 'NoUndo';
             }
-
-            throw error;
+            throw new Error(`Unexpected output ${result.stdout}`);
         }
 
         return match[2] as FossilUndoCommand;
@@ -550,13 +534,8 @@ export class OpenedRepository {
 
     /** Report the change status of files in the current checkout */
     @throttle
-    async getStatus(reason: string): Promise<StatusString> {
-        // quiet, include renames/copies of current checkout
-        const executionResult = await this.exec(
-            ['status', '--differ', '--merge'],
-            reason
-        );
-        return executionResult.stdout as StatusString;
+    async getStatus(reason: string): Promise<ExecResult> {
+        return this.exec(['status', '--differ', '--merge'], reason);
     }
 
     parseStatusString(status: StatusString): FossilStatus {
@@ -575,7 +554,7 @@ export class OpenedRepository {
                 info.set(key, value);
             }
         }
-        const checkoutStr = info.get('checkout')!;
+        const checkoutStr: string | undefined = info.get('checkout')!;
         const spaceIdx = checkoutStr.indexOf(' ');
         const checkout = {
             checkin: checkoutStr.slice(0, spaceIdx) as FossilCheckin,

@@ -23,13 +23,13 @@
         "@typescript-eslint/no-unused-vars": [
             "error",
             {
-                "varsIgnorePattern": "^_",
+                "varsIgnorePattern": "^_|^toString$",
                 "argsIgnorePattern": "^_"
             }
         ],
-        "no-cond-assign": 0,
+        "no-cond-assign": 2,
         "no-constant-condition": 0,
-        "no-inner-declarations": 0,
+        "no-inner-declarations": 2,
         "no-prototype-builtins": 0,
         "@typescript-eslint/no-explicit-any": 0,
         "@typescript-eslint/no-namespace": 0,

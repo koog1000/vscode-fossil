@@ -48,7 +48,7 @@ import * as humanise from './humanise';
 import { partition } from './util';
 import { toFossilUri } from './uri';
 import { FossilPreviewManager } from './preview';
-import { FossilExecutable, FossilError, FossilCWD } from './fossilExecutable';
+import { FossilExecutable, FossilCWD } from './fossilExecutable';
 
 import { localize } from './main';
 import { PraiseAnnotator } from './praise';
@@ -352,21 +352,16 @@ export class CommandCenter {
         filePath: FossilPath,
         parentPath: FossilCWD
     ): Promise<void> {
-        try {
-            await this.executable.openClone(filePath, parentPath);
-        } catch (err) {
-            if (
-                err instanceof FossilError &&
-                err.fossilErrorCode === 'OperationMustBeForced'
-            ) {
-                const openNotEmpty = await interaction.confirmOpenNotEmpty(
-                    parentPath
-                );
-                if (openNotEmpty) {
-                    this.executable.openCloneForce(filePath, parentPath);
-                }
-            } else {
-                throw err;
+        const result = await this.executable.openClone(filePath, parentPath);
+        if (
+            result.exitCode &&
+            result.fossilErrorCode === 'OperationMustBeForced'
+        ) {
+            const openNotEmpty = await interaction.confirmOpenNotEmpty(
+                parentPath
+            );
+            if (openNotEmpty) {
+                await this.executable.openCloneForce(filePath, parentPath);
             }
         }
     }
@@ -1030,19 +1025,16 @@ export class CommandCenter {
         commands.executeCommand('workbench.view.scm');
     }
 
-    private async undoOrRedo(repository: Repository, command: 'undo' | 'redo') {
-        try {
-            const undo = await repository.undoOrRedo(command, true); // dry-run
-            if (await interaction.confirmUndoOrRedo(command, undo)) {
-                await repository.undoOrRedo(command, false); // real-thing
-            }
-        } catch (e) {
-            if (
-                e instanceof FossilError &&
-                e.fossilErrorCode === 'NoUndoInformationAvailable'
-            ) {
-                await interaction.warnNoUndoOrRedo(command);
-            }
+    private async undoOrRedo(
+        repository: Repository,
+        command: 'undo' | 'redo'
+    ): Promise<void> {
+        const undo = await repository.undoOrRedo(command, true); // dry-run
+        if (undo == 'NoUndo') {
+            return interaction.warnNoUndoOrRedo(command);
+        }
+        if (await interaction.confirmUndoOrRedo(command, undo)) {
+            await repository.undoOrRedo(command, false); // real-thing
         }
     }
 
@@ -1161,21 +1153,18 @@ export class CommandCenter {
         if (!newBranch) {
             return;
         }
-        try {
-            await repository.newBranch(newBranch);
-        } catch (e) {
-            if (
-                e instanceof FossilError &&
-                e.fossilErrorCode === 'BranchAlreadyExists'
-            ) {
-                const action = await interaction.warnBranchAlreadyExists(
-                    newBranch.branch
-                );
-                if (action === BranchExistsAction.Reopen) {
-                    await repository.newBranch(newBranch);
-                } else if (action === BranchExistsAction.UpdateTo) {
-                    await repository.update(newBranch.branch);
-                }
+        const result = await repository.newBranch(newBranch);
+        if (
+            result.exitCode &&
+            result.fossilErrorCode === 'BranchAlreadyExists'
+        ) {
+            const action = await interaction.warnBranchAlreadyExists(
+                newBranch.branch
+            );
+            if (action === BranchExistsAction.Reopen) {
+                await repository.newBranch(newBranch);
+            } else if (action === BranchExistsAction.UpdateTo) {
+                await repository.update(newBranch.branch);
             }
         }
     }

@@ -43,9 +43,9 @@ import { Repository, LogEntriesOptions } from './repository';
 import typedConfig from './config';
 import { localize } from './main';
 import {
+    ExecFailure,
     FossilArgs,
     FossilCWD,
-    FossilError,
     FossilStdOut,
 } from './fossilExecutable';
 import { ThemeIcon } from 'vscode';
@@ -241,16 +241,16 @@ export function warnResolveConflicts(this: void): Thenable<string | undefined> {
     );
 }
 
-export function warnNoUndoOrRedo(
+export async function warnNoUndoOrRedo(
     this: void,
     command: 'undo' | 'redo'
-): Thenable<string | undefined> {
-    return window.showWarningMessage(
+): Promise<void> {
+    await window.showWarningMessage(
         localize(`no ${command}`, `Nothing to ${command}.`)
     );
 }
 
-export async function errorPromptOpenLog(err: FossilError): Promise<boolean> {
+export async function errorPromptOpenLog(err: ExecFailure): Promise<boolean> {
     const hint = (err.stderr || err.message || String(err))
         .replace(/^abort: /im, '')
         .split(/[\r\n]/)

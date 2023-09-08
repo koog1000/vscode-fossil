@@ -2,10 +2,11 @@ import * as vscode from 'vscode';
 import * as sinon from 'sinon';
 import {
     FossilCWD,
-    FossilError,
     FossilExecutablePath,
     FossilStdOut,
     FossilStdErr,
+    ExecFailure,
+    toString as ExecFailureToString,
 } from '../../fossilExecutable';
 import * as assert from 'assert/strict';
 import { getExecutable } from './common';
@@ -17,21 +18,24 @@ suite('Infrastructure', () => {
     afterEach(() => {
         sandbox.restore();
     });
-    test('Error is thrown when executing unknown command', async () => {
+    test('Error is not thrown when executing unknown command', async () => {
         const rootUri = vscode.workspace.workspaceFolders![0].uri;
         const cwd = rootUri.fsPath as FossilCWD;
         const showErrorMessage: sinon.SinonStub = sandbox
             .stub(vscode.window, 'showErrorMessage')
             .resolves();
         const executable = getExecutable();
-        await assert.rejects(executable.exec(cwd, ['fizzbuzz'] as any), {
+        const result = await executable.exec(cwd, ['fizzbuzz'] as any);
+        assert.deepEqual(result, {
             message: 'Failed to execute fossil',
-            stderr: 'fossil: unknown command: fizzbuzz\nfossil: use "help" for more information\n',
-            stdout: '',
+            stderr: 'fossil: unknown command: fizzbuzz\nfossil: use "help" for more information\n' as FossilStdErr,
+            stdout: '' as FossilStdOut,
             exitCode: 1,
-            args: ['fizzbuzz'],
+            args: ['fizzbuzz' as any],
             fossilErrorCode: 'unknown',
             cwd: cwd,
+            fossilPath: (executable as any).fossilPath,
+            toString: ExecFailureToString,
         });
         sinon.assert.calledOnceWithExactly(
             showErrorMessage,
@@ -40,25 +44,26 @@ suite('Infrastructure', () => {
         );
     });
     test('Error to string is valid', async () => {
-        const TestError = new FossilError({
+        const TestError = {
             message: 'my message',
             stdout: 'my stdout' as FossilStdOut,
             stderr: 'my stderr' as FossilStdErr,
-            exitCode: 0,
+            exitCode: 1,
             fossilErrorCode: 'unknown',
             args: ['cat'],
             cwd: 'cwd' as FossilCWD,
             fossilPath: '/bin/fossil' as FossilExecutablePath,
-        });
+            toString: ExecFailureToString,
+        } as ExecFailure;
         const referenceString =
             'my message {\n' +
-            '  "exitCode": 0,\n' +
+            '  "stdout": "my stdout",\n' +
+            '  "stderr": "my stderr",\n' +
+            '  "exitCode": 1,\n' +
             '  "fossilErrorCode": "unknown",\n' +
             '  "args": [\n' +
             '    "cat"\n' +
             '  ],\n' +
-            '  "stdout": "my stdout",\n' +
-            '  "stderr": "my stderr",\n' +
             '  "cwd": "cwd",\n' +
             '  "fossilPath": "/bin/fossil"\n' +
             '}';
