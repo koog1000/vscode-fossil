@@ -53,8 +53,6 @@ import { QuickInputButton } from 'vscode';
 
 const SHORT_HASH_LENGTH = 12;
 const LONG_HASH_LENGTH = SHORT_HASH_LENGTH * 2;
-const BULLET = '\u2022';
-const NBSP = '\u00a0';
 let lastUsedRepoUrl = 'https://fossil-scm.org/home';
 let lastUsedNewFossilPath: Uri | undefined;
 let lastUsedUser: string | undefined;
@@ -757,9 +755,9 @@ function describeLogEntrySource(kind: CommitSources): string {
 }
 
 function describeCommitOneLine(commit: Commit): string {
-    return `#${commit.hash.slice(0, LONG_HASH_LENGTH)} ${BULLET} ${
+    return `#${commit.hash.slice(0, LONG_HASH_LENGTH)} • ${
         commit.author
-    }, ${humanise.ageFromNow(commit.date)} ${BULLET} ${commit.message}`;
+    }, ${humanise.ageFromNow(commit.date)} • ${commit.message}`;
 }
 
 function asBackItem(
@@ -769,7 +767,7 @@ function asBackItem(
     const goBack = localize('go back', 'go back');
     const to = localize('to', 'to');
     return new LiteralRunnableQuickPickItem(
-        `$(arrow-left)${NBSP}${NBSP}${goBack}`,
+        `$(arrow-left)  ${goBack}`,
         `${to} ${description}`,
         '',
         action
@@ -1000,7 +998,7 @@ export async function pickDiffAction(
             diffAction(undefined)
         ),
         new LiteralRunnableQuickPickItem(
-            `$(arrow-left)${NBSP}${NBSP}Go back`,
+            `$(arrow-left)  Go back`,
             '',
             'Select first commit',
             backAction
@@ -1255,7 +1253,7 @@ class TimelineEntryItem extends RunnableQuickPickItem {
     }
     get label(): string {
         const hash = this.commit.hash.slice(0, SHORT_HASH_LENGTH);
-        return `$(circle-outline) ${hash} ${BULLET} ${this.commit.branch}`;
+        return `$(circle-outline) ${hash} • ${this.commit.branch}`;
     }
     get description(): string {
         return `$(person)${this.commit.author} $(calendar) ${this.age}`;
@@ -1275,7 +1273,7 @@ class StashEntryItem implements QuickPickItem {
     }
     get label(): string {
         const hash = this.item.hash.slice(0, SHORT_HASH_LENGTH);
-        return `$(circle-outline) ${this.item.stashId} ${BULLET} ${hash}`;
+        return `$(circle-outline) ${this.item.stashId} • ${hash}`;
     }
     get description(): string {
         return `$(calendar) ${this.age}`;
@@ -1324,7 +1322,7 @@ class FileStatusQuickPickItem extends RunnableQuickPickItem {
         return path.basename(this.status.path);
     }
     get label(): string {
-        return `${NBSP}${NBSP}${NBSP}${NBSP}${this.icon}${NBSP}${NBSP}${this.basename}`;
+        return `    ${this.icon}  ${this.basename}`;
     }
     get description(): string {
         return path.dirname(this.status.path);
