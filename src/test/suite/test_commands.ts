@@ -376,6 +376,16 @@ export function MergeSuite(this: Suite): void {
             .onFirstCall()
             .callsFake(items => {
                 assert.ok(items instanceof Array);
+                assert.ok(typeof items[0].description == 'string');
+                assert.match(
+                    items[0].description,
+                    /\$\(person\)\w+ \$\(calendar\) a few moments ago$/
+                );
+                assert.equal(items[0].detail, 'test merge message');
+                assert.match(
+                    items[0].label,
+                    /\$\(circle-outline\) [0-9a-f]{12} • trunk$/
+                );
                 hash = (items[0] as unknown as { commit: { hash: string } })
                     .commit.hash;
                 assert.ok(hash);
