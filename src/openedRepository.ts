@@ -512,7 +512,7 @@ export class OpenedRepository {
                     out.push({
                         stashId: parseInt(match[1], 10),
                         hash: match[2],
-                        date: new Date(match[3]),
+                        date: new Date(match[3] + '.000Z'),
                         comment,
                     });
                 }

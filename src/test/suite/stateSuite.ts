@@ -129,6 +129,8 @@ export function StashSuite(this: Suite): void {
                 items[0].label,
                 /\$\(circle-outline\) 1 • [a-f0-9]{12}/
             );
+            assert.equal(items[0].description, '$(calendar) a few moments ago');
+            assert.equal(items[0].detail, 'stashSave commit message');
             return Promise.resolve(items[0]);
         });
         await commands.executeCommand('fossil.stashDrop');
