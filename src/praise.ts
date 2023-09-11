@@ -76,7 +76,7 @@ export class PraiseAnnotator {
     ): Promise<PraiseAnnotator> {
         await editor.document.save(); // for `fossil diff` to work
         let prev_hash: FossilHash | undefined;
-        const space = '\u00a0';
+        const nbsp = ' ';
         const decorations = praises.map((praise, lineNo) => {
             const range = editor.document.validateRange(
                 new Range(lineNo, 0, lineNo, 0)
@@ -88,17 +88,17 @@ export class PraiseAnnotator {
             };
             if (prev_hash == praise[0]) {
                 before = {
-                    contentText: space,
+                    contentText: nbsp,
                     textDecoration: 'none;padding: 0 33ch 0 0',
                     ...common,
                 };
             } else {
                 prev_hash = praise[0];
                 // total width: 8(hash) + 1 + 10(date) + 1 + 13 = 33
-                const checkin = praise[0].slice(0, 8) || space.repeat(8);
-                const date = praise[1] || space.repeat(10);
+                const checkin = praise[0].slice(0, 8) || nbsp.repeat(8);
+                const date = praise[1] || nbsp.repeat(10);
                 const username = praise[2].slice(-13);
-                const contentText = `${checkin} ${date}${space.repeat(
+                const contentText = `${checkin} ${date}${nbsp.repeat(
                     14 - username.length
                 )}${username}`;
                 before = {
