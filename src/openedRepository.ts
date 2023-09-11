@@ -619,7 +619,7 @@ export class OpenedRepository {
                     branch,
                     message,
                     author,
-                    date: new Date(date),
+                    date: new Date(date + '.000Z'),
                 };
                 if (verbose) {
                     lastFiles = (commit as CommitDetails).files = [];

@@ -45,6 +45,8 @@ export function UpdateSuite(this: Suite): void {
         showQuickPick.onFirstCall().callsFake(items => {
             assert.ok(items instanceof Array);
             assert.equal(items[2].label, '$(git-branch) trunk');
+            assert.equal(items[2].description, 'current');
+            assert.equal(items[2].detail, undefined);
             return Promise.resolve(items[2]);
         });
 
@@ -65,6 +67,8 @@ export function UpdateSuite(this: Suite): void {
         showQuickPick.onFirstCall().callsFake(items => {
             assert.ok(items instanceof Array);
             assert.equal(items[0].label, '$(pencil) Checkout by hash');
+            assert.equal(items[0].description, undefined);
+            assert.equal(items[0].detail, undefined);
             return Promise.resolve(items[0]);
         });
         const showInputBox = this.ctx.sandbox.stub(window, 'showInputBox');
