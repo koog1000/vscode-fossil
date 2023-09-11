@@ -1377,12 +1377,13 @@ class UserInputItem extends RunnableQuickPickItem implements QuickPickItem {
     async run(): Promise<CheckinItem<FossilCheckin> | undefined> {
         const userInput = await inputCommon(
             'commit hash',
-            'Commit hash to checkout'
+            'Enter hash/check-in/tag to update to',
+            { placeHolder: 'hash/check-in/tag' }
         );
         if (userInput) {
             return new CheckinItem(userInput as FossilCheckin);
         }
-        return undefined;
+        return;
     }
 }
 
