@@ -292,4 +292,67 @@ export function CommitSuite(this: Suite): void {
             'must not be committed'
         );
     });
+
+    test('Commit missing files', async () => {
+        const repository = getRepository();
+        const execStub = getExecStub(this.ctx.sandbox);
+        const statusStub = fakeFossilStatus(
+            execStub,
+            'ADDED a\nMISSING b\nMISSING c'
+        );
+        await repository.updateModelState();
+        sinon.assert.calledOnce(statusStub);
+        repository.sourceControl.inputBox.value = 'remove files';
+        const swm: sinon.SinonStub = this.ctx.sandbox
+            .stub(window, 'showWarningMessage')
+            .withArgs(sinon.match(/^Did you want to delete/))
+            .resolves('&&Delete' as any);
+        await commands.executeCommand('fossil.stageAll');
+
+        const forgetStub = execStub
+            .withArgs(sinon.match.array.startsWith(['forget']))
+            .resolves();
+        const commitStub = execStub
+            .withArgs(sinon.match.array.startsWith(['commit']))
+            .resolves();
+
+        await commands.executeCommand('fossil.commitWithInput');
+        sinon.assert.calledOnceWithExactly(
+            swm,
+            'Did you want to delete 2 missing files in this commit?\n\n • b\n • c',
+            { modal: true },
+            '&&Delete'
+        );
+        sinon.assert.calledOnceWithExactly(forgetStub, ['forget', 'b', 'c']);
+        sinon.assert.calledOnceWithExactly(commitStub, [
+            'commit',
+            'a',
+            'b',
+            'c',
+            '-m',
+            'remove files',
+        ]);
+    });
+
+    test('Do not commit missing file', async () => {
+        const repository = getRepository();
+        const execStub = getExecStub(this.ctx.sandbox);
+        const statusStub = fakeFossilStatus(execStub, 'ADDED a\nMISSING b');
+        await repository.updateModelState();
+        sinon.assert.calledOnce(statusStub);
+        repository.sourceControl.inputBox.value = 'must not commit';
+        const swm: sinon.SinonStub = this.ctx.sandbox
+            .stub(window, 'showWarningMessage')
+            .withArgs(sinon.match(/^Did you want to delete/))
+            .resolves();
+        await commands.executeCommand('fossil.stageAll');
+
+        await commands.executeCommand('fossil.commitWithInput');
+        sinon.assert.calledOnceWithExactly(
+            swm,
+            "Did you want to delete 'b' in this commit?",
+            { modal: true },
+            '&&Delete'
+        );
+    });
 }

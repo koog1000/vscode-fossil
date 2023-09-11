@@ -884,12 +884,16 @@ export class CommandCenter {
             }
         }
 
-        if (scope === CommitScope.WORKING_GROUP) {
-            const missingResources =
-                repository.workingGroup.resourceStates.filter(
-                    r => r.status === ResourceStatus.MISSING
-                );
-            if (missingResources.length > 0) {
+        if (
+            scope === CommitScope.WORKING_GROUP ||
+            scope === CommitScope.STAGING_GROUP
+        ) {
+            const missingResources = (
+                scope === CommitScope.WORKING_GROUP
+                    ? repository.workingGroup
+                    : repository.stagingGroup
+            ).resourceStates.filter(r => r.status === ResourceStatus.MISSING);
+            if (missingResources.length) {
                 const missingFilenames = missingResources.map(r =>
                     repository.mapResourceToWorkspaceRelativePath(r)
                 );
