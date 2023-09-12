@@ -2,6 +2,7 @@ import { Uri, window, workspace, commands } from 'vscode';
 import * as sinon from 'sinon';
 import {
     cleanupFossil,
+    fakeExecutionResult,
     fakeFossilStatus,
     getExecStub,
     getRepository,
@@ -76,6 +77,52 @@ export function UpdateSuite(this: Suite): void {
         await commands.executeCommand('fossil.branchChange');
 
         sinon.assert.calledOnce(showInputBox);
+        sinon.assert.calledOnce(updateCall);
+    });
+
+    test('Change branch to hash (cancel)', async () => {
+        const showQuickPick = this.ctx.sandbox.stub(window, 'showQuickPick');
+        showQuickPick.onFirstCall().callsFake(items => {
+            assert.ok(items instanceof Array);
+            assert.equal(items[0].label, '$(pencil) Checkout by hash');
+            return Promise.resolve(items[0]);
+        });
+        const showInputBox = this.ctx.sandbox.stub(window, 'showInputBox');
+        showInputBox.onFirstCall().resolves();
+        await commands.executeCommand('fossil.branchChange');
+        sinon.assert.calledOnce(showInputBox);
+    });
+
+    test('Change branch to tag', async () => {
+        const showQuickPick = this.ctx.sandbox.stub(window, 'showQuickPick');
+
+        const execStub = getExecStub(this.ctx.sandbox);
+        const tagsStub = execStub
+            .withArgs(['tag', 'list'])
+            .resolves(fakeExecutionResult({ stdout: 'a\nb $(plus)\nc c c' }));
+        const branchesStub = execStub
+            .withArgs(sinon.match.array.startsWith(['branch', 'ls']))
+            .resolves(
+                fakeExecutionResult({ stdout: '   d\n   e $(plus)\n   f f f' })
+            );
+
+        showQuickPick.onFirstCall().callsFake(items => {
+            assert.ok(items instanceof Array);
+            assert.equal(items[0].label, '$(pencil) Checkout by hash');
+            assert.equal(items[1].label, '');
+            assert.equal(items[2].label, '$(git-branch) d');
+            assert.equal(items[3].label, '$(git-branch) e $(plus)');
+            assert.equal(items[4].label, '$(git-branch) f f f');
+            assert.equal(items[5].label, '$(tag) a');
+            assert.equal(items[6].label, '$(tag) b $(plus)');
+            assert.equal(items[7].label, '$(tag) c c c');
+            return Promise.resolve(items[5]);
+        });
+        const updateCall = execStub.withArgs(['update', 'a']).resolves();
+        await commands.executeCommand('fossil.branchChange');
+        sinon.assert.calledOnce(tagsStub);
+        sinon.assert.calledOnce(branchesStub);
+        sinon.assert.calledOnce(showQuickPick);
         sinon.assert.calledOnce(updateCall);
     });
 }
