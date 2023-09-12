@@ -65,6 +65,7 @@ export const enum MergeAction {
 }
 export type FossilUsername = Distinct<string, 'fossil username'>;
 export type FossilPassword = Distinct<string, 'fossil password'>;
+export type StashID = Distinct<number, 'stash id'>;
 
 export interface TimelineOptions extends LogEntryOptions {
     /** Output items affecting filePath only */
@@ -130,7 +131,7 @@ export interface FossilRemote {
 }
 
 export interface StashItem {
-    readonly stashId: number;
+    readonly stashId: StashID;
     readonly hash: string;
     readonly date: Date;
     readonly comment: FossilCommitMessage;
@@ -510,7 +511,7 @@ export class OpenedRepository {
                         comment = lines[++idx].trim() as FossilCommitMessage;
                     }
                     out.push({
-                        stashId: parseInt(match[1], 10),
+                        stashId: parseInt(match[1], 10) as StashID,
                         hash: match[2],
                         date: new Date(match[3] + '.000Z'),
                         comment,
@@ -527,7 +528,7 @@ export class OpenedRepository {
 
     async stashApplyOrDrop(
         operation: 'apply' | 'drop',
-        stashId: number
+        stashId: StashID
     ): Promise<void> {
         await this.exec(['stash', operation, stashId.toString()]);
     }

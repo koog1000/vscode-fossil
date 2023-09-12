@@ -37,6 +37,7 @@ import {
     ResourceStatus,
     UserPath,
     RelativePath,
+    StashID,
 } from './openedRepository';
 import * as humanise from './humanise';
 import { Repository, LogEntriesOptions } from './repository';
@@ -874,7 +875,7 @@ export async function pickCommitToCherrypick(
 export async function pickStashItem(
     items: StashItem[],
     operation: 'drop' | 'apply'
-): Promise<number | undefined> {
+): Promise<StashID | undefined> {
     const stashItems = items.map(entry => new StashEntryItem(entry));
     const placeHolder = localize(
         `stash to ${operation}`,

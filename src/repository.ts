@@ -42,6 +42,7 @@ import {
     FossilClass,
     AnyPath,
     UserPath,
+    StashID,
 } from './openedRepository';
 import {
     anyEvent,
@@ -960,7 +961,7 @@ export class Repository implements IDisposable, InteractionAPI {
 
     async stashApplyOrDrop(
         operation: 'apply' | 'drop',
-        stashId: number
+        stashId: StashID
     ): Promise<void> {
         return this.runWithProgress(Operation.Status, async () =>
             this.repository.stashApplyOrDrop(operation, stashId)
