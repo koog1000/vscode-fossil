@@ -56,6 +56,45 @@ export function UpdateSuite(this: Suite): void {
         sinon.assert.calledOnce(updateCall);
     });
 
+    const selectTrunk = async () => {
+        const execStub = getExecStub(this.ctx.sandbox);
+        await fakeFossilStatus(execStub, 'ADDED fake.txt\nCHERRYPICK aaa');
+        const repository = getRepository();
+        await repository.updateModelState();
+        assert.ok(repository.fossilStatus?.isMerge);
+
+        const updateCall = execStub.withArgs(['update', 'trunk']).resolves();
+
+        const showQuickPick = this.ctx.sandbox.stub(window, 'showQuickPick');
+        showQuickPick.onFirstCall().callsFake(items => {
+            assert.ok(items instanceof Array);
+            assert.equal(items[2].label, '$(git-branch) trunk');
+            return Promise.resolve(items[2]);
+        });
+
+        const swm: sinon.SinonStub = this.ctx.sandbox.stub(
+            window,
+            'showWarningMessage'
+        );
+        return [swm, updateCall];
+    };
+
+    test('Change branch to trunk when merge is active', async () => {
+        const [swm, updateCall] = await selectTrunk();
+        swm.resolves('Continue' as any);
+        await commands.executeCommand('fossil.branchChange');
+        sinon.assert.calledOnce(swm);
+        sinon.assert.calledOnce(updateCall);
+    });
+
+    test('Change branch to trunk when merge is active (cancel)', async () => {
+        const [swm, updateCall] = await selectTrunk();
+        swm.resolves();
+        await commands.executeCommand('fossil.branchChange');
+        sinon.assert.calledOnce(swm);
+        sinon.assert.notCalled(updateCall);
+    });
+
     test('Change branch to hash', async () => {
         const repository = getRepository();
         await cleanupFossil(repository);

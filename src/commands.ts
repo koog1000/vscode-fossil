@@ -43,7 +43,7 @@ import {
 } from './repository';
 import { FossilResourceGroup, isResourceGroup } from './resourceGroups';
 import * as interaction from './interaction';
-import { WarnScenario, BranchExistsAction, CommitSources } from './interaction';
+import { BranchExistsAction, CommitSources } from './interaction';
 import * as humanise from './humanise';
 import { partition } from './util';
 import { toFossilUri } from './uri';
@@ -1025,10 +1025,6 @@ export class CommandCenter {
         });
     }
 
-    private focusScm() {
-        commands.executeCommand('workbench.view.scm');
-    }
-
     private async undoOrRedo(
         repository: Repository,
         command: 'undo' | 'redo'
@@ -1138,11 +1134,9 @@ export class CommandCenter {
     @command('fossil.branchChange', { repository: true })
     async branchChange(repository: Repository): Promise<void> {
         // branches/tags
-        if (await interaction.checkThenWarnOutstandingMerge(repository)) {
-            this.focusScm();
+        if (await interaction.checkActiveMerge(repository)) {
             return;
         }
-        await interaction.checkThenWarnUnclean(repository, WarnScenario.Update);
         const refs = await repository.getBranchesAndTags();
 
         const checkin = await interaction.pickUpdateCheckin(refs);
@@ -1185,26 +1179,12 @@ export class CommandCenter {
         await repository.pull(pullOptions);
     }
 
-    private async isItOkayToMerge(repository: Repository): Promise<boolean> {
-        if (
-            (await interaction.checkThenWarnOutstandingMerge(repository)) ||
-            (await interaction.checkThenErrorUnclean(
-                repository,
-                WarnScenario.Merge
-            ))
-        ) {
-            this.focusScm();
-            return false;
-        }
-        return true;
-    }
-
     private async mergeCommon(
         repository: Repository,
         mergeAction: MergeAction,
         placeholder: string
     ): Promise<void> {
-        if (!(await this.isItOkayToMerge(repository))) {
+        if (await interaction.checkActiveMerge(repository)) {
             return;
         }
 
