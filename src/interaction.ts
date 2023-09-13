@@ -63,10 +63,7 @@ export const enum BranchExistsAction {
     Reopen,
     UpdateTo,
 }
-export const enum WarnScenario {
-    Merge,
-    Update,
-}
+
 export const enum CommitSources {
     File,
     Branch,
@@ -150,79 +147,19 @@ export function informNoChangesToCommit(): void {
     );
 }
 
-export async function checkThenWarnOutstandingMerge(
+export async function checkActiveMerge(
     repository: Repository
 ): Promise<boolean> {
     if (repository.fossilStatus?.isMerge) {
-        window.showErrorMessage(
-            localize(
-                'outstanding merge',
-                'There is an outstanding merge in your working directory.'
-            )
+        const doit = localize('continue', 'Continue');
+        const answer = await window.showWarningMessage(
+            localize('outstanding merge', 'Merge is in progress'),
+            { modal: true },
+            doit
         );
-        return true;
+        return answer != doit;
     }
     return false;
-}
-
-export async function checkThenErrorUnclean(
-    repository: Repository,
-    scenario: WarnScenario
-): Promise<boolean> {
-    if (!repository.isClean) {
-        let nextStep = '';
-        if (scenario === WarnScenario.Merge) {
-            const discardAllChanges = localize(
-                'command.revertAll',
-                'Discard All Changes'
-            );
-            const abandonMerge = localize('abandon merge', 'abandon merge');
-            nextStep = localize(
-                'use x to y',
-                'Use {0} to {1}',
-                discardAllChanges,
-                abandonMerge
-            );
-        }
-        window.showErrorMessage(
-            localize(
-                'not clean merge',
-                'There are uncommited changes in your working directory. {0}',
-                nextStep
-            )
-        );
-        return true;
-    }
-    return false;
-}
-
-export async function checkThenWarnUnclean(
-    repository: Repository,
-    scenario: WarnScenario
-): Promise<void> {
-    if (!repository.isClean) {
-        let nextStep = '';
-        if (scenario === WarnScenario.Merge) {
-            const discardAllChanges = localize(
-                'command.revertAll',
-                'Discard All Changes'
-            );
-            const abandonMerge = localize('abandon merge', 'abandon merge');
-            nextStep = localize(
-                'use x to y',
-                'Use {0} to {1}',
-                discardAllChanges,
-                abandonMerge
-            );
-        }
-        window.showWarningMessage(
-            localize(
-                'not clean merge',
-                'There are uncommited changes in your working directory. {0}',
-                nextStep
-            )
-        );
-    }
 }
 
 export async function warnNoPaths(type: 'pull' | 'push'): Promise<void> {

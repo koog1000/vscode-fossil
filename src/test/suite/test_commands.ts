@@ -314,6 +314,36 @@ export function MergeSuite(this: Suite): void {
         assertGroups(repository, new Map(), new Map());
     }).timeout(5000);
 
+    test('Cancel merge when a merge is in progress', async () => {
+        const execStub = getExecStub(this.ctx.sandbox);
+        execStub
+            .withArgs(['branch', 'ls', '-t'])
+            .resolves(fakeExecutionResult({ stdout: ' * a\n   b\n   c\n' }));
+        fakeFossilStatus(execStub, 'INTEGRATE 0123456789');
+        await getRepository().updateModelState();
+        const sqp = this.ctx.sandbox
+            .stub(window, 'showQuickPick')
+            .onFirstCall()
+            .callsFake(items => {
+                assert.ok(items instanceof Array);
+                assert.equal(items[2].label, '$(git-branch) c');
+                return Promise.resolve(items[2]);
+            });
+        const swm: sinon.SinonStub = this.ctx.sandbox
+            .stub(window, 'showWarningMessage')
+            .onFirstCall()
+            .resolves();
+
+        await commands.executeCommand('fossil.merge');
+        sinon.assert.notCalled(sqp);
+        sinon.assert.calledOnceWithExactly(
+            swm,
+            'Merge is in progress',
+            { modal: true },
+            'Continue'
+        );
+    });
+
     test('Integrate', async () => {
         const repository = getRepository();
         await cleanupFossil(repository);
@@ -322,6 +352,7 @@ export function MergeSuite(this: Suite): void {
             .withArgs(['branch', 'ls', '-t'])
             .resolves(fakeExecutionResult({ stdout: ' * a\n   b\n   c\n' }));
         fakeFossilStatus(execStub, 'INTEGRATE 0123456789');
+        await repository.updateModelState();
         const mergeStub = execStub
             .withArgs(['merge', 'c', '--integrate'])
             .resolves();
@@ -337,6 +368,10 @@ export function MergeSuite(this: Suite): void {
                 return Promise.resolve(items[2]);
             });
         const sim = this.ctx.sandbox.stub(window, 'showInformationMessage');
+        const swm = this.ctx.sandbox
+            .stub(window, 'showWarningMessage')
+            .onFirstCall()
+            .resolves('Continue' as any);
         const sib = this.ctx.sandbox
             .stub(window, 'showInputBox')
             .withArgs(sinon.match({ placeHolder: 'Commit message' }))
@@ -344,6 +379,12 @@ export function MergeSuite(this: Suite): void {
 
         await commands.executeCommand('fossil.integrate');
         sinon.assert.notCalled(sim);
+        sinon.assert.calledOnceWithExactly(
+            swm,
+            'Merge is in progress',
+            { modal: true },
+            'Continue' as any
+        );
         sinon.assert.calledOnceWithExactly(sib, {
             value: 'Merge c into trunk',
             placeHolder: 'Commit message',
