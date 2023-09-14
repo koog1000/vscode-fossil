@@ -12,38 +12,167 @@ import * as fs from 'fs/promises';
 import { OpenedRepository } from '../../openedRepository';
 import { Suite, before } from 'mocha';
 
-export function UpdateSuite(this: Suite): void {
-    test('pull with autoUpdate on', async () => {
+function PullAndPushSuite(this: Suite): void {
+    const pull = async () => {
         const execStub = getExecStub(this.ctx.sandbox);
+        const listCall = execStub
+            .withArgs(['remote', 'list'])
+            .resolves(
+                fakeExecutionResult({ stdout: 'default https://example.com\n' })
+            );
         const sem = this.ctx.sandbox
             .stub(window, 'showErrorMessage')
             .resolves();
-        const updateCall = execStub.withArgs(['update']).resolves();
+        const updateCall = execStub
+            .withArgs(
+                sinon.match.array
+                    .startsWith(['update'])
+                    .or(sinon.match.array.startsWith(['pull']))
+            )
+            .resolves();
         await commands.executeCommand('fossil.pull');
+        sinon.assert.calledOnce(listCall);
         sinon.assert.notCalled(sem);
-        sinon.assert.calledOnce(updateCall);
+        return updateCall;
+    };
+
+    const noRemotes = async (
+        command: 'fossil.pull' | 'fossil.push' | 'fossil.pushTo'
+    ) => {
+        const execStub = getExecStub(this.ctx.sandbox);
+        const listCall = execStub
+            .withArgs(['remote', 'list'])
+            .resolves(fakeExecutionResult({ stdout: '' }));
+        const sem = this.ctx.sandbox
+            .stub(window, 'showErrorMessage')
+            .resolves() as sinon.SinonStub;
+        await commands.executeCommand(command);
+        sinon.assert.calledOnce(listCall);
+        sinon.assert.calledOnceWithExactly(
+            sem,
+            'Your repository has no remotes configured.'
+        );
+    };
+
+    test('Pull no remotes', async () => {
+        await noRemotes('fossil.pull');
     });
 
-    test('pull with autoUpdate_off', async () => {
-        const fossilConfig = workspace.getConfiguration('fossil');
-        const sem = this.ctx.sandbox
-            .stub(window, 'showErrorMessage')
-            .resolves();
-        await fossilConfig.update('autoUpdate', false);
-        const execStub = getExecStub(this.ctx.sandbox);
-        const pullCall = execStub.withArgs(['pull']).resolves();
-        await commands.executeCommand('fossil.pull');
-        sinon.assert.notCalled(sem);
-        sinon.assert.calledOnce(pullCall);
-        await fossilConfig.update('autoUpdate', true);
+    test('Push no remotes', async () => {
+        await noRemotes('fossil.push');
     });
+
+    test('PushTo no remotes', async () => {
+        await noRemotes('fossil.pushTo');
+    });
+
+    test('Pull with autoUpdate on', async () => {
+        const updateCall = await pull();
+        sinon.assert.calledOnceWithExactly(updateCall, [
+            'update',
+            'https://example.com/',
+        ]);
+    });
+
+    test('Pull with autoUpdate_off', async () => {
+        const fossilConfig = workspace.getConfiguration('fossil');
+        await fossilConfig.update('autoUpdate', false);
+        const updateCall = await pull();
+        await fossilConfig.update('autoUpdate', true);
+        sinon.assert.calledOnceWithExactly(updateCall, [
+            'pull',
+            'https://example.com/',
+        ]);
+    });
+
+    const oneRemote = async (command: 'fossil.push' | 'fossil.pushTo') => {
+        const execStub = getExecStub(this.ctx.sandbox);
+        const listCall = execStub
+            .withArgs(['remote', 'list'])
+            .resolves(
+                fakeExecutionResult({ stdout: 'default https://example.com\n' })
+            );
+        const pushCall = execStub
+            .withArgs(sinon.match.array.startsWith(['push']))
+            .resolves();
+        await commands.executeCommand(command);
+        sinon.assert.calledOnce(listCall);
+        return pushCall;
+    };
+
+    test('Push', async () => {
+        const pushCall = await oneRemote('fossil.push');
+        sinon.assert.calledOnceWithExactly(pushCall, ['push']);
+    });
+
+    test('PushTo (one remote)', async () => {
+        const pushCall = await oneRemote('fossil.pushTo');
+        sinon.assert.calledOnceWithExactly(pushCall, [
+            'push',
+            'https://example.com/',
+        ]);
+    });
+
+    test('PushTo (two remotes)', async () => {
+        const execStub = getExecStub(this.ctx.sandbox);
+        const listCall = execStub.withArgs(['remote', 'list']).resolves(
+            fakeExecutionResult({
+                stdout: 'default https://example.com\norigin ssh://fossil\n',
+            })
+        );
+        const sqp = this.ctx.sandbox.stub(window, 'showQuickPick');
+        sqp.onFirstCall().callsFake(items => {
+            assert.ok(items instanceof Array);
+            assert.equal(items.length, 2);
+            assert.equal(items[1].label, '$(link) origin');
+            assert.equal(items[1].detail, 'ssh://fossil');
+            return Promise.resolve(items[1]);
+        });
+
+        const pushCall = execStub
+            .withArgs(sinon.match.array.startsWith(['push']))
+            .resolves();
+        await commands.executeCommand('fossil.pushTo');
+        sinon.assert.calledOnce(listCall);
+        sinon.assert.calledOnce(sqp);
+        sinon.assert.calledOnceWithExactly(pushCall, ['push', 'ssh://fossil']);
+    });
+
+    test('PushTo (two remotes, do not pick)', async () => {
+        const execStub = getExecStub(this.ctx.sandbox);
+        const listCall = execStub.withArgs(['remote', 'list']).resolves(
+            fakeExecutionResult({
+                stdout: 'default https://example.com\norigin ssh://fossil\n',
+            })
+        );
+        const sqp = this.ctx.sandbox.stub(window, 'showQuickPick');
+        sqp.onFirstCall().callsFake(items => {
+            assert.ok(items instanceof Array);
+            assert.equal(items.length, 2);
+            assert.equal(items[1].label, '$(link) origin');
+            assert.equal(items[1].detail, 'ssh://fossil');
+            return Promise.resolve(undefined);
+        });
+
+        const pushCall = execStub
+            .withArgs(sinon.match.array.startsWith(['push']))
+            .resolves();
+        await commands.executeCommand('fossil.pushTo');
+        sinon.assert.calledOnce(listCall);
+        sinon.assert.calledOnce(sqp);
+        sinon.assert.notCalled(pushCall);
+    });
+}
+
+export function UpdateSuite(this: Suite): void {
+    suite('Pull and Push', PullAndPushSuite);
 
     test('Change branch to trunk', async () => {
         const execStub = getExecStub(this.ctx.sandbox);
         const updateCall = execStub.withArgs(['update', 'trunk']).resolves();
 
-        const showQuickPick = this.ctx.sandbox.stub(window, 'showQuickPick');
-        showQuickPick.onFirstCall().callsFake(items => {
+        const sqp = this.ctx.sandbox.stub(window, 'showQuickPick');
+        sqp.onFirstCall().callsFake(items => {
             assert.ok(items instanceof Array);
             assert.equal(items[2].label, '$(git-branch) trunk');
             assert.equal(items[2].description, 'current');
@@ -52,7 +181,7 @@ export function UpdateSuite(this: Suite): void {
         });
 
         await commands.executeCommand('fossil.branchChange');
-
+        sinon.assert.calledOnce(sqp);
         sinon.assert.calledOnce(updateCall);
     });
 

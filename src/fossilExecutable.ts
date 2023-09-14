@@ -100,7 +100,7 @@ type FossilCommand =
     | 'pull'
     | 'push'
     | 'redo'
-    | 'remote-url'
+    | 'remote'
     | 'rename'
     | 'revert'
     | 'settings'

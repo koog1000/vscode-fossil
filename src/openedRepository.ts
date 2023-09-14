@@ -84,11 +84,9 @@ interface LogEntryOptions {
     readonly checkin?: FossilCheckin;
 }
 
-// ToDo: add `uri` to `PullOptions` interface
 export interface PullOptions {
-    //readonly branch?: FossilBranch;
-    //readonly revs?: FossilCheckin[];
-    readonly autoUpdate: boolean; // run an update after the pull?
+    readonly uri: FossilURI;
+    readonly autoUpdate: boolean; // execute 'update' instead of 'pull'
 }
 
 export const enum ResourceStatus {
@@ -127,7 +125,7 @@ export interface BranchDetails {
 
 export interface FossilRemote {
     readonly name: FossilRemoteName;
-    readonly url: FossilURI;
+    readonly uri: FossilURI;
 }
 
 export interface StashItem {
@@ -458,11 +456,14 @@ export class OpenedRepository {
     }
 
     async pull(options: PullOptions): Promise<void> {
-        await this.exec([options?.autoUpdate ? 'update' : 'pull']);
+        await this.exec([
+            options?.autoUpdate ? 'update' : 'pull',
+            ...(options.uri ? [options.uri.toString()] : []),
+        ]);
     }
 
-    async push(): Promise<void> {
-        await this.exec(['push']);
+    async push(uri: FossilURI | undefined): Promise<void> {
+        await this.exec(['push', ...(uri ? [uri.toString()] : [])]);
     }
 
     async merge(checkin: FossilCheckin, integrate: MergeAction): Promise<void> {
@@ -705,11 +706,16 @@ export class OpenedRepository {
         return branches;
     }
 
-    async getRemotes(): Promise<FossilRemote> {
-        const pathsResult = await this.exec(['remote-url']);
-        return {
-            name: 'path' as FossilRemoteName,
-            url: Uri.parse(pathsResult.stdout.trim()) as FossilURI,
-        };
+    async getRemotes(): Promise<FossilRemote[]> {
+        const pathsResult = await this.exec(['remote', 'list']);
+        return [...pathsResult.stdout.matchAll(/^(.+?)\s+(\S+)$/gm)].map(
+            match => {
+                const [, name, uri] = match;
+                return {
+                    name,
+                    uri: Uri.parse(uri),
+                } as FossilRemote;
+            }
+        );
     }
 }

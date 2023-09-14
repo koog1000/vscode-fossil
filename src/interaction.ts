@@ -38,6 +38,7 @@ import {
     UserPath,
     RelativePath,
     StashID,
+    FossilRemote,
 } from './openedRepository';
 import * as humanise from './humanise';
 import { Repository, LogEntriesOptions } from './repository';
@@ -162,12 +163,9 @@ export async function checkActiveMerge(
     return false;
 }
 
-export async function warnNoPaths(type: 'pull' | 'push'): Promise<void> {
+export async function warnNoRemotes(): Promise<void> {
     await window.showErrorMessage(
-        localize(
-            `no paths to ${type}`,
-            `Your repository has no paths configured for ${type}ing.`
-        )
+        localize(`no remotes`, `Your repository has no remotes configured.`)
     );
 }
 
@@ -965,26 +963,31 @@ export async function pickDiffAction(
     }
 }
 
-// this function is unused but should be
-// export async function pickRemotePath(
-//     paths: FossilRemote[]
-// ): Promise<string | undefined> {
-//     const picks = paths.map(
-//         p => ({ label: p.name, description: p.url } as QuickPickItem)
-//     );
-//     const placeHolder = localize(
-//         'pick remote',
-//         'Pick a remote to push to:'
-//     );
-//     const choice = await window.showQuickPick<QuickPickItem>(picks, {
-//         placeHolder,
-//     });
-//     if (choice) {
-//         return choice.label;
-//     }
+interface RemoteQuickPickItem extends QuickPickItem {
+    readonly uri: FossilURI;
+}
 
-//     return;
-// }
+export async function pickRemote(
+    remotes: FossilRemote[],
+    what: 'push to' | 'pull from'
+): Promise<FossilURI | undefined> {
+    if (remotes.length == 1) {
+        return remotes[0].uri;
+    }
+    const picks = remotes.map(
+        (remote): RemoteQuickPickItem => ({
+            label: `$(link) ${remote.name}`,
+            detail: remote.uri.toString(),
+            uri: remote.uri,
+        })
+    );
+    const placeHolder = localize('pick remote', 'Pick a remote to {0}:', what);
+    const choice = await window.showQuickPick(picks, {
+        placeHolder,
+        matchOnDetail: true,
+    });
+    return choice?.uri;
+}
 
 export function warnUnsavedChanges(msg: string): void {
     window.showWarningMessage(localize('unsaved changes', `Fossil: ${msg}`));

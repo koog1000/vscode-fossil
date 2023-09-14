@@ -843,6 +843,10 @@ export function RenameSuite(this: Suite): void {
             new Map()
         );
     }).timeout(10000);
+
+    test('Relocate nothing', async () => {
+        await commands.executeCommand('fossil.relocate');
+    });
 }
 
 export function CleanSuite(this: Suite): void {

@@ -18,7 +18,6 @@ import {
 import {
     OpenedRepository,
     Commit,
-    PullOptions,
     CommitDetails,
     TimelineOptions,
     FossilRoot,
@@ -30,7 +29,6 @@ import {
     MergeAction,
     FossilHash,
     FossilRemote,
-    FossilRemoteName,
     FossilURI,
     FossilUndoCommand,
     FossilCommitMessage,
@@ -840,10 +838,6 @@ export class Repository implements IDisposable, InteractionAPI {
         );
     }
 
-    public async createPullOptions(): Promise<PullOptions> {
-        return { autoUpdate: typedConfig.autoUpdate };
-    }
-
     async changeInoutAfterDelay(delayMs = 3000): Promise<void> {
         // then confirm after delay
         if (delayMs) {
@@ -853,16 +847,19 @@ export class Repository implements IDisposable, InteractionAPI {
     }
 
     @throttle
-    async pull(options: PullOptions): Promise<void> {
+    async pull(uri: FossilURI): Promise<void> {
         return this.runWithProgress(Operation.Pull, async () => {
-            await this.repository.pull(options);
+            await this.repository.pull({
+                autoUpdate: typedConfig.autoUpdate,
+                uri,
+            });
         });
     }
 
     @throttle
-    async push(_path: FossilURI | undefined): Promise<void> {
+    async push(uri?: FossilURI): Promise<void> {
         return this.runWithProgress(Operation.Push, async () => {
-            await this.repository.push();
+            await this.repository.push(uri);
         });
     }
 
@@ -1015,18 +1012,8 @@ export class Repository implements IDisposable, InteractionAPI {
     }
 
     @throttle
-    public async getPath(): Promise<FossilRemote> {
-        try {
-            const path = await this.repository.getRemotes();
-            return path;
-        } catch (e) {
-            // noop
-        }
-
-        return {
-            name: '' as FossilRemoteName,
-            url: Uri.parse('') as FossilURI,
-        };
+    public async getRemotes(): Promise<FossilRemote[]> {
+        return this.repository.getRemotes();
     }
 
     @throttle
