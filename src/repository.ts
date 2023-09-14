@@ -743,22 +743,11 @@ export class Repository implements IDisposable, InteractionAPI {
             const toRevert: RelativePath[] = [];
 
             for (const r of resources) {
-                switch (r.status) {
-                    case ResourceStatus.EXTRA:
-                        break;
-                    default:
-                        toRevert.push(this.mapResourceToRepoRelativePath(r));
-                        break;
+                if (r.status != ResourceStatus.EXTRA) {
+                    toRevert.push(this.mapResourceToRepoRelativePath(r));
                 }
             }
-
-            const promises: Promise<void>[] = [];
-
-            if (toRevert.length > 0) {
-                promises.push(this.repository.revert(toRevert));
-            }
-
-            await Promise.all(promises);
+            await this.repository.revert(toRevert);
         });
     }
 
@@ -889,6 +878,7 @@ export class Repository implements IDisposable, InteractionAPI {
         return this.repository.praise(path);
     }
 
+    // used for "praise" tooltips
     async info(checkin: FossilCheckin): Promise<{ [key: string]: string }> {
         return this.repository.info(checkin);
     }
