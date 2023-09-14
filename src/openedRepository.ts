@@ -368,7 +368,7 @@ export class OpenedRepository {
         const groups = Object.keys(pathsByGroup).map(k => pathsByGroup[k]);
         const tasks = groups.map(
             paths => () => this.exec(['revert', ...paths])
-        ); // -C = no-backup
+        );
 
         for (const task of tasks) {
             await task();
