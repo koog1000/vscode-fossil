@@ -168,6 +168,7 @@ export class CommandCenter {
         this.disposables = this.register.map(command =>
             commands.registerCommand(command.id, command.method, this)
         );
+        this.disposables.push(this.previewManager);
     }
 
     @command('fossil.refresh', { repository: true })
