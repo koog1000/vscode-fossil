@@ -1,7 +1,7 @@
 {
-  "lines": 80,
-  "branches": 80,
-  "statements": 80,
+  "lines": 92,
+  "branches": 85,
+  "statements": 92,
   "watermarks": {
     "lines": [80, 95],
     "functions": [80, 95],
