@@ -1169,14 +1169,15 @@ export class CommandCenter {
 
     @command('fossil.pull', { repository: true })
     async pull(repository: Repository): Promise<void> {
-        const paths = await repository.getPath();
+        const remotes = await repository.getRemotes();
 
-        if (!paths.url) {
-            return interaction.warnNoPaths('pull');
+        if (!remotes.length) {
+            return interaction.warnNoRemotes();
         }
-
-        const pullOptions = await repository.createPullOptions();
-        await repository.pull(pullOptions);
+        const uri = await interaction.pickRemote(remotes, 'pull from');
+        if (uri) {
+            await repository.pull(uri);
+        }
     }
 
     private async mergeCommon(
@@ -1279,17 +1280,24 @@ export class CommandCenter {
 
     @command('fossil.push', { repository: true })
     async push(repository: Repository): Promise<void> {
-        await repository.push(undefined);
+        const remotes = await repository.getRemotes();
+        if (!remotes.length) {
+            return interaction.warnNoRemotes();
+        }
+        // we know we have remotes now, so push will use the latest
+        await repository.push();
     }
 
     @command('fossil.pushTo', { repository: true })
     async pushTo(repository: Repository): Promise<void> {
-        const path = await repository.getPath();
-
-        if (!path.url) {
-            return interaction.warnNoPaths('push');
+        const remotes = await repository.getRemotes();
+        if (!remotes.length) {
+            return interaction.warnNoRemotes();
         }
-        repository.push(path.url);
+        const uri = await interaction.pickRemote(remotes, 'push to');
+        if (uri) {
+            await repository.push(uri);
+        }
     }
 
     @command('fossil.showOutput')
