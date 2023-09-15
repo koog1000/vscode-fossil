@@ -1,4 +1,12 @@
-import { Uri, workspace, window, commands, ViewColumn } from 'vscode';
+import {
+    Uri,
+    workspace,
+    window,
+    commands,
+    ViewColumn,
+    TextDocument,
+    TextDocumentShowOptions,
+} from 'vscode';
 import * as sinon from 'sinon';
 import { FossilCWD } from '../../fossilExecutable';
 import {
@@ -14,6 +22,7 @@ import * as fs from 'fs/promises';
 import { existsSync } from 'fs';
 import { Suite } from 'mocha';
 import { ResourceStatus } from '../../openedRepository';
+import { FossilResource } from '../../repository';
 
 async function documentWasShown(
     sandbox: sinon.SinonSandbox,
@@ -216,7 +225,7 @@ export function resourceActionsSuite(this: Suite): void {
         await commands.executeCommand('fossil.openResource');
     }).timeout(100);
 
-    const diffCheck = async (status: string, caption: string) => {
+    const createTestResource = async (status: string) => {
         const repository = getRepository();
         const root = workspace.workspaceFolders![0].uri;
         const uri = Uri.joinPath(root, 'open_resource.txt');
@@ -229,6 +238,11 @@ export function resourceActionsSuite(this: Suite): void {
         sinon.assert.calledOnce(statusStub);
         const resource = repository.workingGroup.getResource(uri);
         assert.ok(resource);
+        return [uri, resource] as [Uri, FossilResource];
+    };
+
+    const diffCheck = async (status: string, caption: string) => {
+        const [uri, resource] = await createTestResource(status);
 
         const diffCall = this.ctx.sandbox
             .stub(commands, 'executeCommand')
@@ -266,5 +280,40 @@ export function resourceActionsSuite(this: Suite): void {
 
     test('Open resource (Renamed)', async () => {
         await diffCheck('RENAMED', 'Renamed');
+    });
+
+    test('Open resource (Added)', async () => {
+        const [uri, resource] = await createTestResource('ADDED');
+        const testTd: TextDocument = { isUntitled: false } as TextDocument;
+        const otd = this.ctx.sandbox
+            .stub(workspace, 'openTextDocument')
+            .resolves(testTd);
+        const std = this.ctx.sandbox
+            .stub(window, 'showTextDocument')
+            .resolves();
+        await commands.executeCommand('fossil.openResource', resource);
+        void uri.fsPath; // populate fsPath property this way
+        sinon.assert.calledOnceWithExactly(otd, uri as any);
+        sinon.assert.calledOnceWithExactly(
+            std,
+            testTd as any,
+            {
+                preview: undefined,
+                preserveFocus: true,
+                viewColumn: ViewColumn.Active,
+            } as TextDocumentShowOptions
+        );
+    });
+    test('Open resource (Missing)', async () => {
+        const [, resource] = await createTestResource('MISSING');
+        const otd = this.ctx.sandbox
+            .stub(workspace, 'openTextDocument')
+            .resolves();
+        const std = this.ctx.sandbox
+            .stub(window, 'showTextDocument')
+            .resolves();
+        await commands.executeCommand('fossil.openResource', resource);
+        sinon.assert.notCalled(otd);
+        sinon.assert.notCalled(std);
     });
 }
