@@ -187,7 +187,9 @@ export class CommandCenter {
         preserveFocus?: boolean,
         preserveSelection?: boolean
     ): Promise<void> {
-        if (!resource) return;
+        if (!resource) {
+            return;
+        }
         const left = this.getLeftResource(resource);
         const right = this.getRightResource(resource);
         const title = this.getTitle(resource);
@@ -230,11 +232,12 @@ export class CommandCenter {
                 if (resource.renameResourceUri) {
                     return toFossilUri(resource.original);
                 }
-                return undefined;
+                /* c8 ignore next */
+                return;
 
             case ResourceStatus.ADDED:
             case ResourceStatus.EXTRA:
-                return undefined;
+                return;
 
             case ResourceStatus.MODIFIED:
             case ResourceStatus.CONFLICT:
@@ -282,7 +285,7 @@ export class CommandCenter {
             case ResourceStatus.MISSING:
                 return `${basename} (Missing)`;
         }
-
+        /* c8 ignore next */
         return '';
     }
 
@@ -450,7 +453,8 @@ export class CommandCenter {
         return this.openFile(...(<FossilResource[]>resources));
     }
 
-    @command('fossil.openFile') // todo: remove as this is not a real @command
+    // user clicked `Open file` action in diff view
+    @command('fossil.openFile')
     async openFile(...resources: FossilResource[]): Promise<void> {
         if (!resources) {
             return;
@@ -518,11 +522,6 @@ export class CommandCenter {
     @command('fossil.openChangeFromUri')
     async openChangeFromUri(uri?: Uri): Promise<void> {
         const resource = this.getSCMResource(uri);
-
-        if (!resource) {
-            return;
-        }
-
         return this._openResource(resource);
     }
 
