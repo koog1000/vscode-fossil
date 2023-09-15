@@ -36,13 +36,13 @@ _Work in progress_.
 | fossil.openFile | Open File |
 | fossil.openFileFromUri | Open File | •&nbsp;Command palette<br>•&nbsp;Editor bar | When in diff view, there's a special button to show local file
 | fossil.openFiles | Open Files |
-| fossil.openResource| _not needed_ |
+| fossil.openResource| _not needed_ | •&nbsp; Source Control panel | Resource in opened in a diff view if possible |
 | fossil.openUI | Open web UI | •&nbsp;Command palette | execute `fossil ui` in VSCode terminal |
 | fossil.patchApply | Apply Patch | •&nbsp;Main SCM menu<br>•&nbsp;Command palette | 1. Select path<br>2. Execute `fossil patch apply $(path)`
 | fossil.patchCreate | Create Patch | •&nbsp;Main SCM menu<br>•&nbsp;Command palette | 1. Select path<br>2. Execute `fossil patch create $(path)`
 | fossil.pull | Pull | •&nbsp;Main SCM menu<br>•&nbsp;Command palette | Execute `fossil pull` or `fossil update` depending on `autoUpdate` configuration option
-| fossil.push | Push | •&nbsp;Main SCM menu<br>•&nbsp;Command palette | 1. Execute `fossil push`<br>2. Deal with errors
-| fossil.pushTo | Push to... | •&nbsp;Main SCM menu<br>•&nbsp;Command palette | <span style="color: darkred">not implemented correctly</span>
+| fossil.push | Push | •&nbsp;Main SCM menu<br>•&nbsp;Command palette | 1. Execute `fossil push`
+| fossil.pushTo | Push to... | •&nbsp;Main SCM menu<br>•&nbsp;Command palette | 1. Pick remote if > 1<br>2. Execute `fossil push URI`
 | fossil.redo | Redo | •&nbsp;Main SCM menu<br>•&nbsp;Command palette | execute `fossil redo`
 | fossil.refresh | Refresh | Source control header | 1. Execute `fossil status`<br>2. Update related information
 | fossil.render | Preview Using Fossil Renderer |
