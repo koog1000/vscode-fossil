@@ -1232,7 +1232,10 @@ export class CommandCenter {
         otherRevision: FossilCheckin,
         mergeAction: MergeAction
     ) {
-        await repository.merge(otherRevision, mergeAction);
+        const result = await repository.merge(otherRevision, mergeAction);
+        if (result.exitCode) {
+            return;
+        }
         const { currentBranch } = repository;
 
         if (currentBranch) {

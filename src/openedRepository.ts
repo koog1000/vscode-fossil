@@ -466,7 +466,10 @@ export class OpenedRepository {
         await this.exec(['push', ...(uri ? [uri.toString()] : [])]);
     }
 
-    async merge(checkin: FossilCheckin, integrate: MergeAction): Promise<void> {
+    async merge(
+        checkin: FossilCheckin,
+        integrate: MergeAction
+    ): Promise<ExecResult> {
         const extraArgs = (() => {
             switch (integrate) {
                 case MergeAction.Cherrypick:
@@ -477,7 +480,7 @@ export class OpenedRepository {
                     return [];
             }
         })();
-        await this.exec(['merge', checkin, ...extraArgs]);
+        return this.exec(['merge', checkin, ...extraArgs]);
     }
 
     async patchCreate(path: string): Promise<void> {

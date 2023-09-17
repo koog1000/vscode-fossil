@@ -355,7 +355,7 @@ export function MergeSuite(this: Suite): void {
         await repository.updateModelState();
         const mergeStub = execStub
             .withArgs(['merge', 'c', '--integrate'])
-            .resolves();
+            .resolves(fakeExecutionResult());
         const commitStub = execStub
             .withArgs(sinon.match.array.startsWith(['commit']))
             .resolves();
@@ -410,7 +410,7 @@ export function MergeSuite(this: Suite): void {
         let hash = '';
         const mergeCallStub = execStub
             .withArgs(sinon.match.array.startsWith(['merge']))
-            .resolves();
+            .resolves(fakeExecutionResult());
 
         this.ctx.sandbox
             .stub(window, 'showQuickPick')
