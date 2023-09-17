@@ -719,11 +719,11 @@ export class Repository implements IDisposable, InteractionAPI {
         message: FossilCommitMessage,
         scope: Exclude<CommitScope, CommitScope.UNKNOWN>,
         newBranch: NewBranchOptions | undefined
-    ): Promise<void> {
-        await this.runWithProgress(Operation.Commit, async () => {
+    ): Promise<ExecResult> {
+        return this.runWithProgress(Operation.Commit, async () => {
             const user = typedConfig.username;
             const fileList = this.scopeToFileList(scope);
-            await this.repository.commit(message, fileList, user, newBranch);
+            return this.repository.commit(message, fileList, user, newBranch);
         });
     }
 

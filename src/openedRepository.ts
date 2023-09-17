@@ -258,10 +258,10 @@ export class OpenedRepository {
         fileList: RelativePath[],
         user: FossilUsername | null,
         newBranch: NewBranchOptions | undefined
-    ): Promise<void> {
+    ): Promise<ExecResult> {
         // always pass a message, otherwise fossil
         // internal editor will spawn
-        await this.exec([
+        return this.exec([
             'commit',
             ...(user ? ['--user-override', user] : []),
             ...(newBranch

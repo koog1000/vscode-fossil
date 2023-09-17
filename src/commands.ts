@@ -911,9 +911,8 @@ export class CommandCenter {
             return false;
         }
 
-        await repository.commit(message, scope, newBranch);
-
-        return true;
+        const result = await repository.commit(message, scope, newBranch);
+        return !result.exitCode;
     }
 
     private async commitWithAnyInput(

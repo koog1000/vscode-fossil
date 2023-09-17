@@ -358,7 +358,7 @@ export function MergeSuite(this: Suite): void {
             .resolves(fakeExecutionResult());
         const commitStub = execStub
             .withArgs(sinon.match.array.startsWith(['commit']))
-            .resolves();
+            .resolves(fakeExecutionResult());
         this.ctx.sandbox
             .stub(window, 'showQuickPick')
             .onFirstCall()
