@@ -529,16 +529,7 @@ export class CommandCenter {
     async ignore(
         ...resourceStates: SourceControlResourceState[]
     ): Promise<void> {
-        if (resourceStates.length === 0) {
-            const resource = this.getSCMResource();
-
-            if (!resource) {
-                return;
-            }
-
-            resourceStates = [resource];
-        }
-
+        this.maybeUseDefaultResource(resourceStates);
         const scmResources = resourceStates.filter(
             s => s instanceof FossilResource && s.resourceGroup.is('untracked')
         );
@@ -565,15 +556,7 @@ export class CommandCenter {
 
     @command('fossil.add')
     async add(...resourceStates: SourceControlResourceState[]): Promise<void> {
-        if (resourceStates.length === 0) {
-            const resource = this.getSCMResource();
-
-            if (!resource) {
-                return;
-            }
-
-            resourceStates = [resource];
-        }
+        this.maybeUseDefaultResource(resourceStates);
 
         const scmResources = resourceStates.filter(
             s => s instanceof FossilResource && s.resourceGroup.is('untracked')
@@ -617,15 +600,7 @@ export class CommandCenter {
     async forget(
         ...resourceStates: SourceControlResourceState[]
     ): Promise<void> {
-        if (resourceStates.length === 0) {
-            const resource = this.getSCMResource();
-
-            if (!resource) {
-                return;
-            }
-
-            resourceStates = [resource];
-        }
+        this.maybeUseDefaultResource(resourceStates);
 
         const scmResources = resourceStates.filter(
             s => s instanceof FossilResource && s.resourceGroup.is('working')
@@ -677,15 +652,7 @@ export class CommandCenter {
     async stage(
         ...resourceStates: SourceControlResourceState[]
     ): Promise<void> {
-        if (resourceStates.length === 0) {
-            const resource = this.getSCMResource();
-
-            if (!resource) {
-                return;
-            }
-
-            resourceStates = [resource];
-        }
+        this.maybeUseDefaultResource(resourceStates);
 
         const scmResources = resourceStates.filter(
             s =>
@@ -714,15 +681,7 @@ export class CommandCenter {
     async unstage(
         ...resourceStates: SourceControlResourceState[]
     ): Promise<void> {
-        if (resourceStates.length === 0) {
-            const resource = this.getSCMResource();
-
-            if (!resource) {
-                return;
-            }
-
-            resourceStates = [resource];
-        }
+        this.maybeUseDefaultResource(resourceStates);
 
         const scmResources = resourceStates.filter(
             s => s instanceof FossilResource && s.resourceGroup.is('staging')
@@ -749,15 +708,7 @@ export class CommandCenter {
     async revert(
         ...resourceStates: SourceControlResourceState[]
     ): Promise<void> {
-        if (resourceStates.length === 0) {
-            const resource = this.getSCMResource();
-
-            if (!resource) {
-                return;
-            }
-
-            resourceStates = [resource];
-        }
+        this.maybeUseDefaultResource(resourceStates);
 
         const scmResources = resourceStates.filter(
             (s): s is FossilResource =>
@@ -1542,5 +1493,16 @@ export class CommandCenter {
 
     dispose(): void {
         this.disposables.forEach(d => d.dispose());
+    }
+
+    private maybeUseDefaultResource(
+        resourceStates: SourceControlResourceState[]
+    ): void {
+        if (!resourceStates.length) {
+            const resource = this.getSCMResource();
+            if (resource) {
+                resourceStates.push(resource);
+            }
+        }
     }
 }
