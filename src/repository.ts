@@ -358,15 +358,6 @@ export class Repository implements IDisposable, InteractionAPI {
         this._onDidChangeInOutState.fire();
     }
 
-    get isClean(): boolean {
-        const groups = [
-            this.workingGroup,
-            this.conflictGroup,
-            this.stagingGroup,
-        ];
-        return groups.every(g => g.resourceStates.length === 0);
-    }
-
     toUri(rawPath: string): Uri {
         return Uri.file(path.join(this.repository.root, rawPath));
     }
