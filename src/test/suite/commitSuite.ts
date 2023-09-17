@@ -303,7 +303,6 @@ export function CommitSuite(this: Suite): void {
         );
         await repository.updateModelState();
         sinon.assert.calledOnce(statusStub);
-        repository.sourceControl.inputBox.value = 'remove files';
         const swm: sinon.SinonStub = this.ctx.sandbox
             .stub(window, 'showWarningMessage')
             .withArgs(sinon.match(/^Did you want to delete/))
@@ -317,6 +316,7 @@ export function CommitSuite(this: Suite): void {
             .withArgs(sinon.match.array.startsWith(['commit']))
             .resolves(fakeExecutionResult());
 
+        repository.sourceControl.inputBox.value = 'remove files';
         await commands.executeCommand('fossil.commitWithInput');
         sinon.assert.calledOnceWithExactly(
             swm,
