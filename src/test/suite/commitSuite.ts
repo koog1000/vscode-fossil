@@ -4,6 +4,7 @@ import * as sinon from 'sinon';
 import {
     add,
     cleanupFossil,
+    fakeExecutionResult,
     fakeFossilStatus,
     getExecStub,
     getRepository,
@@ -29,7 +30,7 @@ export function CommitSuite(this: Suite): void {
         assert.equal(repository.workingGroup.resourceStates.length, 1);
         const commitStub = execStub
             .withArgs(['commit', 'fake.txt', '-m', 'non empty message'])
-            .resolves();
+            .resolves(fakeExecutionResult());
 
         const swm: sinon.SinonStub = this.ctx.sandbox.stub(
             window,
@@ -59,7 +60,7 @@ export function CommitSuite(this: Suite): void {
         const statusStub = fakeFossilStatus(execStub, 'ADDED a\nADDED b\n');
         const commitStub = execStub
             .withArgs(sinon.match.array.startsWith(['commit']))
-            .resolves();
+            .resolves(fakeExecutionResult());
         await repository.updateModelState();
         await commands.executeCommand('fossil.stageAll');
         const sib = this.ctx.sandbox
@@ -97,7 +98,7 @@ export function CommitSuite(this: Suite): void {
         fakeFossilStatus(execStub, 'ADDED a\nADDED b\n');
         const commitStub = execStub
             .withArgs(sinon.match.array.startsWith(['commit']))
-            .resolves();
+            .resolves(fakeExecutionResult());
         await repository.updateModelState();
         assert.ok(repository.workingGroup.resourceStates[1]);
         await commands.executeCommand(
@@ -206,7 +207,7 @@ export function CommitSuite(this: Suite): void {
                 '-m',
                 'creating new branch',
             ])
-            .resolves();
+            .resolves(fakeExecutionResult());
 
         await commands.executeCommand('fossil.commitBranch');
         sinon.assert.calledOnce(commitStub);
@@ -314,7 +315,7 @@ export function CommitSuite(this: Suite): void {
             .resolves();
         const commitStub = execStub
             .withArgs(sinon.match.array.startsWith(['commit']))
-            .resolves();
+            .resolves(fakeExecutionResult());
 
         await commands.executeCommand('fossil.commitWithInput');
         sinon.assert.calledOnceWithExactly(
