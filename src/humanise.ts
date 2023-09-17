@@ -1,5 +1,9 @@
 import * as path from 'path';
-import { FossilCheckin, FossilCommitMessage } from './openedRepository';
+import {
+    FossilBranch,
+    FossilCheckin,
+    FossilCommitMessage,
+} from './openedRepository';
 
 import { localize } from './main';
 
@@ -52,10 +56,10 @@ export function formatFilesAsBulletedList(filenames: string[]): string {
 }
 
 export function describeMerge(
-    localBranchName: FossilCheckin,
-    otherBranchName: FossilCheckin | undefined
+    localBranchName: FossilBranch,
+    otherBranchName: FossilCheckin
 ): FossilCommitMessage {
-    if (!otherBranchName || localBranchName === otherBranchName) {
+    if (localBranchName === otherBranchName) {
         return localize('merge', 'Merge') as FossilCommitMessage;
     } else {
         return localize(

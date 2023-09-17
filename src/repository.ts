@@ -853,7 +853,10 @@ export class Repository implements IDisposable, InteractionAPI {
     }
 
     @throttle
-    merge(checkin: FossilCheckin, mergeAction: MergeAction): Promise<void> {
+    merge(
+        checkin: FossilCheckin,
+        mergeAction: MergeAction
+    ): Promise<ExecResult> {
         return this.runWithProgress(Operation.Merge, async () => {
             return this.repository.merge(checkin, mergeAction);
         });
