@@ -1,5 +1,20 @@
 # Changelog
 
+# v0.4.0
+
+### What's New
+
+- Restore push/pull functionality
+- Show current checkout time in the status bar tooltip
+- Rework "Fossil: Log" menu: it's now possible to open all changed files of a past commit
+- Allow multiple cherrypicks and merges (with confirmation)
+
+### Bug Fixes
+
+- Execution error handling reworked
+- Invalid UTC date handling when showing stash and timeline entries
+
+
 # v0.3.2
 
 ### What's New
