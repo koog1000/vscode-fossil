@@ -762,7 +762,7 @@ export class Repository implements IDisposable, InteractionAPI {
         );
     }
 
-    async update(checkin: FossilCheckin): Promise<void> {
+    async update(checkin?: FossilCheckin): Promise<void> {
         await this.runWithProgress(Operation.Update, () =>
             this.repository.update(checkin)
         );
@@ -829,10 +829,7 @@ export class Repository implements IDisposable, InteractionAPI {
     @throttle
     async pull(uri: FossilURI): Promise<void> {
         return this.runWithProgress(Operation.Pull, async () => {
-            await this.repository.pull({
-                autoUpdate: typedConfig.autoUpdate,
-                uri,
-            });
+            await this.repository.pull(uri);
         });
     }
 

@@ -40,7 +40,7 @@ _Work in progress_.
 | fossil.openUI | Open web UI | •&nbsp;Command palette | execute `fossil ui` in VSCode terminal |
 | fossil.patchApply | Apply Patch | •&nbsp;Main SCM menu<br>•&nbsp;Command palette | 1. Select path<br>2. Execute `fossil patch apply $(path)`
 | fossil.patchCreate | Create Patch | •&nbsp;Main SCM menu<br>•&nbsp;Command palette | 1. Select path<br>2. Execute `fossil patch create $(path)`
-| fossil.pull | Pull | •&nbsp;Main SCM menu<br>•&nbsp;Command palette | Execute `fossil pull` or `fossil update` depending on `autoUpdate` configuration option
+| fossil.pull | Pull | •&nbsp;Main SCM menu<br>•&nbsp;Command palette | 1. Select remote URI if many<br>2. Execute `fossil pull URI`
 | fossil.push | Push | •&nbsp;Main SCM menu<br>•&nbsp;Command palette | 1. Execute `fossil push`
 | fossil.pushTo | Push to... | •&nbsp;Main SCM menu<br>•&nbsp;Command palette | 1. Pick remote if > 1<br>2. Execute `fossil push URI`
 | fossil.redo | Redo | •&nbsp;Main SCM menu<br>•&nbsp;Command palette | execute `fossil redo`
@@ -61,4 +61,5 @@ _Work in progress_.
 | fossil.undo | Undo | •&nbsp;Main SCM menu<br>•&nbsp;Command palette | execute `fossil undo`
 | fossil.unstage | Unstage Changes |
 | fossil.unstageAll | Unstage All Changes |
+| fossil.update | Update | •&nbsp;Main SCM menu<br>•&nbsp;Command palette<br>•&nbsp;Status bar item | 1. Execute `fossil update`
 | fossil.wikiCreate | Publish as Fossil Wiki or Technote |

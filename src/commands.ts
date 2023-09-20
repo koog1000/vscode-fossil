@@ -112,7 +112,7 @@ type CommandKey =
     | 'unstageAll'
     | 'update'
     | 'wikiCreate';
-type CommandId = `fossil.${CommandKey}`;
+export type CommandId = `fossil.${CommandKey}`;
 
 interface Command {
     id: CommandId;
@@ -1115,6 +1115,11 @@ export class CommandCenter {
                 await repository.update(newBranch.branch);
             }
         }
+    }
+
+    @command('fossil.update', { repository: true })
+    async update(repository: Repository): Promise<void> {
+        await repository.update();
     }
 
     @command('fossil.pull', { repository: true })

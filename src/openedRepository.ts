@@ -84,11 +84,6 @@ interface LogEntryOptions {
     readonly checkin?: FossilCheckin;
 }
 
-export interface PullOptions {
-    readonly uri: FossilURI;
-    readonly autoUpdate: boolean; // execute 'update' instead of 'pull'
-}
-
 export const enum ResourceStatus {
     MODIFIED,
     ADDED,
@@ -249,8 +244,8 @@ export class OpenedRepository {
         return (result.stdout + result.stderr).trim();
     }
 
-    async update(checkin: FossilCheckin): Promise<void> {
-        await this.exec(['update', checkin]);
+    async update(checkin?: FossilCheckin): Promise<void> {
+        await this.exec(['update', ...(checkin ? [checkin] : [])]);
     }
 
     async commit(
@@ -455,11 +450,8 @@ export class OpenedRepository {
         return match[2] as FossilUndoCommand;
     }
 
-    async pull(options: PullOptions): Promise<void> {
-        await this.exec([
-            options?.autoUpdate ? 'update' : 'pull',
-            ...(options.uri ? [options.uri.toString()] : []),
-        ]);
+    async pull(uri: Uri): Promise<void> {
+        await this.exec(['pull', uri.toString()]);
     }
 
     async push(uri: FossilURI | undefined): Promise<void> {
