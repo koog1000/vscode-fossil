@@ -11,6 +11,7 @@ import { Repository, Operation } from './repository';
 import { ageFromNow, Old } from './humanise';
 
 import { localize } from './main';
+import { CommandId } from './commands';
 
 const enum SyncStatus {
     None = 0,
@@ -194,7 +195,7 @@ class SyncStatusBar {
         const autoInOut = this.describeAutoInOutStatus();
         let icon = autoInOut.icon;
         let text = '';
-        let command = 'fossil.pull'; // pull in autoupdate context performs an 'update'
+        let command: CommandId | '' = 'fossil.update';
         let tooltip = autoInOut.message;
 
         const { syncStatus } = this.state;

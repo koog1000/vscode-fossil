@@ -7,7 +7,6 @@ interface ConfigScheme {
     path: UnvalidatedFossilExecutablePath | null;
     autoInOutInterval: number;
     username: FossilUsername | null;
-    autoUpdate: boolean;
     autoRefresh: boolean;
     enableRenaming: boolean;
 }
@@ -38,14 +37,6 @@ class Config {
 
     get path(): UnvalidatedFossilExecutablePath | null {
         return this.get('path');
-    }
-
-    /**
-     * Enables automatic update of working directory to branch head
-     * after pulling (equivalent to fossil update)
-     */
-    get autoUpdate(): boolean {
-        return this.get('autoUpdate');
     }
 
     /**

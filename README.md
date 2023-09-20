@@ -97,13 +97,6 @@ about cloning from the extension.
 
   * Enables Fossil as a source control manager in VS Code.
 
-`fossil.autoUpdate { boolean }`
-
-  * Enables automatic update of working directory to branch head after
-  pulling (equivalent to `fossil update`)
-  *  `"true"` &mdash; enabled
-  *  `"false"` &mdash; disabled, manual update/merge required
-
 `fossil.autoRefresh { boolean }`
 
   * Enables automatic refreshing of Source Control tab and badge counter
