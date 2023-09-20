@@ -1,5 +1,18 @@
 # Changelog
 
+# v0.5.0
+
+### What's New
+
+- Add 'Update' command
+- Remove 'autoUpdate' configuration option. Use 'Pull' command to run
+  'fossil pull' and 'Update' command to run 'fossil update'
+
+### Bug Fix
+
+- In 0.4.0 'Pull' command did `fossil update URI` which is not a valid command.
+
+
 # v0.4.0
 
 ### What's New
