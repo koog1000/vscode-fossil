@@ -29,7 +29,6 @@ import {
     MergeAction,
     FossilHash,
     FossilRemote,
-    FossilURI,
     FossilUndoCommand,
     FossilCommitMessage,
     StashItem,
@@ -41,6 +40,7 @@ import {
     AnyPath,
     UserPath,
     StashID,
+    FossilRemoteName,
 } from './openedRepository';
 import {
     anyEvent,
@@ -827,16 +827,16 @@ export class Repository implements IDisposable, InteractionAPI {
     }
 
     @throttle
-    async pull(uri: FossilURI): Promise<void> {
+    async pull(name: FossilRemoteName): Promise<void> {
         return this.runWithProgress(Operation.Pull, async () => {
-            await this.repository.pull(uri);
+            await this.repository.pull(name);
         });
     }
 
     @throttle
-    async push(uri?: FossilURI): Promise<void> {
+    async push(name?: FossilRemoteName): Promise<void> {
         return this.runWithProgress(Operation.Push, async () => {
-            await this.repository.push(uri);
+            await this.repository.push(name);
         });
     }
 

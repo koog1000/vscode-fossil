@@ -1129,9 +1129,9 @@ export class CommandCenter {
         if (!remotes.length) {
             return interaction.warnNoRemotes();
         }
-        const uri = await interaction.pickRemote(remotes, 'pull from');
-        if (uri) {
-            await repository.pull(uri);
+        const name = await interaction.pickRemote(remotes, 'pull from');
+        if (name) {
+            await repository.pull(name);
         }
     }
 
@@ -1252,9 +1252,9 @@ export class CommandCenter {
         if (!remotes.length) {
             return interaction.warnNoRemotes();
         }
-        const uri = await interaction.pickRemote(remotes, 'push to');
-        if (uri) {
-            await repository.push(uri);
+        const name = await interaction.pickRemote(remotes, 'push to');
+        if (name) {
+            await repository.push(name);
         }
     }
 
