@@ -450,12 +450,12 @@ export class OpenedRepository {
         return match[2] as FossilUndoCommand;
     }
 
-    async pull(uri: Uri): Promise<void> {
-        await this.exec(['pull', uri.toString()]);
+    async pull(name: FossilRemoteName): Promise<void> {
+        await this.exec(['pull', name]);
     }
 
-    async push(uri: FossilURI | undefined): Promise<void> {
-        await this.exec(['push', ...(uri ? [uri.toString()] : [])]);
+    async push(name: FossilRemoteName | undefined): Promise<void> {
+        await this.exec(['push', ...(name ? [name] : [])]);
     }
 
     async merge(

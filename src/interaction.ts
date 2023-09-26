@@ -39,6 +39,7 @@ import {
     RelativePath,
     StashID,
     FossilRemote,
+    FossilRemoteName,
 } from './openedRepository';
 import * as humanise from './humanise';
 import { Repository, LogEntriesOptions } from './repository';
@@ -970,13 +971,14 @@ interface RemoteQuickPickItem extends QuickPickItem {
 export async function pickRemote(
     remotes: FossilRemote[],
     what: 'push to' | 'pull from'
-): Promise<FossilURI | undefined> {
+): Promise<FossilRemoteName | undefined> {
     if (remotes.length == 1) {
-        return remotes[0].uri;
+        return remotes[0].name;
     }
     const picks = remotes.map(
-        (remote): RemoteQuickPickItem => ({
+        (remote): RemoteQuickPickItem & { name: FossilRemoteName } => ({
             label: `$(link) ${remote.name}`,
+            name: remote.name,
             detail: remote.uri.toString(),
             uri: remote.uri,
         })
@@ -986,7 +988,7 @@ export async function pickRemote(
         placeHolder,
         matchOnDetail: true,
     });
-    return choice?.uri;
+    return choice?.name;
 }
 
 export function warnUnsavedChanges(msg: string): void {

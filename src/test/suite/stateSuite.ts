@@ -59,10 +59,7 @@ function PullAndPushSuite(this: Suite): void {
         await commands.executeCommand('fossil.pull');
         sinon.assert.calledOnce(listCall);
         sinon.assert.notCalled(sem);
-        sinon.assert.calledOnceWithExactly(pullCall, [
-            'pull',
-            'https://example.com/',
-        ]);
+        sinon.assert.calledOnceWithExactly(pullCall, ['pull', 'default']);
     });
 
     test('Update', async () => {
@@ -95,10 +92,7 @@ function PullAndPushSuite(this: Suite): void {
 
     test('PushTo (one remote)', async () => {
         const pushCall = await oneRemote('fossil.pushTo');
-        sinon.assert.calledOnceWithExactly(pushCall, [
-            'push',
-            'https://example.com/',
-        ]);
+        sinon.assert.calledOnceWithExactly(pushCall, ['push', 'default']);
     });
 
     test('PushTo (two remotes)', async () => {
@@ -123,7 +117,7 @@ function PullAndPushSuite(this: Suite): void {
         await commands.executeCommand('fossil.pushTo');
         sinon.assert.calledOnce(listCall);
         sinon.assert.calledOnce(sqp);
-        sinon.assert.calledOnceWithExactly(pushCall, ['push', 'ssh://fossil']);
+        sinon.assert.calledOnceWithExactly(pushCall, ['push', 'origin']);
     });
 
     test('PushTo (two remotes, do not pick)', async () => {
