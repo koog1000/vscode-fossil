@@ -9,7 +9,7 @@
 import { ExtensionContext, window, Disposable, commands } from 'vscode';
 import { Model } from './model';
 import { CommandCenter } from './commands';
-import { FossilContentProvider } from './contentProvider';
+import { FossilFileSystemProvider } from './fileSystemProvider';
 import * as nls from 'vscode-nls';
 import typedConfig from './config';
 import { findFossil } from './fossilFinder';
@@ -54,7 +54,7 @@ async function init(
 
     disposables.push(
         new CommandCenter(executable, model, outputChannel, context),
-        new FossilContentProvider(model)
+        new FossilFileSystemProvider(model)
     );
     return model;
 }

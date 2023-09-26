@@ -874,31 +874,14 @@ export class Repository implements IDisposable, InteractionAPI {
         return this.repository.info(checkin);
     }
 
-    async show(params: FossilUriParams): Promise<string> {
-        // TODO@Joao: should we make this a general concept?
+    async cat(params: FossilUriParams): Promise<Buffer | undefined> {
         await this.whenIdleAndFocused();
 
         return this.runWithProgress(Operation.Show, async () => {
             const relativePath = path
                 .relative(this.repository.root, params.path)
                 .replace(/\\/g, '/') as RelativePath;
-            const result = await this.repository.cat(
-                relativePath,
-                params.checkin
-            );
-            if (result.exitCode) {
-                if (result.fossilErrorCode === 'NoSuchFile') {
-                    return '';
-                }
-                throw new Error(
-                    localize(
-                        'cantshow {1}',
-                        'Could not show object {1}',
-                        String(result)
-                    )
-                );
-            }
-            return result.stdout;
+            return this.repository.cat(relativePath, params.checkin);
         });
     }
 
