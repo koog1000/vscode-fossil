@@ -33,30 +33,37 @@ export function filterEvent<T>(
     event: Event<T>,
     filter: (e: T) => boolean
 ): Event<T> {
-    return (listener, thisArgs = null, disposables?) =>
-        event(e => filter(e) && listener.call(thisArgs, e), null, disposables);
+    return (
+        listener: (e: T) => any,
+        thisArgs?: any,
+        disposables?: IDisposable[]
+    ) => event(e => filter(e) && listener.call(thisArgs, e), null, disposables);
 }
 
 export function anyEvent<T>(...events: Event<T>[]): Event<T> {
-    return (listener, thisArgs = null, disposables?) => {
+    return (
+        listener: (e: T) => any,
+        thisArgs?: any,
+        disposables?: IDisposable[]
+    ) => {
         const result = combinedDisposable(
             events.map(event => event(i => listener.call(thisArgs, i)))
         );
-
-        if (disposables) {
-            disposables.push(result);
-        }
-
+        disposables?.push(result);
         return result;
     };
 }
 
 export function done<T>(promise: Promise<T>): Promise<void> {
-    return promise.then<void>(() => void 0, <any>(() => void 0));
+    return promise.then<void>(() => undefined);
 }
 
 export function once<T>(event: Event<T>): Event<T> {
-    return (listener, thisArgs = null, disposables?) => {
+    return (
+        listener: (e: T) => any,
+        thisArgs?: any,
+        disposables?: IDisposable[]
+    ) => {
         const result = event(
             e => {
                 result.dispose();
