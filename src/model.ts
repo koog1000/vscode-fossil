@@ -18,7 +18,7 @@ import {
     FileRenameEvent,
 } from 'vscode';
 import { FossilExecutable } from './fossilExecutable';
-import { anyEvent, filterEvent, dispose } from './util';
+import { anyEvent, filterEvent, dispose, eventToPromise } from './util';
 import { memoize, debounce, sequentialize } from './decorators';
 import * as path from 'path';
 import * as fs from 'fs/promises';
@@ -64,6 +64,11 @@ function isParent(parent: string, child: string): boolean {
     return child.startsWith(parent);
 }
 
+const enum State {
+    UNINITIALIZED = 1,
+    INITIALIZED,
+}
+
 /**
  *
  * 1) Model should manage list of Repository objects
@@ -88,6 +93,9 @@ export class Model implements Disposable {
     readonly onDidChangeOriginalResource: Event<OriginalResourceChangeEvent> =
         this._onDidChangeOriginalResource.event;
 
+    private _onDidChangeState = new EventEmitter<State>();
+    readonly onDidChangeState = this._onDidChangeState.event;
+
     private openRepositories: OpenRepository[] = [];
     get repositories(): Repository[] {
         return this.openRepositories.map(r => r.repository);
@@ -95,7 +103,19 @@ export class Model implements Disposable {
 
     private possibleFossilRepositoryPaths = new Set<string>();
 
-    private enabled = false;
+    private enabled: boolean;
+    private _state = State.UNINITIALIZED;
+    get state(): State {
+        return this._state;
+    }
+
+    set state(state: State) {
+        this._state = state;
+
+        this._onDidChangeState.fire(state);
+        // commands.executeCommand('setContext', 'fossil.state', state);
+    }
+
     private readonly disposables: Disposable[] = [];
     private renamingDisposable: Disposable | undefined;
 
@@ -110,6 +130,17 @@ export class Model implements Disposable {
             this.enable();
         }
         this.onDidChangeConfiguration();
+    }
+
+    @memoize
+    get isInitialized(): Promise<void> {
+        if (this._state === State.INITIALIZED) {
+            return Promise.resolve();
+        }
+
+        return eventToPromise(
+            filterEvent(this.onDidChangeState, s => s === State.INITIALIZED)
+        ) as Promise<any>;
     }
 
     private onDidChangeConfiguration(): void {
@@ -142,17 +173,12 @@ export class Model implements Disposable {
             this,
             this.disposables
         );
-        this.onDidChangeWorkspaceFolders({
-            added: workspace.workspaceFolders || [],
-            removed: [],
-        });
 
         window.onDidChangeVisibleTextEditors(
             this.onDidChangeVisibleTextEditors,
             this,
             this.disposables
         );
-        this.onDidChangeVisibleTextEditors(window.visibleTextEditors);
 
         const checkoutWatcher =
             workspace.createFileSystemWatcher('**/.fslckout');
@@ -169,8 +195,18 @@ export class Model implements Disposable {
             this.disposables
         );
 
-        this.scanWorkspaceFolders();
-        // this.status();
+        this.doInitialScan().finally(() => (this._state = State.INITIALIZED));
+    }
+
+    private async doInitialScan(): Promise<void> {
+        await Promise.all([
+            this.onDidChangeWorkspaceFolders({
+                added: workspace.workspaceFolders || [],
+                removed: [],
+            }),
+            this.onDidChangeVisibleTextEditors(window.visibleTextEditors),
+            this.scanWorkspaceFolders(),
+        ]);
     }
 
     private disable(): void {

@@ -226,12 +226,12 @@ export class OpenedRepository {
     async cat(
         relativePath: RelativePath,
         checkin: FossilCheckin
-    ): Promise<ExecResult> {
-        return this.exec(
-            ['cat', relativePath, ...(checkin ? ['-r', checkin] : [])],
-            '',
-            { logErrors: false }
-        );
+    ): Promise<Buffer | undefined> {
+        return this.executable.cat(this.root, [
+            'cat',
+            relativePath,
+            ...(checkin ? ['-r', checkin] : []),
+        ]);
     }
 
     /**

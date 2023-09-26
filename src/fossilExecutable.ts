@@ -44,7 +44,14 @@ export interface FossilSpawnOptions extends cp.SpawnOptionsWithoutStdio {
     readonly stdin_data?: string; // dump data to stdin
 }
 
-interface BaseFossilResult {
+interface FossilRawResult {
+    readonly fossilPath: FossilExecutablePath;
+    readonly exitCode: 0 | 1 | Inline.ENOENT;
+    readonly args: FossilArgs;
+    readonly cwd: FossilCWD;
+}
+
+interface BaseFossilResult extends FossilRawResult {
     readonly fossilPath: FossilExecutablePath;
     readonly exitCode: 0 | 1 | Inline.ENOENT;
     readonly stdout: FossilStdOut;
@@ -115,12 +122,13 @@ type FossilCommand =
     | 'wiki';
 
 export type FossilArgs = [FossilCommand, ...string[]];
+type RawExecResult = FossilRawResult & { stdout: Buffer; stderr: Buffer };
 
-async function exec(
+async function rawExec(
     fossilPath: FossilExecutablePath,
     args: FossilArgs,
     options: FossilSpawnOptions
-): Promise<BaseFossilResult> {
+): Promise<RawExecResult> {
     if (!fossilPath) {
         throw new Error('fossil could not be found in the system.');
     }
@@ -157,7 +165,7 @@ async function exec(
         ee.on(name, fn);
         disposables.push(toDisposable(() => ee.removeListener(name, fn)));
     };
-    let readTimeout: NodeJS.Timeout | undefined = undefined;
+    let readTimeout: NodeJS.Timeout | undefined;
     const buffers: Buffer[] = [];
 
     async function onReadTimeout(): Promise<void> {
@@ -192,7 +200,7 @@ async function exec(
             }
             throw e;
         }),
-        new Promise<FossilStdOut>(c => {
+        new Promise<Buffer>(c => {
             function pushBuffer(buffer: Buffer) {
                 buffers.push(buffer);
                 if (checkForPrompt) {
@@ -201,16 +209,12 @@ async function exec(
                 }
             }
             on(child.stdout!, 'data', b => pushBuffer(b));
-            once(child.stdout!, 'close', () =>
-                c(Buffer.concat(buffers).toString('utf8') as FossilStdOut)
-            );
+            once(child.stdout!, 'close', () => c(Buffer.concat(buffers)));
         }),
-        new Promise<FossilStdErr>(c => {
+        new Promise<Buffer>(c => {
             const buffers: Buffer[] = [];
             on(child.stderr!, 'data', b => buffers.push(b));
-            once(child.stderr!, 'close', () =>
-                c(Buffer.concat(buffers).toString('utf8') as FossilStdErr)
-            );
+            once(child.stderr!, 'close', () => c(Buffer.concat(buffers)));
         }),
     ]);
     clearTimeout(readTimeout);
@@ -287,37 +291,31 @@ export class FossilExecutable {
         await this.exec(fossilCwd, ['open', fossilPath, '--force']);
     }
 
-    async exec(
-        cwd: FossilCWD,
-        args: FossilArgs,
-        reason = '',
-        options: Omit<FossilSpawnOptions, 'cwd'> = {} as const
-    ): Promise<ExecResult> {
-        const result = await this._exec(args, reason, { cwd, ...options });
-        if (
-            result.exitCode &&
-            result.fossilErrorCode === 'unknown' &&
-            args[0] != 'close'
-        ) {
-            const openLog = await interaction.errorPromptOpenLog(result);
-            if (openLog) {
-                this.outputChannel.show();
-            }
+    async cat(
+        fossilCwd: FossilCWD,
+        args: FossilArgs
+    ): Promise<Buffer | undefined> {
+        const res = await this._loggingExec(args, '', { cwd: fossilCwd });
+        if (!res.exitCode) {
+            return res.stdout;
         }
-        return result;
+        return;
     }
 
-    private async _exec(
+    private async _loggingExec(
         args: FossilArgs,
         reason: string,
         options: FossilSpawnOptions
-    ): Promise<ExecResult> {
+    ) {
         const startTimeHR = process.hrtime();
-        const logTimeout = setTimeout(
-            () => this.logArgs(args, reason, 'still running'),
-            500
-        );
-        const result = await exec(this.fossilPath, args, options);
+        const waitAndLog = (timeout: number): NodeJS.Timeout => {
+            return setTimeout(() => {
+                this.logArgs(args, reason, 'still running');
+                logTimeout = waitAndLog(timeout * 4);
+            }, timeout);
+        };
+        let logTimeout = waitAndLog(500);
+        const resultRaw = await rawExec(this.fossilPath, args, options);
         clearTimeout(logTimeout);
 
         const durationHR = process.hrtime(startTimeHR);
@@ -326,6 +324,24 @@ export class FossilExecutable {
             reason,
             `${Math.floor(msFromHighResTime(durationHR))}ms`
         );
+        return resultRaw;
+    }
+
+    public async exec(
+        cwd: FossilCWD,
+        args: FossilArgs,
+        reason = '',
+        options: Omit<FossilSpawnOptions, 'cwd'> = {} as const
+    ): Promise<ExecResult> {
+        const resultRaw = await this._loggingExec(args, reason, {
+            cwd,
+            ...options,
+        });
+        const result: ExecResult = {
+            ...resultRaw,
+            stdout: resultRaw.stdout.toString('utf8') as FossilStdOut,
+            stderr: resultRaw.stderr.toString('utf8') as FossilStdErr,
+        } as ExecResult;
 
         if (result.exitCode) {
             const fossilErrorCode: FossilErrorCode = (() => {
@@ -351,20 +367,25 @@ export class FossilExecutable {
                 ) {
                     return 'BranchAlreadyExists';
                 }
-
                 return 'unknown';
             })();
 
             if (options.logErrors !== false && result.stderr) {
                 this.log(`${result.stderr}\n`);
             }
-
-            return {
-                message: 'Failed to execute fossil',
+            const failure: ExecFailure = {
                 ...result,
+                message: 'Failed to execute fossil',
                 fossilErrorCode,
                 toString,
-            } as ExecFailure;
+            };
+            if (fossilErrorCode == 'unknown' && args[0] != 'close') {
+                const openLog = await interaction.errorPromptOpenLog(result);
+                if (openLog) {
+                    this.outputChannel.show();
+                }
+            }
+            return failure;
         }
         return result as ExecSuccess;
     }
