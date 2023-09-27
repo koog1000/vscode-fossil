@@ -1,5 +1,16 @@
 # Changelog
 
+# v0.5.1
+
+### What's New
+
+- Use the same content backend (`FileSystemProvider`) as git extension
+
+### Bug Fix
+
+- Use remote names to push and pull to allows the use of the saved passwords
+
+
 # v0.5.0
 
 ### What's New
