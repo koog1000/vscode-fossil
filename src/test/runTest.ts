@@ -1,5 +1,6 @@
 import * as path from 'path';
 import * as fs from 'fs/promises';
+import * as os from 'os';
 
 import { runTests } from '@vscode/test-electron';
 
@@ -13,7 +14,7 @@ async function main() {
         // Passed to --extensionTestsPath
         const extensionTestsPath = path.resolve(__dirname, './suite/index');
 
-        const testWorkspace = path.resolve(__dirname, './test_repo');
+        const testWorkspace = path.resolve(os.tmpdir(), './test_repo');
         await fs.mkdir(testWorkspace, { recursive: true });
         console.log(`testWorkspace: '${testWorkspace}'`);
         console.log(`extensionDevelopmentPath: '${extensionDevelopmentPath}'`);
