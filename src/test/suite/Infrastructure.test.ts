@@ -85,9 +85,6 @@ suite('Infrastructure', () => {
         test('Now', () => {
             assert.equal(ageFromNow(new Date()), 'now');
         });
-        test('Now + 1 day', () => {
-            assert.equal(ageFromNow(days(10)), 'now');
-        });
         test('Now - 12 seconds', () => {
             assert.equal(ageFromNow(minutes(-0.2)), 'a few moments ago');
         });
@@ -126,6 +123,18 @@ suite('Infrastructure', () => {
         });
         test('Long ago is empty string', () => {
             assert.equal(ageFromNow(days(-30), Old.EMPTY_STRING), '');
+        });
+        test('Now + 1 minute', () => {
+            assert.equal(ageFromNow(minutes(1)), 'future (1 minute)');
+        });
+        test('Now + 1 day', () => {
+            assert.equal(ageFromNow(days(1)), 'future (24 hours)');
+        });
+        test('Now + 7 days', () => {
+            assert.equal(ageFromNow(days(7)), 'future (7 days)');
+        });
+        test('Now + one year', () => {
+            assert.equal(ageFromNow(days(366)), 'future (366 days)');
         });
     });
 });

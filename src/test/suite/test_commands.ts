@@ -420,7 +420,7 @@ export function MergeSuite(this: Suite): void {
                 assert.ok(typeof items[0].description == 'string');
                 assert.match(
                     items[0].description,
-                    /\$\(person\)\w+ \$\(calendar\) a few moments ago$/
+                    /\$\(person\)\w+ \$\(calendar\) now$/
                 );
                 assert.equal(items[0].detail, 'test merge message');
                 assert.match(
