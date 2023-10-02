@@ -79,21 +79,25 @@ export const enum Old {
 export function ageFromNow(date: Date, old: Old = Old.DATE): string {
     const elapsedSeconds = timeSince(date) / 1e3;
     const elapsed = new TimeSpan(elapsedSeconds);
-    if (elapsed.totalDays > 0) {
+    if (elapsed.totalDays >= 0) {
         // past
+        if (elapsed.totalSeconds < 5) {
+            return 'now';
+        }
         if (elapsed.totalSeconds < 15) {
             return 'a few moments ago';
-        } else if (elapsed.totalSeconds < 99) {
+        }
+        if (elapsed.totalSeconds < 99) {
             return `${Math.floor(elapsed.totalSeconds)} seconds ago`;
-        } else if (elapsed.totalMinutes < 60) {
+        }
+        if (elapsed.totalMinutes < 60) {
             const minutes: string = pluraliseQuantity(
                 'minute',
-                Math.floor(elapsed.totalMinutes),
-                's',
-                ''
+                elapsed.totalMinutes
             );
             return `${minutes} ago`;
-        } else if (elapsed.totalHours < 24) {
+        }
+        if (elapsed.totalHours < 24) {
             const now: Date = new Date();
             const today: Date = datePart(now);
             const startDate: Date = datePart(addSeconds(now, -elapsedSeconds));
@@ -104,13 +108,12 @@ export function ageFromNow(date: Date, old: Old = Old.DATE): string {
             } else {
                 const hours: string = pluraliseQuantity(
                     'hour',
-                    Math.floor(elapsed.totalHours),
-                    's',
-                    ''
+                    elapsed.totalHours
                 );
                 return `${hours} ago`;
             }
-        } else if (elapsed.totalDays < 7) {
+        }
+        if (elapsed.totalDays < 7) {
             const now: Date = new Date();
             const today: Date = datePart(now);
             const startDate: Date = datePart(addSeconds(now, -elapsedSeconds));
@@ -128,44 +131,26 @@ export function ageFromNow(date: Date, old: Old = Old.DATE): string {
                     return 'last week';
                 }
             }
+        }
+        if (old == Old.DATE) {
+            return date.toLocaleDateString(undefined, {
+                formatMatcher: 'basic',
+            });
         } else {
-            if (old == Old.DATE) {
-                return date.toLocaleDateString(undefined, {
-                    formatMatcher: 'basic',
-                });
-            } else {
-                return '';
-            }
-        } /*if (elapsed.totalDays < 32) {
-                let weeks: number = Math.round(elapsed.totalWeeks);
-                if (weeks === 1) {
-                    return "a week ago";
-                }
-                else {
-                    return `${weeks} weeks ago`;
-                }
-            }
-            else {
-                let months: number = Math.round(elapsed.totalWeeks / AVERAGE_WEEKS_PER_MONTH);
-                if (months === 1) {
-                    return "a month ago";
-                }
-                else {
-                    return `${months} months ago`;
-                }
-            }*/
+            return '';
+        }
     } else {
         // future
-        //let totalDays: number = Math.floor(-elapsed.totalDays);
-        //if (totalDays == 1)
-        //{
-        //    return "tomorrow";
-        //}
-        //else
-        //{
-        //    return "in the future";
-        //}
-        return 'now';
+        const totalDays: number = Math.floor(-elapsed.totalDays);
+        const totalHours: number = Math.floor(-elapsed.totalHours);
+        const totalMinutes: number = Math.floor(-elapsed.totalMinutes);
+        if (totalMinutes < 60) {
+            return `future (${pluraliseQuantity('minute', totalMinutes)})`;
+        }
+        if (totalHours < 48) {
+            return `future (${pluraliseQuantity('hour', totalHours)})`;
+        }
+        return `future (${totalDays} days)`;
     }
 }
 
@@ -205,14 +190,7 @@ function getWeek(date: Date): number {
     );
 }
 
-function pluraliseQuantity(
-    word: string,
-    quantity: number,
-    pluralSuffix = 's',
-    singularSuffix = '',
-    singleQuantifier: string | null = null
-) {
-    return quantity == 1
-        ? `${singleQuantifier || '1'} ${word}${singularSuffix}`
-        : `${quantity} ${word}${pluralSuffix}`;
+function pluraliseQuantity(word: string, quantity: number) {
+    quantity = Math.floor(quantity);
+    return `${quantity} ${word}${quantity == 1 ? '' : 's'}`;
 }
