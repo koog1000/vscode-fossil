@@ -427,8 +427,7 @@ export class Model implements Disposable {
     getRepository(
         hint: Uri | SourceControl | Repository
     ): Repository | undefined {
-        const liveRepository = this.getOpenRepository(hint);
-        return liveRepository && liveRepository.repository;
+        return this.getOpenRepository(hint)?.repository;
     }
 
     private getOpenRepository(
