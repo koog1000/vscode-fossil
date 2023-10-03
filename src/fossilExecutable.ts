@@ -122,107 +122,10 @@ type FossilCommand =
     | 'wiki';
 
 export type FossilArgs = [FossilCommand, ...string[]];
-type RawExecResult = FossilRawResult & { stdout: Buffer; stderr: Buffer };
-
-async function rawExec(
-    fossilPath: FossilExecutablePath,
-    args: FossilArgs,
-    options: FossilSpawnOptions
-): Promise<RawExecResult> {
-    if (!fossilPath) {
-        throw new Error('fossil could not be found in the system.');
-    }
-
-    if (!options.stdio) {
-        options.stdio = 'pipe';
-    }
-
-    options.env = {
-        ...process.env,
-        ...options.env,
-        LC_ALL: 'en_US',
-        LANG: 'en_US.UTF-8',
-    };
-
-    const child = cp.spawn(fossilPath, args, options);
-
-    const disposables: IDisposable[] = [];
-
-    const once = (
-        ee: NodeJS.EventEmitter,
-        name: 'close' | 'error' | 'exit',
-        fn: (...args: any[]) => void
-    ) => {
-        ee.once(name, fn);
-        disposables.push(toDisposable(() => ee.removeListener(name, fn)));
-    };
-
-    const on = (
-        ee: NodeJS.EventEmitter,
-        name: 'data',
-        fn: (...args: any[]) => void
-    ) => {
-        ee.on(name, fn);
-        disposables.push(toDisposable(() => ee.removeListener(name, fn)));
-    };
-    let readTimeout: NodeJS.Timeout | undefined;
-    const buffers: Buffer[] = [];
-
-    async function onReadTimeout(): Promise<void> {
-        if (!buffers.length) {
-            return;
-        }
-        const stringThatMightBePrompt = buffers[buffers.length - 1].toString();
-        if (/[:?]\s?$/.test(stringThatMightBePrompt)) {
-            const stdout = Buffer.concat(buffers).toString(
-                'utf8'
-            ) as FossilStdOut;
-            buffers.length = 0;
-            const resp = await interaction.inputPrompt(stdout, args);
-            child.stdin.write(resp + '\n');
-        }
-    }
-
-    const checkForPrompt = !['cat', 'status'].includes(args[0]);
-    if (options.stdin_data !== undefined) {
-        child.stdin.write(options.stdin_data);
-        child.stdin.end();
-    }
-
-    const [exitCode, stdout, stderr] = await Promise.all([
-        new Promise<0 | 1 | Inline.ENOENT>((c, e) => {
-            once(child, 'error', e);
-            once(child, 'exit', c);
-        }).catch((e: NodeJS.ErrnoException) => {
-            if (e.code === 'ENOENT') {
-                // most likely cwd was deleted
-                return Inline.ENOENT;
-            }
-            throw e;
-        }),
-        new Promise<Buffer>(c => {
-            function pushBuffer(buffer: Buffer) {
-                buffers.push(buffer);
-                if (checkForPrompt) {
-                    clearTimeout(readTimeout);
-                    readTimeout = setTimeout(() => onReadTimeout(), 50);
-                }
-            }
-            on(child.stdout!, 'data', b => pushBuffer(b));
-            once(child.stdout!, 'close', () => c(Buffer.concat(buffers)));
-        }),
-        new Promise<Buffer>(c => {
-            const buffers: Buffer[] = [];
-            on(child.stderr!, 'data', b => buffers.push(b));
-            once(child.stderr!, 'close', () => c(Buffer.concat(buffers)));
-        }),
-    ]);
-    clearTimeout(readTimeout);
-
-    dispose(disposables);
-
-    return { fossilPath, exitCode, stdout, stderr, args, cwd: options.cwd };
-}
+export type RawExecResult = FossilRawResult & {
+    stdout: Buffer;
+    stderr: Buffer;
+};
 
 export function toString(this: ExecFailure): string {
     // because https://github.com/github/codeql-action/issues/1230
@@ -302,6 +205,107 @@ export class FossilExecutable {
         return;
     }
 
+    async rawExec(
+        args: FossilArgs,
+        options: FossilSpawnOptions
+    ): Promise<RawExecResult> {
+        options.stdio ??= 'pipe';
+
+        options.env = {
+            ...process.env,
+            ...options.env,
+            LC_ALL: 'en_US',
+            LANG: 'en_US.UTF-8',
+        };
+
+        const child = cp.spawn(this.fossilPath, args, options);
+
+        const disposables: IDisposable[] = [];
+
+        const once = (
+            ee: NodeJS.EventEmitter,
+            name: 'close' | 'error' | 'exit',
+            fn: (...args: any[]) => void
+        ) => {
+            ee.once(name, fn);
+            disposables.push(toDisposable(() => ee.removeListener(name, fn)));
+        };
+
+        const on = (
+            ee: NodeJS.EventEmitter,
+            name: 'data',
+            fn: (...args: any[]) => void
+        ) => {
+            ee.on(name, fn);
+            disposables.push(toDisposable(() => ee.removeListener(name, fn)));
+        };
+        let readTimeout: NodeJS.Timeout | undefined;
+        const buffers: Buffer[] = [];
+
+        async function onReadTimeout(): Promise<void> {
+            if (!buffers.length) {
+                return;
+            }
+            const stringThatMightBePrompt =
+                buffers[buffers.length - 1].toString();
+            if (/[:?]\s?$/.test(stringThatMightBePrompt)) {
+                const stdout = Buffer.concat(buffers).toString(
+                    'utf8'
+                ) as FossilStdOut;
+                buffers.length = 0;
+                const resp = await interaction.inputPrompt(stdout, args);
+                child.stdin.write(resp + '\n');
+            }
+        }
+
+        const checkForPrompt = !['cat', 'status'].includes(args[0]);
+        if (options.stdin_data !== undefined) {
+            child.stdin.write(options.stdin_data);
+            child.stdin.end();
+        }
+
+        const [exitCode, stdout, stderr] = await Promise.all([
+            new Promise<0 | 1 | Inline.ENOENT>((c, e) => {
+                once(child, 'error', e);
+                once(child, 'exit', c);
+            }).catch((e: NodeJS.ErrnoException) => {
+                if (e.code === 'ENOENT') {
+                    // most likely cwd was deleted
+                    return Inline.ENOENT;
+                }
+                throw e;
+            }),
+            new Promise<Buffer>(c => {
+                function pushBuffer(buffer: Buffer) {
+                    buffers.push(buffer);
+                    if (checkForPrompt) {
+                        clearTimeout(readTimeout);
+                        readTimeout = setTimeout(() => onReadTimeout(), 50);
+                    }
+                }
+                on(child.stdout!, 'data', b => pushBuffer(b));
+                once(child.stdout!, 'close', () => c(Buffer.concat(buffers)));
+            }),
+            new Promise<Buffer>(c => {
+                const buffers: Buffer[] = [];
+                on(child.stderr!, 'data', b => buffers.push(b));
+                once(child.stderr!, 'close', () => c(Buffer.concat(buffers)));
+            }),
+        ]);
+        clearTimeout(readTimeout);
+
+        dispose(disposables);
+
+        return {
+            fossilPath: this.fossilPath,
+            exitCode,
+            stdout,
+            stderr,
+            args,
+            cwd: options.cwd,
+        };
+    }
+
     private async _loggingExec(
         args: FossilArgs,
         reason: string,
@@ -315,7 +319,7 @@ export class FossilExecutable {
             }, timeout);
         };
         let logTimeout = waitAndLog(500);
-        const resultRaw = await rawExec(this.fossilPath, args, options);
+        const resultRaw = await this.rawExec(args, options);
         clearTimeout(logTimeout);
 
         const durationHR = process.hrtime(startTimeHR);
