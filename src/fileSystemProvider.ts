@@ -160,14 +160,6 @@ export class FossilFileSystemProvider implements FileSystemProvider {
         return { type: FileType.File, size: 0, mtime: this.mtime, ctime: 0 };
     }
 
-    readDirectory(): Thenable<[string, FileType][]> {
-        throw new Error('Method not implemented.');
-    }
-
-    createDirectory(): void {
-        throw new Error('Method not implemented.');
-    }
-
     async readFile(uri: Uri): Promise<Uint8Array> {
         await this.model.isInitialized;
 
@@ -190,6 +182,15 @@ export class FossilFileSystemProvider implements FileSystemProvider {
         throw FileSystemError.FileNotFound();
     }
 
+    /* c8 ignore start */
+    readDirectory(): Thenable<[string, FileType][]> {
+        throw new Error('Method not implemented.');
+    }
+
+    createDirectory(): void {
+        throw new Error('Method not implemented.');
+    }
+
     writeFile(): void {
         throw new Error('Method not implemented.');
     }
@@ -201,6 +202,7 @@ export class FossilFileSystemProvider implements FileSystemProvider {
     rename(): void {
         throw new Error('Method not implemented.');
     }
+    /* c8 ignore stop */
 
     private cleanup(): void {
         const now = new Date().getTime();
