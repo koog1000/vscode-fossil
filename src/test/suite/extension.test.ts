@@ -8,6 +8,7 @@ import {
     RenameSuite,
     StatusSuite,
     CleanSuite,
+    FileSystemSuite,
 } from './test_commands';
 import { cleanRoot, fossilInit, fossilOpen } from './common';
 import { utilitiesSuite } from './utilitiesSuite';
@@ -41,6 +42,7 @@ suite('Fossil.OpenedRepo', function (this: Suite) {
     suite('Stage', StageSuite);
     suite('Rename', RenameSuite);
     suite('Clean', CleanSuite);
+    suite('FileSystemSuite', FileSystemSuite);
     suite('Quality of Life', QualityOfLifeSuite);
 
     afterEach(() => {

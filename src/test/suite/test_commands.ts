@@ -7,7 +7,9 @@ import {
     cleanupFossil,
     fakeExecutionResult,
     fakeFossilStatus,
+    fakeRawExecutionResult,
     getExecStub,
+    getRawExecStub,
     getRepository,
 } from './common';
 import * as assert from 'assert/strict';
@@ -19,6 +21,7 @@ import {
 } from '../../openedRepository';
 import { delay, eventToPromise } from '../../util';
 import { Suite, Func, Test, before } from 'mocha';
+import { toFossilUri } from '../../uri';
 
 declare module 'mocha' {
     interface TestFunction {
@@ -941,4 +944,24 @@ export function CleanSuite(this: Suite): void {
             ),
         ]);
     }).timeout(5000);
+}
+
+export function FileSystemSuite(this: Suite): void {
+    test('Open document', async () => {
+        const cat = getRawExecStub(this.ctx.sandbox)
+            .withArgs(sinon.match.array.startsWith(['cat']))
+            .resolves(fakeRawExecutionResult({ stdout: 'document text\n' }));
+        const uri = Uri.joinPath(
+            vscode.workspace.workspaceFolders![0].uri,
+            'test.txt'
+        );
+        const fossilUri = toFossilUri(uri);
+        const document = await workspace.openTextDocument(fossilUri);
+        sinon.assert.calledOnceWithExactly(
+            cat,
+            ['cat', 'test.txt', '-r', 'current'],
+            { cwd: sinon.match.string }
+        );
+        assert.equal(document.getText(), 'document text\n');
+    });
 }

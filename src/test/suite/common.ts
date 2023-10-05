@@ -114,6 +114,18 @@ export function getExecStub(sandbox: sinon.SinonSandbox): ExecStub {
     return sandbox.stub(openedRepository, 'exec').callThrough();
 }
 
+type RawExecFunc = FossilExecutable['rawExec'];
+type RawExecStub = sinon.SinonStub<
+    Parameters<RawExecFunc>,
+    ReturnType<RawExecFunc>
+>;
+export function getRawExecStub(sandbox: sinon.SinonSandbox): RawExecStub {
+    const repository = getRepository();
+    const executable: FossilExecutable = (repository as any).repository
+        .executable;
+    return sandbox.stub(executable, 'rawExec').callThrough();
+}
+
 export function fakeExecutionResult({
     stdout,
     stderr,
@@ -133,6 +145,27 @@ export function fakeExecutionResult({
         args: args ?? ['status'],
         cwd: '' as FossilCWD,
     } as ExecResult;
+}
+
+export function fakeRawExecutionResult({
+    stdout,
+    stderr,
+    args,
+    exitCode,
+}: {
+    stdout?: string;
+    stderr?: string;
+    args?: FossilArgs;
+    exitCode?: 0 | 1;
+} = {}): Awaited<ReturnType<RawExecFunc>> {
+    return {
+        fossilPath: '' as FossilExecutablePath,
+        exitCode: exitCode ?? 0,
+        stdout: Buffer.from(stdout ?? ''),
+        stderr: Buffer.from(stderr ?? ''),
+        args: args ?? ['status'],
+        cwd: '' as FossilCWD,
+    };
 }
 
 export function fakeFossilStatus(execStub: ExecStub, status: string): ExecStub {
