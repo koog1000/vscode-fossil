@@ -450,6 +450,14 @@ export function StageSuite(this: Suite): void {
         assert.equal(repository.stagingGroup.resourceStates.length, 2);
     });
 
+    test('Stage (nothing)', async () => {
+        await commands.executeCommand('fossil.stage');
+    });
+
+    test('Unstage (nothing)', async () => {
+        await commands.executeCommand('fossil.unstage');
+    });
+
     test('Stage all', async () => {
         await commands.executeCommand('fossil.unstageAll');
         await statusSetup('ADDED a.txt\nEDITED b.txt\nEDITED c.txt');

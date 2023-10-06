@@ -106,6 +106,10 @@ export function RevertSuite(this: Suite): void {
         );
     });
 
+    test('Revert (Nothing)', async () => {
+        await commands.executeCommand('fossil.revert');
+    });
+
     test('Revert all', async () => {
         const swm: sinon.SinonStub = this.ctx.sandbox.stub(
             window,
@@ -260,6 +264,22 @@ export function BranchSuite(this: Suite): void {
             .resolves(fakeExecutionResult());
         await commands.executeCommand('fossil.branch');
         sinon.assert.calledOnce(creation);
+    });
+
+    test('Create branch canceled', async () => {
+        const cib = this.ctx.sandbox.stub(window, 'createInputBox');
+        cib.onFirstCall().callsFake(() => {
+            const inputBox: vscode.InputBox = cib.wrappedMethod();
+            const stub = sinon.stub(inputBox);
+            stub.show.callsFake(() => {
+                const onDidAccept = stub.onDidAccept.getCall(0).args[0];
+                stub.value = '';
+                onDidAccept();
+            });
+            return stub;
+        });
+        await commands.executeCommand('fossil.branch');
+        sinon.assert.calledOnce(cib);
     });
 }
 
@@ -963,5 +983,19 @@ export function FileSystemSuite(this: Suite): void {
             { cwd: sinon.match.string }
         );
         assert.equal(document.getText(), 'document text\n');
+    });
+}
+
+export function DiffSuite(this: Suite): void {
+    test('Open File From Uri (Nothing)', async () => {
+        await commands.executeCommand('fossil.openFileFromUri');
+    });
+
+    test('Open Change From Uri (Nothing)', async () => {
+        await commands.executeCommand('fossil.openChangeFromUri');
+    });
+
+    test('Open Change (Nothing)', async () => {
+        await commands.executeCommand('fossil.openChange');
     });
 }
