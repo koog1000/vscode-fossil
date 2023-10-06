@@ -453,13 +453,9 @@ export class CommandCenter {
         return this.openFile(...(<FossilResource[]>resources));
     }
 
-    // user clicked `Open file` action in diff view
+    // user clicked `Open file` action in diff view or in the scm panel
     @command('fossil.openFile')
     async openFile(...resources: FossilResource[]): Promise<void> {
-        if (!resources) {
-            return;
-        }
-
         const uris = resources.map(res => res.resourceUri);
         const preview = uris.length === 1;
         const activeTextEditor = window.activeTextEditor;
@@ -487,10 +483,6 @@ export class CommandCenter {
 
     @command('fossil.openChange')
     async openChange(...resources: FossilResource[]): Promise<void> {
-        if (!resources) {
-            return;
-        }
-
         if (resources.length === 1) {
             // a resource group proxy object?
             const [resourceGroup] = resources;

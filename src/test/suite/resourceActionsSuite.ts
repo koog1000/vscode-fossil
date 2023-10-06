@@ -193,6 +193,10 @@ export function resourceActionsSuite(this: Suite): void {
         await executable.exec(cwd, ['commit', '-m', 'fossil_ignore_new_2']);
     }).timeout(8000);
 
+    test('Ignore (nothing)', async () => {
+        await commands.executeCommand('fossil.ignore');
+    });
+
     test('Open files (nothing)', async () => {
         await commands.executeCommand('fossil.openFiles');
     });
