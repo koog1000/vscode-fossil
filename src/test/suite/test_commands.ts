@@ -991,6 +991,43 @@ export function DiffSuite(this: Suite): void {
         await commands.executeCommand('fossil.openFileFromUri');
     });
 
+    test('Open File From Uri (non existing fossil path)', async () => {
+        const uri = Uri.from({ scheme: 'fossil', path: 'nowhere' });
+        await commands.executeCommand('fossil.openFileFromUri', uri);
+    });
+
+    test('Open File From Uri (existing fossil path)', async () => {
+        const repository = getRepository();
+        const rootUri = workspace.workspaceFolders![0].uri;
+        const uri = Uri.joinPath(rootUri, 'a_path.txt');
+        const execStub = getExecStub(this.ctx.sandbox);
+        const statusCall = fakeFossilStatus(execStub, 'ADDED a_path.txt');
+        await repository.updateModelState();
+        sinon.assert.calledOnce(statusCall);
+
+        const testTd = { isUntitled: false } as vscode.TextDocument;
+        const otd = this.ctx.sandbox
+            .stub(workspace, 'openTextDocument')
+            .resolves(testTd);
+        const std = this.ctx.sandbox
+            .stub(window, 'showTextDocument')
+            .resolves();
+        await commands.executeCommand('fossil.openFileFromUri', uri);
+        sinon.assert.calledOnceWithExactly(
+            otd,
+            sinon.match({ path: uri.fsPath })
+        );
+        sinon.assert.calledOnceWithExactly(
+            std,
+            testTd as any,
+            {
+                preview: true,
+                preserveFocus: true,
+                viewColumn: vscode.ViewColumn.Active,
+            } as vscode.TextDocumentShowOptions
+        );
+    });
+
     test('Open Change From Uri (Nothing)', async () => {
         await commands.executeCommand('fossil.openChangeFromUri');
     });
