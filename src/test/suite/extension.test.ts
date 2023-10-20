@@ -3,7 +3,6 @@ import * as sinon from 'sinon';
 import {
     RevertSuite,
     BranchSuite,
-    MergeSuite,
     TagSuite,
     RenameSuite,
     StatusSuite,
@@ -11,6 +10,7 @@ import {
     FileSystemSuite,
     DiffSuite,
 } from './test_commands';
+import { MergeSuite } from './mergeSuite';
 import { cleanRoot, fossilInit, fossilOpen } from './common';
 import { utilitiesSuite } from './utilitiesSuite';
 import { resourceActionsSuite } from './resourceActionsSuite';
