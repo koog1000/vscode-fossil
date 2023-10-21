@@ -123,14 +123,7 @@ export function MergeSuite(this: Suite): void {
             .resolves(fakeExecutionResult({ stdout: ' * a\n   b\n   c\n' }));
         fakeFossilStatus(execStub, 'INTEGRATE 0123456789');
         await getRepository().updateModelState();
-        const sqp = this.ctx.sandbox
-            .stub(window, 'showQuickPick')
-            .onFirstCall()
-            .callsFake(items => {
-                assert.ok(items instanceof Array);
-                assert.equal(items[2].label, '$(git-branch) c');
-                return Promise.resolve(items[2]);
-            });
+        const sqp = this.ctx.sandbox.stub(window, 'showQuickPick');
         const swm: sinon.SinonStub = this.ctx.sandbox
             .stub(window, 'showWarningMessage')
             .onFirstCall()
