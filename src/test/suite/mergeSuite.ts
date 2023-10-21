@@ -5,7 +5,9 @@ import {
     cleanupFossil,
     fakeExecutionResult,
     fakeFossilStatus,
+    fakeRawExecutionResult,
     getExecStub,
+    getRawExecStub,
     getRepository,
 } from './common';
 import * as assert from 'assert/strict';
@@ -14,6 +16,53 @@ import { FossilBranch, OpenedRepository } from '../../openedRepository';
 import { Suite } from 'mocha';
 
 export function MergeSuite(this: Suite): void {
+    test('Merge error is shown', async () => {
+        const mergeExec = getRawExecStub(this.ctx.sandbox)
+            .withArgs(sinon.match.array.startsWith(['merge']))
+            .resolves(
+                fakeRawExecutionResult({
+                    stderr:
+                        'cannot find a common ancestor between ' +
+                        'the current check-out and trunk',
+                    exitCode: 1,
+                })
+            );
+        const sqp = this.ctx.sandbox
+            .stub(window, 'showQuickPick')
+            .onFirstCall()
+            .callsFake(items => {
+                assert.ok(items instanceof Array);
+                assert.equal(items[0].label, '$(git-branch) trunk');
+                return Promise.resolve(items[0]);
+            });
+        const swm: sinon.SinonStub = this.ctx.sandbox
+            .stub(window, 'showWarningMessage')
+            .onFirstCall()
+            .resolves();
+
+        const sem: sinon.SinonStub = this.ctx.sandbox
+            .stub(window, 'showErrorMessage')
+            .onFirstCall()
+            .resolves();
+        const sib = this.ctx.sandbox
+            .stub(window, 'showInputBox')
+            .resolves('trunk merge message');
+
+        await commands.executeCommand('fossil.merge');
+        sinon.assert.calledOnceWithExactly(mergeExec, ['merge', 'trunk'], {
+            cwd: sinon.match.string,
+        });
+        sinon.assert.calledOnce(sqp);
+        sinon.assert.notCalled(sib);
+        sinon.assert.notCalled(swm);
+        sinon.assert.calledOnceWithExactly(
+            sem,
+            'Fossil: cannot find a common ancestor between ' +
+                'the current check-out and trunk',
+            'Open Fossil Log'
+        );
+    });
+
     test('Merge', async () => {
         const repository = getRepository();
         const openedRepository: OpenedRepository = (repository as any)
