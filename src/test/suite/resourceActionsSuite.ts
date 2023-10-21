@@ -201,6 +201,28 @@ export function resourceActionsSuite(this: Suite): void {
         await commands.executeCommand('fossil.openFiles');
     });
 
+    test('Open files (group)', async () => {
+        const repository = getRepository();
+        const execStub = getExecStub(this.ctx.sandbox);
+        fakeFossilStatus(execStub, `ADDED a\nADDED b\n`);
+        await repository.updateModelState();
+        assert.equal(repository.workingGroup.resourceStates.length, 2);
+
+        const testTd: TextDocument = { isUntitled: false } as TextDocument;
+        const otd = this.ctx.sandbox
+            .stub(workspace, 'openTextDocument')
+            .resolves(testTd);
+        const std = this.ctx.sandbox
+            .stub(window, 'showTextDocument')
+            .resolves();
+        await commands.executeCommand(
+            'fossil.openFiles',
+            repository.workingGroup
+        );
+        sinon.assert.calledTwice(otd);
+        sinon.assert.calledTwice(std);
+    });
+
     test('Open files', async () => {
         const rootUri = workspace.workspaceFolders![0].uri;
         const uriToOpen = Uri.joinPath(rootUri, 'a file to open.txt');
