@@ -65,6 +65,10 @@ interface CacheRow {
 const THREE_MINUTES = 1000 * 60 * 3;
 const FIVE_MINUTES = 1000 * 60 * 5;
 
+function not_implemented(): never {
+    throw new Error('Method not implemented.');
+}
+
 export class FossilFileSystemProvider implements FileSystemProvider {
     private _onDidChangeFile = new EventEmitter<FileChangeEvent[]>();
     readonly onDidChangeFile: Event<FileChangeEvent[]> =
@@ -183,24 +187,24 @@ export class FossilFileSystemProvider implements FileSystemProvider {
     }
 
     /* c8 ignore start */
-    readDirectory(): Thenable<[string, FileType][]> {
-        throw new Error('Method not implemented.');
+    readDirectory(): never {
+        not_implemented();
     }
 
-    createDirectory(): void {
-        throw new Error('Method not implemented.');
+    createDirectory(): never {
+        not_implemented();
     }
 
-    writeFile(): void {
-        throw new Error('Method not implemented.');
+    writeFile(): never {
+        not_implemented();
     }
 
-    delete(): void {
-        throw new Error('Method not implemented.');
+    delete(): never {
+        not_implemented();
     }
 
-    rename(): void {
-        throw new Error('Method not implemented.');
+    rename(): never {
+        not_implemented();
     }
     /* c8 ignore stop */
 
