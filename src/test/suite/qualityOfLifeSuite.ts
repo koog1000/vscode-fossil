@@ -14,41 +14,51 @@ function PraiseSuite(this: Suite) {
         assert.ok(!window.activeTextEditor);
         await commands.executeCommand('fossil.praise');
     });
-    test('Praise file', async () => {
-        const uri = Uri.joinPath(
-            workspace.workspaceFolders![0].uri,
-            'praise.txt'
-        );
-        const path = uri.fsPath;
-        await fs.writeFile(path, [...'first', ''].join('\n'));
-        const repository = getRepository();
-        const openedRepository: OpenedRepository = (repository as any)
-            .repository;
-        const ci = (n: number) =>
-            openedRepository.exec([
-                'commit',
-                path,
-                '-m',
-                `praise ${n}`,
-                '--user-override',
-                `u${n}`,
-            ]);
-        await openedRepository.exec(['add', path]);
-        await ci(1);
-        await fs.appendFile(path, [...'second', ''].join('\n'));
-        await ci(2);
-        await fs.appendFile(path, [...'third', ''].join('\n'));
-        await ci(3);
-        await fs.appendFile(path, [...'user', ''].join('\n'));
 
-        await commands.executeCommand('vscode.open', vscode.Uri.file(path));
-        assert.ok(window.activeTextEditor);
-        assert.equal(window.activeTextEditor.document.uri.fsPath, uri.fsPath);
-        // we can't stub `setDecorations`, but what else can we check?
-        // const setDecorations = this.ctx.sandbox.spy(vscode.window.activeTextEditor!, 'setDecorations');
-        await commands.executeCommand('fossil.praise');
-        // sinon.assert.calledOnceWithExactly(setDecorations, sinon.match.object);
-    }).timeout(30000); // sometimes io is unpredictable
+    suite('Praise file', () => {
+        test('First time', async () => {
+            const uri = Uri.joinPath(
+                workspace.workspaceFolders![0].uri,
+                'praise.txt'
+            );
+            const path = uri.fsPath;
+            await fs.writeFile(path, [...'first', ''].join('\n'));
+            const repository = getRepository();
+            const openedRepository: OpenedRepository = (repository as any)
+                .repository;
+            const ci = (n: number) =>
+                openedRepository.exec([
+                    'commit',
+                    path,
+                    '-m',
+                    `praise ${n}`,
+                    '--user-override',
+                    `u${n}`,
+                ]);
+            await openedRepository.exec(['add', path]);
+            await ci(1);
+            await fs.appendFile(path, [...'second', ''].join('\n'));
+            await ci(2);
+            await fs.appendFile(path, [...'third', ''].join('\n'));
+            await ci(3);
+            await fs.appendFile(path, [...'user', ''].join('\n'));
+
+            await commands.executeCommand('vscode.open', vscode.Uri.file(path));
+            assert.ok(window.activeTextEditor);
+            assert.equal(
+                window.activeTextEditor.document.uri.fsPath,
+                uri.fsPath
+            );
+            // we can't stub `setDecorations`, but what else can we check?
+            // const setDecorations = this.ctx.sandbox.spy(vscode.window.activeTextEditor!, 'setDecorations');
+            await commands.executeCommand('fossil.praise');
+            // sinon.assert.calledOnceWithExactly(setDecorations, sinon.match.object);
+        }).timeout(30000); // sometimes io is unpredictable
+
+        test('Second time', async () => {
+            await commands.executeCommand('fossil.praise');
+        });
+    });
 }
 
 function RenderSuite(this: Suite) {
