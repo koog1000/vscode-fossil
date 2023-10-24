@@ -556,7 +556,6 @@ export class CommandCenter {
         const resources = scmResources.map(r => r.resourceUri);
         const repository = this.model.getRepository(resources[0]);
         if (repository) {
-            await repository.add(...resources);
             await repository.stage(...resources);
         }
     }
