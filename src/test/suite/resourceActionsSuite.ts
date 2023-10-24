@@ -12,6 +12,7 @@ import { FossilCWD } from '../../fossilExecutable';
 import {
     assertGroups,
     cleanupFossil,
+    fakeExecutionResult,
     fakeFossilStatus,
     getExecStub,
     getExecutable,
@@ -341,5 +342,23 @@ export function resourceActionsSuite(this: Suite): void {
         await commands.executeCommand('fossil.openResource', resource);
         sinon.assert.notCalled(otd);
         sinon.assert.notCalled(std);
+    });
+
+    test('Add current editor uri', async () => {
+        const root = workspace.workspaceFolders![0].uri;
+        const uri = Uri.joinPath(root, 'opened.txt');
+        await fs.writeFile(uri.fsPath, 'opened');
+        const repository = getRepository();
+        // make file available in 'untracked' group
+        await repository.updateModelState();
+        const document = await workspace.openTextDocument(uri);
+        await window.showTextDocument(document, { preview: false });
+
+        const addStub = getExecStub(this.ctx.sandbox)
+            .withArgs(sinon.match.array.startsWith(['add']))
+            .resolves(fakeExecutionResult());
+        await commands.executeCommand('fossil.add');
+        sinon.assert.calledOnceWithExactly(addStub, ['add', 'opened.txt']);
+        await fs.unlink(uri.fsPath);
     });
 }
