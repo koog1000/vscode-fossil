@@ -252,11 +252,7 @@ export class CommandCenter {
         switch (resource.status) {
             case ResourceStatus.DELETED:
             case ResourceStatus.MISSING:
-                return resource.resourceUri.with({
-                    scheme: 'fossil',
-                    query: 'empty',
-                });
-
+                return toFossilUri(resource.resourceUri);
             case ResourceStatus.ADDED:
             case ResourceStatus.MODIFIED:
             case ResourceStatus.RENAMED:
