@@ -531,7 +531,6 @@ export class CommandCenter {
         if (repository) {
             await repository.ignore(...resources);
         }
-        // await this.runByRepository(resources, async (repository, uris) => repository.ignore(...uris));
     }
 
     @command('fossil.addAll', { repository: true })
@@ -684,7 +683,6 @@ export class CommandCenter {
         if (repository) {
             await repository.unstage(...resources);
         }
-        // await this.runByRepository(resources, async (repository, uris) => repository.unstage(...uris));
     }
 
     @command('fossil.unstageAll', { repository: true })
@@ -733,7 +731,6 @@ export class CommandCenter {
         if (repository) {
             await repository.revert(...resources);
         }
-        // await this.runByRepository(resources, async (repository, uris) => repository.revert(...uris));
     }
 
     @command('fossil.revertAll', { repository: true })
@@ -1451,37 +1448,6 @@ export class CommandCenter {
         }
         return undefined;
     }
-
-    // private runByRepository<T>(resource: Uri, fn: (repository: Repository, resource: Uri) => Promise<T>): Promise<T[]>;
-    // private runByRepository<T>(resources: Uri[], fn: (repository: Repository, resources: Uri[]) => Promise<T>): Promise<T[]>;
-    // private async runByRepository<T>(arg: Uri | Uri[], fn: (repository: Repository, resources: any) => Promise<T>): Promise<T[]> {
-    //     const resources = arg instanceof Uri ? [arg] : arg;
-    //     const isSingleResource = arg instanceof Uri;
-
-    //     const groups = resources.reduce((result, resource) => {
-    //         const repository = this.model.getRepository(resource);
-
-    //         if (!repository) {
-    //             console.warn('Could not find fossil repository for ', resource);
-    //             return result;
-    //         }
-
-    //         const tuple = result.filter(p => p[0] === repository)[0];
-
-    //         if (tuple) {
-    //             tuple.resources.push(resource);
-    //         } else {
-    //             result.push({ repository, resources: [resource] });
-    //         }
-
-    //         return result;
-    //     }, [] as { repository: Repository, resources: Uri[] }[]);
-
-    //     const promises = groups
-    //         .map(({ repository, resources }) => fn(repository as Repository, isSingleResource ? resources[0] : resources));
-
-    //     return Promise.all(promises);
-    // }
 
     dispose(): void {
         this.disposables.forEach(d => d.dispose());
