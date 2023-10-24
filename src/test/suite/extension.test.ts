@@ -4,12 +4,11 @@ import {
     RevertSuite,
     BranchSuite,
     TagSuite,
-    RenameSuite,
     StatusSuite,
     CleanSuite,
     FileSystemSuite,
     DiffSuite,
-} from './test_commands';
+} from './commandSuites';
 import { MergeSuite } from './mergeSuite';
 import { cleanRoot, fossilInit, fossilOpen } from './common';
 import { utilitiesSuite } from './utilitiesSuite';
@@ -18,6 +17,7 @@ import { timelineSuite } from './timelineSuite';
 import { CommitSuite } from './commitSuite';
 import { QualityOfLifeSuite as QualityOfLifeSuite } from './qualityOfLifeSuite';
 import { PatchSuite, StageSuite, StashSuite, UpdateSuite } from './stateSuite';
+import { RenameSuite } from './renameSuite';
 
 suite('Fossil.OpenedRepo', function (this: Suite) {
     this.ctx.sandbox = sinon.createSandbox();
