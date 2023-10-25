@@ -2,7 +2,6 @@ import { before, afterEach, Suite } from 'mocha';
 import * as sinon from 'sinon';
 import {
     RevertSuite,
-    BranchSuite,
     TagSuite,
     StatusSuite,
     CleanSuite,
@@ -18,6 +17,7 @@ import { CommitSuite } from './commitSuite';
 import { QualityOfLifeSuite as QualityOfLifeSuite } from './qualityOfLifeSuite';
 import { PatchSuite, StageSuite, StashSuite, UpdateSuite } from './stateSuite';
 import { RenameSuite } from './renameSuite';
+import { BranchSuite } from './branchSuite';
 
 suite('Fossil.OpenedRepo', function (this: Suite) {
     this.ctx.sandbox = sinon.createSandbox();
