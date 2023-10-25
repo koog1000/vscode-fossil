@@ -276,6 +276,65 @@ export function BranchSuite(this: Suite): void {
         await commands.executeCommand('fossil.branch');
         sinon.assert.calledOnce(cib);
     });
+
+    test('Branch already exists - reopen branch', async () => {
+        const cib = this.ctx.sandbox.stub(window, 'createInputBox');
+        cib.onFirstCall().callsFake(() => {
+            const inputBox: vscode.InputBox = cib.wrappedMethod();
+            const stub = sinon.stub(inputBox);
+            stub.show.callsFake(() => {
+                const onDidAccept = stub.onDidAccept.getCall(0).args[0];
+                stub.value = 'trunk';
+                onDidAccept();
+            });
+            return stub;
+        });
+        const swm: sinon.SinonStub = this.ctx.sandbox
+            .stub(window, 'showWarningMessage')
+            .resolves('&&Re-open' as any);
+
+        const execStub = getExecStub(this.ctx.sandbox);
+        const newBranchStub = execStub
+            .withArgs(['branch', 'new', 'trunk', 'current'])
+            .onSecondCall()
+            .resolves(fakeExecutionResult());
+
+        await commands.executeCommand('fossil.branch');
+        sinon.assert.calledOnce(cib);
+        sinon.assert.calledOnce(swm);
+        sinon.assert.calledTwice(newBranchStub);
+    });
+
+    test('Branch already exists - update to', async () => {
+        const cib = this.ctx.sandbox.stub(window, 'createInputBox');
+        cib.onFirstCall().callsFake(() => {
+            const inputBox: vscode.InputBox = cib.wrappedMethod();
+            const stub = sinon.stub(inputBox);
+            stub.show.callsFake(() => {
+                const onDidAccept = stub.onDidAccept.getCall(0).args[0];
+                stub.value = 'trunk';
+                onDidAccept();
+            });
+            return stub;
+        });
+        const swm: sinon.SinonStub = this.ctx.sandbox
+            .stub(window, 'showWarningMessage')
+            .resolves('&&Update' as any);
+
+        const execStub = getExecStub(this.ctx.sandbox);
+        const newBranchStub = execStub.withArgs(
+            sinon.match.array.startsWith(['branch', 'new', 'trunk', 'current'])
+        );
+        const updateStub = execStub
+            .withArgs(sinon.match.array.startsWith(['update']))
+            .resolves(fakeExecutionResult());
+
+        await commands.executeCommand('fossil.branch');
+        sinon.assert.calledOnce(cib);
+        sinon.assert.calledOnce(swm);
+        sinon.assert.calledOnce(newBranchStub);
+        sinon.assert.calledOnceWithExactly(updateStub, ['update', 'trunk']);
+    });
 }
 
 export function StatusSuite(this: Suite): void {
