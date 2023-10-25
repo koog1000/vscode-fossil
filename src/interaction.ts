@@ -68,7 +68,6 @@ export const enum BranchExistsAction {
 
 export const enum CommitSources {
     File,
-    Branch,
     Repo,
 }
 
@@ -680,14 +679,10 @@ export async function pickUpdateCheckin(
 
 function describeLogEntrySource(kind: CommitSources): string {
     switch (kind) {
-        case CommitSources.Branch:
-            return localize('branch history', 'Branch history');
         case CommitSources.Repo:
             return localize('repo history', 'Repo history');
         case CommitSources.File:
             return localize('file history', 'File history');
-        default:
-            return localize('history', 'History');
     }
 }
 
