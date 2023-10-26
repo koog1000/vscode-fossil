@@ -1,5 +1,12 @@
 # Changelog
 
+# v0.5.3
+
+### Bug Fix
+
+- Show file content instead of erroring when clicking deleted file in scm panel
+
+
 # v0.5.2
 
 ### What's New
