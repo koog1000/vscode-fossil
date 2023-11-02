@@ -302,6 +302,38 @@ export function StatusSuite(this: Suite): void {
         new Map();
         await fs.rmdir(not_file_path);
     }).timeout(20000);
+
+    const testRename = async (
+        status: string,
+        before: string,
+        after: string
+    ) => {
+        const repository = getRepository();
+        const execStub = getExecStub(this.ctx.sandbox);
+        await fakeFossilStatus(execStub, status);
+        await repository.updateModelState();
+        const folder = vscode.workspace.workspaceFolders![0].uri;
+        const uriBefore = Uri.joinPath(folder, before).toString();
+        const uriAfter = Uri.joinPath(folder, after).toString();
+        assert.equal(repository.workingGroup.resourceStates.length, 1);
+        const resource = repository.workingGroup.resourceStates[0];
+        assert.equal(resource.resourceUri.toString(), uriAfter);
+        assert.equal(resource.original.toString(), uriBefore);
+        assert.ok(resource.renameResourceUri);
+        assert.equal(resource.renameResourceUri.toString(), uriAfter);
+    };
+
+    test('Renamed (pre 2.19)', async () => {
+        await testRename('RENAMED a.txt', 'a.txt', 'a.txt');
+    });
+
+    test('Renamed (since 2.19)', async () => {
+        await testRename('RENAMED a.txt  ->  b.txt', 'a.txt', 'b.txt');
+    });
+
+    test('Renamed (since 2.23)', async () => {
+        await testRename('EDITED a.txt  ->  b.txt', 'a.txt', 'b.txt');
+    });
 }
 
 export function TagSuite(this: Suite): void {

@@ -137,21 +137,7 @@ export class FossilResource implements SourceControlResourceState {
     }
     @memoize
     get resourceUri(): Uri {
-        if (this.renameResourceUri) {
-            if (
-                this.status === ResourceStatus.MODIFIED ||
-                this.status === ResourceStatus.RENAMED ||
-                this.status === ResourceStatus.ADDED ||
-                this.status === ResourceStatus.CONFLICT
-            ) {
-                return this.renameResourceUri;
-            }
-
-            throw new Error(
-                `Renamed resource with unexpected status: ${this.status}`
-            );
-        }
-        return this._resourceUri;
+        return this.renameResourceUri ?? this._resourceUri;
     }
 
     private static Icons: {

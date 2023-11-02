@@ -168,17 +168,19 @@ const classes = {
 export type FossilClass = keyof typeof classes;
 
 function toStatus(klass: FossilClass, value: string): FileStatus {
-    if (klass !== 'RENAMED') {
-        return { klass, status: classes[klass], path: value as RelativePath };
-    } else {
-        // since fossil 2.19 there's '  ->  '
+    const status = classes[klass];
+    // fossil did't have "->" before 2.19
+    const idx = value.indexOf('->');
+    if (idx != -1 || klass === 'RENAMED') {
         const [from_path, to_path] = value.split('  ->  ');
         return {
             klass,
-            status: ResourceStatus.RENAMED,
+            status,
             path: from_path as RelativePath,
             rename: to_path ?? from_path,
         };
+    } else {
+        return { klass, status, path: value as RelativePath };
     }
 }
 
