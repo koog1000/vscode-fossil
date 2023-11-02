@@ -1,10 +1,17 @@
 # Changelog
 
+# v0.5.4
+
+### What's New
+
+- Support fossil 2.23 updated status command output
+
+
 # v0.5.3
 
 ### Bug Fix
 
-- Show file content instead of erroring when clicking deleted file in scm panel
+- Show file contents instead of error when clicking on deleted file in scm panel
 
 
 # v0.5.2
