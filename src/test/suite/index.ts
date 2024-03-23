@@ -1,24 +1,24 @@
 import * as path from 'path';
 import * as Mocha from 'mocha';
-import * as glob from 'glob';
+import * as fs from 'fs';
 
-export function run(): Promise<void> {
+export function run(testsRoot: string): Promise<void> {
     // Create the mocha test
     const mocha = new Mocha({
         ui: 'tdd',
     });
 
-    const testsRoot = path.resolve(__dirname, '..');
-
     return new Promise((c, e) => {
-        glob('**/**.test.js', { cwd: testsRoot }, (err, files) => {
+        fs.readdir(testsRoot, { withFileTypes: true }, (err, files) => {
             /* c8 ignore next 3 */
             if (err) {
                 return e(err);
             }
 
             // Add files to the test suite
-            files.forEach(f => mocha.addFile(path.resolve(testsRoot, f)));
+            files
+                .filter(f => f.isFile() && f.name.endsWith('.test.js'))
+                .forEach(f => mocha.addFile(path.resolve(testsRoot, f.name)));
 
             try {
                 // Run the mocha test
