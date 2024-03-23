@@ -1,0 +1,13 @@
+// SYNTAX TEST "source.pikchr" "checks for 'attribute' tree"
+
+arrow from C6 to C3P chop
+//    ^^^^ keyword.pikchr
+//         ^^    ^^^  variable.language.pikchr
+//            ^^ keyword.pikchr
+//                   ^^^^ entity.name.tag.pikchr
+
+arrow right then down
+//    ^^^^^ support.constant.direction.pikchr
+//          ^^^^ keyword.pikchr
+//              ^ -keyword.pikchr
+//               ^^^^  support.constant.direction.pikchr

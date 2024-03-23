@@ -1063,6 +1063,31 @@
                     }
                 ]
             }
+        ],
+        "languages": [
+            {
+                "id": "pikchr",
+                "extensions": [
+                    ".pikchr"
+                ],
+                "icon": {
+                    "dark": "pikchr/assets/pikchr.svg",
+                    "light": "pikchr/assets/pikchr.svg"
+                }
+            }
+        ],
+        "grammars": [
+            {
+                "language": "pikchr",
+                "scopeName": "source.pikchr",
+                "path": "./pikchr/pikchr.tmLanguage.json",
+                "injectTo": [
+                    "text.html.markdown"
+                ],
+                "embeddedLanguages": {
+                    "meta.embedded.block.pikchr": "pikchr"
+                }
+            }
         ]
     },
     "scripts": {
@@ -1078,7 +1103,8 @@
         "lint": "eslint ./src --ext .ts src media",
         "lint:fix": "eslint --fix --ext .ts src media",
         "esbuild-base": "esbuild ./src/main.ts --bundle --outfile=out/main.js --external:vscode --format=cjs --platform=node",
-        "esbuild": "npm run esbuild-base -- --sourcemap"
+        "esbuild": "npm run esbuild-base -- --sourcemap",
+        "grammar-test": "vscode-tmgrammar-test ./pikchr/test/*.test.pikchr"
     },
     "dependencies": {
         "vscode-nls": "^5.0.1"
@@ -1105,7 +1131,8 @@
         "mocha": "~10.2.0",
         "prettier": "~2.8.8",
         "sinon": "~17.0.1",
-        "typescript": "^5.2.2"
+        "typescript": "^5.2.2",
+        "vscode-tmgrammar-test": "^0.1.3"
     },
     "__metadata": {
         "id": "e828bfe6-95e7-4c7a-a334-ae2cc5ba8788",

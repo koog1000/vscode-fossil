@@ -1,0 +1,38 @@
+// SYNTAX TEST "source.pikchr" "all checks for 'position' tree"
+
+<
+< test for `position -> expr -> ',' -> expr`
+<
+box at 1 , 1
+//  ^^ keyword.pikchr
+//     ^   ^ constant.numeric.pikchr
+//       ^ punctuation.separator.pikchr
+
+<
+< `position -> place`
+<
+box at 1st box
+//  ^^ keyword.pikchr
+//     ^^^ constant.language.pikchr
+//         ^^^ keyword.pikchr
+
+<
+< `position -> place -> + -> expr -> ',' -> expr`
+<
+box at 3rd box + 0.1,9.3
+//  ^^ keyword.pikchr
+//     ^^^ constant.language.pikchr
+//         ^^^ keyword.pikchr
+//             ^ keyword.operator.arithmetic.pikchr
+//               ^^^ ^^^ constant.numeric.pikchr
+//                  ^ punctuation.separator.pikchr
+
+<
+< `position -> ( -> position -> )`
+<
+circle at (-0.055, -0.25)
+//     ^^ keyword.pikchr
+//        ^ punctuation.parenthesis.begin.pikchr
+//         ^       ^ keyword.operator.arithmetic.pikchr
+//          ^^^^^   ^^^^ constant.numeric.pikchr
+//                      ^ punctuation.parenthesis.end.pikchr

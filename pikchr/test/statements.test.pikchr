@@ -1,0 +1,93 @@
+// SYNTAX TEST "source.pikchr" "first test"
+
+box
+// <--- storage.type.class.pikchr
+
+cylinder  ;
+// <--------  storage.type.class.pikchr
+//      ^  source.pikchr
+
+
+cylinder;
+// <--- storage.type.class.pikchr
+//      ^ source.pikchr punctuation.separator.delimiter.end.pikchr
+
+cylinder;box
+// <--- storage.type.class.pikchr
+//      ^ source.pikchr punctuation.separator.delimiter.end.pikchr
+//       ^ storage.type.class.pikchr
+
+
+cylinder  ;  box
+// <--- storage.type.class.pikchr
+//      ^ source.pikchr
+//        ^ source.pikchr punctuation.separator.delimiter.end.pikchr
+//         ^ source.pikchr
+//           ^ storage.type.class.pikchr
+
+arrow right
+// <--- storage.type.class.pikchr
+//   ^ -storage.type.class.pikchr
+//    ^^^^^ support.constant.direction.pikchr
+
+diamond "hi"
+// <--- storage.type.class.pikchr
+//      ^^^^ string.quoted.double.pikchr
+
+
+Cat: box "box"
+// <--- variable.language.pikchr
+// ^ punctuation.separator.pikchr
+//   ^^^ storage.type.class.pikchr
+//       ^^^^^ string.quoted.double.pikchr
+
+box "hello, \"world\""
+//  ^^^^^^^^^^^^^^^^^^ string.quoted.double.pikchr
+
+box "hello, \x"
+//  ^^^^^^^^^^^ source.pikchr string.quoted.double.pikchr
+//          ^^ invalid.illegal.unrecognized-string-escape.pikchr
+
+linewid = 0.25
+// <--- variable.pikchr
+//      ^ keyword.operator.assignment.pikchr
+//        ^^^^ constant.numeric.pikchr
+
+$r = 0.2in
+// <-- variable.pikchr
+// ^ keyword.operator.assignment.pikchr
+//   ^^^^^ constant.numeric.pikchr
+//      ^^ keyword.other.unit.in.pikchr
+
+linerad = 0.75*$r
+// <------- variable.pikchr
+//     ^ -variable.pikchr
+//      ^ keyword.operator.assignment.pikchr
+//        ^^^^ constant.numeric.pikchr
+//            ^ keyword.operator.arithmetic.pikchr
+//             ^^ variable.language.pikchr
+
+boxht = .2; boxwid = .3; circlerad = .3; dx = 0.05
+// <----- variable.pikchr
+//          ^^^^^^       ^^^^^^^^^       ^^ variable.language.pikchr
+//    ^            ^               ^        ^ keyword.operator.assignment.pikchr
+//      ^^           ^^              ^^       ^^^^ constant.numeric.pikchr
+//        ^            ^               ^ punctuation.separator.delimiter.end.pikchr
+
+left
+// <- support.constant.direction.pikchr
+
+define par {}
+// <------ keyword.control.directive.define.pikchr
+//     ^^^ variable.language.pikchr
+//         ^ punctuation.section.block.begin.bracket.curly.pikchr
+//          ^ punctuation.section.block.end.bracket.curly.pikchr
+
+line dashed
+//   ^^^^^^ entity.name.tag.pikchr
+
+line dotted
+//   ^^^^^^ entity.name.tag.pikchr
+
+"splines"
+// <--------- string.quoted.double.pikchr
