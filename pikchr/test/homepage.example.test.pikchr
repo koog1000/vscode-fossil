@@ -1,0 +1,39 @@
+// SYNTAX TEST "source.pikchr" "https://pikchr.org/home/doc/trunk/homepage.md"
+
+arrow right 200% "Markdown" "Source"
+// <----- storage.type.class.pikchr
+//   ^ source.pikchr
+//    ^ source.pikchr
+//          ^ source.pikchr constant.numeric.pikchr
+//               ^ source.pikchr string.quoted.double.pikchr
+//                         ^ source.pikchr
+//                          ^ source.pikchr string.quoted.double.pikchr
+
+box rad 10px "Markdown" "Formatter" "(markdown.c)" fit
+// <--- storage.type.class.pikchr
+// ^ -storage.type.class.pikchr
+//  ^^^ support.constant.property-value.pikchr
+//     ^ source.pikchr
+//      ^^^^ source.pikchr constant.numeric.pikchr
+//           ^ source.pikchr
+//            ^ source.pikchr string.quoted.double.pikchr
+//                      ^ source.pikchr
+//                       ^ source.pikchr string.quoted.double.pikchr
+//                                  ^ source.pikchr
+//                                   ^ source.pikchr string.quoted.double.pikchr
+//                                                ^ source.pikchr
+//                                                 ^ source.pikchr entity.name.tag.pikchr
+
+arrow <-> down 70% from last box.s
+// <--- storage.type.class.pikchr
+//   ^ source.pikchr
+//    ^^^ source.pikchr entity.name.tag.pikchr
+//        ^^^^ support.constant.direction.pikchr
+//             ^^ constant.numeric.pikchr
+//               ^ keyword.other.unit.percentage.pikchr
+//                ^ source.pikchr
+//                 ^^^^ keyword.pikchr
+//                      ^^^^ entity.name.type
+//                           ^^^ keyword.pikchr
+//                              ^ punctuation.separator.period.pikchr
+//                               ^ entity.name.class.pikchr

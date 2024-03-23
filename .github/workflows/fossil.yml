@@ -37,5 +37,8 @@ jobs:
         # when running locally using `gh act` command
         run: sudo apt-get install -y fossil
 
-      - name: Run tests and coverage
+      - name: Run code tests and coverage
         run: xvfb-run -a npm run coverage-ci $GITHUB_STEP_SUMMARY
+
+      - name: Run pikchr grammar tests
+        run: npm run grammar-test

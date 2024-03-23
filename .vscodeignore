@@ -11,3 +11,5 @@ docs/
 images/
 node_modules
 src/
+pikchr/test/*
+pikchr/*.py

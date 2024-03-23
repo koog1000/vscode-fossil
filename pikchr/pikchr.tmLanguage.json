@@ -1,0 +1,671 @@
+{
+  "scopeName": "source.pikchr",
+  "comment": "regexp test https://rubular.com/",
+  "patterns": [
+    {
+      "include": "#statement-list"
+    }
+  ],
+  "repository": {
+    "statement-list": {
+      "patterns": [
+        {
+          "include": "#whitespace"
+        },
+        {
+          "include": "#statement"
+        },
+        {
+          "include": "#eol"
+        }
+      ]
+    },
+    "eol": {
+      "comment": "T_EOL was `\\Z|$|(;)`",
+      "match": "\\n\\Z|(;)\\s*",
+      "name": "punctuation.separator.delimiter.end.pikchr"
+    },
+    "syntax-error": {
+      "comment": "T_ERROR (maybe)",
+      "match": "\\w+",
+      "name": "invalid.illegal.pikchr"
+    },
+    "statement": {
+      "patterns": [
+        {
+          "include": "#direction"
+        },
+        {
+          "match": "(:?[A-Z]\\w*)(:)",
+          "captures": {
+            "1": {
+              "name": "variable.language.pikchr"
+            },
+            "2": {
+              "name": "punctuation.separator.pikchr"
+            }
+          }
+        },
+        {
+          "include": "#unnamed-statement"
+        },
+        {
+          "include": "#define-id-codeblock"
+        },
+        {
+          "include": "#lvalue"
+        },
+        {
+          "begin": "\\s*(=)\\s*",
+          "beginCaptures": {
+            "1": {
+              "name": "keyword.operator.assignment.pikchr"
+            }
+          },
+          "patterns": [
+            {
+              "include": "#rvalue"
+            }
+          ],
+          "name": "meta.assignment.pickchr",
+          "applyEndPatternLast": true,
+          "end": "(?:)"
+        }
+      ]
+    },
+    "define-id-codeblock": {
+      "begin": "(?<=^|;|:)\\s*\\b(define)\\b\\s*",
+      "beginCaptures": {
+        "1": {
+          "name": "keyword.control.directive.define.pikchr"
+        }
+      },
+      "patterns": [
+        {
+          "include": "#id"
+        },
+        {
+          "begin": "{",
+          "captures": {
+            "0": {
+              "name": "punctuation.section.block.begin.bracket.curly.pikchr"
+            }
+          },
+          "patterns": [
+            {
+              "include": "#unnamed-statement"
+            }
+          ],
+          "end": "}",
+          "endCaptures": {
+            "0": {
+              "name": "punctuation.section.block.end.bracket.curly.pikchr"
+            }
+          }
+        }
+      ],
+      "end": "(?:(?<!\\\\)(?:\\Z|$))|(;)",
+      "endCaptures": {
+        "1": {
+          "name": "punctuation.separator.delimiter.end.pikchr"
+        }
+      }
+    },
+    "unnamed-statement": {
+      "patterns": [
+        {
+          "include": "#basetype"
+        }
+      ]
+    },
+    "basetype": {
+      "patterns": [
+        {
+          "include": "#basetype-classname"
+        }
+      ]
+    },
+    "basetype-classname": {
+      "begin": "(?<=^|;|:)\\s*(?:\\b(arc|arrow|box|circle|cylinder|diamond|dot|ellipse|file|line|move|oval|spline|text)\\b|(\".*\"))\\s*",
+      "beginCaptures": {
+        "1": {
+          "name": "storage.type.class.pikchr"
+        },
+        "2": {
+          "patterns": [
+            {
+              "include": "#string"
+            }
+          ]
+        }
+      },
+      "applyEndPatternLast": false,
+      "end": "(?<!\\\\)(?=\\n)|(;)",
+      "endCaptures": {
+        "1": {
+          "name": "punctuation.separator.delimiter.end.pikchr"
+        }
+      },
+      "patterns": [
+        {
+          "include": "#attribute"
+        }
+      ]
+    },
+    "string-then-text-attributes": {
+      "begin": "(?=\\s*\")",
+      "patterns": [
+        {
+          "include": "#string"
+        },
+        {
+          "include": "#text-attribute"
+        },
+        {
+          "include": "#text-position"
+        }
+      ],
+      "applyEndPatternLast": true,
+      "end": "(?!\\G)"
+    },
+    "expr": {
+      "patterns": [
+        {
+          "include": "#number"
+        },
+        {
+          "include": "#variable"
+        },
+        {
+          "include": "#colorname"
+        },
+        {
+          "match": "[-+*\\/]",
+          "name": "keyword.operator.arithmetic.pikchr"
+        },
+        {
+          "include": "#id"
+        },
+        {
+          "match": ",\\s*",
+          "name": "punctuation.separator.pikchr"
+        },
+        {
+          "comment": "object->DOT_L->{numproperty,dashproperty,colorproperty}",
+          "match": "\\b(\\.)(diameter|ht|height|rad|radius|thickness|width|wid|dashed|dotted|fill|color)\\s*",
+          "captures": {
+            "1": {
+              "name": "punctuation.separator.period.pikchr"
+            },
+            "2": {
+              "name": "support.constant.property-value.pikchr"
+            }
+          }
+        },
+        {
+          "begin": "(\\()\\s*",
+          "beginCaptures": {
+            "1": {
+              "name": "punctuation.parenthesis.begin.pikch"
+            }
+          },
+          "patterns": [
+            {
+              "include": "#expr"
+            }
+          ],
+          "end": "(\\))\\s*",
+          "endCaptures": {
+            "1": {
+              "name": "punctuation.parenthesis.end.pikchr"
+            }
+          }
+        },
+        {
+          "include": "$self"
+        }
+      ]
+    },
+    "object": {
+      "patterns": [
+        {
+          "include": "#objctname"
+        },
+        {
+          "include": "#nth"
+        },
+        {
+          "patterns": [
+            {
+              "include": "$self"
+            },
+            {
+              "comment": "dot_u->placename",
+              "match": "(\\.)(:?[A-Z]\\w*)",
+              "captures": {
+                "1": {
+                  "name": "punctuation.separator.period.pikchr"
+                },
+                "2": {
+                  "name": "entity.name.tag.pikchr"
+                }
+              }
+            }
+          ]
+        }
+      ]
+    },
+    "objctname": {
+      "patterns": [
+        {
+          "match": "\\bthis\\b",
+          "name": "tag.pikchr"
+        },
+        {
+          "include": "#placename"
+        },
+        {
+          "include": "$self"
+        }
+      ]
+    },
+    "attribute-then": {
+      "begin": "\\b(then|go)\\b\\s*",
+      "beginCaptures": {
+        "1": {
+          "name": "keyword.pikchr"
+        }
+      },
+      "patterns": [
+        {
+          "include": "#edge"
+        },
+        {
+          "match": "\\b(heading)\\b\\s*",
+          "captures": {
+            "1": {
+              "name": "pikchr.keyword"
+            }
+          }
+        }
+      ],
+      "applyEndPatternLast": true,
+      "end": "(?:)"
+    },
+    "percent-sign": {
+      "match": "(%)\\s*",
+      "captures": {
+        "1": {
+          "name": "keyword.other.unit.percentage.pikchr"
+        }
+      }
+    },
+    "number": {
+      "comment": "see `pik_atof` from pikchr.y",
+      "patterns": [
+        {
+          "match": "\\b(0[xX]\\h{1,8})\\b\\s*",
+          "captures": {
+            "1": {
+              "name": "constant.numeric.pikchr"
+            }
+          }
+        },
+        {
+          "match": "((?:\\d*\\.)?\\d+(in|cm|px|pt|pc|mm|%)?)\\b\\s*",
+          "captures": {
+            "1": {
+              "name": "constant.numeric.pikchr"
+            },
+            "2": {
+              "name": "keyword.other.unit.$2.pikchr"
+            }
+          }
+        }
+      ]
+    },
+    "placename": {
+      "patterns": [
+        {
+          "match": "([A-Z]\\w*)\\s*",
+          "captures": {
+            "1": {
+              "name": "variable.language.pikchr"
+            }
+          }
+        },
+        {
+          "comment": "color is a part of placename, according to pikchr.y",
+          "include": "#colorname"
+        }
+      ]
+    },
+    "variable": {
+      "match": "^[a-z_$@][\\w$@]*",
+      "name": "entity.name.tag.pikchr"
+    },
+    "attribute": {
+      "patterns": [
+        {
+          "include": "#dashproperty"
+        },
+        {
+          "include": "#boolproperty"
+        },
+        {
+          "include": "#attribute-then"
+        },
+        {
+          "include": "#go-until-even"
+        },
+        {
+          "include": "#colorproperty-then-rvalue"
+        },
+        {
+          "include": "#numproperty"
+        },
+        {
+          "include": "#percent-sign"
+        },
+        {
+          "include": "#string-then-text-attributes"
+        },
+        {
+          "match": "\\b(:?close|chop|from|to|at)\\b",
+          "name": "keyword.pikchr"
+        },
+        {
+          "match": "\\b(with)\\b",
+          "name": "constant.language.pikchr"
+        },
+        {
+          "include": "#expr"
+        }
+      ]
+    },
+    "dashproperty": {
+      "match": "\\b(dashed|dotted)\\b\\s*",
+      "captures": {
+        "1": {
+          "name": "entity.name.tag.pikchr"
+        }
+      }
+    },
+    "boolproperty": {
+      "comment": "Properties with no argument",
+      "match": "(<->|<-|->)|\\b(cw|ccw|invis(ible)?|thick|thin|solid|same|chop|fit)\\b\\s*",
+      "captures": {
+        "1": {
+          "name": "entity.name.tag.pikchr"
+        },
+        "2": {
+          "name": "entity.name.tag.pikchr"
+        }
+      }
+    },
+    "nth": {
+      "patterns": [
+        {
+          "comment": "last, previous",
+          "match": "\\b(last|previous)\\b\\s*",
+          "captures": {
+            "1": {
+              "name": "entity.name.type"
+            }
+          }
+        },
+        {
+          "match": "\\b(first|\\d+(th|rd|nd|st))\\b\\s*",
+          "name": "constant.language.pikchr"
+        },
+        {
+          "include": "#object-class"
+        }
+      ]
+    },
+    "object-class": {
+      "match": "\\b(arc|arrow|box|circle|cylinder|diamond|dot|ellipse|file|line|move|oval|spline|text)\\b",
+      "name": "keyword.pikchr"
+    },
+    "text-attribute": {
+      "match": "\\b(above|aligned|below|big|bold|mono|monospace|center|italic|ljust|rjust|small)\\b\\s*",
+      "name": "constant.other.pikchr"
+    },
+    "text-position": {
+      "match": "\\b(above|aligned|below|big|bold|center|italic|ljust|mono|rjust|small)\\b\\s*",
+      "name": "constant.other.pikchr"
+    },
+    "edge": {
+      "match": "\\b(bot|bottom|c|center|e|east|end|left|n|ne|north|nw|right|s|se|south|start|sw|t|top|w|west)\\b\\s*",
+      "name": "support.constant.edge.pikchr"
+    },
+    "colorname": {
+      "patterns": [
+        {
+          "match": "(?i)\\b(aqua|black|blue|fuchsia|gray|green|lime|maroon|navy|olive|orange|purple|red|silver|teal|white|yellow)\\b",
+          "name": "support.constant.color.w3c-standard-color-name.pikchr"
+        },
+        {
+          "match": "(?i)\\b(aliceblue|antiquewhite|aquamarine|azure|beige|bisque|blanchedalmond|blueviolet|brown|burlywood|cadetblue|chartreuse|chocolate|coral|cornflowerblue|cornsilk|crimson|cyan|darkblue|darkcyan|darkgoldenrod|darkgray|darkgreen|darkgrey|darkkhaki|darkmagenta|darkolivegreen|darkorange|darkorchid|darkred|darksalmon|darkseagreen|darkslateblue|darkslategray|darkslategrey|darkturquoise|darkviolet|deeppink|deepskyblue|dimgray|dimgrey|dodgerblue|firebrick|floralwhite|forestgreen|gainsboro|ghostwhite|gold|goldenrod|greenyellow|grey|honeydew|hotpink|indianred|indigo|ivory|khaki|lavender|lavenderblush|lawngreen|lemonchiffon|lightblue|lightcoral|lightcyan|lightgoldenrodyellow|lightgray|lightgreen|lightgrey|lightpink|lightsalmon|lightseagreen|lightskyblue|lightslategray|lightslategrey|lightsteelblue|lightyellow|limegreen|linen|magenta|mediumaquamarine|mediumblue|mediumorchid|mediumpurple|mediumseagreen|mediumslateblue|mediumspringgreen|mediumturquoise|mediumvioletred|midnightblue|mintcream|mistyrose|moccasin|navajowhite|none|off|oldlace|olivedrab|orangered|orchid|palegoldenrod|palegreen|paleturquoise|palevioletred|papayawhip|peachpuff|peru|pink|plum|powderblue|rebeccapurple|rosybrown|royalblue|saddlebrown|salmon|sandybrown|seagreen|seashell|sienna|skyblue|slateblue|slategray|slategrey|snow|springgreen|steelblue|tan|thistle|tomato|turquoise|violet|wheat|whitesmoke|yellowgreen)\\b",
+          "name": "support.constant.color.w3c-extended-color-name.pikchr"
+        }
+      ]
+    },
+    "string": {
+      "begin": "\"",
+      "beginCaptures": {
+        "0": {
+          "name": "punctuation.definition.string.begin.pikchr"
+        }
+      },
+      "end": "(\")\\s*",
+      "endCaptures": {
+        "1": {
+          "name": "punctuation.definition.string.end.pikchr"
+        }
+      },
+      "name": "string.quoted.double.pikchr",
+      "patterns": [
+        {
+          "match": "\\\\\"",
+          "name": "constant.character.escape.pikchr"
+        },
+        {
+          "match": "\\\\.",
+          "name": "invalid.illegal.unrecognized-string-escape.pikchr"
+        }
+      ]
+    },
+    "direction": {
+      "match": "\\b(down|left|right|up)\\b\\s*",
+      "captures": {
+        "1": {
+          "name": "support.constant.direction.pikchr"
+        }
+      }
+    },
+    "go-until-even": {
+      "patterns": [
+        {
+          "match": "(\\bgo\\s+)?\\b(down|left|right|up)\\b\\s*",
+          "captures": {
+            "1": {
+              "name": "support.constant.direction.pikchr"
+            },
+            "2": {
+              "name": "support.constant.direction.pikchr"
+            }
+          }
+        },
+        {
+          "match": "\\b((?:until\\s+)?even\\s+with)\\b\\s*",
+          "captures": {
+            "1": {
+              "name": "constant.language.pikchr"
+            }
+          }
+        },
+        {
+          "include": "#position"
+        }
+      ]
+    },
+    "numproperty": {
+      "match": "\\b(diameter|ht|height|rad|radius|thickness|width|wid)\\b\\s+",
+      "captures": {
+        "1": {
+          "name": "support.constant.property-value.pikchr"
+        }
+      }
+    },
+    "lvalue": {
+      "patterns": [
+        {
+          "include": "#id-at-the-beggining"
+        }
+      ]
+    },
+    "id-at-the-beggining": {
+      "comment": "didn't find the rule exactly",
+      "match": "(?<=^\\s*)(\\$?[a-z]+)",
+      "captures": {
+        "1": {
+          "name": "variable.pikchr"
+        }
+      }
+    },
+    "id": {
+      "comment": "didn't find the rule exactly",
+      "match": "(?!\\b(?:then|from|at|diameter|ht|height|rad|radius|thickness|width|wid|with|dashed|dotted|fill|color|to|chop|even)\\b)(\\$?[a-zA-Z]+[a-zA-Z0-9_]*)\\s*",
+      "captures": {
+        "1": {
+          "name": "variable.language.pikchr"
+        }
+      }
+    },
+    "rvalue": {
+      "patterns": [
+        {
+          "include": "#expr"
+        },
+        {
+          "include": "#placename"
+        }
+      ]
+    },
+    "colorproperty-then-rvalue": {
+      "begin": "\\b(fill|color)\\b\\s*",
+      "beginCaptures": {
+        "1": {
+          "name": "keyword.pikchr"
+        }
+      },
+      "applyEndPatternLast": true,
+      "patterns": [
+        {
+          "include": "#rvalue"
+        }
+      ],
+      "end": "(?:)"
+    },
+    "position": {
+      "patterns": [
+        {
+          "include": "#place"
+        },
+        {
+          "match": "\\b(above|below|heading|way between|between|of the way between|and)\\b\\s*",
+          "captures": {
+            "1": {
+              "name": "keyword.pikchr"
+            }
+          }
+        },
+        {
+          "begin": "\\(\\s*",
+          "end": "\\)\\s*",
+          "beginCaptures": {
+            "0": {
+              "name": "punctuation.parenthesis.begin.pikchr"
+            }
+          },
+          "endCaptures": {
+            "0": {
+              "name": "punctuation.parenthesis.end.pikchr"
+            }
+          },
+          "patterns": [
+            {
+              "include": "#expr"
+            },
+            {
+              "include": "#position"
+            }
+          ]
+        },
+        {
+          "include": "#expr"
+        }
+      ]
+    },
+    "place": {
+      "patterns": [
+        {
+          "include": "#place2"
+        },
+        {
+          "include": "#edge"
+        },
+        {
+          "match": "\\b(of)\\b\\s*",
+          "captures": {
+            "1": {
+              "name": "keyword.control.of.pikchr"
+            }
+          }
+        }
+      ]
+    },
+    "place2": {
+      "patterns": [
+        {
+          "include": "#object"
+        },
+        {
+          "include": "#dot_e-edge"
+        },
+        {
+          "include": "#nth"
+        }
+      ]
+    },
+    "dot_e-edge": {
+      "match": "(\\.)(bot|bottom|c|center|e|east|end|left|n|ne|north|nw|right|s|se|south|start|sw|t|top|w|west)\\b\\s*",
+      "captures": {
+        "1": {
+          "name": "punctuation.separator.period.pikchr"
+        },
+        "2": {
+          "name": "entity.name.class.pikchr"
+        }
+      }
+    },
+    "whitespace": {
+      "comment": "match T_WHITESPACE as seen in pikchr.y",
+      "patterns": [
+        {
+          "match": " \\r\\n\\t\\f"
+        },
+        {
+          "begin": "/\\*",
+          "end": "\\*/",
+          "name": "comment.block.pikchr"
+        },
+        {
+          "match": "(?://|#).*$\\n?",
+          "name": "comment.line.pikchr"
+        }
+      ]
+    }
+  }
+}

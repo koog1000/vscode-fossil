@@ -1,0 +1,33 @@
+// SYNTAX TEST "source.pikchr" "all checks for 'nth' tree"
+
+<
+< all checks are `attribute -> at -> position -> place -> place2 -> nth -> ...`
+<
+
+<
+< `nth -> NTH -> classname`
+<
+box at 1st box
+//  ^^ keyword.pikchr
+//     ^^^ constant.language.pikchr
+//         ^^^ keyword.pikchr
+
+<
+< `nth -> NTH -> last|previous -> classname`
+<
+box at 2nd previous box
+//  ^^ keyword.pikchr
+//     ^^^ constant.language.pikchr
+//         ^^^^^^^^ entity.name.type
+//                  ^^^ keyword.pikchr
+
+<
+< `nth -> last|previous -> classname
+<
+
+box at last box
+//  ^^ keyword.pikchr
+//     ^^^^ entity.name.type
+//          ^^^ keyword.pikchr
+box at previous box
+//     ^^^^^^^^ entity.name.type

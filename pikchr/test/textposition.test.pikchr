@@ -1,0 +1,40 @@
+// SYNTAX TEST "source.pikchr" "everything related to using text"
+
+box "" above
+//     ^^^^^ constant.other.pikchr
+
+box "" aligned
+//     ^^^^^^^ constant.other.pikchr
+
+box "" below
+//     ^^^^^ constant.other.pikchr
+
+box "" big
+//     ^^^ constant.other.pikchr
+
+box "" bold
+//     ^^^^ constant.other.pikchr
+
+box "" mono
+//     ^^^^ constant.other.pikchr
+
+box "" monospace
+//     ^^^^^^^^^ constant.other.pikchr
+
+box "" center
+//     ^^^^^^ constant.other.pikchr
+
+box "" italic
+//     ^^^^^^ constant.other.pikchr
+
+box "" ljust
+//     ^^^^^ constant.other.pikchr
+
+box "" rjust
+//     ^^^^^ constant.other.pikchr
+
+box "" small
+//     ^^^^^ constant.other.pikchr
+
+box "" small bold
+//     ^^^^^ ^^^^ constant.other.pikchr

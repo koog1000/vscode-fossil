@@ -1,0 +1,88 @@
+// SYNTAX TEST "source.pikchr" "long statements"
+
+line right even with $r left of X9 then up until even with VARIABLE.n
+// <---- storage.type.class.pikchr
+//   ^^^^^ support.constant.direction.pikchr
+//         ^^^^ constant.language.pikchr
+//              ^^^^ constant.language.pikchr
+//                   ^^ variable.language.pikchr
+//                      ^^^^ support.constant.direction.pikchr
+//                           ^^ keyword.control.of.pikchr
+//                              ^^ variable.language.pikchr
+//                                 ^^^^ keyword.pikchr
+//                                      ^^ support.constant.direction.pikchr
+//                                         ^^^^^^^^^^ constant.language.pikchr
+//                                                    ^^^^ constant.language.pikchr
+//                                                         ^^^^^^^^ variable.language.pikchr
+
+circle rad 0.05 at Paper + (-0.055, -0.25)
+// <------ storage.type.class.pikchr
+//     ^^^ support.constant.property-value.pikchr
+//         ^^^^ constant.numeric.pikchr
+//              ^^ keyword.pikchr
+//                 ^^^^^ variable.language.pikchr
+//                       ^ keyword.operator.arithmetic.pikchr
+//                         ^ punctuation.parenthesis.begin.pikchr
+//                          ^       ^ keyword.operator.arithmetic.pikchr
+//                           ^^^^^   ^^^^ constant.numeric.pikchr
+//                                       ^ punctuation.parenthesis.end.pikchr
+
+
+line thick  right from 0.3cm below start of previous
+// <---- storage.type.class.pikchr
+//   ^^^^^ entity.name.tag.pikchr
+//          ^^^^^ support.constant.direction.pikchr
+//                ^^^^ keyword.pikchr
+//                     ^^^^^ constant.numeric.pikchr
+//                        ^^ keyword.other.unit.cm.pikchr
+//                           ^^^^^ keyword.pikchr
+//                                 ^^^^^ support.constant.edge.pikchr
+//                                       ^^ keyword.control.of.pikchr
+//                                          ^^^^^^^^ entity.name.type
+
+oval width OVAL1.height height OVAL1.width
+// <---- storage.type.class.pikchr
+//   ^^^^^              ^^^^^^ support.constant.property-value.pikchr
+//         ^^^^^ variable.language.pikchr
+//              ^                   ^ punctuation.separator.period.pikchr
+//               ^^^^^^              ^^^^^ support.constant.property-value.pikchr
+
+oval "" fit at $r*1.2 below 1/2 way between X0 and X9
+// <---- storage.type.class.pikchr
+//   ^^ string.quoted.double.pikchr
+//      ^^^ entity.name.tag.pikchr
+//         ^ -entity.name.tag.pikchr
+//          ^^ keyword.pikchr
+//             ^^ variable.language.pikchr
+//               ^ keyword.operator.arithmetic.pikchr
+//                ^^^       ^ ^ constant.numeric.pikchr
+//                    ^^^^^ keyword.pikchr
+//                           ^ keyword.operator.arithmetic.pikchr
+//                              ^^^ ^^^^^^^ keyword.pikchr
+//                                          ^^     ^^ variable.language.pikchr
+//                                             ^^^ keyword.pikchr
+
+arrow from TYPENAME.e right even with ATTR
+// <----- storage.type.class.pikchr
+//    ^^^^ keyword.pikchr
+//         ^^^^^^^^                   ^^^^ variable.language.pikchr
+//                 ^ punctuation.separator.period.pikchr
+//                  ^ entity.name.class.pikchr
+//                    ^^^^^ support.constant.direction.pikchr
+//                          ^^^^ ^^^^ constant.language.pikchr
+
+box "expr" fit with .w at 1.75*$h below BTW.w
+// <--- storage.type.class.pikchr
+//  ^^^^^^ string.quoted.double.pikchr
+//         ^^^ entity.name.tag.pikchr
+//             ^^^^ constant.language.pikchr
+//                  ^ punctuation.separator.period.pikchr
+//                   ^ entity.name.class.pikchr
+//                     ^^ keyword.pikchr
+//                        ^^^^ constant.numeric.pikchr
+//                            ^ keyword.operator.arithmetic.pikchr
+//                             ^^ variable.language.pikchr
+//                                ^^^^^ keyword.pikchr
+//                                      ^^^ variable.language.pikchr
+//                                         ^ punctuation.separator.period.pikchr
+//                                          ^ entity.name.class.pikchr
