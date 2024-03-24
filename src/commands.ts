@@ -733,10 +733,21 @@ export class CommandCenter {
     }
 
     @command('fossil.revertAll', { repository: true })
-    async revertAll(repository: Repository): Promise<void> {
-        if (await interaction.confirmDiscardAllChanges()) {
-            const resources = repository.workingGroup.resourceStates;
-            await repository.revert(...resources.map(r => r.resourceUri));
+    async revertAll(
+        repository: Repository,
+        ...groups: FossilResourceGroup[]
+    ): Promise<void> {
+        if (!groups.length) {
+            groups = [repository.workingGroup, repository.conflictGroup];
+        }
+        const name = groups.map(g => `"${g.label}"`).join(' and ');
+        if (await interaction.confirmDiscardAllChanges(name)) {
+            await repository.revert(
+                ...groups
+                    .map(g => g.resourceStates)
+                    .flat()
+                    .map(r => r.resourceUri)
+            );
         }
     }
 

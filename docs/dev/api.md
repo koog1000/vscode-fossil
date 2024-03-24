@@ -48,8 +48,8 @@ _Work in progress_.
 | fossil.render | Preview Using Fossil Renderer |
 | fossil.reopenBranch | Reopen branch... | | 1. Pick branch<br>2. execute `fossil tag cancel --raw closed $(branch-name)`
 | fossil.revert | Discard Changes |
-| fossil.revertAll | Discard All Changes |
-| fossil.revertChange | Revert Change |
+| fossil.revertAll | Discard All Changes | •&nbsp;SCM group header<br>•&nbsp;Command palette | 1. When called from Command palette, revert "conflict" and "changes" groups <br>2. When called from SCM group header, revert all files in that group.
+| fossil.revertChange | Revert Change | •&nbsp;Inline diff window |
 | fossil.showOutput | Show fossil output | •&nbsp;Main SCM menu<br>•&nbsp;Command palette | Reveal `outputChannel` channel in the UI
 | fossil.stage | Stage Changes |
 | fossil.stageAll | Stage All Changes |
