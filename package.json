@@ -1059,7 +1059,7 @@
                 "priority": "option",
                 "selector": [
                     {
-                        "filenamePattern": "*.wiki"
+                        "filenamePattern": "*.{wiki,md,pikchr}"
                     }
                 ]
             }
@@ -1081,6 +1081,13 @@
                 "language": "pikchr",
                 "scopeName": "source.pikchr",
                 "path": "./pikchr/pikchr.tmLanguage.json",
+                "embeddedLanguages": {
+                    "meta.embedded.block.pikchr": "pikchr"
+                }
+            },
+            {
+                "scopeName": "markdown.pikchr.codeblock",
+                "path": "./pikchr/codeblock.pikchr.tmLanguage.json",
                 "injectTo": [
                     "text.html.markdown"
                 ],
