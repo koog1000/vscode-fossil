@@ -10,6 +10,7 @@ import {
     WebviewPanelSerializer,
     EventEmitter,
     WebviewOptions,
+    ColorThemeKind,
 } from 'vscode';
 import * as fs from 'fs/promises';
 import { dispose, IDisposable } from './util';
@@ -100,12 +101,14 @@ export class FossilPreview implements IDisposable {
     private renderer: 'wiki' | 'markdown' | undefined;
     private dirname!: FossilCWD;
     private readonly _disposables: IDisposable[] = [];
-    private current_content: string | undefined;
-    private next_content: string | undefined;
+    private current_content: [string, boolean] | undefined;
+    private next_content: [string, boolean] | undefined;
     private _callbacks: {
         resolve: (value: RenderedHTML) => void;
         reject: (reason: 'new request arrived') => void;
     }[] = [];
+    private last_content: MDorWIKI | undefined;
+    private readonly oldFossil: boolean;
 
     private readonly _onDisposeEmitter = this._register(
         new EventEmitter<void>()
@@ -133,9 +136,16 @@ export class FossilPreview implements IDisposable {
         public uri: Uri,
         private readonly mediaDir: Uri
     ) {
+        this.oldFossil = executable.version < [2, 24];
+
         this.panel.onDidDispose(() => {
             this.dispose();
         });
+        if (!this.oldFossil) {
+            this._register(
+                window.onDidChangeActiveColorTheme(_ => this.update())
+            );
+        }
         this._register(
             this.panel.webview.onDidReceiveMessage(
                 (message: { status: 'loaded' }): void => {
@@ -168,9 +178,9 @@ export class FossilPreview implements IDisposable {
             }
         }
         if (this.uri.scheme == 'file') {
-            return (await fs.readFile(this.uri.fsPath, {
+            return fs.readFile(this.uri.fsPath, {
                 encoding: 'utf-8',
-            })) as MDorWIKI;
+            }) as Promise<MDorWIKI>;
         }
         return;
     }
@@ -246,9 +256,15 @@ export class FossilPreview implements IDisposable {
             this._callbacks = [];
             const res = this.executable.exec(
                 this.dirname,
-                [`test-${renderer}-render`, '-'],
+                [
+                    `test-${renderer}-render`,
+                    ...(this.current_content[1] && !this.oldFossil
+                        ? ['--dark-pikchr']
+                        : []),
+                    '-',
+                ],
                 '',
-                { stdin_data: this.current_content }
+                { stdin_data: this.current_content[0] }
             );
             const html = (await res).stdout as RenderedHTML;
 
@@ -267,7 +283,10 @@ export class FossilPreview implements IDisposable {
      * @returns Promise with output of `fossil test-${this.renderer}-render`
      *          All old promises get rejected.
      */
-    private async render(content: MDorWIKI): Promise<RenderedHTML> {
+    private async render(
+        content: MDorWIKI,
+        isDark: boolean
+    ): Promise<RenderedHTML> {
         const renderer = this.renderer;
         if (!renderer) {
             return `<h1>unknown fossil renderer</h1>` as RenderedHTML;
@@ -276,9 +295,9 @@ export class FossilPreview implements IDisposable {
             this._callbacks.push({ resolve, reject });
         });
         if (this.current_content) {
-            this.next_content = content;
+            this.next_content = [content, isDark];
         } else {
-            this.current_content = content;
+            this.current_content = [content, isDark];
             if (!this.next_content) {
                 this._run_current_task(renderer);
             }
@@ -289,9 +308,19 @@ export class FossilPreview implements IDisposable {
     /**
      * render and post update message to the panel
      */
-    private async update(content: MDorWIKI): Promise<void> {
+    private async update(content?: MDorWIKI): Promise<void> {
         try {
-            const rendered_html = await this.render(content);
+            content ??= this.last_content;
+            this.last_content = content;
+            if (content === undefined) {
+                return;
+            }
+            const kind = window.activeColorTheme.kind;
+            const rendered_html = await this.render(
+                content,
+                kind === ColorThemeKind.Dark ||
+                    kind === ColorThemeKind.HighContrast
+            );
             this.panel.webview.postMessage({
                 html: rendered_html,
                 uri: this.uri.toString(),
@@ -331,7 +360,9 @@ export class FossilPreview implements IDisposable {
         'preview.css'
     )}">
   </head>
-  <body class="vscode-body scrollBeyondLastLine">
+  <body class="vscode-body scrollBeyondLastLine${
+      this.oldFossil ? ' oldFossil' : ''
+  }">
     <div id="fossil-preview-content"></div>
   </body></html>`;
         this.panel.webview.html = html;

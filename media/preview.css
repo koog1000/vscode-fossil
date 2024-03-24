@@ -5,7 +5,7 @@ html, body {
   line-height: var(--markdown-line-height, 22px);
   word-wrap: break-word;
 }
-.pikchr-svg {
+.oldFossil .pikchr-svg {
   background-color: white;
 }
 .pikchr-src {
