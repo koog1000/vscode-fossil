@@ -789,7 +789,7 @@
                 },
                 {
                     "command": "fossil.revertAll",
-                    "when": "config.fossil.enabled && scmProvider == fossil && scmResourceGroup == working",
+                    "when": "config.fossil.enabled && scmProvider == fossil && (scmResourceGroup == working || scmResourceGroup == conflict)",
                     "group": "inline"
                 },
                 {

@@ -1018,10 +1018,18 @@ export async function inputCommitMessage(
     }) as Promise<FossilCommitMessage | undefined>;
 }
 
-export async function confirmDiscardAllChanges(this: void): Promise<boolean> {
+export async function confirmDiscardAllChanges(
+    this: void,
+    where: string
+): Promise<boolean> {
+    // `where` can be
+    // * "Changes"
+    // * "Unresolved Conflicts"
+    // * "Changes" and "Unresolved Conflicts"
     const message = localize(
         'confirm discard all',
-        'Are you sure you want to discard ALL changes?'
+        'Are you sure you want to discard changes in {0} group?',
+        where
     );
     const discard = localize('discard', '&&Discard Changes');
     const choice = await window.showWarningMessage(

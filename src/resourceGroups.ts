@@ -87,7 +87,7 @@ export class FossilResourceGroup {
     constructor(
         sourceControl: SourceControl,
         id: FossilResourceId,
-        label: string
+        readonly label: string // translated string
     ) {
         this._uriToResource = new Map<string, FossilResource>();
         this._vscode_group = sourceControl.createResourceGroup(

@@ -16,6 +16,7 @@ import * as fs from 'fs/promises';
 import { OpenedRepository, ResourceStatus } from '../../openedRepository';
 import { Suite, Func, Test } from 'mocha';
 import { toFossilUri } from '../../uri';
+import { FossilResourceGroup } from '../../resourceGroups';
 
 declare module 'mocha' {
     interface TestFunction {
@@ -104,36 +105,65 @@ export function RevertSuite(this: Suite): void {
         await commands.executeCommand('fossil.revert');
     });
 
-    test('Revert all', async () => {
-        const swm: sinon.SinonStub = this.ctx.sandbox.stub(
-            window,
-            'showWarningMessage'
-        );
+    async function revertAllTest(
+        sandbox: sinon.SinonSandbox,
+        groups: FossilResourceGroup[],
+        message: string,
+        files: string[]
+    ): Promise<void> {
+        const swm: sinon.SinonStub = sandbox.stub(window, 'showWarningMessage');
         swm.onFirstCall().resolves('&&Discard Changes');
 
         const repository = getRepository();
-        const execStub = getExecStub(this.ctx.sandbox);
+        const execStub = getExecStub(sandbox);
         const statusStub = fakeFossilStatus(
             execStub,
-            'EDITED a.txt\nEDITED b.txt'
+            'EDITED a.txt\nEDITED b.txt\nCONFLICT c.txt\nCONFLICT d.txt'
         );
         const revertStub = execStub
             .withArgs(sinon.match.array.startsWith(['revert']))
             .resolves();
         await repository.updateModelState();
         sinon.assert.calledOnce(statusStub);
-        await commands.executeCommand('fossil.revertAll');
+        await commands.executeCommand('fossil.revertAll', ...groups);
         sinon.assert.calledOnceWithExactly(
             swm,
-            'Are you sure you want to discard ALL changes?',
+            message,
             { modal: true },
             '&&Discard Changes'
         );
-        sinon.assert.calledOnceWithExactly(revertStub, [
-            'revert',
-            'a.txt',
-            'b.txt',
-        ]);
+        sinon.assert.calledOnceWithExactly(revertStub, ['revert', ...files]);
+    }
+
+    test('Revert all (no groups)', async () => {
+        await revertAllTest(
+            this.ctx.sandbox,
+            [],
+            'Are you sure you want to discard changes in ' +
+                '"Changes" and "Unresolved Conflicts" group?',
+            ['a.txt', 'b.txt', 'c.txt', 'd.txt']
+        );
+    });
+
+    test('Revert all (changes group)', async () => {
+        const repository = getRepository();
+        await revertAllTest(
+            this.ctx.sandbox,
+            [repository.workingGroup],
+            'Are you sure you want to discard changes in "Changes" group?',
+            ['a.txt', 'b.txt']
+        );
+    });
+
+    test('Revert all (conflict group)', async () => {
+        const repository = getRepository();
+        await revertAllTest(
+            this.ctx.sandbox,
+            [repository.conflictGroup],
+            'Are you sure you want to discard changes ' +
+                'in "Unresolved Conflicts" group?',
+            ['c.txt', 'd.txt']
+        );
     });
 }
 

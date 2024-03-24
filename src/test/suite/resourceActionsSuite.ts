@@ -67,8 +67,8 @@ export function resourceActionsSuite(this: Suite): void {
 
         await commands.executeCommand('fossil.add', resource);
         await repository.updateModelState();
-        assert(!repository.untrackedGroup.includesUri(uri));
-        assert(repository.stagingGroup.includesUri(uri));
+        assert.ok(!repository.untrackedGroup.includesUri(uri));
+        assert.ok(repository.stagingGroup.includesUri(uri));
     }).timeout(5000);
 
     test('fossil add untracked', async () => {
