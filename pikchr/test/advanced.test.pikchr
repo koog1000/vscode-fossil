@@ -86,3 +86,11 @@ box "expr" fit with .w at 1.75*$h below BTW.w
 //                                      ^^^ variable.language.pikchr
 //                                         ^ punctuation.separator.period.pikchr
 //                                          ^ entity.name.class.pikchr
+
+define square { box ht $7 wid $8 $9 }
+// <------ keyword.control.directive.define.pikchr
+//     ^^^^^^ variable.language.pikchr
+//            ^ punctuation.section.block.begin.bracket.curly.pikchr
+//              ^^^ storage.type.class.pikchr
+//                  ^^    ^^^ support.constant.property-value.pikchr
+//                     ^^     ^^ ^^ variable.language.pikchr

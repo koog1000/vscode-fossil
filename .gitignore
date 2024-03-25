@@ -13,3 +13,5 @@ resources/icons/*-light
 /coverage
 *.js
 package-lock.json
+*.pdf
+*.gv
