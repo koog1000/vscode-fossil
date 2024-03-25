@@ -536,7 +536,7 @@
     },
     "id": {
       "comment": "didn't find the rule exactly",
-      "match": "(?!\\b(?:then|from|at|diameter|ht|height|rad|radius|thickness|width|wid|with|dashed|dotted|fill|color|to|chop|even)\\b)(\\$?[a-zA-Z]+[a-zA-Z0-9_]*)\\s*",
+      "match": "(?!\\b(?:then|from|at|diameter|ht|height|rad|radius|thickness|width|wid|with|dashed|dotted|fill|color|to|chop|even)\\b)([$a-zA-Z][a-zA-Z0-9_]*)\\s*",
       "captures": {
         "1": {
           "name": "variable.language.pikchr"

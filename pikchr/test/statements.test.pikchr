@@ -91,3 +91,7 @@ line dotted
 
 "splines"
 // <--------- string.quoted.double.pikchr
+
+box ht $1 wid $1 $2
+//  ^^    ^^^ support.constant.property-value.pikchr
+//     ^^     ^^ ^^ variable.language.pikchr
