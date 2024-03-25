@@ -561,7 +561,7 @@
                 },
                 {
                     "command": "fossil.render",
-                    "when": "fossilOpenRepositoryCount && !isInDiffEditor && resourceExtname =~ /^\\.(md|wiki)$/ || config.fossil.enabled && resourceScheme == untitled"
+                    "when": "fossilOpenRepositoryCount && !isInDiffEditor && resourceExtname =~ /^\\.(md|wiki|pikchr)$/ || config.fossil.enabled && resourceScheme == untitled"
                 },
                 {
                     "command": "fossil.deleteFiles",
@@ -979,7 +979,7 @@
                 },
                 {
                     "command": "fossil.render",
-                    "when": "fossilOpenRepositoryCount && !isInDiffEditor && resourceExtname =~ /^\\.(md|wiki)$/ || config.fossil.enabled && resourceScheme == untitled",
+                    "when": "fossilOpenRepositoryCount && !isInDiffEditor && resourceExtname =~ /^\\.(md|wiki|pikchr)$/ || config.fossil.enabled && resourceScheme == untitled",
                     "group": "navigation"
                 },
                 {

@@ -103,6 +103,7 @@ type FossilCommand =
     | 'mv'
     | 'open'
     | 'patch'
+    | 'pikchr'
     | 'praise'
     | 'pull'
     | 'push'
@@ -383,7 +384,11 @@ export class FossilExecutable {
                 fossilErrorCode,
                 toString,
             };
-            if (fossilErrorCode == 'unknown' && args[0] != 'close') {
+            if (
+                options.logErrors !== false &&
+                fossilErrorCode == 'unknown' &&
+                args[0] != 'close'
+            ) {
                 const openLog = await interaction.errorPromptOpenLog(result);
                 if (openLog) {
                     this.outputChannel.show();

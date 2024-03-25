@@ -1,4 +1,4 @@
-import { FossilExecutable, FossilCWD } from './fossilExecutable';
+import { FossilExecutable, FossilCWD, FossilArgs } from './fossilExecutable';
 import * as path from 'path';
 import {
     Uri,
@@ -11,6 +11,7 @@ import {
     EventEmitter,
     WebviewOptions,
     ColorThemeKind,
+    TextDocument,
 } from 'vscode';
 import * as fs from 'fs/promises';
 import { dispose, IDisposable } from './util';
@@ -97,8 +98,8 @@ export class FossilPreviewManager
     }
 }
 
-export class FossilPreview implements IDisposable {
-    private renderer: 'wiki' | 'markdown' | undefined;
+class FossilPreview implements IDisposable {
+    private renderer: 'wiki' | 'markdown' | 'pikchr' | undefined;
     private dirname!: FossilCWD;
     private readonly _disposables: IDisposable[] = [];
     private current_content: [string, boolean] | undefined;
@@ -171,11 +172,19 @@ export class FossilPreview implements IDisposable {
         this.panel.webview.options = this.getWebviewOptions();
     }
 
-    private async getSource(): Promise<MDorWIKI | undefined> {
+    private currentDocument(): TextDocument | undefined {
         for (const document of workspace.textDocuments) {
             if (document.uri.path == this.uri.path) {
-                return document.getText() as MDorWIKI;
+                return document;
             }
+        }
+        return;
+    }
+
+    private async getSource(): Promise<MDorWIKI | undefined> {
+        const document = this.currentDocument();
+        if (document) {
+            return document.getText() as MDorWIKI;
         }
         if (this.uri.scheme == 'file') {
             return fs.readFile(this.uri.fsPath, {
@@ -249,24 +258,33 @@ export class FossilPreview implements IDisposable {
     }
 
     private async _run_current_task(
-        renderer: 'wiki' | 'markdown'
+        renderer: 'wiki' | 'markdown' | 'pikchr'
     ): Promise<void> {
         while (this.current_content) {
             const awaiting_callback = this._callbacks;
             this._callbacks = [];
-            const res = this.executable.exec(
-                this.dirname,
-                [
+            const dark = this.current_content[1] && !this.oldFossil;
+            let args: FossilArgs;
+            if (renderer == 'pikchr') {
+                args = ['pikchr', ...(dark ? ['-dark'] : [])];
+            } else {
+                args = [
                     `test-${renderer}-render`,
-                    ...(this.current_content[1] && !this.oldFossil
-                        ? ['--dark-pikchr']
-                        : []),
+                    ...(dark ? ['--dark-pikchr'] : []),
                     '-',
-                ],
-                '',
-                { stdin_data: this.current_content[0] }
-            );
-            const html = (await res).stdout as RenderedHTML;
+                ];
+            }
+
+            const result = await this.executable.exec(this.dirname, args, '', {
+                stdin_data: this.current_content[0],
+                logErrors: false,
+            });
+            let html: RenderedHTML;
+            if (!result.exitCode) {
+                html = result.stdout as RenderedHTML;
+            } else {
+                html = `<pre>${result.stderr}</pre>` as RenderedHTML;
+            }
 
             const current_item = awaiting_callback.pop();
             for (const cbs of awaiting_callback) {
@@ -336,19 +354,22 @@ export class FossilPreview implements IDisposable {
         if (uri.scheme == 'file') {
             this.dirname = path.dirname(uri.fsPath) as FossilCWD;
             this.renderer = (() => {
-                switch (path.extname(uri.fsPath)) {
-                    case '.wiki':
-                        return 'wiki';
-                    case '.md':
-                        return 'markdown';
-                }
-                return;
+                return (
+                    {
+                        '.wiki': 'wiki',
+                        '.md': 'markdown',
+                        '.pikchr': 'pikchr',
+                    } as const
+                )[path.extname(uri.fsPath)];
             })();
         } else {
             // untitled schema - try our best
             const cwd = workspace.workspaceFolders?.[0].uri.fsPath ?? '.';
             this.dirname = cwd as FossilCWD;
-            this.renderer = 'markdown';
+            this.renderer =
+                this.currentDocument()?.languageId === 'pikchr'
+                    ? 'pikchr'
+                    : 'markdown';
         }
         this.uri = uri;
         const base_url = this.panel.webview.asWebviewUri(uri);
