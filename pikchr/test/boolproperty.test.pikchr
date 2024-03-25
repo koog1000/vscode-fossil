@@ -38,3 +38,18 @@ cylinder same
 box same;
 // <--- storage.type.class.pikchr
 //  ^^^^ source.pikchr entity.name.tag.pikchr
+
+arrow &rarr;
+//    ^^^^^^ entity.name.tag.pikchr
+
+arrow &rightarrow;
+//    ^^^^^^^^^^^^ entity.name.tag.pikchr
+
+arrow &larr;
+//    ^^^^^^ entity.name.tag.pikchr
+
+arrow &leftarrow;
+//    ^^^^^^^^^^^ entity.name.tag.pikchr
+
+arrow &leftrightarrow;
+//    ^^^^^^^^^^^^^^^^ entity.name.tag.pikchr

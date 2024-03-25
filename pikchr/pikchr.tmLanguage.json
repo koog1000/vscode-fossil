@@ -126,7 +126,7 @@
       ]
     },
     "basetype-classname": {
-      "begin": "(?<=^|;|:)\\s*(?:\\b(arc|arrow|box|circle|cylinder|diamond|dot|ellipse|file|line|move|oval|spline|text)\\b|(\".*\"))\\s*",
+      "begin": "(?<=^|;|:|{)\\s*(?:\\b(arc|arrow|box|circle|cylinder|diamond|dot|ellipse|file|line|move|oval|spline|text)\\b|(\".*\"))\\s*",
       "beginCaptures": {
         "1": {
           "name": "storage.type.class.pikchr"
@@ -393,12 +393,16 @@
     },
     "boolproperty": {
       "comment": "Properties with no argument",
-      "match": "(<->|<-|->)|\\b(cw|ccw|invis(ible)?|thick|thin|solid|same|chop|fit)\\b\\s*",
+      "match": "(<->|<-|->)|\\b(cw|ccw|invis(ible)?|thick|thin|solid|same|chop|fit)\\b|(&(?:larr|leftarrow|leftrightarrow|rarr|rightarrow);)\\s*",
       "captures": {
         "1": {
           "name": "entity.name.tag.pikchr"
         },
         "2": {
+          "name": "entity.name.tag.pikchr"
+        },
+        "4": {
+          "comment": "obscure pikchr constants",
           "name": "entity.name.tag.pikchr"
         }
       }
