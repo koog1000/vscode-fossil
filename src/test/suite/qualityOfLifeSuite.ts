@@ -3,6 +3,7 @@ import { commands, window, workspace, Uri } from 'vscode';
 import * as assert from 'assert/strict';
 import * as fs from 'fs/promises';
 import * as vscode from 'vscode';
+import { languages } from 'vscode';
 import * as sinon from 'sinon';
 import { add, getRepository } from './common';
 import { OpenedRepository } from '../../openedRepository';
@@ -16,6 +17,19 @@ function PraiseSuite(this: Suite) {
     });
 
     suite('Praise file', () => {
+        let registerHoverProviderSpy: sinon.SinonSpy<
+            Parameters<typeof languages.registerHoverProvider>
+        >;
+        let onDidChangeTextDocumentSpy: sinon.SinonSpy<
+            Parameters<typeof workspace.onDidChangeTextDocument>
+        >;
+        let onDidCloseTextDocumentSpy: sinon.SinonSpy<
+            Parameters<typeof workspace.onDidCloseTextDocument>
+        >;
+        let onDidChangeTextEditorSelectionSpy: sinon.SinonSpy<
+            Parameters<typeof window.onDidChangeTextEditorSelection>
+        >;
+
         test('First time', async () => {
             const uri = Uri.joinPath(
                 workspace.workspaceFolders![0].uri,
@@ -49,14 +63,124 @@ function PraiseSuite(this: Suite) {
                 window.activeTextEditor.document.uri.fsPath,
                 uri.fsPath
             );
-            // we can't stub `setDecorations`, but what else can we check?
-            // const setDecorations = this.ctx.sandbox.spy(vscode.window.activeTextEditor!, 'setDecorations');
+
+            onDidChangeTextDocumentSpy = this.ctx.sandbox.spy(
+                vscode.workspace,
+                'onDidChangeTextDocument'
+            );
+            onDidCloseTextDocumentSpy = this.ctx.sandbox.spy(
+                vscode.workspace,
+                'onDidCloseTextDocument'
+            );
+            registerHoverProviderSpy = this.ctx.sandbox.spy(
+                vscode.languages,
+                'registerHoverProvider'
+            );
+            onDidChangeTextEditorSelectionSpy = this.ctx.sandbox.spy(
+                vscode.window,
+                'onDidChangeTextEditorSelection'
+            );
+
             await commands.executeCommand('fossil.praise');
-            // sinon.assert.calledOnceWithExactly(setDecorations, sinon.match.object);
+            sinon.assert.calledOnce(registerHoverProviderSpy);
+            sinon.assert.calledOnce(onDidChangeTextDocumentSpy);
+            sinon.assert.calledOnce(onDidCloseTextDocumentSpy);
+            sinon.assert.calledOnce(onDidChangeTextEditorSelectionSpy);
         }).timeout(30000); // sometimes io is unpredictable
 
         test('Second time', async () => {
+            const registerHoverProviderSpy = this.ctx.sandbox.spy(
+                vscode.languages,
+                'registerHoverProvider'
+            );
             await commands.executeCommand('fossil.praise');
+            sinon.assert.notCalled(registerHoverProviderSpy);
+        });
+
+        test('Hover full text', async () => {
+            assert.ok(window.activeTextEditor);
+            const hover =
+                await registerHoverProviderSpy.firstCall.args[1].provideHover(
+                    window.activeTextEditor.document,
+                    new vscode.Position(1, 1),
+                    null as any
+                );
+            assert.ok(hover);
+            assert.ok(hover.contents[0] instanceof vscode.MarkdownString);
+            assert.match(
+                hover.contents[0].value,
+                /^\*\*praise 1 \(user: u1\)\*\*\n\n\* hash: \*\*.*\*\*\n\* parent: \*\*.*\n\* child: \*\*.*\*\*\n\* tags: \*\*trunk\*\*\n$/
+            );
+        });
+
+        test('Hover for another document', async () => {
+            assert.ok(window.activeTextEditor);
+            const hover =
+                await registerHoverProviderSpy.firstCall.args[1].provideHover(
+                    null as any,
+                    null as any,
+                    null as any
+                );
+            assert.strictEqual(hover, undefined);
+        });
+
+        test('Hover user line', async () => {
+            assert.ok(window.activeTextEditor);
+            const hover =
+                await registerHoverProviderSpy.firstCall.args[1].provideHover(
+                    window.activeTextEditor.document,
+                    new vscode.Position(100, 1),
+                    null as any
+                );
+            assert.ok(hover);
+            assert.ok(hover.contents[0] instanceof vscode.MarkdownString);
+            assert.equal(hover.contents[0].value, 'local change');
+        });
+
+        test('Close text document event', async () => {
+            const args = onDidCloseTextDocumentSpy.firstCall.args;
+            const close = args[0].bind(args[1]);
+            close({} as vscode.TextDocument);
+            assert.ok(window.activeTextEditor);
+            close(window.activeTextEditor.document);
+        });
+
+        test('Change text document event', async () => {
+            const args = onDidChangeTextDocumentSpy.firstCall.args;
+            const change = args[0].bind(args[1]);
+            change({
+                document: {} as vscode.TextDocument,
+                contentChanges: [],
+                reason: undefined,
+            });
+            assert.ok(window.activeTextEditor);
+            change({
+                document: window.activeTextEditor.document,
+                contentChanges: [],
+                reason: undefined,
+            });
+        });
+
+        test('Change text document event', async () => {
+            const args = onDidChangeTextEditorSelectionSpy.firstCall.args;
+            const change = args[0].bind(args[1]);
+            change({
+                kind: undefined as any,
+                selections: [],
+                textEditor: undefined as any,
+            });
+            assert.ok(window.activeTextEditor);
+            // setDecorations cannot be watched, so this is a code coverage test
+            change({
+                kind: undefined as any,
+                selections: [
+                    new vscode.Selection(
+                        new vscode.Position(1, 1),
+                        new vscode.Position(1, 1)
+                    ),
+                ],
+                textEditor: window.activeTextEditor,
+            });
         });
     });
 }
