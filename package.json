@@ -1073,7 +1073,8 @@
                 "icon": {
                     "dark": "pikchr/assets/pikchr.svg",
                     "light": "pikchr/assets/pikchr.svg"
-                }
+                },
+                "configuration": "pikchr/language-configuration.json"
             }
         ],
         "grammars": [
