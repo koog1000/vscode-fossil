@@ -24,7 +24,7 @@
             "runtimeExecutable": "${execPath}",
             "args": [
                 "--extensionDevelopmentPath=${workspaceFolder}",
-                "--extensionTestsPath=${workspaceFolder}/out/test/suite/index",
+                "--extensionTestsPath=${workspaceFolder}/out/test/suite",
                 "${workspaceFolder}/out/test/test_repo",
                 "--disable-extensions"
             ],
