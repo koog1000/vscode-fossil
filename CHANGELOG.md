@@ -1,5 +1,15 @@
 # Changelog
 
+# v0.5.5
+
+### What's New
+
+- Add pikchr syntax highlighting (work in progress)
+- Add .pikchr files preview
+- Dark/light theme support for wiki/md/pikchr previews (requires fossil trunk version 2.24)
+- Add "Revert" button to "Unresolved Conflicts" SCM group
+
+
 # v0.5.4
 
 ### What's New
