@@ -42,3 +42,13 @@ jobs:
 
       - name: Run pikchr grammar tests
         run: npm run grammar-test
+
+      - name: Package
+        if: startsWith(github.ref, 'refs/tags/v')
+        run: rm -rf out && npm run package -- --allow-star-activation
+
+      - name: Release
+        uses: softprops/action-gh-release@v2
+        if: startsWith(github.ref, 'refs/tags/v')
+        with:
+          files: fossil-*.*.*.vsix
