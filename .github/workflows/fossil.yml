@@ -13,15 +13,16 @@ jobs:
     name: Run Fossil Tests
     runs-on: ubuntu-latest
     permissions:
-      contents: read
+      contents: write
       security-events: write
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v3
-
-      - name: Install packages
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Set up Node
+        uses: actions/setup-node@v4
+      - name: Install dependencies
+        # ToDo: use 'npm ci' after we adopt package-lock.json file
         run: npm install
-
       - name: Run ESLint
         run: npm run lint --
           --format @microsoft/eslint-formatter-sarif
