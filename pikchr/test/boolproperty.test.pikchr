@@ -1,55 +1,45 @@
 // SYNTAX TEST "source.pikchr" "Properties with no argument"
 
 arrow cw
-//    ^ source.pikchr entity.name.tag.pikchr
-
+//    ^^ source.pikchr entity.name.tag.pikchr
 box ccw
-//  ^ source.pikchr entity.name.tag.pikchr
-
+//  ^^^ source.pikchr entity.name.tag.pikchr
 box <-
 //  ^^ source.pikchr entity.name.tag.pikchr
-
 box ->
 //  ^^ source.pikchr entity.name.tag.pikchr
-
 box <->
 //  ^^^ source.pikchr entity.name.tag.pikchr
-
 arrow invis
 //    ^^^^^ source.pikchr entity.name.tag.pikchr
-
 box invisible
 //  ^^^^^^^^^ source.pikchr entity.name.tag.pikchr
-
 box thick
-//  ^ source.pikchr entity.name.tag.pikchr
-
+//  ^^^^^ source.pikchr entity.name.tag.pikchr
 box thin
-//  ^ source.pikchr entity.name.tag.pikchr
-
+//  ^^^^ source.pikchr entity.name.tag.pikchr
 arrow solid
-//    ^ source.pikchr entity.name.tag.pikchr
-
+//    ^^^^^ source.pikchr entity.name.tag.pikchr
 cylinder same
 // <-------- storage.type.class.pikchr
 //      ^ source.pikchr
 //       ^^^^ source.pikchr entity.name.tag.pikchr
-
 box same;
 // <--- storage.type.class.pikchr
 //  ^^^^ source.pikchr entity.name.tag.pikchr
-
 arrow &rarr;
 //    ^^^^^^ entity.name.tag.pikchr
-
 arrow &rightarrow;
 //    ^^^^^^^^^^^^ entity.name.tag.pikchr
-
 arrow &larr;
 //    ^^^^^^ entity.name.tag.pikchr
-
 arrow &leftarrow;
 //    ^^^^^^^^^^^ entity.name.tag.pikchr
-
 arrow &leftrightarrow;
 //    ^^^^^^^^^^^^^^^^ entity.name.tag.pikchr
+arrow ←
+//    ^ entity.name.tag.pikchr
+arrow →
+//    ^ entity.name.tag.pikchr
+arrow ↔
+//    ^ entity.name.tag.pikchr

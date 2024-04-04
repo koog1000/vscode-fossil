@@ -14,7 +14,7 @@ box at 1 , 1
 box at 1st box
 //  ^^ keyword.pikchr
 //     ^^^ constant.language.pikchr
-//         ^^^ keyword.pikchr
+//         ^^^ entity.name.function.pikchr
 
 <
 < `position -> place -> + -> expr -> ',' -> expr`
@@ -22,7 +22,7 @@ box at 1st box
 box at 3rd box + 0.1,9.3
 //  ^^ keyword.pikchr
 //     ^^^ constant.language.pikchr
-//         ^^^ keyword.pikchr
+//         ^^^ entity.name.function.pikchr
 //             ^ keyword.operator.arithmetic.pikchr
 //               ^^^ ^^^ constant.numeric.pikchr
 //                  ^ punctuation.separator.pikchr

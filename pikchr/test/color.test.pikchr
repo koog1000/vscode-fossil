@@ -3,456 +3,306 @@
 box fill Red
 // <--- storage.type.class.pikchr
 // ^ source.pikchr
-//  ^^^^ keyword.pikchr
-//      ^ -keyword.pikchr
+//  ^^^^ support.constant.property-value.pikchr
+//      ^ -support.constant.property-value.pikchr
 //       ^^^ support.constant.color.w3c-standard-color-name.pikchr
-
 box fill aqua
-//       ^ support.constant.color.w3c-standard-color-name.pikchr
-
+//       ^^^^ support.constant.color.w3c-standard-color-name.pikchr
 box fill black
-//       ^ support.constant.color.w3c-standard-color-name.pikchr
-
+//       ^^^^^ support.constant.color.w3c-standard-color-name.pikchr
 box fill blue
-//       ^ support.constant.color.w3c-standard-color-name.pikchr
-
+//       ^^^^ support.constant.color.w3c-standard-color-name.pikchr
 box fill gray
-//       ^ support.constant.color.w3c-standard-color-name.pikchr
-
+//       ^^^^ support.constant.color.w3c-standard-color-name.pikchr
 box fill green
-//       ^ support.constant.color.w3c-standard-color-name.pikchr
-
+//       ^^^^^ support.constant.color.w3c-standard-color-name.pikchr
 box fill lime
-//       ^ support.constant.color.w3c-standard-color-name.pikchr
-
+//       ^^^^ support.constant.color.w3c-standard-color-name.pikchr
 box fill maroon
-//       ^ support.constant.color.w3c-standard-color-name.pikchr
-
+//       ^^^^^^ support.constant.color.w3c-standard-color-name.pikchr
 box fill navy
-//       ^ support.constant.color.w3c-standard-color-name.pikchr
-
+//       ^^^^ support.constant.color.w3c-standard-color-name.pikchr
 box fill olive
-//       ^ support.constant.color.w3c-standard-color-name.pikchr
-
+//       ^^^^^ support.constant.color.w3c-standard-color-name.pikchr
 box fill orange
-//       ^ support.constant.color.w3c-standard-color-name.pikchr
-
+//       ^^^^^^ support.constant.color.w3c-standard-color-name.pikchr
 box fill purple
-//       ^ support.constant.color.w3c-standard-color-name.pikchr
-
+//       ^^^^^^ support.constant.color.w3c-standard-color-name.pikchr
 box fill red
-//       ^ support.constant.color.w3c-standard-color-name.pikchr
-
+//       ^^^ support.constant.color.w3c-standard-color-name.pikchr
 box fill silver
-//       ^ support.constant.color.w3c-standard-color-name.pikchr
-
+//       ^^^^^^ support.constant.color.w3c-standard-color-name.pikchr
 box fill teal
-//       ^ support.constant.color.w3c-standard-color-name.pikchr
-
+//       ^^^^ support.constant.color.w3c-standard-color-name.pikchr
 box fill white
-//       ^ support.constant.color.w3c-standard-color-name.pikchr
-
+//       ^^^^^ support.constant.color.w3c-standard-color-name.pikchr
 box fill yellow
-//       ^ support.constant.color.w3c-standard-color-name.pikchr
-
+//       ^^^^^^ support.constant.color.w3c-standard-color-name.pikchr
 box color AliceBlue
-//        ^ support.constant.color.w3c-extended-color-name.pikchr
-
+//        ^^^^^^^^^ support.constant.color.w3c-extended-color-name.pikchr
 box color AntiqueWhite
-//        ^ support.constant.color.w3c-extended-color-name.pikchr
-
+//        ^^^^^^^^^^^^ support.constant.color.w3c-extended-color-name.pikchr
 box color Aquamarine
-//        ^ support.constant.color.w3c-extended-color-name.pikchr
-
+//        ^^^^^^^^^^ support.constant.color.w3c-extended-color-name.pikchr
 box color Azure
-//        ^ support.constant.color.w3c-extended-color-name.pikchr
-
+//        ^^^^^ support.constant.color.w3c-extended-color-name.pikchr
 box color Beige
-//        ^ support.constant.color.w3c-extended-color-name.pikchr
-
+//        ^^^^^ support.constant.color.w3c-extended-color-name.pikchr
 box color Bisque
-//        ^ support.constant.color.w3c-extended-color-name.pikchr
-
+//        ^^^^^^ support.constant.color.w3c-extended-color-name.pikchr
 box color BlanchedAlmond
-//        ^ support.constant.color.w3c-extended-color-name.pikchr
-
+//        ^^^^^^^^^^^^^^ support.constant.color.w3c-extended-color-name.pikchr
 box color BlueViolet
-//        ^ support.constant.color.w3c-extended-color-name.pikchr
-
+//        ^^^^^^^^^^ support.constant.color.w3c-extended-color-name.pikchr
 box color Brown
-//        ^ support.constant.color.w3c-extended-color-name.pikchr
-
+//        ^^^^^ support.constant.color.w3c-extended-color-name.pikchr
 box color BurlyWood
-//        ^ support.constant.color.w3c-extended-color-name.pikchr
-
+//        ^^^^^^^^^ support.constant.color.w3c-extended-color-name.pikchr
 box color CadetBlue
-//        ^ support.constant.color.w3c-extended-color-name.pikchr
-
+//        ^^^^^^^^^ support.constant.color.w3c-extended-color-name.pikchr
 box color Chartreuse
-//        ^ support.constant.color.w3c-extended-color-name.pikchr
-
+//        ^^^^^^^^^^ support.constant.color.w3c-extended-color-name.pikchr
 box color Chocolate
-//        ^ support.constant.color.w3c-extended-color-name.pikchr
-
+//        ^^^^^^^^^ support.constant.color.w3c-extended-color-name.pikchr
 box color Coral
-//        ^ support.constant.color.w3c-extended-color-name.pikchr
-
+//        ^^^^^ support.constant.color.w3c-extended-color-name.pikchr
 box color CornflowerBlue
-//        ^ support.constant.color.w3c-extended-color-name.pikchr
-
+//        ^^^^^^^^^^^^^^ support.constant.color.w3c-extended-color-name.pikchr
 box color Cornsilk
-//        ^ support.constant.color.w3c-extended-color-name.pikchr
-
+//        ^^^^^^^^ support.constant.color.w3c-extended-color-name.pikchr
 box color Crimson
-//        ^ support.constant.color.w3c-extended-color-name.pikchr
-
+//        ^^^^^^^ support.constant.color.w3c-extended-color-name.pikchr
 box color Cyan
-//        ^ support.constant.color.w3c-extended-color-name.pikchr
-
+//        ^^^^ support.constant.color.w3c-extended-color-name.pikchr
 box color DarkBlue
-//        ^ support.constant.color.w3c-extended-color-name.pikchr
-
+//        ^^^^^^^^ support.constant.color.w3c-extended-color-name.pikchr
 box color DarkCyan
-//        ^ support.constant.color.w3c-extended-color-name.pikchr
-
+//        ^^^^^^^^ support.constant.color.w3c-extended-color-name.pikchr
 box color DarkGoldenrod
-//        ^ support.constant.color.w3c-extended-color-name.pikchr
-
+//        ^^^^^^^^^^^^^ support.constant.color.w3c-extended-color-name.pikchr
 box color DarkGray
-//        ^ support.constant.color.w3c-extended-color-name.pikchr
-
+//        ^^^^^^^^ support.constant.color.w3c-extended-color-name.pikchr
 box color DarkGreen
-//        ^ support.constant.color.w3c-extended-color-name.pikchr
-
+//        ^^^^^^^^^ support.constant.color.w3c-extended-color-name.pikchr
 box color DarkGrey
-//        ^ support.constant.color.w3c-extended-color-name.pikchr
-
+//        ^^^^^^^^ support.constant.color.w3c-extended-color-name.pikchr
 box color DarkKhaki
-//        ^ support.constant.color.w3c-extended-color-name.pikchr
-
+//        ^^^^^^^^^ support.constant.color.w3c-extended-color-name.pikchr
 box color DarkMagenta
-//        ^ support.constant.color.w3c-extended-color-name.pikchr
-
+//        ^^^^^^^^^^^ support.constant.color.w3c-extended-color-name.pikchr
 box color DarkOliveGreen
-//        ^ support.constant.color.w3c-extended-color-name.pikchr
-
+//        ^^^^^^^^^^^^^^ support.constant.color.w3c-extended-color-name.pikchr
 box color DarkOrange
-//        ^ support.constant.color.w3c-extended-color-name.pikchr
-
+//        ^^^^^^^^^^ support.constant.color.w3c-extended-color-name.pikchr
 box color DarkOrchid
-//        ^ support.constant.color.w3c-extended-color-name.pikchr
-
+//        ^^^^^^^^^^ support.constant.color.w3c-extended-color-name.pikchr
 box color DarkRed
-//        ^ support.constant.color.w3c-extended-color-name.pikchr
-
+//        ^^^^^^^ support.constant.color.w3c-extended-color-name.pikchr
 box color DarkSalmon
-//        ^ support.constant.color.w3c-extended-color-name.pikchr
-
+//        ^^^^^^^^^^ support.constant.color.w3c-extended-color-name.pikchr
 box color DarkSeaGreen
-//        ^ support.constant.color.w3c-extended-color-name.pikchr
-
+//        ^^^^^^^^^^^^ support.constant.color.w3c-extended-color-name.pikchr
 box color DarkSlateBlue
-//        ^ support.constant.color.w3c-extended-color-name.pikchr
-
+//        ^^^^^^^^^^^^^ support.constant.color.w3c-extended-color-name.pikchr
 box color DarkSlateGray
-//        ^ support.constant.color.w3c-extended-color-name.pikchr
-
+//        ^^^^^^^^^^^^^ support.constant.color.w3c-extended-color-name.pikchr
 box color DarkSlateGrey
-//        ^ support.constant.color.w3c-extended-color-name.pikchr
-
+//        ^^^^^^^^^^^^^ support.constant.color.w3c-extended-color-name.pikchr
 box color DarkTurquoise
-//        ^ support.constant.color.w3c-extended-color-name.pikchr
-
+//        ^^^^^^^^^^^^^ support.constant.color.w3c-extended-color-name.pikchr
 box color DarkViolet
-//        ^ support.constant.color.w3c-extended-color-name.pikchr
-
+//        ^^^^^^^^^^ support.constant.color.w3c-extended-color-name.pikchr
 box color DeepPink
-//        ^ support.constant.color.w3c-extended-color-name.pikchr
-
+//        ^^^^^^^^ support.constant.color.w3c-extended-color-name.pikchr
 box color DeepSkyBlue
-//        ^ support.constant.color.w3c-extended-color-name.pikchr
-
+//        ^^^^^^^^^^^ support.constant.color.w3c-extended-color-name.pikchr
 box color DimGray
-//        ^ support.constant.color.w3c-extended-color-name.pikchr
-
+//        ^^^^^^^ support.constant.color.w3c-extended-color-name.pikchr
 box color DimGrey
-//        ^ support.constant.color.w3c-extended-color-name.pikchr
-
+//        ^^^^^^^ support.constant.color.w3c-extended-color-name.pikchr
 box color DodgerBlue
-//        ^ support.constant.color.w3c-extended-color-name.pikchr
-
+//        ^^^^^^^^^^ support.constant.color.w3c-extended-color-name.pikchr
 box color Firebrick
-//        ^ support.constant.color.w3c-extended-color-name.pikchr
-
+//        ^^^^^^^^^ support.constant.color.w3c-extended-color-name.pikchr
 box color FloralWhite
-//        ^ support.constant.color.w3c-extended-color-name.pikchr
-
+//        ^^^^^^^^^^^ support.constant.color.w3c-extended-color-name.pikchr
 box color ForestGreen
-//        ^ support.constant.color.w3c-extended-color-name.pikchr
-
+//        ^^^^^^^^^^^ support.constant.color.w3c-extended-color-name.pikchr
 box color Gainsboro
-//        ^ support.constant.color.w3c-extended-color-name.pikchr
-
+//        ^^^^^^^^^ support.constant.color.w3c-extended-color-name.pikchr
 box color GhostWhite
-//        ^ support.constant.color.w3c-extended-color-name.pikchr
-
+//        ^^^^^^^^^^ support.constant.color.w3c-extended-color-name.pikchr
 box color Gold
-//        ^ support.constant.color.w3c-extended-color-name.pikchr
-
+//        ^^^^ support.constant.color.w3c-extended-color-name.pikchr
 box color Goldenrod
-//        ^ support.constant.color.w3c-extended-color-name.pikchr
-
+//        ^^^^^^^^^ support.constant.color.w3c-extended-color-name.pikchr
 box color GreenYellow
-//        ^ support.constant.color.w3c-extended-color-name.pikchr
-
+//        ^^^^^^^^^^^ support.constant.color.w3c-extended-color-name.pikchr
 box color Grey
-//        ^ support.constant.color.w3c-extended-color-name.pikchr
-
+//        ^^^^ support.constant.color.w3c-extended-color-name.pikchr
 box color Honeydew
-//        ^ support.constant.color.w3c-extended-color-name.pikchr
-
+//        ^^^^^^^^ support.constant.color.w3c-extended-color-name.pikchr
 box color HotPink
-//        ^ support.constant.color.w3c-extended-color-name.pikchr
-
+//        ^^^^^^^ support.constant.color.w3c-extended-color-name.pikchr
 box color IndianRed
-//        ^ support.constant.color.w3c-extended-color-name.pikchr
-
+//        ^^^^^^^^^ support.constant.color.w3c-extended-color-name.pikchr
 box color Indigo
-//        ^ support.constant.color.w3c-extended-color-name.pikchr
-
+//        ^^^^^^ support.constant.color.w3c-extended-color-name.pikchr
 box color Ivory
-//        ^ support.constant.color.w3c-extended-color-name.pikchr
-
+//        ^^^^^ support.constant.color.w3c-extended-color-name.pikchr
 box color Khaki
-//        ^ support.constant.color.w3c-extended-color-name.pikchr
-
+//        ^^^^^ support.constant.color.w3c-extended-color-name.pikchr
 box color Lavender
-//        ^ support.constant.color.w3c-extended-color-name.pikchr
-
+//        ^^^^^^^^ support.constant.color.w3c-extended-color-name.pikchr
 box color LavenderBlush
-//        ^ support.constant.color.w3c-extended-color-name.pikchr
-
+//        ^^^^^^^^^^^^^ support.constant.color.w3c-extended-color-name.pikchr
 box color LawnGreen
-//        ^ support.constant.color.w3c-extended-color-name.pikchr
-
+//        ^^^^^^^^^ support.constant.color.w3c-extended-color-name.pikchr
 box color LemonChiffon
-//        ^ support.constant.color.w3c-extended-color-name.pikchr
-
+//        ^^^^^^^^^^^^ support.constant.color.w3c-extended-color-name.pikchr
 box color LightBlue
-//        ^ support.constant.color.w3c-extended-color-name.pikchr
-
+//        ^^^^^^^^^ support.constant.color.w3c-extended-color-name.pikchr
 box color LightCoral
-//        ^ support.constant.color.w3c-extended-color-name.pikchr
-
+//        ^^^^^^^^^^ support.constant.color.w3c-extended-color-name.pikchr
 box color LightCyan
-//        ^ support.constant.color.w3c-extended-color-name.pikchr
-
+//        ^^^^^^^^^ support.constant.color.w3c-extended-color-name.pikchr
 box color LightGoldenrodYellow
-//        ^ support.constant.color.w3c-extended-color-name.pikchr
-
+//        ^^^^^^^^^^^^^^^^^^^^ support.constant.color.w3c-extended-color-name.pikchr
 box color LightGray
-//        ^ support.constant.color.w3c-extended-color-name.pikchr
-
+//        ^^^^^^^^^ support.constant.color.w3c-extended-color-name.pikchr
 box color LightGreen
-//        ^ support.constant.color.w3c-extended-color-name.pikchr
-
+//        ^^^^^^^^^^ support.constant.color.w3c-extended-color-name.pikchr
 box color LightGrey
-//        ^ support.constant.color.w3c-extended-color-name.pikchr
-
+//        ^^^^^^^^^ support.constant.color.w3c-extended-color-name.pikchr
 box color LightPink
-//        ^ support.constant.color.w3c-extended-color-name.pikchr
-
+//        ^^^^^^^^^ support.constant.color.w3c-extended-color-name.pikchr
 box color LightSalmon
-//        ^ support.constant.color.w3c-extended-color-name.pikchr
-
+//        ^^^^^^^^^^^ support.constant.color.w3c-extended-color-name.pikchr
 box color LightSeaGreen
-//        ^ support.constant.color.w3c-extended-color-name.pikchr
-
+//        ^^^^^^^^^^^^^ support.constant.color.w3c-extended-color-name.pikchr
 box color LightSkyBlue
-//        ^ support.constant.color.w3c-extended-color-name.pikchr
-
+//        ^^^^^^^^^^^^ support.constant.color.w3c-extended-color-name.pikchr
 box color LightSlateGray
-//        ^ support.constant.color.w3c-extended-color-name.pikchr
-
+//        ^^^^^^^^^^^^^^ support.constant.color.w3c-extended-color-name.pikchr
 box color LightSlateGrey
-//        ^ support.constant.color.w3c-extended-color-name.pikchr
-
+//        ^^^^^^^^^^^^^^ support.constant.color.w3c-extended-color-name.pikchr
 box color LightSteelBlue
-//        ^ support.constant.color.w3c-extended-color-name.pikchr
-
+//        ^^^^^^^^^^^^^^ support.constant.color.w3c-extended-color-name.pikchr
 box color LightYellow
-//        ^ support.constant.color.w3c-extended-color-name.pikchr
-
+//        ^^^^^^^^^^^ support.constant.color.w3c-extended-color-name.pikchr
 box color LimeGreen
-//        ^ support.constant.color.w3c-extended-color-name.pikchr
-
+//        ^^^^^^^^^ support.constant.color.w3c-extended-color-name.pikchr
 box color Linen
-//        ^ support.constant.color.w3c-extended-color-name.pikchr
-
+//        ^^^^^ support.constant.color.w3c-extended-color-name.pikchr
 box color Magenta
-//        ^ support.constant.color.w3c-extended-color-name.pikchr
-
+//        ^^^^^^^ support.constant.color.w3c-extended-color-name.pikchr
 box color MediumAquamarine
-//        ^ support.constant.color.w3c-extended-color-name.pikchr
-
+//        ^^^^^^^^^^^^^^^^ support.constant.color.w3c-extended-color-name.pikchr
 box color MediumBlue
-//        ^ support.constant.color.w3c-extended-color-name.pikchr
-
+//        ^^^^^^^^^^ support.constant.color.w3c-extended-color-name.pikchr
 box color MediumOrchid
-//        ^ support.constant.color.w3c-extended-color-name.pikchr
-
+//        ^^^^^^^^^^^^ support.constant.color.w3c-extended-color-name.pikchr
 box color MediumPurple
-//        ^ support.constant.color.w3c-extended-color-name.pikchr
-
+//        ^^^^^^^^^^^^ support.constant.color.w3c-extended-color-name.pikchr
 box color MediumSeaGreen
-//        ^ support.constant.color.w3c-extended-color-name.pikchr
-
+//        ^^^^^^^^^^^^^^ support.constant.color.w3c-extended-color-name.pikchr
 box color MediumSlateBlue
-//        ^ support.constant.color.w3c-extended-color-name.pikchr
-
+//        ^^^^^^^^^^^^^^^ support.constant.color.w3c-extended-color-name.pikchr
 box color MediumSpringGreen
-//        ^ support.constant.color.w3c-extended-color-name.pikchr
-
+//        ^^^^^^^^^^^^^^^^^ support.constant.color.w3c-extended-color-name.pikchr
 box color MediumTurquoise
-//        ^ support.constant.color.w3c-extended-color-name.pikchr
-
+//        ^^^^^^^^^^^^^^^ support.constant.color.w3c-extended-color-name.pikchr
 box color MediumVioletRed
-//        ^ support.constant.color.w3c-extended-color-name.pikchr
-
+//        ^^^^^^^^^^^^^^^ support.constant.color.w3c-extended-color-name.pikchr
 box color MidnightBlue
-//        ^ support.constant.color.w3c-extended-color-name.pikchr
-
+//        ^^^^^^^^^^^^ support.constant.color.w3c-extended-color-name.pikchr
 box color MintCream
-//        ^ support.constant.color.w3c-extended-color-name.pikchr
-
+//        ^^^^^^^^^ support.constant.color.w3c-extended-color-name.pikchr
 box color MistyRose
-//        ^ support.constant.color.w3c-extended-color-name.pikchr
-
+//        ^^^^^^^^^ support.constant.color.w3c-extended-color-name.pikchr
 box color Moccasin
-//        ^ support.constant.color.w3c-extended-color-name.pikchr
-
+//        ^^^^^^^^ support.constant.color.w3c-extended-color-name.pikchr
 box color NavajoWhite
-//        ^ support.constant.color.w3c-extended-color-name.pikchr
-
+//        ^^^^^^^^^^^ support.constant.color.w3c-extended-color-name.pikchr
 box color None  /* Non-standard addition */
-//        ^ support.constant.color.w3c-extended-color-name.pikchr
-
+//        ^^^^ support.constant.color.w3c-extended-color-name.pikchr
 box color Off  /* Non-standard addition */
-//        ^ support.constant.color.w3c-extended-color-name.pikchr
-
+//        ^^^ support.constant.color.w3c-extended-color-name.pikchr
 box color OldLace
-//        ^ support.constant.color.w3c-extended-color-name.pikchr
-
+//        ^^^^^^^ support.constant.color.w3c-extended-color-name.pikchr
 box color OliveDrab
-//        ^ support.constant.color.w3c-extended-color-name.pikchr
-
+//        ^^^^^^^^^ support.constant.color.w3c-extended-color-name.pikchr
 box color OrangeRed
-//        ^ support.constant.color.w3c-extended-color-name.pikchr
-
+//        ^^^^^^^^^ support.constant.color.w3c-extended-color-name.pikchr
 box color Orchid
-//        ^ support.constant.color.w3c-extended-color-name.pikchr
-
+//        ^^^^^^ support.constant.color.w3c-extended-color-name.pikchr
 box color PaleGoldenrod
-//        ^ support.constant.color.w3c-extended-color-name.pikchr
-
+//        ^^^^^^^^^^^^^ support.constant.color.w3c-extended-color-name.pikchr
 box color PaleGreen
-//        ^ support.constant.color.w3c-extended-color-name.pikchr
-
+//        ^^^^^^^^^ support.constant.color.w3c-extended-color-name.pikchr
 box color PaleTurquoise
-//        ^ support.constant.color.w3c-extended-color-name.pikchr
-
+//        ^^^^^^^^^^^^^ support.constant.color.w3c-extended-color-name.pikchr
 box color PaleVioletRed
-//        ^ support.constant.color.w3c-extended-color-name.pikchr
-
+//        ^^^^^^^^^^^^^ support.constant.color.w3c-extended-color-name.pikchr
 box color PapayaWhip
-//        ^ support.constant.color.w3c-extended-color-name.pikchr
-
+//        ^^^^^^^^^^ support.constant.color.w3c-extended-color-name.pikchr
 box color PeachPuff
-//        ^ support.constant.color.w3c-extended-color-name.pikchr
-
+//        ^^^^^^^^^ support.constant.color.w3c-extended-color-name.pikchr
 box color Peru
-//        ^ support.constant.color.w3c-extended-color-name.pikchr
-
+//        ^^^^ support.constant.color.w3c-extended-color-name.pikchr
 box color Pink
-//        ^ support.constant.color.w3c-extended-color-name.pikchr
-
+//        ^^^^ support.constant.color.w3c-extended-color-name.pikchr
 box color Plum
-//        ^ support.constant.color.w3c-extended-color-name.pikchr
-
+//        ^^^^ support.constant.color.w3c-extended-color-name.pikchr
 box color PowderBlue
-//        ^ support.constant.color.w3c-extended-color-name.pikchr
-
+//        ^^^^^^^^^^ support.constant.color.w3c-extended-color-name.pikchr
 box color RebeccaPurple
-//        ^ support.constant.color.w3c-extended-color-name.pikchr
-
+//        ^^^^^^^^^^^^^ support.constant.color.w3c-extended-color-name.pikchr
 box color RosyBrown
-//        ^ support.constant.color.w3c-extended-color-name.pikchr
-
+//        ^^^^^^^^^ support.constant.color.w3c-extended-color-name.pikchr
 box color RoyalBlue
-//        ^ support.constant.color.w3c-extended-color-name.pikchr
-
+//        ^^^^^^^^^ support.constant.color.w3c-extended-color-name.pikchr
 box color SaddleBrown
-//        ^ support.constant.color.w3c-extended-color-name.pikchr
-
+//        ^^^^^^^^^^^ support.constant.color.w3c-extended-color-name.pikchr
 box color Salmon
-//        ^ support.constant.color.w3c-extended-color-name.pikchr
-
+//        ^^^^^^ support.constant.color.w3c-extended-color-name.pikchr
 box color SandyBrown
-//        ^ support.constant.color.w3c-extended-color-name.pikchr
-
+//        ^^^^^^^^^^ support.constant.color.w3c-extended-color-name.pikchr
 box color SeaGreen
-//        ^ support.constant.color.w3c-extended-color-name.pikchr
-
+//        ^^^^^^^^ support.constant.color.w3c-extended-color-name.pikchr
 box color Seashell
-//        ^ support.constant.color.w3c-extended-color-name.pikchr
-
+//        ^^^^^^^^ support.constant.color.w3c-extended-color-name.pikchr
 box color Sienna
-//        ^ support.constant.color.w3c-extended-color-name.pikchr
-
+//        ^^^^^^ support.constant.color.w3c-extended-color-name.pikchr
 box color SkyBlue
-//        ^ support.constant.color.w3c-extended-color-name.pikchr
-
+//        ^^^^^^^ support.constant.color.w3c-extended-color-name.pikchr
 box color SlateBlue
-//        ^ support.constant.color.w3c-extended-color-name.pikchr
-
+//        ^^^^^^^^^ support.constant.color.w3c-extended-color-name.pikchr
 box color SlateGray
-//        ^ support.constant.color.w3c-extended-color-name.pikchr
-
+//        ^^^^^^^^^ support.constant.color.w3c-extended-color-name.pikchr
 box color SlateGrey
-//        ^ support.constant.color.w3c-extended-color-name.pikchr
-
+//        ^^^^^^^^^ support.constant.color.w3c-extended-color-name.pikchr
 box color Snow
-//        ^ support.constant.color.w3c-extended-color-name.pikchr
-
+//        ^^^^ support.constant.color.w3c-extended-color-name.pikchr
 box color SpringGreen
-//        ^ support.constant.color.w3c-extended-color-name.pikchr
-
+//        ^^^^^^^^^^^ support.constant.color.w3c-extended-color-name.pikchr
 box color SteelBlue
-//        ^ support.constant.color.w3c-extended-color-name.pikchr
-
+//        ^^^^^^^^^ support.constant.color.w3c-extended-color-name.pikchr
 box color Tan
-//        ^ support.constant.color.w3c-extended-color-name.pikchr
-
+//        ^^^ support.constant.color.w3c-extended-color-name.pikchr
 box color Thistle
-//        ^ support.constant.color.w3c-extended-color-name.pikchr
-
+//        ^^^^^^^ support.constant.color.w3c-extended-color-name.pikchr
 box color Tomato
-//        ^ support.constant.color.w3c-extended-color-name.pikchr
-
+//        ^^^^^^ support.constant.color.w3c-extended-color-name.pikchr
 box color Turquoise
-//        ^ support.constant.color.w3c-extended-color-name.pikchr
-
+//        ^^^^^^^^^ support.constant.color.w3c-extended-color-name.pikchr
 box color Violet
-//        ^ support.constant.color.w3c-extended-color-name.pikchr
-
+//        ^^^^^^ support.constant.color.w3c-extended-color-name.pikchr
 box color Wheat
-//        ^ support.constant.color.w3c-extended-color-name.pikchr
-
+//        ^^^^^ support.constant.color.w3c-extended-color-name.pikchr
 box color WhiteSmoke
-//        ^ support.constant.color.w3c-extended-color-name.pikchr
-
+//        ^^^^^^^^^^ support.constant.color.w3c-extended-color-name.pikchr
 box color YellowGreen
 //        ^^^^^^^^^^^ support.constant.color.w3c-extended-color-name.pikchr
-
 circle fill 0xffff00
 //          ^^^^^^^^ constant.numeric.pikchr

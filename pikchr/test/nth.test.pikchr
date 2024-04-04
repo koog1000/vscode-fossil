@@ -10,7 +10,7 @@
 box at 1st box
 //  ^^ keyword.pikchr
 //     ^^^ constant.language.pikchr
-//         ^^^ keyword.pikchr
+//         ^^^ entity.name.function.pikchr
 
 <
 < `nth -> NTH -> last|previous -> classname`
@@ -18,8 +18,8 @@ box at 1st box
 box at 2nd previous box
 //  ^^ keyword.pikchr
 //     ^^^ constant.language.pikchr
-//         ^^^^^^^^ entity.name.type
-//                  ^^^ keyword.pikchr
+//         ^^^^^^^^ constant.language.pikchr
+//                  ^^^ entity.name.function.pikchr
 
 <
 < `nth -> last|previous -> classname
@@ -27,7 +27,7 @@ box at 2nd previous box
 
 box at last box
 //  ^^ keyword.pikchr
-//     ^^^^ entity.name.type
-//          ^^^ keyword.pikchr
+//     ^^^^ constant.language.pikchr
+//          ^^^ entity.name.function.pikchr
 box at previous box
-//     ^^^^^^^^ entity.name.type
+//     ^^^^^^^^ constant.language.pikchr

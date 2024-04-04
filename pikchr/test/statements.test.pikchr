@@ -2,16 +2,14 @@
 
 box
 // <--- storage.type.class.pikchr
-
+box
+// <--- storage.type.class.pikchr
 cylinder  ;
 // <--------  storage.type.class.pikchr
 //      ^  source.pikchr
-
-
 cylinder;
 // <--- storage.type.class.pikchr
 //      ^ source.pikchr punctuation.separator.delimiter.end.pikchr
-
 cylinder;box
 // <--- storage.type.class.pikchr
 //      ^ source.pikchr punctuation.separator.delimiter.end.pikchr
@@ -28,7 +26,7 @@ cylinder  ;  box
 arrow right
 // <--- storage.type.class.pikchr
 //   ^ -storage.type.class.pikchr
-//    ^^^^^ support.constant.direction.pikchr
+//    ^^^^^ support.constant.edge.pikchr
 
 diamond "hi"
 // <--- storage.type.class.pikchr
@@ -40,35 +38,38 @@ Cat: box "box"
 // ^ punctuation.separator.pikchr
 //   ^^^ storage.type.class.pikchr
 //       ^^^^^ string.quoted.double.pikchr
+   Cat: box "box"
+// ^^^ variable.language.pikchr
+//    ^ punctuation.separator.pikchr
+//      ^^^ storage.type.class.pikchr
+//          ^^^^^ string.quoted.double.pikchr
 
 box "hello, \"world\""
 //  ^^^^^^^^^^^^^^^^^^ string.quoted.double.pikchr
-
 box "hello, \x"
 //  ^^^^^^^^^^^ source.pikchr string.quoted.double.pikchr
-//          ^^ invalid.illegal.unrecognized-string-escape.pikchr
-
 linewid = 0.25
-// <--- variable.pikchr
+// <--- variable.language.pikchr
 //      ^ keyword.operator.assignment.pikchr
 //        ^^^^ constant.numeric.pikchr
-
-$r = 0.2in
-// <-- variable.pikchr
-// ^ keyword.operator.assignment.pikchr
-//   ^^^^^ constant.numeric.pikchr
+$r = 0.2in ;  _a=0; @b=-1
+// <--        ^^    ^^ variable.language.pikchr
+// ^            ^     ^  keyword.operator.assignment.pikchr
+//   ^^^^^       ^      ^ constant.numeric.pikchr
 //      ^^ keyword.other.unit.in.pikchr
+//         ^      ^ punctuation.separator.delimiter.end.pikchr
+//                     ^ keyword.operator.arithmetic.pikchr
 
 linerad = 0.75*$r
-// <------- variable.pikchr
-//     ^ -variable.pikchr
+// <------- variable.language.pikchr
+//     ^ -variable.language.pikchr
 //      ^ keyword.operator.assignment.pikchr
 //        ^^^^ constant.numeric.pikchr
 //            ^ keyword.operator.arithmetic.pikchr
 //             ^^ variable.language.pikchr
 
 boxht = .2; boxwid = .3; circlerad = .3; dx = 0.05
-// <----- variable.pikchr
+// <----- variable.language.pikchr
 //          ^^^^^^       ^^^^^^^^^       ^^ variable.language.pikchr
 //    ^            ^               ^        ^ keyword.operator.assignment.pikchr
 //      ^^           ^^              ^^       ^^^^ constant.numeric.pikchr
@@ -77,15 +78,8 @@ boxht = .2; boxwid = .3; circlerad = .3; dx = 0.05
 left
 // <- support.constant.direction.pikchr
 
-define par {}
-// <------ keyword.control.directive.define.pikchr
-//     ^^^ variable.language.pikchr
-//         ^ punctuation.section.block.begin.bracket.curly.pikchr
-//          ^ punctuation.section.block.end.bracket.curly.pikchr
-
 line dashed
 //   ^^^^^^ entity.name.tag.pikchr
-
 line dotted
 //   ^^^^^^ entity.name.tag.pikchr
 
@@ -95,3 +89,25 @@ line dotted
 box ht $1 wid $1 $2
 //  ^^    ^^^ support.constant.property-value.pikchr
 //     ^^     ^^ ^^ variable.language.pikchr
+
+print "Oval at: ",previous.x, ",", previous.y
+// <----- keyword.control.directive.define.pikchr
+//    ^^^^^^^^^^^             ^^^ string.quoted.double.pikchr
+//               ^               ^ punctuation.separator.pikchr
+//                ^^^^^^^^         ^^^^^^^^ constant.language.pikchr
+//                        ^                ^ punctuation.separator.period.pikchr
+//                         ^                ^ constant.language.pikchr
+
+circlerad = previous.radius
+// <--------- variable.language.pikchr
+//        ^^^^^^^^^^^^^^^^^ meta.assignment.pickchr
+//        ^ keyword.operator.assignment.pikchr
+//          ^^^^^^^^ constant.language.pikchr
+//                  ^ punctuation.separator.period.pikchr
+//                   ^^^^^^ support.constant.property-value.pikchr
+X0: last.e
+//> <-- variable.language.pikchr
+//>^ punctuation.separator.pikchr
+//>  ^^^^ variable.language.pikchr
+//>      ^ punctuation.separator.period.pikchr
+//>       ^ entity.name.class.pikchr

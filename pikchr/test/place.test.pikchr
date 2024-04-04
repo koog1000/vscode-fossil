@@ -2,15 +2,14 @@
 
 arrow from last dot to X0
 //    ^^^^ keyword.pikchr
-//         ^^^^ entity.name.type
-//              ^^^ keyword.pikchr
+//         ^^^^ constant.language.pikchr
+//              ^^^ entity.name.function.pikchr
 //                  ^^ keyword.pikchr
 //                     ^^ variable.language.pikchr
-
 circle at end of first arrow
 //     ^^ keyword.pikchr
 //        ^^^ support.constant.edge.pikchr
 //            ^^ keyword.control.of.pikchr
 //              ^ -keyword.control.of.pikchr
 //               ^^^^^ constant.language.pikchr
-//                     ^^^^^ keyword.pikchr
+//                     ^^^^^ entity.name.function.pikchr

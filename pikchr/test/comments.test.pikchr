@@ -1,0 +1,21 @@
+!! SYNTAX TEST "source.pikchr" "all statements must work with commants"
+
+/**/box
+!! <---- comment.block.pikchr
+!!  ^^^ storage.type.class.pikchr
+
+/*
+!! <-- comment.block.pikchr
+
+test
+!! <---- comment.block.pikchr
+
+*/
+!! <-- comment.block.pikchr
+
+box//test
+!! <--- storage.type.class.pikchr
+!! ^^^^^^ comment.line.pikchr
+
+#!
+!! <-- comment.line.pikchr

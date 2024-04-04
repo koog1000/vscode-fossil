@@ -1,0 +1,12 @@
+// SYNTAX TEST "source.pikchr" "all statements must work with commants"
+
+box/**/width/**/10px
+// <--- storage.type.class.pikchr
+// ^^^^     ^^^^ comment.block.pikchr
+//     ^^^^ support.constant.property-value.pikchr
+//              ^^^^ constant.numeric.pikchr
+
+box diameter 1 ht 1 height 1 rad 1 radius 1 thickness 1 width 1 wid 1
+// <--- storage.type.class.pikchr
+//  ^^^^^^^^   ^^   ^^^^^^   ^^^   ^^^^^^   ^^^^^^^^^   ^^^^^   ^^^ support.constant.property-value.pikchr
+//           ^    ^        ^     ^        ^           ^       ^     ^ constant.numeric.pikchr
