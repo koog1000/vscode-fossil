@@ -1,0 +1,64 @@
+// SYNTAX TEST "source.pikchr" "macro definition and expansion"
+
+
+define par {}
+// <------ keyword.control.directive.define.pikchr
+//     ^^^ variable.language.pikchr
+//         ^ punctuation.section.block.begin.bracket.curly.pikchr
+//          ^ punctuation.section.block.end.bracket.curly.pikchr
+define mymacro {box $1}
+// <------ keyword.control.directive.define.pikchr
+//     ^^^^^^^ variable.language.pikchr
+//             ^ punctuation.section.block.begin.bracket.curly.pikchr
+//              ^^^ storage.type.class.pikchr
+//                  ^^ variable.language.pikchr
+//                    ^ punctuation.section.block.end.bracket.curly.pikchr
+define keyword {right}
+//             ^ punctuation.section.block.begin.bracket.curly.pikchr
+//              ^^^^^ support.constant.direction.pikchr
+//                   ^ punctuation.section.block.end.bracket.curly.pikchr
+par
+// <--- entity.name.function.pikchr
+par()
+// <--- entity.name.function.pikchr
+// ^ punctuation.parenthesis.begin.pikchr
+//  ^ punctuation.parenthesis.end.pikchr
+par par
+// <--- entity.name.function.pikchr
+//  ^^^ entity.name.function.pikchr
+mymacro( /**/ "hi" /**/ )
+// <------- entity.name.function.pikchr
+//     ^ punctuation.parenthesis.begin.pikchr
+//       ^^^^      ^^^^ comment.block.pikchr
+//            ^^^^ string.quoted.double.pikchr
+//                      ^ punctuation.parenthesis.end.pikchr
+define square { box ht $7 wid $8 $9 }
+// <------ keyword.control.directive.define.pikchr
+//     ^^^^^^ variable.language.pikchr
+//            ^ punctuation.section.block.begin.bracket.curly.pikchr
+//              ^^^ storage.type.class.pikchr
+//                  ^^    ^^^ support.constant.property-value.pikchr
+//                     ^^     ^^ ^^ variable.language.pikchr
+//                                  ^ punctuation.section.block.end.bracket.curly.pikchr
+define m01 {m00("m01",$1,$2)}
+// <------ keyword.control.directive.define.pikchr
+//     ^^^ variable.language.pikchr
+//         ^ punctuation.section.block.begin.bracket.curly.pikchr
+//          ^^^ entity.name.function.pikchr
+//             ^ punctuation.parenthesis.begin.pikchr
+//              ^^^^^ string.quoted.double.pikchr
+//                   ^  ^ punctuation.separator.pikchr
+//                    ^^ ^^ variable.language.pikchr
+//                         ^ punctuation.parenthesis.end.pikchr
+//                          ^ punctuation.section.block.end.bracket.curly.pikchr
+define dodef {define $1 {box "Hello"}}
+// <------ keyword.control.directive.define.pikchr
+//            ^^^^^^ keyword.control.directive.define.pikchr
+define dodef {mymacro}
+//           ^ punctuation.section.block.begin.bracket.curly.pikchr
+//            ^^^^^^^ entity.name.function.pikchr
+//                   ^ punctuation.section.block.end.bracket.curly.pikchr
+mymacro("o") mymacro("o")
+// <-------  entity.name.function.pikchr
+//           ^^^^^^^ entity.name.function.pikchr
+//      ^^^          ^^^ string.quoted.double.pikchr

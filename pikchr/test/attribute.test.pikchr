@@ -1,13 +1,60 @@
 // SYNTAX TEST "source.pikchr" "checks for 'attribute' tree"
 
 arrow from C6 to C3P chop
-//    ^^^^ keyword.pikchr
+//    ^^^^    ^^ keyword.pikchr
 //         ^^    ^^^  variable.language.pikchr
-//            ^^ keyword.pikchr
 //                   ^^^^ entity.name.tag.pikchr
-
 arrow right then down
-//    ^^^^^ support.constant.direction.pikchr
+//    ^^^^^      ^^^^ support.constant.edge.pikchr
 //          ^^^^ keyword.pikchr
 //              ^ -keyword.pikchr
-//               ^^^^  support.constant.direction.pikchr
+circle at bot of first arrow
+//        ^^^ support.constant.edge.pikchr
+circle at bottom of first arrow
+//        ^^^^^^ support.constant.edge.pikchr
+circle at c of first arrow
+//        ^ support.constant.edge.pikchr
+circle at center of first arrow
+//        ^^^^^^  support.constant.edge.pikchr
+circle at e of first arrow
+//        ^ support.constant.edge.pikchr
+circle at east of first arrow
+//        ^^^^ support.constant.edge.pikchr
+circle at end of first arrow
+//        ^^^ support.constant.edge.pikchr
+circle at left of first arrow
+//        ^^^^ support.constant.edge.pikchr
+circle at n of first arrow
+//        ^ support.constant.edge.pikchr
+circle at ne of first arrow
+//        ^^ support.constant.edge.pikchr
+circle at north of first arrow
+//        ^^^^^ support.constant.edge.pikchr
+circle at nw of first arrow
+//        ^^ support.constant.edge.pikchr
+circle at right of first arrow
+//        ^^^^^ support.constant.edge.pikchr
+circle at s of first arrow
+//        ^ support.constant.edge.pikchr
+circle at se of first arrow
+//        ^^ support.constant.edge.pikchr
+circle at south of first arrow
+//        ^^^^^ support.constant.edge.pikchr
+circle at start of first arrow
+//        ^^^^^ support.constant.edge.pikchr
+circle at sw of first arrow
+//        ^^ support.constant.edge.pikchr
+circle at t of first arrow
+//        ^ support.constant.edge.pikchr
+circle at top of first arrow
+//        ^^^ support.constant.edge.pikchr
+circle at w of first arrow
+//        ^ support.constant.edge.pikchr
+circle at west of first arrow
+//        ^^^^ support.constant.edge.pikchr
+cylinder "B" at 5cm heading 125 from A
+// <-------- storage.type.class.pikchr
+//       ^^^ string.quoted.double.pikchr
+//           ^^     ^^^^^^^     ^^^^ keyword.pikchr
+//              ^^^         ^^^ constant.numeric.pikchr
+//                                   ^ variable.language.pikchr

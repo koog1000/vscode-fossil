@@ -1,40 +1,40 @@
 // SYNTAX TEST "source.pikchr" "everything related to using text"
 
 box "" above
-//     ^^^^^ constant.other.pikchr
+//     ^^^^^ keyword.pikchr
 
 box "" aligned
-//     ^^^^^^^ constant.other.pikchr
+//     ^^^^^^^ keyword.pikchr
 
 box "" below
-//     ^^^^^ constant.other.pikchr
+//     ^^^^^ keyword.pikchr
 
 box "" big
-//     ^^^ constant.other.pikchr
+//     ^^^ keyword.pikchr
 
 box "" bold
-//     ^^^^ constant.other.pikchr
+//     ^^^^ keyword.pikchr
 
 box "" mono
-//     ^^^^ constant.other.pikchr
+//     ^^^^ keyword.pikchr
 
 box "" monospace
-//     ^^^^^^^^^ constant.other.pikchr
+//     ^^^^^^^^^ keyword.pikchr
 
 box "" center
-//     ^^^^^^ constant.other.pikchr
+//     ^^^^^^ keyword.pikchr
 
 box "" italic
-//     ^^^^^^ constant.other.pikchr
+//     ^^^^^^ keyword.pikchr
 
 box "" ljust
-//     ^^^^^ constant.other.pikchr
+//     ^^^^^ keyword.pikchr
 
 box "" rjust
-//     ^^^^^ constant.other.pikchr
+//     ^^^^^ keyword.pikchr
 
 box "" small
-//     ^^^^^ constant.other.pikchr
+//     ^^^^^ keyword.pikchr
 
 box "" small bold
-//     ^^^^^ ^^^^ constant.other.pikchr
+//     ^^^^^ ^^^^ keyword.pikchr
