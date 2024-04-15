@@ -24,18 +24,16 @@ const viewType = 'fossil.renderPanel';
 export class FossilPreviewManager
     implements IDisposable, WebviewPanelSerializer
 {
-    private readonly previews: Set<FossilPreview>;
+    private readonly previews: Set<FossilPreview> = new Set();
     private readonly mediaDir: Uri;
-    private readonly _disposables: IDisposable[];
+    private readonly _disposables: IDisposable[] = [];
     private _activePreview: FossilPreview | undefined = undefined;
 
     constructor(
         context: ExtensionContext,
         private readonly executable: FossilExecutable
     ) {
-        this.previews = new Set();
         this.mediaDir = Uri.joinPath(context.extensionUri, 'media');
-        this._disposables = [];
         this._register(window.registerWebviewPanelSerializer(viewType, this));
     }
     public dispose(): void {
@@ -64,7 +62,7 @@ export class FossilPreviewManager
         return this._activePreview;
     }
 
-    public async openDynamicPreview(uri: Uri): Promise<void> {
+    public openDynamicPreview(uri: Uri): void {
         for (const pv of this.previews) {
             if (pv.uri.toString() == uri.toString()) {
                 return pv.reveal();
@@ -115,6 +113,7 @@ class FossilPreview implements IDisposable {
         new EventEmitter<void>()
     );
     public readonly onDispose = this._onDisposeEmitter.event;
+    private closed = false;
 
     public static create(
         executable: FossilExecutable,
@@ -165,6 +164,35 @@ class FossilPreview implements IDisposable {
             workspace.onDidChangeTextDocument((event): void => {
                 if (event.document.uri.path == this.uri.path) {
                     this.update(event.document.getText() as MDorWIKI);
+                }
+            })
+        );
+        this._register(
+            workspace.onDidCloseTextDocument(document => {
+                if (document.uri.path == this.uri.path) {
+                    this.closed = true;
+                }
+            })
+        );
+        this._register(
+            window.onDidChangeActiveTextEditor(editor => {
+                if (editor?.viewColumn === undefined) {
+                    return;
+                }
+                if (
+                    this.closed &&
+                    ['markdown', 'pikchr', 'wiki'].includes(
+                        editor.document.languageId
+                    )
+                ) {
+                    this.closed = false;
+                    this.uri = editor.document.uri;
+                    this.panel.title = `Preview ${path.basename(uri.fsPath)}`;
+                    this.getSource().then(source => {
+                        if (source !== undefined) {
+                            this.update(source);
+                        }
+                    });
                 }
             })
         );
