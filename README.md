@@ -33,7 +33,9 @@ about cloning from the extension.
 
 * Undo/Redo.
 
-* Preview md and wiki files
+* Preview `md`, `wiki` and `pikchr` files
+
+* Syntax highlighting for `pikchr` language
 
 * Use command palette `Ctrl-Shift-P` >> `fossil:` to see all commands. (Not everything has a UI control.)
 
