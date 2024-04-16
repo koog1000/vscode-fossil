@@ -1,5 +1,17 @@
 # Changelog
 
+# v0.5.6
+
+### What's New
+
+- .{md,wiki,pikchr} files preview is automatically updated on editor/file switch
+
+### Bug Fix
+
+- pikchr syntax highlighting is ready, please report any issues now.
+- some text wasn't rendered in the preview window
+
+
 # v0.5.5
 
 ### What's New
