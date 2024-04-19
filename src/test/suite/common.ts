@@ -101,6 +101,7 @@ export function getExecutable(): FossilExecutable {
     const extension = vscode.extensions.getExtension('koog1000.fossil');
     assert.ok(extension);
     const model = extension.exports as Model;
+    assert.ok(model, "extension initialization didn't succeed");
     const executable = model['executable'];
     assert.ok(executable);
     return executable;
