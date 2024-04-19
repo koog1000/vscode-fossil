@@ -124,7 +124,7 @@ function makeCommandWithRepository(method: CommandMethod): CommandMethod {
     return async function (this: CommandCenter, ...args: any[]): Promise<void> {
         const repository = await this.guessRepository(args[0]);
         if (repository) {
-            return Promise.resolve(method.apply(this, [repository, ...args]));
+            return method.call(this, repository, ...args);
         }
     };
 }
@@ -132,6 +132,8 @@ function makeCommandWithRepository(method: CommandMethod): CommandMethod {
 /**
  * Decorator
  */
+const register: Command[] = [];
+
 function command(id: CommandId, options: { repository?: boolean } = {}) {
     return (
         target: CommandCenter,
@@ -141,19 +143,12 @@ function command(id: CommandId, options: { repository?: boolean } = {}) {
         if (options.repository) {
             descriptor.value = makeCommandWithRepository(descriptor.value!);
         }
-        target.register.push({ id, method: descriptor.value! });
+        register.push({ id, method: descriptor.value! });
         return descriptor;
     };
 }
 
-function setProtoArray<K extends string>(target: Record<K, Command[]>, key: K) {
-    target[key] = [];
-}
-
 export class CommandCenter {
-    @setProtoArray
-    register!: Command[];
-
     private readonly disposables: Disposable[];
     private readonly previewManager: FossilPreviewManager;
 
@@ -165,9 +160,10 @@ export class CommandCenter {
     ) {
         this.previewManager = new FossilPreviewManager(context, executable);
 
-        this.disposables = this.register.map(command =>
+        this.disposables = register.map(command =>
             commands.registerCommand(command.id, command.method, this)
         );
+        register.length = 0;
         this.disposables.push(this.previewManager);
     }
 
