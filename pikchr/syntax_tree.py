@@ -36,7 +36,7 @@ subgraphs = (
     "prsep",
     "rvalue",
     "savelist",
-    "unnamed_statement",
+    # "unnamed_statement",
     "withclause",
     "optrelexpr",
     # "objectname", recursion
@@ -81,7 +81,7 @@ def render(
         dbg_count += 1
         dot2_key = f"{orig_value}_{dot_key}_{dbg_count}"
         value = replace.get(orig_value, orig_value)
-        if value in enumerate(subgraphs):
+        if value in subgraphs:
             dot2_key = f"{value}_{dot_key}_{dbg_count}"
             with dot.subgraph(
                 name=dot2_key,
