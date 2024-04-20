@@ -23,9 +23,10 @@ par()
 // <--- entity.name.function.pikchr
 // ^ punctuation.parenthesis.begin.pikchr
 //  ^ punctuation.parenthesis.end.pikchr
-par par
+par() par() par par
 // <--- entity.name.function.pikchr
-//  ^^^ entity.name.function.pikchr
+//    ^^^ entity.name.function.pikchr
+//          ^^^ ^^^ variable.language.pikchr
 mymacro( /**/ "hi" /**/ )
 // <------- entity.name.function.pikchr
 //     ^ punctuation.parenthesis.begin.pikchr
@@ -62,3 +63,34 @@ mymacro("o") mymacro("o")
 // <-------  entity.name.function.pikchr
 //           ^^^^^^^ entity.name.function.pikchr
 //      ^^^          ^^^ string.quoted.double.pikchr
+E2: emo at last move.end;
+// <-- variable.language.place.pikchr
+//^ punctuation.separator.pikchr
+//  ^^^ variable.language.pikchr
+//      ^^ keyword.pikchr
+//         ^^^^ constant.language.pikchr
+//              ^^^^ entity.name.function.pikchr
+//                  ^ punctuation.separator.period.pikchr
+//                   ^^^ constant.language.pikchr
+define place_as_parameter {$1: [C1: circle radius 1;];}
+// <------ keyword.control.directive.define.pikchr
+//     ^^^^^^^^^^^^^^^^^^ variable.language.pikchr
+//                        ^ punctuation.section.block.begin.bracket.curly.pikchr
+//                         ^^   ^^ variable.language.place.pikchr
+//                           ^ punctuation.separator.pikchr
+//                             ^ punctuation.bracket.square.begin.pikchr
+//                                ^ punctuation.separator.pikchr
+//                                  ^^^^^^ storage.type.class.pikchr
+//                                                 ^ ^ punctuation.separator.delimiter.end.pikchr
+//                                                  ^ punctuation.bracket.square.end.pikchr
+//                                                    ^ punctuation.section.block.end.bracket.curly.pikchr
+define place_as_parameter {$1: [C1: circle radius 1;]}
+//                                                   ^ punctuation.section.block.end.bracket.curly.pikchr
+emo at last move.end;
+// <--- entity.name.function.pikchr
+//  ^^ keyword.pikchr
+//     ^^^^ constant.language.pikchr
+//          ^^^^ entity.name.function.pikchr
+//              ^ punctuation.separator.period.pikchr
+//               ^^^ constant.language.pikchr
+//                  ^ punctuation.separator.delimiter.end.pikchr

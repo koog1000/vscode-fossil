@@ -6,16 +6,15 @@ line right even with $r left of X9 then up until even with VARIABLE.n
 //         ^^^^ ^^^^                       ^^^^^ ^^^^ ^^^^ keyword.pikchr
 //                   ^^ variable.language.pikchr
 //                           ^^ keyword.control.of.pikchr
-//                              ^^ variable.language.pikchr
+//                              ^^                         ^^^^^^^^ variable.language.place.pikchr
 //                                 ^^^^ keyword.pikchr
-//                                                         ^^^^^^^^ variable.language.pikchr
 
 circle rad 0.05 at Paper + (-0.055, -0.25)
 // <------ storage.type.class.pikchr
 //     ^^^ support.constant.property-value.pikchr
 //         ^^^^ constant.numeric.pikchr
 //              ^^ keyword.pikchr
-//                 ^^^^^ variable.language.pikchr
+//                 ^^^^^ variable.language.place.pikchr
 //                       ^ keyword.operator.arithmetic.pikchr
 //                         ^ punctuation.parenthesis.begin.pikchr
 //                          ^       ^ keyword.operator.arithmetic.pikchr
@@ -38,7 +37,7 @@ line thick  right from 0.3cm below start of previous
 oval width OVAL1.height height OVAL1.width
 // <---- storage.type.class.pikchr
 //   ^^^^^              ^^^^^^ support.constant.property-value.pikchr
-//         ^^^^^ variable.language.pikchr
+//         ^^^^^               ^^^^^ variable.language.place.pikchr
 //              ^                   ^ punctuation.separator.period.pikchr
 //               ^^^^^^              ^^^^^ support.constant.property-value.pikchr
 
@@ -54,13 +53,13 @@ oval "" fit at $r*1.2 below 1/2 way between X0 and X9
 //                    ^^^^^ keyword.pikchr
 //                           ^ keyword.operator.arithmetic.pikchr
 //                              ^^^ ^^^^^^^ keyword.pikchr
-//                                          ^^     ^^ variable.language.pikchr
+//                                          ^^     ^^ variable.language.place.pikchr
 //                                             ^^^ keyword.pikchr
 
 arrow from TYPENAME.e right even with ATTR
 // <----- storage.type.class.pikchr
 //    ^^^^ keyword.pikchr
-//         ^^^^^^^^                   ^^^^ variable.language.pikchr
+//         ^^^^^^^^                   ^^^^ variable.language.place.pikchr
 //                 ^ punctuation.separator.period.pikchr
 //                  ^ constant.language.pikchr
 //                    ^^^^^ support.constant.edge.pikchr
@@ -78,7 +77,7 @@ box "expr" fit with .w at 1.75*$h below BTW.w
 //                            ^ keyword.operator.arithmetic.pikchr
 //                             ^^ variable.language.pikchr
 //                                ^^^^^ keyword.pikchr
-//                                      ^^^ variable.language.pikchr
+//                                      ^^^ variable.language.place.pikchr
 //                                         ^ punctuation.separator.period.pikchr
 //                                          ^ constant.language.pikchr
 box (thickness)
@@ -104,11 +103,12 @@ from d1+8mm heading 0 from C2
 //          ^^^^^^^ keyword.pikchr
 //                  ^ constant.numeric.pikchr
 //                    ^^^^ keyword.pikchr
-//                         ^^ variable.language.pikchr
+//                         ^^ variable.language.place.pikchr
 
 circle "C3" at dist(C2,C4) heading 30 from C2
 //             ^^^^ entity.name.function.pikchr
 //                         ^^^^^^^    ^^^^ keyword.pikchr
+//                  ^^ ^^                  ^^ variable.language.place.pikchr
 
 box height C3.y-C2.y \
 //  ^^^^^  support.constant.property-value.pikchr
@@ -133,22 +133,24 @@ text "radius" at (6/8<X4.start,X4.end>,1/2<X3,X4> /*comment*/)
 //                   ^                    ^ punctuation.bracket.angle.begin.pikchr
 //                                   ^          ^ punctuation.bracket.angle.end.pikchr
 //                                                           ^ punctuation.parenthesis.end.pikchr
-//                    ^^       ^^          ^^ ^^ variable.language.pikchr
+//                    ^^       ^^          ^^ ^^ variable.language.place.pikchr
 //                      ^        ^ punctuation.separator.period.pikchr
 //                            ^ punctuation.separator.pikchr
 //                                                ^^^^^^^^^^^ comment.block.pikchr
 
 "Pikchr source " rjust "code input " rjust at 2nd vertex /**/ of previous
-// <----------------   ^^^^^^^^^^^^^ string.quoted.double.pikchr
+// <---------------- string.quoted.double.pikchr
+//                     ^^^^^^^^^^^^^ string.quoted.double.pikchr
 //               ^^^^^               ^^^^^ ^^     ^^^^^^      ^^  keyword.pikchr
 //                                            ^^ constant.language.pikchr
 //                                                       ^^^^ comment.block.pikchr
 //                                                               ^^^^^^^^ constant.language.pikchr
 
 diamond;One: [line ->] with .n at 1cm below previous
-// <-------   ^^^^ storage.type.class.pikchr
+// <------- storage.type.class.pikchr
+//            ^^^^ storage.type.class.pikchr
 //     ^ punctuation.separator.delimiter.end.pikchr
-//      ^^^ variable.language.pikchr
+//      ^^^ variable.language.place.pikchr
 //         ^ punctuation.separator.pikchr
 //           ^ punctuation.bracket.square.begin.pikchr
 //                 ^^ entity.name.tag.pikchr
