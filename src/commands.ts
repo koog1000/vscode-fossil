@@ -136,15 +136,16 @@ const register: Command[] = [];
 
 function command(id: CommandId, options: { repository?: boolean } = {}) {
     return (
-        target: CommandCenter,
-        key: unknown,
-        descriptor: TypedPropertyDescriptor<CommandMethod>
-    ): TypedPropertyDescriptor<CommandMethod> => {
-        if (options.repository) {
-            descriptor.value = makeCommandWithRepository(descriptor.value!);
+        fn: CommandMethod,
+        _context: ClassMethodDecoratorContext<CommandCenter, CommandMethod> & {
+            name: CommandKey;
         }
-        register.push({ id, method: descriptor.value! });
-        return descriptor;
+    ) => {
+        if (options.repository) {
+            fn = makeCommandWithRepository(fn);
+        }
+        register.push({ id, method: fn });
+        return fn;
     };
 }
 

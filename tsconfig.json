@@ -1,10 +1,9 @@
 {
     "compileOnSave": true,
     "compilerOptions": {
-        "target": "es2018",
+        "target": "es2020",
         "lib": [
-            "es6",
-            "es2018"
+            "es2020"
         ],
         "noImplicitOverride": true,
         "noImplicitThis": true,
@@ -17,7 +16,6 @@
         "removeComments": true,
         "sourceMap": true,
         "strictNullChecks": true,
-        "experimentalDecorators": true,
     },
     "include": [
         "src/**/*",
