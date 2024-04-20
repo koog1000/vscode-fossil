@@ -224,7 +224,7 @@ export class FossilExecutable {
         const disposables: IDisposable[] = [];
 
         const once = (
-            ee: NodeJS.EventEmitter,
+            ee: typeof child.stdout | typeof child,
             name: 'close' | 'error' | 'exit',
             fn: (...args: any[]) => void
         ) => {
@@ -233,14 +233,14 @@ export class FossilExecutable {
         };
 
         const on = (
-            ee: NodeJS.EventEmitter,
+            ee: typeof child.stdout | typeof child,
             name: 'data',
             fn: (...args: any[]) => void
         ) => {
             ee.on(name, fn);
             disposables.push(toDisposable(() => ee.removeListener(name, fn)));
         };
-        let readTimeout: NodeJS.Timeout | undefined;
+        let readTimeout: ReturnType<typeof setTimeout> | undefined;
         const buffers: Buffer[] = [];
 
         async function onReadTimeout(): Promise<void> {
@@ -313,7 +313,7 @@ export class FossilExecutable {
         options: FossilSpawnOptions
     ) {
         const startTimeHR = process.hrtime();
-        const waitAndLog = (timeout: number): NodeJS.Timeout => {
+        const waitAndLog = (timeout: number): ReturnType<typeof setTimeout> => {
             return setTimeout(() => {
                 this.logArgs(args, reason, 'still running');
                 logTimeout = waitAndLog(timeout * 4);

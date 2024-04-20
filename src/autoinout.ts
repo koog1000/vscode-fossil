@@ -33,7 +33,7 @@ const opAffectsInOut = (op: Operation): boolean =>
 
 export class AutoIncomingOutgoing {
     private disposables: Disposable[] = [];
-    private timer: NodeJS.Timer | undefined;
+    private timer: ReturnType<typeof setTimeout> | undefined;
 
     constructor(private repository: Repository) {
         workspace.onDidChangeConfiguration(
