@@ -4,109 +4,91 @@
  *  Licensed under the MIT License. See LICENSE.txt in the project root for license information.
  *--------------------------------------------------------------------------------------------*/
 
-'use strict';
-
 import { done } from './util';
 
-function decorate(
-    decorator: (fn: Function, key: string) => Function
-): Function {
-    return (target: any, key: string, descriptor: any) => {
-        let fnKey: string | null = null;
-        let fn: Function | null = null;
-
-        if (typeof descriptor.value === 'function') {
-            fnKey = 'value';
-            fn = descriptor.value;
-        } else if (typeof descriptor.get === 'function') {
-            fnKey = 'get';
-            fn = descriptor.get;
+export function memoize<Return extends {}>(
+    target: (this: Record<string, Return>) => Return,
+    context: ClassGetterDecoratorContext
+) {
+    const memoizeKey = `$memoize$${context.name as string}`;
+    return function (this: Record<string, Return>): Return {
+        if (!this[memoizeKey]) {
+            this[memoizeKey] = target.apply(this);
         }
-
-        if (!fn || !fnKey) {
-            throw new Error('not supported');
-        }
-
-        descriptor[fnKey] = decorator(fn, key);
-    };
-}
-
-function _memoize(fn: Function, key: string): Function {
-    const memoizeKey = `$memoize$${key}`;
-
-    return function (this: Record<string, any>, ...args: any[]) {
-        if (!this.hasOwnProperty(memoizeKey)) {
-            Object.defineProperty(this, memoizeKey, {
-                configurable: false,
-                enumerable: false,
-                writable: false,
-                value: fn.apply(this, args),
-            });
-        }
-
         return this[memoizeKey];
     };
 }
-
-export const memoize = decorate(_memoize);
-
 /**
  * Decorator to not allow multiple async calls
  */
-function _throttle<T>(fn: Function, key: string): Function {
-    const currentKey = `$throttle$current$${key}`;
-    const nextKey = `$throttle$next$${key}`;
+export function throttle<Args extends any[], T>(
+    target: (
+        this: Record<string, Promise<T> | undefined>,
+        ...args: Args
+    ) => Promise<T>,
+    context: ClassMethodDecoratorContext
+) {
+    const currentKey = `$thr$c$${String(context.name)}`; // $throttle$current$
+    const nextKey = `$thr$n$${String(context.name)}`; // $throttle$next$
 
-    const trigger = function (this: Record<string, any>, ...args: any[]) {
+    const trigger = function (
+        this: Record<string, Promise<T> | undefined>,
+        ...args: Args
+    ): Promise<T> {
         if (this[nextKey]) {
-            return this[nextKey];
+            return this[nextKey]!;
         }
 
         if (this[currentKey]) {
-            this[nextKey] = done(this[currentKey]).then(() => {
+            this[nextKey] = done(this[currentKey]!).then(() => {
                 this[nextKey] = undefined;
                 return trigger.apply(this, args);
             });
 
-            return this[nextKey];
+            return this[nextKey]!;
         }
 
-        this[currentKey] = fn.apply(this, args) as Promise<T>;
+        this[currentKey] = target.apply(this, args);
 
-        done(this[currentKey]).then(() => {
-            this[currentKey] = undefined;
-        });
+        const clear = () => (this[currentKey] = undefined);
+        done(this[currentKey]!).then(clear, clear);
 
-        return this[currentKey];
+        return this[currentKey]!;
     };
 
     return trigger;
 }
 
-export const throttle = decorate(_throttle);
+// Make sure asynchronous functions are called one after another.
+type ThisPromise = Record<string, Promise<any>>;
 
-// Make sure asynchronous functions are called one after another (untested).
-function _sequentialize(fn: Function, key: string): Function {
-    const currentKey = `__$sequence$${key}`;
+export function sequentialize<Args extends any[]>(
+    target: (this: ThisPromise, ...args: Args) => Promise<any>,
+    context: ClassMethodDecoratorContext
+) {
+    const currentKey = `$s11e$${context.name as string}`; // sequentialize
 
-    return function (this: any, ...args: any[]) {
+    return function (this: ThisPromise, ...args: Args): Promise<any> {
         const currentPromise =
             (this[currentKey] as Promise<any>) || Promise.resolve(null);
-        const run = async () => await fn.apply(this, args);
+        const run = async () => await target.apply(this, args);
         this[currentKey] = currentPromise.then(run, run);
         return this[currentKey];
     };
 }
 
-export const sequentialize = decorate(_sequentialize);
+type ThisTimer = Record<string, ReturnType<typeof setTimeout>>;
 
-export function debounce(delay: number): Function {
-    return decorate((fn, key) => {
-        const timerKey = `$debounce$${key}`;
+export function debounce(delay: number) {
+    return function <Args extends any[]>(
+        target: (this: ThisTimer, ...args: Args) => void,
+        context: ClassMemberDecoratorContext
+    ) {
+        const timerKey = `$d6e$${String(context.name)}`; // debounce
 
-        return function (this: Record<string, any>, ...args: any[]) {
+        return function (this: ThisTimer, ...args: Args): void {
             clearTimeout(this[timerKey]);
-            this[timerKey] = setTimeout(() => fn.apply(this, args), delay);
+            this[timerKey] = setTimeout(() => target.apply(this, args), delay);
         };
-    });
+    };
 }
