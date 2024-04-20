@@ -2,7 +2,7 @@
 
 arrow from C6 to C3P chop
 //    ^^^^    ^^ keyword.pikchr
-//         ^^    ^^^  variable.language.pikchr
+//         ^^    ^^^  variable.language.place.pikchr
 //                   ^^^^ entity.name.tag.pikchr
 arrow right then down
 //    ^^^^^      ^^^^ support.constant.edge.pikchr
@@ -57,4 +57,4 @@ cylinder "B" at 5cm heading 125 from A
 //       ^^^ string.quoted.double.pikchr
 //           ^^     ^^^^^^^     ^^^^ keyword.pikchr
 //              ^^^         ^^^ constant.numeric.pikchr
-//                                   ^ variable.language.pikchr
+//                                   ^ variable.language.place.pikchr

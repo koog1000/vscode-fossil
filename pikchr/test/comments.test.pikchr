@@ -19,3 +19,11 @@ box//test
 
 #!
 !! <-- comment.line.pikchr
+    # box
+!!  ^^^^^ comment.line.pikchr
+    // TEST:
+!!  ^^^^^^^^ comment.line.pikchr
+    /* TEST
+!!  ^^^^^^^ comment.block.pikchr
+    */
+!!  ^^ comment.block.pikchr

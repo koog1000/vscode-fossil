@@ -5,7 +5,7 @@ arrow from last dot to X0
 //         ^^^^ constant.language.pikchr
 //              ^^^ entity.name.function.pikchr
 //                  ^^ keyword.pikchr
-//                     ^^ variable.language.pikchr
+//                     ^^ variable.language.place.pikchr
 circle at end of first arrow
 //     ^^ keyword.pikchr
 //        ^^^ support.constant.edge.pikchr

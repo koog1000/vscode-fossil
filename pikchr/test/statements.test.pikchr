@@ -4,6 +4,8 @@ box
 // <--- storage.type.class.pikchr
 box
 // <--- storage.type.class.pikchr
+\
+// <- punctuation.separator.continuation.line.pikchr
 cylinder  ;
 // <--------  storage.type.class.pikchr
 //      ^  source.pikchr
@@ -34,20 +36,21 @@ diamond "hi"
 
 
 Cat: box "box"
-// <--- variable.language.pikchr
+// <--- variable.language.place.pikchr
 // ^ punctuation.separator.pikchr
 //   ^^^ storage.type.class.pikchr
 //       ^^^^^ string.quoted.double.pikchr
-   Cat: box "box"
-// ^^^ variable.language.pikchr
-//    ^ punctuation.separator.pikchr
-//      ^^^ storage.type.class.pikchr
-//          ^^^^^ string.quoted.double.pikchr
+   Cat : box "box"
+// ^^^ variable.language.place.pikchr
+//     ^ punctuation.separator.pikchr
+//       ^^^ storage.type.class.pikchr
+//           ^^^^^ string.quoted.double.pikchr
 
 box "hello, \"world\""
 //  ^^^^^^^^^^^^^^^^^^ string.quoted.double.pikchr
-box "hello, \x"
+box "hello, \x";;;;
 //  ^^^^^^^^^^^ source.pikchr string.quoted.double.pikchr
+//             ^^^^ punctuation.separator.delimiter.end.pikchr
 linewid = 0.25
 // <--- variable.language.pikchr
 //      ^ keyword.operator.assignment.pikchr
@@ -76,7 +79,10 @@ boxht = .2; boxwid = .3; circlerad = .3; dx = 0.05
 //        ^            ^               ^ punctuation.separator.delimiter.end.pikchr
 
 left
-// <- support.constant.direction.pikchr
+// <---- support.constant.direction.pikchr
+down with the sickness
+// <---- support.constant.direction.pikchr
+//   ^^^^ ^^^ ^^^^^^^^ invalid.illegal.pikchr
 
 line dashed
 //   ^^^^^^ entity.name.tag.pikchr
