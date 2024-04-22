@@ -96,6 +96,7 @@ type FossilCommand =
     | 'diff'
     // | 'extras' - we get it from `fossil status --differ`
     | 'forget'
+    | 'git'
     | 'info'
     | 'init'
     | 'ls'
@@ -112,6 +113,7 @@ type FossilCommand =
     | 'rename'
     | 'revert'
     | 'settings'
+    | 'sqlite'
     | 'stash'
     | 'status'
     | 'tag'

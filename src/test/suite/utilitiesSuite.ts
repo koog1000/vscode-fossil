@@ -205,6 +205,6 @@ export function utilitiesSuite(this: Suite): void {
             .returns(terminal);
         await vscode.commands.executeCommand('fossil.openUI');
         sinon.assert.calledOnce(createTerminalstub);
-        sinon.assert.calledOnceWithExactly(sendText, 'fossil ui', true);
+        sinon.assert.calledOnceWithExactly(sendText, 'fossil ui');
     });
 }

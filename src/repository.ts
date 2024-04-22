@@ -16,31 +16,32 @@ import {
     TextDocumentShowOptions,
 } from 'vscode';
 import {
-    OpenedRepository,
+    AnyPath,
+    BranchDetails,
     Commit,
     CommitDetails,
-    TimelineOptions,
-    FossilRoot,
-    BranchDetails,
-    FossilCheckin,
+    ConfigKey,
     FossilBranch,
-    FossilTag,
-    StatusString,
-    MergeAction,
+    FossilCheckin,
+    FossilClass,
+    FossilCommitMessage,
     FossilHash,
     FossilRemote,
-    FossilUndoCommand,
-    FossilCommitMessage,
-    StashItem,
-    RelativePath,
-    Praise,
-    ResourceStatus,
-    FossilStatus,
-    FossilClass,
-    AnyPath,
-    UserPath,
-    StashID,
     FossilRemoteName,
+    FossilRoot,
+    FossilStatus,
+    FossilTag,
+    FossilUndoCommand,
+    MergeAction,
+    OpenedRepository,
+    Praise,
+    RelativePath,
+    ResourceStatus,
+    StashID,
+    StashItem,
+    StatusString,
+    TimelineOptions,
+    UserPath,
 } from './openedRepository';
 import {
     anyEvent,
@@ -858,6 +859,14 @@ export class Repository implements IDisposable, InteractionAPI {
     // used for "praise" tooltips
     async info(checkin: FossilCheckin): Promise<{ [key: string]: string }> {
         return this.repository.info(checkin);
+    }
+
+    async config<T extends ConfigKey>(...keys: T[]): Promise<Map<T, string>> {
+        return this.repository.config(keys);
+    }
+
+    async gitExport(): Promise<void> {
+        return this.repository.gitExport();
     }
 
     async cat(params: FossilUriParams): Promise<Buffer | undefined> {

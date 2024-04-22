@@ -351,6 +351,16 @@
                 "command": "fossil.praise",
                 "title": "Praise (blame)",
                 "category": "Fossil"
+            },
+            {
+                "command": "fossil.gitPublish",
+                "title": "Publish to GitHub/Git",
+                "category": "Fossil"
+            },
+            {
+                "command": "fossil.gitExport",
+                "title": "Export git",
+                "category": "Fossil"
             }
         ],
         "menus": {
@@ -1049,6 +1059,16 @@
                     ],
                     "description": "%config.username%",
                     "default": null
+                },
+                "fossil.confirmGitExport": {
+                    "type": "string",
+                    "enum": [
+                        "Automatically",
+                        "Never",
+                        "Ask"
+                    ],
+                    "default": "Ask",
+                    "description": "When repository was exported to git, ask to run `fossil export` after every commit"
                 }
             }
         },
@@ -1127,7 +1147,8 @@
         "@typescript-eslint/eslint-plugin": "^7.6.0",
         "@typescript-eslint/parser": "^7.6.0",
         "@vscode/test-electron": "~2.3.9",
-        "@vscode/vsce": "~2.25.0",
+        "@vscode/vsce": "~2.26.0",
+        "@octokit/rest": "~20.1.0",
         "c8": "^8.0.1",
         "esbuild": "~0.20.2",
         "eslint": "^8.52.0",
