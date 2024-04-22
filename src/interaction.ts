@@ -1176,6 +1176,31 @@ export async function confirmCommitWorkingGroup(): Promise<boolean> {
     return choice === respOpt;
 }
 
+export async function confirmGitExport(): Promise<boolean> {
+    const fromConfig = typedConfig.gitExport;
+    if (fromConfig == 'Automatically') {
+        return true;
+    } else if (fromConfig == 'Never') {
+        return false;
+    }
+
+    const answer = await window.showInformationMessage(
+        'Export repository to git?',
+        'Yes',
+        'No',
+        'Automatically',
+        'Never'
+    );
+    if (answer == 'Yes') {
+        return true;
+    }
+    if (!answer || answer == 'No') {
+        return false;
+    }
+    typedConfig.setGitExport(answer as any);
+    return answer == 'Automatically';
+}
+
 export async function inputWikiType(): Promise<
     'Technote' | 'Wiki' | undefined
 > {

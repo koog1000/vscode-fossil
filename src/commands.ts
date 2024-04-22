@@ -52,6 +52,7 @@ import { FossilExecutable, FossilCWD } from './fossilExecutable';
 
 import { localize } from './main';
 import { PraiseAnnotator } from './praise';
+import { Credentials, exportGit, inputExportOptions } from './gitExport';
 
 type CommandKey =
     | 'add'
@@ -72,6 +73,8 @@ type CommandKey =
     | 'deleteFiles'
     | 'fileLog'
     | 'forget'
+    | 'gitExport'
+    | 'gitPublish'
     | 'ignore'
     | 'init'
     | 'integrate'
@@ -152,6 +155,7 @@ function command(id: CommandId, options: { repository?: boolean } = {}) {
 export class CommandCenter {
     private readonly disposables: Disposable[];
     private readonly previewManager: FossilPreviewManager;
+    private readonly credentials = new Credentials();
 
     constructor(
         private readonly executable: FossilExecutable,
@@ -904,9 +908,19 @@ export class CommandCenter {
         }
 
         const result = await repository.commit(message, scope, newBranch);
+
+        if (!result.exitCode) {
+            const config = await repository.config('last-git-export-repo');
+            if (config.get('last-git-export-repo')) {
+                if (await interaction.confirmGitExport()) {
+                    repository.gitExport();
+                }
+            }
+        }
         return !result.exitCode;
     }
 
+    // ToDo: rename/rethink this function
     private async commitWithAnyInput(
         repository: Repository,
         opts: CommitOptions
@@ -921,7 +935,6 @@ export class CommandCenter {
                     : interaction.inputCommitMessage(),
             opts
         );
-
         if (message && didCommit) {
             inputBox.value = '';
         }
@@ -1261,7 +1274,7 @@ export class CommandCenter {
             name: 'Fossil UI',
             cwd: repository.root,
         });
-        terminal.sendText('fossil ui', true);
+        terminal.sendText('fossil ui');
         //  await commands.executeCommand<void>(
         //     'simpleBrowser.show',
         //     'http://127.0.0.1:8000'
@@ -1386,6 +1399,23 @@ export class CommandCenter {
         const praises = await repository.praise(uri.fsPath);
         await PraiseAnnotator.create(repository, editor, praises);
     }
+
+    @command('fossil.gitPublish', { repository: true })
+    async gitPublish(repository: Repository): Promise<void> {
+        const options = await inputExportOptions(
+            this.credentials,
+            repository,
+            this.disposables
+        );
+        if (options) {
+            await exportGit(options, repository);
+        }
+    }
+    @command('fossil.gitExport', { repository: true })
+    async gitExport(repository: Repository): Promise<void> {
+        await repository.gitExport();
+    }
+
     private async diff(
         repository: Repository,
         checkin: FossilCheckin,

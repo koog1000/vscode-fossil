@@ -184,6 +184,12 @@ function toStatus(klass: FossilClass, value: string): FileStatus {
     }
 }
 
+export type ConfigKey =
+    | 'project-name'
+    | 'short-project-name'
+    | 'project-description'
+    | 'last-git-export-repo';
+
 export class OpenedRepository {
     private constructor(
         private readonly executable: FossilExecutable,
@@ -641,6 +647,33 @@ export class OpenedRepository {
             return parent[1] as FossilHash;
         }
         throw new Error(`fossil checkin '${checkin}' has no ${field}`);
+    }
+
+    /**
+     * experimental method to get basic repository configuration
+     */
+    async config<T extends ConfigKey>(keys: T[]): Promise<Map<T, string>> {
+        const result = await this.exec(
+            ['sqlite', '--readonly'],
+            'reading configuration for github',
+            {
+                stdin_data:
+                    '.mode json\n' +
+                    'select name, value ' +
+                    'from repository.config ' +
+                    'where name in ' +
+                    "('" +
+                    keys.join("', '") +
+                    "');",
+            }
+        );
+        // sqlite return empty string when there are no rows
+        const rows: { name: T; value: string }[] =
+            result.stdout.length > 9 ? JSON.parse(result.stdout) : [];
+        return new Map(rows.map(row => [row['name'], row['value']]));
+    }
+    async gitExport(): Promise<void> {
+        await this.exec(['git', 'export']);
     }
 
     async info(checkin: FossilCheckin): Promise<{ [key: string]: string }> {

@@ -9,6 +9,7 @@ interface ConfigScheme {
     username: FossilUsername | null;
     autoRefresh: boolean;
     enableRenaming: boolean;
+    confirmGitExport: 'Automatically' | 'Never' | null;
 }
 
 class Config {
@@ -66,6 +67,14 @@ class Config {
 
     disableRenaming() {
         this.config.update('enableRenaming', false, false);
+    }
+
+    setGitExport(how: NonNullable<ConfigScheme['confirmGitExport']>) {
+        this.config.update('confirmGitExport', how, false);
+    }
+
+    get gitExport() {
+        return this.get('confirmGitExport');
     }
 }
 
