@@ -3,7 +3,7 @@
     "version": "0.1.0",
     "configurations": [
         {
-            "name": "Launch Extension",
+            "name": "Fossil Extension (--disable-extensions)",
             "type": "extensionHost",
             "request": "launch",
             "runtimeExecutable": "${execPath}",
@@ -18,7 +18,21 @@
             "preLaunchTask": "npm"
         },
         {
-            "name": "Launch Tests",
+            "name": "Fossil Extension",
+            "type": "extensionHost",
+            "request": "launch",
+            "runtimeExecutable": "${execPath}",
+            "args": [
+                "--extensionDevelopmentPath=${workspaceRoot}",
+            ],
+            "sourceMaps": true,
+            "outFiles": [
+                "${workspaceRoot}/out/*.js"
+            ],
+            "preLaunchTask": "npm"
+        },
+        {
+            "name": "Fossil Tests",
             "type": "extensionHost",
             "request": "launch",
             "runtimeExecutable": "${execPath}",
