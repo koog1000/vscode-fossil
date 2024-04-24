@@ -136,18 +136,24 @@ function makeCommandWithRepository(method: CommandMethod): CommandMethod {
  * Decorator
  */
 const register: Command[] = [];
+const enum Inline {
+    Repository = 1,
+}
 
-function command(id: CommandId, options: { repository?: boolean } = {}) {
+function command(repository?: 1) {
     return (
         fn: CommandMethod,
-        _context: ClassMethodDecoratorContext<CommandCenter, CommandMethod> & {
+        context: ClassMethodDecoratorContext<CommandCenter, CommandMethod> & {
             name: CommandKey;
         }
     ) => {
-        if (options.repository) {
+        if (repository) {
             fn = makeCommandWithRepository(fn);
         }
-        register.push({ id, method: fn });
+        register.push({
+            id: `fossil.${context.name as CommandKey}`,
+            method: fn,
+        });
         return fn;
     };
 }
@@ -172,12 +178,12 @@ export class CommandCenter {
         this.disposables.push(this.previewManager);
     }
 
-    @command('fossil.refresh', { repository: true })
+    @command(Inline.Repository)
     async refresh(repository: Repository): Promise<void> {
         await repository.status('forced refresh');
     }
 
-    @command('fossil.openResource')
+    @command()
     async openResource(resource: FossilResource): Promise<void> {
         await this._openResource(resource, undefined, true, false);
     }
@@ -286,7 +292,7 @@ export class CommandCenter {
         return '';
     }
 
-    @command('fossil.clone')
+    @command()
     async clone(): Promise<void> {
         let url = await interaction.inputRepoUrl();
         if (!url) {
@@ -381,7 +387,7 @@ export class CommandCenter {
         }
     }
 
-    @command('fossil.init')
+    @command()
     async init(): Promise<void> {
         const fossilPath = await interaction.selectNewFossilPath('Create');
 
@@ -415,7 +421,7 @@ export class CommandCenter {
         await this.askOpenRepository(fossilPath, fossilCwd);
     }
 
-    @command('fossil.open')
+    @command()
     async open(): Promise<void> {
         const fossilPath = await interaction.selectExistingFossilPath();
         if (!fossilPath) {
@@ -429,12 +435,12 @@ export class CommandCenter {
         await this.model.tryOpenRepository(rootPath);
     }
 
-    @command('fossil.close', { repository: true })
+    @command(Inline.Repository)
     async close(repository: Repository): Promise<void> {
         return this.model.close(repository);
     }
 
-    @command('fossil.openFiles')
+    @command()
     openFiles(
         ...resources: (FossilResource | SourceControlResourceGroup)[]
     ): Promise<void> {
@@ -451,7 +457,7 @@ export class CommandCenter {
     }
 
     // user clicked `Open file` action in diff view or in the scm panel
-    @command('fossil.openFile')
+    @command()
     async openFile(...resources: FossilResource[]): Promise<void> {
         const uris = resources.map(res => res.resourceUri);
         const preview = uris.length === 1;
@@ -478,7 +484,7 @@ export class CommandCenter {
         }
     }
 
-    @command('fossil.openChange')
+    @command()
     async openChange(...resources: FossilResource[]): Promise<void> {
         if (resources.length === 1) {
             // a resource group proxy object?
@@ -497,7 +503,7 @@ export class CommandCenter {
         }
     }
 
-    @command('fossil.openFileFromUri')
+    @command()
     async openFileFromUri(uri?: Uri): Promise<void> {
         const resource = this.getSCMResource(uri);
 
@@ -508,13 +514,13 @@ export class CommandCenter {
         return this.openFile(resource);
     }
 
-    @command('fossil.openChangeFromUri')
+    @command()
     async openChangeFromUri(uri?: Uri): Promise<void> {
         const resource = this.getSCMResource(uri);
         return this._openResource(resource);
     }
 
-    @command('fossil.ignore')
+    @command()
     async ignore(
         ...resourceStates: SourceControlResourceState[]
     ): Promise<void> {
@@ -534,7 +540,7 @@ export class CommandCenter {
         }
     }
 
-    @command('fossil.addAll', { repository: true })
+    @command(Inline.Repository)
     async addAll(repository: Repository): Promise<void> {
         const untracked = repository.untrackedGroup.resourceStates;
         if (untracked.length) {
@@ -542,7 +548,7 @@ export class CommandCenter {
         }
     }
 
-    @command('fossil.add')
+    @command()
     async add(...resourceStates: SourceControlResourceState[]): Promise<void> {
         this.maybeUseDefaultResource(resourceStates);
 
@@ -560,7 +566,7 @@ export class CommandCenter {
             await repository.stage(...resources);
         }
     }
-    @command('fossil.relocate')
+    @command()
     async relocate(resourceState: SourceControlResourceState): Promise<void> {
         if (!(resourceState instanceof FossilResource)) {
             return;
@@ -583,7 +589,7 @@ export class CommandCenter {
             }
         }
     }
-    @command('fossil.forget')
+    @command()
     async forget(
         ...resourceStates: SourceControlResourceState[]
     ): Promise<void> {
@@ -616,7 +622,7 @@ export class CommandCenter {
         }
     }
 
-    @command('fossil.deleteFile', { repository: true })
+    @command(Inline.Repository)
     async deleteFile(
         repository: Repository,
         ...resourceStates: SourceControlResourceState[]
@@ -624,7 +630,7 @@ export class CommandCenter {
         return this.deleteResources(repository, resourceStates);
     }
 
-    @command('fossil.deleteFiles', { repository: true })
+    @command(Inline.Repository)
     async deleteFiles(
         repository: Repository,
         ...resourceGroups: FossilResourceGroup[]
@@ -635,7 +641,7 @@ export class CommandCenter {
         );
     }
 
-    @command('fossil.stage') // run by repo
+    @command() // run by repo
     async stage(
         ...resourceStates: SourceControlResourceState[]
     ): Promise<void> {
@@ -659,12 +665,12 @@ export class CommandCenter {
         }
     }
 
-    @command('fossil.stageAll', { repository: true })
+    @command(Inline.Repository)
     async stageAll(repository: Repository): Promise<void> {
         await repository.stage();
     }
 
-    @command('fossil.unstage')
+    @command()
     async unstage(
         ...resourceStates: SourceControlResourceState[]
     ): Promise<void> {
@@ -685,12 +691,12 @@ export class CommandCenter {
         }
     }
 
-    @command('fossil.unstageAll', { repository: true })
+    @command(Inline.Repository)
     async unstageAll(repository: Repository): Promise<void> {
         return repository.unstage();
     }
 
-    @command('fossil.revert')
+    @command()
     async revert(
         ...resourceStates: SourceControlResourceState[]
     ): Promise<void> {
@@ -733,7 +739,7 @@ export class CommandCenter {
         }
     }
 
-    @command('fossil.revertAll', { repository: true })
+    @command(Inline.Repository)
     async revertAll(
         repository: Repository,
         ...groups: FossilResourceGroup[]
@@ -752,7 +758,7 @@ export class CommandCenter {
         }
     }
 
-    @command('fossil.clean', { repository: true })
+    @command(Inline.Repository)
     async clean(repository: Repository): Promise<void> {
         if (await interaction.confirmDeleteExtras()) {
             await repository.cleanAll();
@@ -940,14 +946,14 @@ export class CommandCenter {
         }
     }
 
-    @command('fossil.commit', { repository: true })
+    @command(Inline.Repository)
     async commit(repository: Repository): Promise<void> {
         await this.commitWithAnyInput(repository, {
             scope: CommitScope.UNKNOWN,
         });
     }
 
-    @command('fossil.commitWithInput', { repository: true })
+    @command(Inline.Repository)
     async commitWithInput(repository: Repository): Promise<void> {
         const didCommit = await this.smartCommit(
             repository,
@@ -960,19 +966,19 @@ export class CommandCenter {
         }
     }
 
-    @command('fossil.commitStaged', { repository: true })
+    @command(Inline.Repository)
     async commitStaged(repository: Repository): Promise<void> {
         await this.commitWithAnyInput(repository, {
             scope: CommitScope.STAGING_GROUP,
         });
     }
 
-    @command('fossil.commitAll', { repository: true })
+    @command(Inline.Repository)
     async commitAll(repository: Repository): Promise<void> {
         await this.commitWithAnyInput(repository, { scope: CommitScope.ALL });
     }
 
-    @command('fossil.commitBranch', { repository: true })
+    @command(Inline.Repository)
     async commitBranch(repository: Repository): Promise<void> {
         await this.commitWithAnyInput(repository, {
             scope: CommitScope.UNKNOWN,
@@ -993,17 +999,17 @@ export class CommandCenter {
         }
     }
 
-    @command('fossil.undo', { repository: true })
+    @command(Inline.Repository)
     async undo(repository: Repository): Promise<void> {
         return this.undoOrRedo(repository, 'undo');
     }
 
-    @command('fossil.redo', { repository: true })
+    @command(Inline.Repository)
     async redo(repository: Repository): Promise<void> {
         return this.undoOrRedo(repository, 'redo');
     }
 
-    @command('fossil.patchCreate', { repository: true })
+    @command(Inline.Repository)
     async patchCreate(repository: Repository): Promise<void> {
         const newPatchPath = await interaction.inputPatchCreate();
         if (newPatchPath) {
@@ -1011,7 +1017,7 @@ export class CommandCenter {
         }
     }
 
-    @command('fossil.patchApply', { repository: true })
+    @command(Inline.Repository)
     async patchApply(repository: Repository): Promise<void> {
         const newPatchPath = await interaction.inputPatchApply();
         if (newPatchPath) {
@@ -1050,12 +1056,12 @@ export class CommandCenter {
         }
     }
 
-    @command('fossil.stashSnapshot', { repository: true })
+    @command(Inline.Repository)
     async stashSnapshot(repository: Repository): Promise<void> {
         return this.stash(repository, 'snapshot');
     }
 
-    @command('fossil.stashSave', { repository: true })
+    @command(Inline.Repository)
     async stashSave(repository: Repository): Promise<void> {
         return this.stash(repository, 'save');
     }
@@ -1071,22 +1077,22 @@ export class CommandCenter {
         }
     }
 
-    @command('fossil.stashPop', { repository: true })
+    @command(Inline.Repository)
     async stashPop(repository: Repository): Promise<void> {
         return repository.stashPop();
     }
 
-    @command('fossil.stashApply', { repository: true })
+    @command(Inline.Repository)
     async stashApply(repository: Repository): Promise<void> {
         return this.stashApplyOrDrop(repository, 'apply');
     }
 
-    @command('fossil.stashDrop', { repository: true })
+    @command(Inline.Repository)
     async stashDrop(repository: Repository): Promise<void> {
         return this.stashApplyOrDrop(repository, 'drop');
     }
 
-    @command('fossil.branchChange', { repository: true })
+    @command(Inline.Repository)
     async branchChange(repository: Repository): Promise<void> {
         // branches/tags
         if (await interaction.checkActiveMerge(repository)) {
@@ -1100,7 +1106,7 @@ export class CommandCenter {
         }
     }
 
-    @command('fossil.branch', { repository: true })
+    @command(Inline.Repository)
     async branch(repository: Repository): Promise<void> {
         const newBranch = await interaction.inputNewBranchOptions();
         if (!newBranch) {
@@ -1122,12 +1128,12 @@ export class CommandCenter {
         }
     }
 
-    @command('fossil.update', { repository: true })
+    @command(Inline.Repository)
     async update(repository: Repository): Promise<void> {
         await repository.update();
     }
 
-    @command('fossil.pull', { repository: true })
+    @command(Inline.Repository)
     async pull(repository: Repository): Promise<void> {
         const remotes = await repository.getRemotes();
 
@@ -1159,7 +1165,7 @@ export class CommandCenter {
         }
     }
 
-    @command('fossil.merge', { repository: true })
+    @command(Inline.Repository)
     async merge(repository: Repository): Promise<void> {
         const placeholder = localize(
             'choose branch',
@@ -1168,7 +1174,7 @@ export class CommandCenter {
         return this.mergeCommon(repository, MergeAction.Merge, placeholder);
     }
 
-    @command('fossil.integrate', { repository: true })
+    @command(Inline.Repository)
     async integrate(repository: Repository): Promise<void> {
         const placeholder = localize(
             'choose branch integrate',
@@ -1177,7 +1183,7 @@ export class CommandCenter {
         return this.mergeCommon(repository, MergeAction.Integrate, placeholder);
     }
 
-    @command('fossil.cherrypick', { repository: true })
+    @command(Inline.Repository)
     async cherrypick(repository: Repository): Promise<void> {
         const logEntries = await repository.getLogEntries();
         const checkin = await interaction.pickCommitToCherrypick(logEntries);
@@ -1215,7 +1221,7 @@ export class CommandCenter {
         }
     }
 
-    @command('fossil.closeBranch', { repository: true })
+    @command(Inline.Repository)
     async closeBranch(repository: Repository): Promise<void> {
         const openedBranches = await repository.getBranches();
         const placeholder = localize('branchtoclose', 'Branch to close');
@@ -1228,7 +1234,7 @@ export class CommandCenter {
         }
     }
 
-    @command('fossil.reopenBranch', { repository: true })
+    @command(Inline.Repository)
     async reopenBranch(repository: Repository): Promise<void> {
         const openedBranches = await repository.getBranches({ closed: true });
         const placeholder = localize('branchtoreopen', 'Branch to reopen');
@@ -1241,7 +1247,7 @@ export class CommandCenter {
         }
     }
 
-    @command('fossil.push', { repository: true })
+    @command(Inline.Repository)
     async push(repository: Repository): Promise<void> {
         const remotes = await repository.getRemotes();
         if (!remotes.length) {
@@ -1251,7 +1257,7 @@ export class CommandCenter {
         await repository.push();
     }
 
-    @command('fossil.pushTo', { repository: true })
+    @command(Inline.Repository)
     async pushTo(repository: Repository): Promise<void> {
         const remotes = await repository.getRemotes();
         if (!remotes.length) {
@@ -1263,12 +1269,12 @@ export class CommandCenter {
         }
     }
 
-    @command('fossil.showOutput')
+    @command()
     showOutput(): void {
         this.outputChannel.show();
     }
 
-    @command('fossil.openUI', { repository: true })
+    @command(Inline.Repository)
     async openUI(repository: Repository): Promise<void> {
         const terminal = window.createTerminal({
             name: 'Fossil UI',
@@ -1281,12 +1287,12 @@ export class CommandCenter {
         //     );
     }
 
-    @command('fossil.log', { repository: true })
+    @command(Inline.Repository)
     async log(repository: Repository): Promise<void> {
         await interaction.presentLogSourcesMenu(repository);
     }
 
-    @command('fossil.fileLog')
+    @command()
     async fileLog(uri?: Uri): Promise<void> {
         if (!uri) {
             uri = window.activeTextEditor?.document.uri;
@@ -1322,7 +1328,7 @@ export class CommandCenter {
         }
     }
 
-    @command('fossil.revertChange')
+    @command()
     async revertChange(
         uri: Uri | undefined,
         changes: LineChange[] | undefined,
@@ -1347,12 +1353,12 @@ export class CommandCenter {
         ];
     }
 
-    @command('fossil.render')
+    @command()
     async render(uri: Uri, _info: { groupId: number }): Promise<void> {
         return this.previewManager.openDynamicPreview(uri);
     }
 
-    @command('fossil.wikiCreate')
+    @command()
     async wikiCreate(): Promise<void> {
         const preview = this.previewManager.activePreview;
         if (preview) {
@@ -1382,7 +1388,7 @@ export class CommandCenter {
         }
     }
 
-    @command('fossil.praise')
+    @command()
     async praise(): Promise<void> {
         const editor = window.activeTextEditor;
         if (!editor) {
@@ -1400,7 +1406,7 @@ export class CommandCenter {
         await PraiseAnnotator.create(repository, editor, praises);
     }
 
-    @command('fossil.gitPublish', { repository: true })
+    @command(Inline.Repository)
     async gitPublish(repository: Repository): Promise<void> {
         const options = await inputExportOptions(
             this.credentials,
@@ -1411,7 +1417,7 @@ export class CommandCenter {
             await exportGit(options, repository);
         }
     }
-    @command('fossil.gitExport', { repository: true })
+    @command(Inline.Repository)
     async gitExport(repository: Repository): Promise<void> {
         await repository.gitExport();
     }
