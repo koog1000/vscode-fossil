@@ -18,6 +18,11 @@ import { OpenedRepository, ResourceStatus } from '../../openedRepository';
 import { FossilResourceGroup } from '../../resourceGroups';
 import { delay } from '../../util';
 
+export type SinonStubT<T extends (...args: any) => any> = sinon.SinonStub<
+    Parameters<T>,
+    ReturnType<T>
+>;
+
 export async function cleanRoot(): Promise<void> {
     /* c8 ignore next 5 */
     if (!vscode.workspace.workspaceFolders) {

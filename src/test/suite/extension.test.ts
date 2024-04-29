@@ -18,6 +18,7 @@ import { PatchSuite, StageSuite, StashSuite, UpdateSuite } from './stateSuite';
 import { RenameSuite } from './renameSuite';
 import { BranchSuite } from './branchSuite';
 import { RevertSuite } from './revertSuite';
+import { GetExportSuite as GitExportSuite } from './gitExportSuite';
 
 suite('Fossil.OpenedRepo', function (this: Suite) {
     this.ctx.sandbox = sinon.createSandbox();
@@ -46,6 +47,7 @@ suite('Fossil.OpenedRepo', function (this: Suite) {
     suite('FileSystem', FileSystemSuite);
     suite('Diff', DiffSuite);
     suite('Quality of Life', QualityOfLifeSuite);
+    suite('Git Export', GitExportSuite);
 
     afterEach(() => {
         this.ctx.sandbox.restore();
