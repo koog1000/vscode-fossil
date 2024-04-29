@@ -8,11 +8,11 @@ import {
     Uri,
     window,
 } from 'vscode';
-import { Octokit } from '@octokit/rest';
-import { Repository } from './repository';
-import { Distinct } from './openedRepository';
 import { mkdir } from 'fs/promises';
+import { Octokit } from '@octokit/rest';
 import { RequestError } from '@octokit/request-error';
+import type { Repository } from './repository';
+import type { Distinct } from './openedRepository';
 
 const GITHUB_AUTH_PROVIDER_ID = 'github';
 // https://fossil-scm.org/home/doc/trunk/www/mirrortogithub.md says
@@ -32,38 +32,36 @@ export class Credentials {
             disposables.push(
                 authentication.onDidChangeSessions(async e => {
                     if (e.provider.id === GITHUB_AUTH_PROVIDER_ID) {
-                        this.octokit = await this.tryCreateOctokit();
+                        await this.tryCreateOctokit();
                     }
                 })
             );
         }
         if (!this.octokit) {
-            this.octokit = await this.tryCreateOctokit();
+            await this.tryCreateOctokit();
         }
     }
 
-    private async tryCreateOctokit(
+    /** @internal */ async tryCreateOctokit(
         createIfNone: boolean = false
     ): Promise<Octokit | undefined> {
-        const session = (this.session = await authentication.getSession(
+        const session = await authentication.getSession(
             GITHUB_AUTH_PROVIDER_ID,
             SCOPES,
             { createIfNone }
-        ));
-
-        return session
-            ? new Octokit({
-                  auth: session.accessToken,
-              })
-            : undefined;
+        );
+        if (session) {
+            this.octokit = new Octokit({
+                auth: session.accessToken,
+            });
+            this.session = session;
+            return this.octokit;
+        }
+        return;
     }
 
     async getOctokit(): Promise<Octokit> {
-        if (this.octokit) {
-            return this.octokit;
-        }
-        this.octokit = await this.tryCreateOctokit(true);
-        return this.octokit!;
+        return this.octokit ?? (await this.tryCreateOctokit(true))!;
     }
 }
 
@@ -93,24 +91,19 @@ export async function inputExportOptions(
     disposables: Disposable[]
 ): Promise<GitExportOptions | undefined> {
     // ask: exportParentPath (hardest part, no explicit vscode API for this)
-    let exportParentPath = await window.showSaveDialog({
-        title:
-            'Parent path for intermediate git repository ' +
-            'outside of fossil repository',
-        saveLabel: 'Select',
-        filters: {
-            Directories: [], // trying to select only directories
-        },
-    });
+    const exportParentPath = (
+        await window.showOpenDialog({
+            title:
+                'Parent path for intermediate git repository ' +
+                'outside of fossil repository',
+            openLabel: 'Select',
+            canSelectFiles: false,
+            canSelectFolders: true,
+        })
+    )?.at(0);
 
     if (!exportParentPath) {
         return;
-    }
-    if (exportParentPath.path.endsWith('.undefined')) {
-        // somewhat vscode bug
-        exportParentPath = exportParentPath.with({
-            path: exportParentPath.path.slice(0, -10),
-        });
     }
 
     // ask: repository name
@@ -123,6 +116,8 @@ export async function inputExportOptions(
         prompt: 'The name of the new repository',
         ignoreFocusOut: true,
         value: config.get('short-project-name') || config.get('project-name'),
+        validateInput: text =>
+            /^\w+$/.test(text) ? '' : 'Must be a single word',
     });
     if (!name) {
         return;
@@ -166,6 +161,16 @@ export async function inputExportOptions(
     // github option was chosen
     // so, we must authenticate
     await credentials.initialize(disposables);
+    const session = credentials.session;
+    if (!session) {
+        await window.showErrorMessage(
+            `No github session available, fossil won't export ${(
+                credentials as any
+            ).octokit!}`
+        );
+        return;
+    }
+
     const octokit = await credentials.getOctokit();
     const userInfo = await octokit.users.getAuthenticated();
     const orgs = await octokit.orgs.listForAuthenticatedUser();
@@ -207,11 +212,11 @@ export async function inputExportOptions(
     }
 
     // ask: privacy
-    const publicItem: QuickPickItem = {
-        label: '$(globe) Public',
-    };
     const privateItem: QuickPickItem = {
         label: '$(lock) Private',
+    };
+    const publicItem: QuickPickItem = {
+        label: '$(globe) Public',
     };
     const selectedPrivacy = await window.showQuickPick(
         [privateItem, publicItem],
@@ -268,7 +273,6 @@ export async function inputExportOptions(
         }
     }
     // add token to url
-    const session = credentials.session!;
     const remoteUri = Uri.parse(response.data.html_url) as AutoPushURISafe;
     const remoteUriWithToken = remoteUri.with({
         authority: `${session.account.label}:${session.accessToken}@${remoteUri.authority}`,
@@ -283,10 +287,10 @@ export async function exportGit(
 ): Promise<void> {
     await window.withProgress(
         {
-            title: `Creating $(github) repository ${options.url}`,
+            title: `Exporting git repository ${options.url}`,
             location: ProgressLocation.Notification,
         },
-        async (progress): Promise<any> => {
+        async (progress): Promise<void> => {
             progress.report({
                 message: `Setting up fossil with ${options.url}`,
                 increment: 33,
@@ -295,6 +299,14 @@ export async function exportGit(
                 name: 'Fossil git export',
                 cwd: repository.root,
             });
+            const terminalIsClosed = new Promise<void>(ready => {
+                const dis = window.onDidCloseTerminal(closedTerminal => {
+                    if (closedTerminal === terminal) {
+                        dis.dispose();
+                        ready();
+                    }
+                });
+            });
             await mkdir(options.path, { recursive: true, mode: 0o700 });
             terminal.sendText(
                 // space at the start to skip history
@@ -302,22 +314,16 @@ export async function exportGit(
                     options.path
                 } --mainbranch main --autopush ${options.urlUnsafe.toString()}`
             );
+            terminal.show();
             progress.report({
                 message:
-                    '$(terminal) running export (manually close the terminal to finish)',
+                    'Running export (manually close the terminal to finish)',
                 increment: 66,
             });
-            await new Promise<void>(ready => {
-                const dis = window.onDidCloseTerminal(closedTerminal => {
-                    if (closedTerminal === terminal) {
-                        progress.report({
-                            message: 'done',
-                            increment: 100,
-                        });
-                        ready();
-                        dis.dispose();
-                    }
-                });
+            await terminalIsClosed;
+            progress.report({
+                message: 'done',
+                increment: 100,
             });
         }
     );
