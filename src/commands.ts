@@ -140,21 +140,38 @@ const enum Inline {
     Repository = 1,
 }
 
+// function command(repository?: 1) {
+//     return (
+//         fn: CommandMethod,
+//         context: ClassMethodDecoratorContext<CommandCenter, CommandMethod> & {
+//             name: CommandKey;
+//         }
+//     ) => {
+//         if (repository) {
+//             fn = makeCommandWithRepository(fn);
+//         }
+//         register.push({
+//             id: `fossil.${context.name as CommandKey}`,
+//             method: fn,
+//         });
+//         return fn;
+//     };
+// }
+
 function command(repository?: 1) {
     return (
-        fn: CommandMethod,
-        context: ClassMethodDecoratorContext<CommandCenter, CommandMethod> & {
-            name: CommandKey;
-        }
+        _target: any,
+        key: CommandKey,
+        descriptor: TypedPropertyDescriptor<CommandMethod>
     ) => {
+        let fn = descriptor.value!;
         if (repository) {
             fn = makeCommandWithRepository(fn);
         }
         register.push({
-            id: `fossil.${context.name as CommandKey}`,
+            id: `fossil.${key}`,
             method: fn,
         });
-        return fn;
     };
 }
 
