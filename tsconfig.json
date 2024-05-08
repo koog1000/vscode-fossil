@@ -16,6 +16,7 @@
         "removeComments": true,
         "sourceMap": true,
         "strictNullChecks": true,
+        "experimentalDecorators": true,
     },
     "include": [
         "src/**/*",
