@@ -1,5 +1,6 @@
 .github/
 .mocharc.js
+esbuild.config.js
 .nycrc
 .vscode
 **/.gitignore

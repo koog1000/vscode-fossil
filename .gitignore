@@ -12,5 +12,6 @@ resources/icons/*-dark
 resources/icons/*-light
 /coverage
 *.js
+!esbuild.config.js
 *.pdf
 *.gv

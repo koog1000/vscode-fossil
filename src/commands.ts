@@ -34,7 +34,7 @@ import {
     ResourceStatus,
     ResourcePath,
 } from './openedRepository';
-import { Model } from './model';
+import type { Model } from './model';
 import {
     FossilResource,
     CommitOptions,
@@ -51,8 +51,7 @@ import { FossilPreviewManager } from './preview';
 import { FossilExecutable, FossilCWD } from './fossilExecutable';
 
 import { localize } from './main';
-import { PraiseAnnotator } from './praise';
-import { Credentials, exportGit, inputExportOptions } from './gitExport';
+import type { Credentials } from './gitExport';
 
 type CommandKey =
     | 'add'
@@ -178,7 +177,7 @@ function command(repository?: 1) {
 export class CommandCenter {
     private readonly disposables: Disposable[];
     private readonly previewManager: FossilPreviewManager;
-    private readonly credentials = new Credentials();
+    private credentials: Credentials | undefined;
 
     constructor(
         private readonly executable: FossilExecutable,
@@ -1411,7 +1410,8 @@ export class CommandCenter {
         if (!editor) {
             return;
         }
-        if (PraiseAnnotator.tryDelete(editor)) {
+        const praise = await require('./praise');
+        if (praise.PraiseAnnotator.tryDelete(editor)) {
             return;
         }
         const uri = editor.document.uri;
@@ -1420,18 +1420,23 @@ export class CommandCenter {
             return;
         }
         const praises = await repository.praise(uri.fsPath);
-        await PraiseAnnotator.create(repository, editor, praises);
+        await praise.PraiseAnnotator.create(repository, editor, praises);
     }
 
     @command(Inline.Repository)
     async gitPublish(repository: Repository): Promise<void> {
-        const options = await inputExportOptions(
+        const gitExport = await require('./gitExport');
+
+        if (!this.credentials) {
+            this.credentials = new gitExport.Credentials();
+        }
+        const options = await gitExport.inputExportOptions(
             this.credentials,
             repository,
             this.disposables
         );
         if (options) {
-            await exportGit(options, repository);
+            await gitExport.exportGit(options, repository);
         }
     }
     @command(Inline.Repository)

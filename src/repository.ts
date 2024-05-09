@@ -69,11 +69,11 @@ import {
     AutoIncomingOutgoing,
 } from './autoinout';
 import * as interaction from './interaction';
-import { InteractionAPI, NewBranchOptions } from './interaction';
+import type { InteractionAPI, NewBranchOptions } from './interaction';
 import { FossilUriParams, toFossilUri } from './uri';
 
 import { localize } from './main';
-import { ExecFailure, ExecResult } from './fossilExecutable';
+import type { ExecFailure, ExecResult } from './fossilExecutable';
 const iconsRootPath = path.join(path.dirname(__dirname), 'resources', 'icons');
 
 type AvailableIcons =
