@@ -2,11 +2,11 @@ import * as vscode from 'vscode';
 import { window } from 'vscode';
 import * as assert from 'assert/strict';
 import { FossilUriParams, toFossilUri } from '../../uri';
-import { FossilCWD } from '../../fossilExecutable';
+import type { FossilCWD } from '../../fossilExecutable';
 import { add, cleanupFossil, getExecutable, getRepository } from './common';
 import { Suite, before } from 'mocha';
 import * as sinon from 'sinon';
-import { FossilCheckin } from '../../openedRepository';
+import type { FossilCheckin } from '../../openedRepository';
 
 // separate function because hash size is different
 const uriMatch = (uri: vscode.Uri, checkin: FossilCheckin) =>

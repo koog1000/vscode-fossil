@@ -1119,10 +1119,11 @@
         ]
     },
     "scripts": {
-        "vscode:prepublish": "npm run esbuild-base -- --minify && npm run esbuild-preview -- --minify",
-        "compile": "tsc -p ./ && npm run esbuild-preview",
+        "vscode:prepublish": "npm run bundle -- --minify",
+        "bundle": "node ./esbuild.config.js",
         "esbuild-preview": "esbuild ./media/preview.ts --bundle --outfile=media/preview.js --platform=browser --format=iife",
-        "package": "vsce package",
+        "compile": "tsc -p ./ && npm run esbuild-preview",
+        "package": "vsce package --allow-star-activation",
         "deploy": "vsce publish",
         "pretest": "npm run compile",
         "test": "node ./out/test/runTest.js",
@@ -1130,8 +1131,6 @@
         "coverage-ci": "node ./node_modules/c8/bin/c8.js --reporter json-summary --check-coverage npm run test && node ./out/test/summary_as_markdown.js coverage/coverage-summary.json",
         "lint": "eslint ./src --ext .ts src media",
         "lint:fix": "eslint --fix --ext .ts src media",
-        "esbuild-base": "esbuild ./src/main.ts --bundle --outfile=out/main.js --external:vscode --format=cjs --platform=node",
-        "esbuild": "npm run esbuild-base -- --sourcemap",
         "grammar-test": "vscode-tmgrammar-test ./pikchr/test/*.test.pikchr"
     },
     "dependencies": {
