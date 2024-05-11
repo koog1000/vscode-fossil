@@ -63,6 +63,7 @@ class GitExportTestHelper {
             gitUrl?: string;
             configJson?: string;
             createForAuthenticatedUser?: 'valid' | 'already exists' | 'error';
+            withToken?: boolean;
         } = {}
     ) {
         options = {
@@ -75,6 +76,7 @@ class GitExportTestHelper {
             userName: 'mr. Test',
             orgDescription: 'the great',
             createForAuthenticatedUser: 'valid',
+            withToken: true,
             ...options,
         };
         this.sod = sandbox
@@ -148,6 +150,30 @@ class GitExportTestHelper {
                 return Promise.resolve(
                     (() => {
                         switch (options.private) {
+                            case true:
+                                return items[0];
+                            case false:
+                                return items[1];
+                        }
+                        return;
+                    })()
+                );
+            })
+            .onCall(3)
+            .callsFake(items => {
+                assert.ok(items instanceof Array);
+                assert.equal(items.length, 2);
+                assert.equal(
+                    items[0].label,
+                    '$(github) Use https url with token'
+                );
+                assert.equal(
+                    items[1].label,
+                    '$(key) Use git url without token'
+                );
+                return Promise.resolve(
+                    (() => {
+                        switch (options.withToken) {
                             case true:
                                 return items[0];
                             case false:
@@ -301,7 +327,8 @@ class GitExportTestHelper {
                         params: RestEndpointMethodTypes['repos']['createForAuthenticatedUser']['parameters']
                     ) => ({
                         data: {
-                            html_url: `https://examplegit.com/${params.name}`,
+                            html_url: `https://examplegit.com/theuser/${params.name}`,
+                            git_url: `git:examplegit.com/theuser/${params.name}.git`,
                         },
                     })
                 );
@@ -336,128 +363,7 @@ class GitExportTestHelper {
     }
 }
 
-export function GetExportSuite(this: Suite): void {
-    test('No session', async () => {
-        // warning! must be first test
-        const helper = new GitExportTestHelper(this.ctx.sandbox);
-        helper.fakeTerminal();
-        helper.getSessionStub.resolves(undefined);
-        const sem = this.ctx.sandbox.stub(window, 'showErrorMessage');
-        await commands.executeCommand('fossil.gitPublish');
-        sinon.assert.calledOnce(helper.getSessionStub);
-        sinon.assert.calledOnceWithMatch(
-            sem,
-            "No github session available, fossil won't export"
-        );
-    });
-
-    test('Export to git (successful)', async () => {
-        const execStub = getExecStub(this.ctx.sandbox);
-        execStub.withArgs(['git', 'export']).resolves(fakeExecutionResult({}));
-        await commands.executeCommand('fossil.gitExport');
-        sinon.assert.calledOnce(execStub);
-    });
-
-    test('Publish repository to github by user as public', async () => {
-        const helper = new GitExportTestHelper(this.ctx.sandbox);
-        const term = helper.fakeTerminal();
-        await commands.executeCommand('fossil.gitPublish');
-        sinon.assert.calledThrice(helper.sqp);
-        sinon.assert.calledOnce(term.mkdir);
-        sinon.assert.calledOnce(term.odct);
-        sinon.assert.calledOnce(term.fakeDisposable.dispose);
-        sinon.assert.calledOnce(
-            helper.fakeOctokit.repos.createForAuthenticatedUser
-        );
-    });
-
-    test('Publish repository to git', async () => {
-        const helper = new GitExportTestHelper(this.ctx.sandbox, {
-            destination: '$(globe) Export using git url',
-            gitUrl: 'https://user:password@example.com/git/test',
-        });
-        const term = helper.fakeTerminal();
-        await commands.executeCommand('fossil.gitPublish');
-        sinon.assert.calledOnce(helper.sqp);
-        sinon.assert.calledOnce(term.mkdir);
-        sinon.assert.calledOnce(term.odct);
-        sinon.assert.calledOnce(term.fakeDisposable.dispose);
-        sinon.assert.notCalled(
-            helper.fakeOctokit.repos.createForAuthenticatedUser
-        );
-        const validateInput = helper.sib.firstCall.args[0]!['validateInput']!;
-        assert.equal(validateInput(''), 'Must be a single word');
-        assert.equal(validateInput('name'), '');
-    });
-
-    test('Publish repository to github by organization as private', async () => {
-        const helper = new GitExportTestHelper(this.ctx.sandbox, {
-            private: true,
-            organization: 'testOrg',
-            userName: undefined,
-            orgDescription: undefined,
-        });
-        const term = helper.fakeTerminal();
-        await commands.executeCommand('fossil.gitPublish');
-        sinon.assert.calledThrice(helper.sqp);
-        sinon.assert.calledOnce(term.mkdir);
-        sinon.assert.calledOnce(term.odct);
-        sinon.assert.calledOnce(term.fakeDisposable.dispose);
-        sinon.assert.calledOnce(helper.fakeOctokit.repos.createInOrg);
-    });
-
-    test('Publish repository to github that already exists', async () => {
-        const helper = new GitExportTestHelper(this.ctx.sandbox, {
-            createForAuthenticatedUser: 'already exists',
-        });
-        const term = helper.fakeTerminal();
-        const sem = helper.stubShowErrorMessage();
-        await commands.executeCommand('fossil.gitPublish');
-        sinon.assert.calledThrice(helper.sqp);
-        sinon.assert.calledOnce(term.mkdir);
-        sinon.assert.calledOnce(term.odct);
-        sinon.assert.calledOnce(term.fakeDisposable.dispose);
-        sinon.assert.calledOnce(
-            helper.fakeOctokit.repos.createForAuthenticatedUser
-        );
-        sinon.assert.calledOnce(sem);
-    });
-
-    test('Publish repository to github that already exists (cancel)', async () => {
-        this.ctx.sandbox.reset();
-        const helper = new GitExportTestHelper(this.ctx.sandbox, {
-            createForAuthenticatedUser: 'already exists',
-        });
-        const term = helper.fakeTerminal();
-        const sem = helper.stubShowErrorMessage();
-        sem.resolves(); // cancel action
-        await commands.executeCommand('fossil.gitPublish');
-        sinon.assert.calledOnce(
-            helper.fakeOctokit.repos.createForAuthenticatedUser
-        );
-        sinon.assert.calledOnceWithMatch(sem, 'already exists:\n');
-        sinon.assert.notCalled(term.mkdir);
-        sinon.assert.notCalled(term.fakeTerminal.sendText);
-    });
-
-    test('Publish repository to github with unknown error', async () => {
-        this.ctx.sandbox.reset();
-        const helper = new GitExportTestHelper(this.ctx.sandbox, {
-            createForAuthenticatedUser: 'error',
-        });
-        const term = helper.fakeTerminal();
-        const sem = helper.stubShowErrorMessage();
-        await commands.executeCommand('fossil.gitPublish');
-        sinon.assert.calledOnce(
-            helper.fakeOctokit.repos.createForAuthenticatedUser
-        );
-        sinon.assert.notCalled(term.fakeTerminal.sendText);
-        sinon.assert.calledOnceWithMatch(
-            sem,
-            'Failed to create github repository: Error: connection error'
-        );
-    });
-
+function GitCancelSuite(this: Suite): void {
     test('Cancel export directory selection', async () => {
         const helper = new GitExportTestHelper(this.ctx.sandbox, {
             exportDirectory: undefined,
@@ -525,6 +431,165 @@ export function GetExportSuite(this: Suite): void {
         sinon.assert.calledThrice(helper.sqp);
     });
 
+    test('Cancel auth type (github/git)', async () => {
+        const helper = new GitExportTestHelper(this.ctx.sandbox, {
+            withToken: undefined,
+        });
+        await commands.executeCommand('fossil.gitPublish');
+        sinon.assert.calledOnce(helper.sod);
+        sinon.assert.calledTwice(helper.sib);
+        sinon.assert.callCount(helper.sqp, 4);
+    });
+}
+
+export function GitExportSuite(this: Suite): void {
+    test('No session', async () => {
+        // warning! must be first test
+        const helper = new GitExportTestHelper(this.ctx.sandbox);
+        helper.fakeTerminal();
+        helper.getSessionStub.resolves(undefined);
+        const sem = this.ctx.sandbox.stub(window, 'showErrorMessage');
+        await commands.executeCommand('fossil.gitPublish');
+        sinon.assert.calledOnce(helper.getSessionStub);
+        sinon.assert.calledOnceWithMatch(
+            sem,
+            "No github session available, fossil won't export"
+        );
+    });
+
+    test('Export to git (successful)', async () => {
+        const execStub = getExecStub(this.ctx.sandbox);
+        execStub.withArgs(['git', 'export']).resolves(fakeExecutionResult({}));
+        await commands.executeCommand('fossil.gitExport');
+        sinon.assert.calledOnce(execStub);
+    });
+
+    test('Publish repository to github by user as public', async () => {
+        const helper = new GitExportTestHelper(this.ctx.sandbox);
+        const term = helper.fakeTerminal();
+        await commands.executeCommand('fossil.gitPublish');
+        sinon.assert.callCount(helper.sqp, 4);
+        sinon.assert.calledOnce(term.mkdir);
+        sinon.assert.calledOnce(term.odct);
+        sinon.assert.calledOnce(term.fakeDisposable.dispose);
+        sinon.assert.calledOnce(
+            helper.fakeOctokit.repos.createForAuthenticatedUser
+        );
+        sinon.assert.calledOnceWithExactly(
+            term.fakeTerminal.sendText,
+            ' fossil git export /tmp/gitExport/spn --mainbranch main ' +
+                '--autopush https://fakeAccountLabel:fakeAccessToken@' +
+                'examplegit.com/theuser/spn'
+        );
+    });
+
+    test('Publish repository to github without token', async () => {
+        const helper = new GitExportTestHelper(this.ctx.sandbox, {
+            withToken: false,
+        });
+        const term = helper.fakeTerminal();
+        await commands.executeCommand('fossil.gitPublish');
+        sinon.assert.callCount(helper.sqp, 4);
+        sinon.assert.calledOnce(term.mkdir);
+        sinon.assert.calledOnce(term.odct);
+        sinon.assert.calledOnce(term.fakeDisposable.dispose);
+        sinon.assert.calledOnce(
+            helper.fakeOctokit.repos.createForAuthenticatedUser
+        );
+        sinon.assert.calledOnceWithExactly(
+            term.fakeTerminal.sendText,
+            ' fossil git export /tmp/gitExport/spn --mainbranch main ' +
+                '--autopush git:examplegit.com/theuser/spn.git'
+        );
+    });
+
+    test('Publish repository to git', async () => {
+        const helper = new GitExportTestHelper(this.ctx.sandbox, {
+            destination: '$(globe) Export using git url',
+            gitUrl: 'https://user:password@example.com/git/test',
+        });
+        const term = helper.fakeTerminal();
+        await commands.executeCommand('fossil.gitPublish');
+        sinon.assert.calledOnce(helper.sqp);
+        sinon.assert.calledOnce(term.mkdir);
+        sinon.assert.calledOnce(term.odct);
+        sinon.assert.calledOnce(term.fakeDisposable.dispose);
+        sinon.assert.notCalled(
+            helper.fakeOctokit.repos.createForAuthenticatedUser
+        );
+        const validateInput = helper.sib.firstCall.args[0]!['validateInput']!;
+        assert.equal(validateInput(''), 'Must be a single word');
+        assert.equal(validateInput('name'), '');
+    });
+
+    test('Publish repository to github by organization as private', async () => {
+        const helper = new GitExportTestHelper(this.ctx.sandbox, {
+            private: true,
+            organization: 'testOrg',
+            userName: undefined,
+            orgDescription: undefined,
+        });
+        const term = helper.fakeTerminal();
+        await commands.executeCommand('fossil.gitPublish');
+        sinon.assert.callCount(helper.sqp, 4);
+        sinon.assert.calledOnce(term.mkdir);
+        sinon.assert.calledOnce(term.odct);
+        sinon.assert.calledOnce(term.fakeDisposable.dispose);
+        sinon.assert.calledOnce(helper.fakeOctokit.repos.createInOrg);
+    });
+
+    test('Publish repository to github that already exists', async () => {
+        const helper = new GitExportTestHelper(this.ctx.sandbox, {
+            createForAuthenticatedUser: 'already exists',
+        });
+        const term = helper.fakeTerminal();
+        const sem = helper.stubShowErrorMessage();
+        await commands.executeCommand('fossil.gitPublish');
+        sinon.assert.callCount(helper.sqp, 4);
+        sinon.assert.calledOnce(term.mkdir);
+        sinon.assert.calledOnce(term.odct);
+        sinon.assert.calledOnce(term.fakeDisposable.dispose);
+        sinon.assert.calledOnce(
+            helper.fakeOctokit.repos.createForAuthenticatedUser
+        );
+        sinon.assert.calledOnce(sem);
+    });
+
+    test('Publish repository to github that already exists (cancel)', async () => {
+        this.ctx.sandbox.reset();
+        const helper = new GitExportTestHelper(this.ctx.sandbox, {
+            createForAuthenticatedUser: 'already exists',
+        });
+        const term = helper.fakeTerminal();
+        const sem = helper.stubShowErrorMessage();
+        sem.resolves(); // cancel action
+        await commands.executeCommand('fossil.gitPublish');
+        sinon.assert.calledOnce(
+            helper.fakeOctokit.repos.createForAuthenticatedUser
+        );
+        sinon.assert.calledOnceWithMatch(sem, 'already exists:\n');
+        sinon.assert.notCalled(term.mkdir);
+        sinon.assert.notCalled(term.fakeTerminal.sendText);
+    });
+
+    test('Publish repository to github with unknown error', async () => {
+        this.ctx.sandbox.reset();
+        const helper = new GitExportTestHelper(this.ctx.sandbox, {
+            createForAuthenticatedUser: 'error',
+        });
+        const term = helper.fakeTerminal();
+        const sem = helper.stubShowErrorMessage();
+        await commands.executeCommand('fossil.gitPublish');
+        sinon.assert.calledOnce(
+            helper.fakeOctokit.repos.createForAuthenticatedUser
+        );
+        sinon.assert.notCalled(term.fakeTerminal.sendText);
+        sinon.assert.calledOnceWithMatch(
+            sem,
+            'Failed to create github repository: Error: connection error'
+        );
+    });
+
     test('Full project name can be used', async () => {
         const helper = new GitExportTestHelper(this.ctx.sandbox, {
             repositoryName: undefined,
@@ -533,4 +598,6 @@ export function GetExportSuite(this: Suite): void {
         await commands.executeCommand('fossil.gitPublish');
         sinon.assert.calledOnceWithMatch(helper.sib, { value: 'pn' });
     });
+
+    suite('Cancel', GitCancelSuite);
 }

@@ -233,7 +233,11 @@ export async function inputExportOptions(
         description,
         private: selectedPrivacy === privateItem,
     };
-    let response: { data: { html_url: string } };
+    type Response =
+        | Awaited<ReturnType<typeof octokit.repos.createForAuthenticatedUser>>
+        | Awaited<ReturnType<typeof octokit.repos.createInOrg>>
+        | Awaited<ReturnType<typeof octokit.repos.get>>;
+    let response: Response;
     try {
         if (orgToUse === userItem) {
             response = await octokit.repos.createForAuthenticatedUser(
@@ -272,13 +276,33 @@ export async function inputExportOptions(
             return;
         }
     }
-    // add token to url
-    const remoteUri = Uri.parse(response.data.html_url) as AutoPushURISafe;
-    const remoteUriWithToken = remoteUri.with({
-        authority: `${session.account.label}:${session.accessToken}@${remoteUri.authority}`,
-    }) as AutoPushURIUnsafe;
 
-    return { path: exportPath, url: remoteUri, urlUnsafe: remoteUriWithToken };
+    // ask: auth
+    const withToken = {
+        label: '$(github) Use https url with token',
+    };
+    const withGit = {
+        label: '$(key) Use git url without token',
+    };
+    const auth = await window.showQuickPick([withToken, withGit]);
+    if (!auth) {
+        return;
+    }
+
+    let url: AutoPushURISafe;
+    let urlUnsafe: AutoPushURIUnsafe;
+    if (auth === withToken) {
+        // add token to url
+        url = Uri.parse(response.data.html_url) as AutoPushURISafe;
+        urlUnsafe = url.with({
+            authority: `${session.account.label}:${session.accessToken}@${url.authority}`,
+        }) as AutoPushURIUnsafe;
+    } else {
+        urlUnsafe = (url = Uri.parse(
+            response.data.git_url
+        ) as AutoPushURISafe) as unknown as AutoPushURIUnsafe;
+    }
+    return { path: exportPath, url, urlUnsafe };
 }
 
 export async function exportGit(
