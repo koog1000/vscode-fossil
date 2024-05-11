@@ -70,11 +70,11 @@ type GitMirrorPath = Distinct<
     'path that goes as MIRROR option to `fossil export`'
 >;
 type AutoPushURIUnsafe = Distinct<
-    Uri,
+    string,
     'URL that goes as --autopush option to `fossil export`'
 >;
 type AutoPushURISafe = Distinct<
-    Uri,
+    string,
     'like `AutoPushURIUnsafe`, but without tokens`'
 >;
 type GitExportOptions = {
@@ -140,19 +140,23 @@ export async function inputExportOptions(
 
     if (where === toUrl) {
         // ask URL
-        const urlStr = await window.showInputBox({
+        const urlStr = (await window.showInputBox({
             prompt: 'The URL of an empty repository',
             ignoreFocusOut: true,
-        });
+        })) as AutoPushURIUnsafe;
         if (urlStr) {
             const url = Uri.parse(urlStr);
-            const safeAuthority = url.authority.substring(
-                url.authority.indexOf('@')
-            );
+            const safeUrl = url
+                .with({
+                    authority: url.authority.substring(
+                        url.authority.indexOf('@')
+                    ),
+                })
+                .toString() as AutoPushURISafe;
             return {
                 path: exportPath,
-                url: url.with({ authority: safeAuthority }) as AutoPushURISafe,
-                urlUnsafe: url as AutoPushURIUnsafe,
+                url: safeUrl,
+                urlUnsafe: urlStr,
             };
         }
         return;
@@ -282,7 +286,7 @@ export async function inputExportOptions(
         label: '$(github) Use https url with token',
     };
     const withGit = {
-        label: '$(key) Use git url without token',
+        label: '$(key) Use ssh url without token',
     };
     const auth = await window.showQuickPick([withToken, withGit]);
     if (!auth) {
@@ -293,14 +297,16 @@ export async function inputExportOptions(
     let urlUnsafe: AutoPushURIUnsafe;
     if (auth === withToken) {
         // add token to url
-        url = Uri.parse(response.data.html_url) as AutoPushURISafe;
-        urlUnsafe = url.with({
-            authority: `${session.account.label}:${session.accessToken}@${url.authority}`,
-        }) as AutoPushURIUnsafe;
+        url = response.data.html_url as AutoPushURISafe;
+        const urlParsed = Uri.parse(url);
+        urlUnsafe = urlParsed
+            .with({
+                authority: `${session.account.label}:${session.accessToken}@${urlParsed.authority}`,
+            })
+            .toString() as AutoPushURIUnsafe;
     } else {
-        urlUnsafe = (url = Uri.parse(
-            response.data.git_url
-        ) as AutoPushURISafe) as unknown as AutoPushURIUnsafe;
+        urlUnsafe = (url = response.data
+            .ssh_url as AutoPushURISafe) as unknown as AutoPushURIUnsafe;
     }
     return { path: exportPath, url, urlUnsafe };
 }
