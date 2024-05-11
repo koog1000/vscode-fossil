@@ -224,8 +224,7 @@ suite('Setup', () => {
                 const cwd = uri.fsPath as FossilCWD;
                 await cleanupFossil(repository);
                 const closeStub = sandbox
-                    .stub(executable, 'exec')
-                    .callThrough()
+                    .spy(executable, 'exec')
                     .withArgs(cwd, sinon.match.array.startsWith(['close']));
 
                 await vscode.commands.executeCommand('fossil.close');
