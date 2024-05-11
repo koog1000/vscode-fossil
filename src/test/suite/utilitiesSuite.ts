@@ -175,16 +175,18 @@ function decoratorsSuite(this: Suite) {
         }
 
         const dt = new DebounceTest();
+        assert.equal(fakeTimers.countTimers(), 0);
         const p0 = dt.debounced_method();
+        assert.equal(fakeTimers.countTimers(), 1);
         const p1 = dt.debounced_method();
         const p2 = dt.debounced_method();
         const resPromise = Promise.race([p0, p1, p2]);
-        assert.equal(await resPromise, undefined);
         assert.equal(fakeTimers.countTimers(), 1);
         const debounceTimer = await fakeTimers.nextAsync();
+        assert.equal(fakeTimers.countTimers(), 0);
+        assert.equal(await resPromise, undefined);
         assert.equal(debounceTimer, startTimeStamp + 50, 'main timer worked');
         assert.equal(dt.debounce_count, 1, 'reached main timer only');
-        assert.equal(fakeTimers.countTimers(), 0);
     });
 }
 
