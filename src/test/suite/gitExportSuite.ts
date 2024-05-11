@@ -169,7 +169,7 @@ class GitExportTestHelper {
                 );
                 assert.equal(
                     items[1].label,
-                    '$(key) Use git url without token'
+                    '$(key) Use ssh url without token'
                 );
                 return Promise.resolve(
                     (() => {
@@ -328,7 +328,7 @@ class GitExportTestHelper {
                     ) => ({
                         data: {
                             html_url: `https://examplegit.com/theuser/${params.name}`,
-                            git_url: `git:examplegit.com/theuser/${params.name}.git`,
+                            ssh_url: `git@github.com:theuser/${params.name}.git`,
                         },
                     })
                 );
@@ -499,7 +499,7 @@ export function GitExportSuite(this: Suite): void {
         sinon.assert.calledOnceWithExactly(
             term.fakeTerminal.sendText,
             ' fossil git export /tmp/gitExport/spn --mainbranch main ' +
-                '--autopush git:examplegit.com/theuser/spn.git'
+                '--autopush git@github.com:theuser/spn.git'
         );
     });
 
