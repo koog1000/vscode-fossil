@@ -21,7 +21,7 @@ import { done } from './util';
 export function memoize<Return>(
     target: any,
     key: string,
-    descriptor: PropertyDescriptor
+    descriptor: TypedPropertyDescriptor<Return>
 ) {
     const memoizeKey = `$memoize$${key}`;
     const fn = descriptor.get!;
@@ -73,7 +73,7 @@ export function memoize<Return>(
 
 //     return trigger;
 // }
-export function throttle(
+export function throttle<Args extends any[], T>(
     target: any,
     key: string,
     descriptor: PropertyDescriptor
@@ -83,9 +83,9 @@ export function throttle(
     const fn = descriptor.value!;
 
     descriptor.value = function (
-        this: Record<string, Promise<any> | undefined>,
-        ...args: any
-    ): Promise<any> {
+        this: Record<string, Promise<T> | undefined>,
+        ...args: Args
+    ): Promise<T> {
         if (this[nextKey]) {
             return this[nextKey]!;
         }
@@ -109,7 +109,7 @@ export function throttle(
 }
 
 // Make sure asynchronous functions are called one after another.
-// type ThisPromise = Record<string, Promise<any>>;
+type ThisPromise = Record<string, Promise<any>>;
 
 // export function sequentialize<Args extends any[]>(
 //     target: (this: ThisPromise, ...args: Args) => Promise<any>,
@@ -126,15 +126,20 @@ export function throttle(
 //     };
 // }
 
-export function sequentialize(
+export function sequentialize<Args extends any[]>(
     target: any,
     key: string,
-    descriptor: PropertyDescriptor
+    descriptor: TypedPropertyDescriptor<
+        (this: ThisPromise, ...args: Args) => Promise<any>
+    >
 ) {
     const currentKey = `$s11e$${key}`; // sequentialize
     const fn = descriptor.value!;
 
-    descriptor.value = function (this: any, ...args: any): Promise<any> {
+    descriptor.value = function (
+        this: ThisPromise,
+        ...args: Args
+    ): Promise<any> {
         const currentPromise =
             (this[currentKey] as Promise<any>) || Promise.resolve(null);
         const run = async () => await fn.apply(this, args);
@@ -143,7 +148,7 @@ export function sequentialize(
     };
 }
 
-// type ThisTimer = Record<string, ReturnType<typeof setTimeout>>;
+type ThisTimer = Record<string, ReturnType<typeof setTimeout>>;
 
 // export function debounce(delay: number) {
 //     return function <Args extends any[]>(
@@ -159,11 +164,17 @@ export function sequentialize(
 //     };
 // }
 export function debounce(delay: number) {
-    return function (target: any, key: string, descriptor: PropertyDescriptor) {
+    return function (
+        target: any,
+        key: string,
+        descriptor: TypedPropertyDescriptor<
+            (this: ThisTimer, ...args: []) => void
+        >
+    ) {
         const timerKey = `$d6e$${key}`; // debounce
         const fn = descriptor.value!;
 
-        descriptor.value = function (this: any, ...args: any): void {
+        descriptor.value = function (this: ThisTimer, ...args: []): void {
             clearTimeout(this[timerKey]);
             this[timerKey] = setTimeout(() => fn.apply(this, args), delay);
         };
