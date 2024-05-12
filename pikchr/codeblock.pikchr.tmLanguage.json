@@ -12,29 +12,15 @@
 					"begin": "(^|\\G)(\\s*)(.*)",
 					"while": "(^|\\G)(?!\\s*([`~]{3,})\\s*$)",
 					"contentName": "meta.embedded.block.pikchr",
-					"patterns": [
-						{
-							"include": "source.pikchr"
-						}
-					]
+					"patterns": [{"include": "source.pikchr"}]
 				}
 			],
 			"beginCaptures": {
-				"3": {
-					"name": "punctuation.definition.markdown"
-				},
-				"4": {
-					"name": "fenced_code.block.language.markdown"
-				},
-				"5": {
-					"name": "fenced_code.block.language.attributes.markdown"
-				}
+				"3": {"name": "punctuation.definition.markdown"},
+				"4": {"name": "fenced_code.block.language.markdown"},
+				"5": {"name": "fenced_code.block.language.attributes.markdown"}
 			},
-			"endCaptures": {
-				"1": {
-					"name": "punctuation.definition.markdown"
-				}
-			}
+			"endCaptures": {"1": {"name": "punctuation.definition.markdown"}}
 		}
 	],
 	"scopeName": "markdown.pikchr.codeblock"
