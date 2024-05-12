@@ -2,36 +2,22 @@
   "scopeName": "source.pikchr",
   "comment": "regexp test https://rubular.com/",
   "patterns": [
-    {
-      "include": "#statement-list"
-    }
+    {"include": "#statement-list"}
   ],
   "repository": {
     "statement-list": {
       "patterns": [
-        {
-          "include": "#comment"
-        },
+        {"include": "#comment"},
         {
           "begin": "(?<=^|[;:{]|\\*/|\\G)\\s*",
           "patterns": [
-            {
-              "include": "#statement"
-            },
-            {
-              "include": "#continuation"
-            }
+            {"include": "#statement"},
+            {"include": "#continuation"}
           ],
           "end": "(?:(?<!\\\\)(?:\\Z|$))|(;)|(?=]|})",
-          "endCaptures": {
-            "1": {
-              "name": "punctuation.separator.delimiter.end.pikchr"
-            }
-          }
+          "endCaptures": {"1": {"name": "punctuation.separator.delimiter.end.pikchr"}}
         },
-        {
-          "include": "#syntax-error"
-        }
+        {"include": "#syntax-error"}
       ]
     },
     "syntax-error": {
@@ -41,64 +27,34 @@
     },
     "statement": {
       "patterns": [
-        {
-          "include": "#statement-direction"
-        },
-        {
-          "include": "#statement-placename"
-        },
-        {
-          "include": "#unnamed-statement"
-        },
-        {
-          "include": "#define-id-codeblock"
-        },
-        {
-          "include": "#print-prlist"
-        },
-        {
-          "include": "#assert"
-        },
+        {"include": "#statement-direction"},
+        {"include": "#statement-placename"},
+        {"include": "#unnamed-statement"},
+        {"include": "#define-id-codeblock"},
+        {"include": "#print-prlist"},
+        {"include": "#assert"},
         {
           "comment": "assignment",
           "begin": "\\G([$_@a-zA-Z]\\w*)\\s*([+-/*]?=)",
           "beginCaptures": {
-            "1": {
-              "patterns": [
-                {
-                  "include": "#lvalue"
-                }
-              ]
-            },
-            "2": {
-              "name": "keyword.operator.assignment.pikchr"
-            }
+            "1": {"patterns": [{"include": "#lvalue"}]},
+            "2": {"name": "keyword.operator.assignment.pikchr"}
           },
-          "patterns": [
-            {
-              "include": "#rvalue"
-            }
-          ],
+          "patterns": [{"include": "#rvalue"}],
           "name": "meta.assignment.pickchr",
           "end": "(?:(?<!\\\\)(?:\\Z|$))|(?=;)"
         },
         {
           "begin": "(?=[$_@a-zA-Z]\\w*)",
           "patterns": [
-            {
-              "include": "#macro-call"
-            },
+            {"include": "#macro-call"},
             {
               "comment": "naked macro",
               "match": "\\G([$_@a-zA-Z]\\w*)\\b",
               "name": "entity.name.function.pikchr"
             },
-            {
-              "match": "[ \\t\\f]+"
-            },
-            {
-              "include": "#attribute"
-            }
+            {"match": "[ \\t\\f]+"},
+            {"include": "#attribute"}
           ],
           "applyEndPatternLast": true,
           "end": "(?:)"
@@ -109,23 +65,13 @@
       "comment": "macro can be anything => macto is incomplete",
       "begin": "([$_@a-zA-Z]\\w*)\\s*(\\()",
       "beginCaptures": {
-        "1": {
-          "name": "entity.name.function.pikchr"
-        },
-        "2": {
-          "name": "punctuation.parenthesis.begin.pikchr"
-        }
+        "1": {"name": "entity.name.function.pikchr"},
+        "2": {"name": "punctuation.parenthesis.begin.pikchr"}
       },
       "patterns": [
-        {
-          "include": "#whitespace"
-        },
-        {
-          "include": "#string"
-        },
-        {
-          "include": "#expr"
-        },
+        {"include": "#whitespace"},
+        {"include": "#string"},
+        {"include": "#expr"},
         {
           "match": ",",
           "name": "punctuation.separator.pikchr"
@@ -133,65 +79,35 @@
       ],
       "name": "meta.macro.call.pikchr",
       "end": "\\)",
-      "endCaptures": {
-        "0": {
-          "name": "punctuation.parenthesis.end.pikchr"
-        }
-      }
+      "endCaptures": {"0": {"name": "punctuation.parenthesis.end.pikchr"}}
     },
     "statement-placename": {
       "begin": "\\G(:?[A-Z]\\w*|\\$[1-9])[ \\t\\f]*(:)[ \\t\\f]*",
       "beginCaptures": {
-        "1": {
-          "name": "variable.language.place.pikchr"
-        },
-        "2": {
-          "name": "punctuation.separator.pikchr"
-        }
+        "1": {"name": "variable.language.place.pikchr"},
+        "2": {"name": "punctuation.separator.pikchr"}
       },
       "patterns": [
-        {
-          "include": "#unnamed-statement"
-        },
+        {"include": "#unnamed-statement"},
         {
           "comment": "insert attributes, for when somebode uses a macro",
           "include": "#attribute"
         },
-        {
-          "include": "#position"
-        }
+        {"include": "#position"}
       ],
       "end": "(?<!\\\\)(?=\\n)|(?=;|})"
     },
     "define-id-codeblock": {
       "begin": "\\G(define)\\b",
-      "beginCaptures": {
-        "1": {
-          "name": "keyword.control.directive.define.pikchr"
-        }
-      },
+      "beginCaptures": {"1": {"name": "keyword.control.directive.define.pikchr"}},
       "patterns": [
-        {
-          "include": "#id"
-        },
+        {"include": "#id"},
         {
           "begin": "{",
-          "beginCaptures": {
-            "0": {
-              "name": "punctuation.section.block.begin.bracket.curly.pikchr"
-            }
-          },
-          "patterns": [
-            {
-              "include": "$self"
-            }
-          ],
+          "beginCaptures": {"0": {"name": "punctuation.section.block.begin.bracket.curly.pikchr"}},
+          "patterns": [{"include": "$self"}],
           "end": "}",
-          "endCaptures": {
-            "0": {
-              "name": "punctuation.section.block.end.bracket.curly.pikchr"
-            }
-          }
+          "endCaptures": {"0": {"name": "punctuation.section.block.end.bracket.curly.pikchr"}}
         }
       ],
       "end": "(?:(?<!\\\\)(?:\\Z|$))|(?=;)"
@@ -199,77 +115,43 @@
     "assert": {
       "begin": "\\G(assert)\\b\\s*(\\()",
       "beginCaptures": {
-        "1": {
-          "name": "keyword.control.directive.assert.pikchr"
-        },
-        "2": {
-          "name": "punctuation.parenthesis.begin.pikchr"
-        }
+        "1": {"name": "keyword.control.directive.assert.pikchr"},
+        "2": {"name": "punctuation.parenthesis.begin.pikchr"}
       },
       "patterns": [
-        {
-          "include": "#position"
-        },
-        {
-          "include": "#expr"
-        },
+        {"include": "#position"},
+        {"include": "#expr"},
         {
           "match": "=",
           "name": "keyword.operator.comparison.pikchr"
         }
       ],
       "end": "\\)",
-      "endCaptures": {
-        "0": {
-          "name": "punctuation.parenthesis.end.pikchr"
-        }
-      }
+      "endCaptures": {"0": {"name": "punctuation.parenthesis.end.pikchr"}}
     },
     "print-prlist": {
       "begin": "\\G(print)\\b",
-      "beginCaptures": {
-        "1": {
-          "name": "keyword.control.directive.define.pikchr"
-        }
-      },
+      "beginCaptures": {"1": {"name": "keyword.control.directive.define.pikchr"}},
       "patterns": [
-        {
-          "include": "#rvalue"
-        },
-        {
-          "include": "#string"
-        }
+        {"include": "#rvalue"},
+        {"include": "#string"}
       ],
       "end": "(?:(?<!\\\\)(?:\\Z|$))|(?=;)"
     },
     "unnamed-statement": {
       "patterns": [
-        {
-          "include": "#classname-atributes"
-        },
-        {
-          "include": "#lb-rb-atributes"
-        }
+        {"include": "#classname-atributes"},
+        {"include": "#lb-rb-atributes"}
       ]
     },
     "classname-atributes": {
       "begin": "\\G(?:(arc|arrow|box|circle|cylinder|diamond|dot|ellipse|file|line|move|oval|spline|text)\\b|(?=\"))",
-      "beginCaptures": {
-        "1": {
-          "name": "storage.type.class.pikchr"
-        }
-      },
+      "beginCaptures": {"1": {"name": "storage.type.class.pikchr"}},
       "end": "(?<!\\\\)(?=\\n)|(?=]|}|;)",
       "patterns": [
-        {
-          "include": "#whitespace"
-        },
-        {
-          "include": "#attribute"
-        },
-        {
-          "include": "#continuation"
-        }
+        {"include": "#whitespace"},
+        {"include": "#attribute"},
+        {"include": "#continuation"}
       ]
     },
     "continuation": {
@@ -281,77 +163,43 @@
       "patterns": [
         {
           "begin": "\\[",
-          "beginCaptures": {
-            "0": {
-              "name": "punctuation.bracket.square.begin.pikchr"
-            }
-          },
-          "patterns": [
-            {
-              "include": "#statement-list"
-            }
-          ],
+          "beginCaptures": {"0": {"name": "punctuation.bracket.square.begin.pikchr"}},
+          "patterns": [{"include": "#statement-list"}],
           "end": "\\]",
-          "endCaptures": {
-            "0": {
-              "name": "punctuation.bracket.square.end.pikchr"
-            }
-          }
+          "endCaptures": {"0": {"name": "punctuation.bracket.square.end.pikchr"}}
         },
-        {
-          "include": "#attribute"
-        }
+        {"include": "#attribute"}
       ],
       "end": "(?:(?<!\\\\)(?:\\Z|$))|(?=;|})"
     },
     "string-then-text-attributes": {
       "begin": "(?=\")",
       "patterns": [
-        {
-          "include": "#string"
-        },
-        {
-          "include": "#whitespace"
-        },
-        {
-          "include": "#text-attribute"
-        }
+        {"include": "#string"},
+        {"include": "#whitespace"},
+        {"include": "#text-attribute"}
       ],
       "applyEndPatternLast": true,
       "end": "(?!\\G)"
     },
     "expr": {
       "patterns": [
-        {
-          "include": "#number"
-        },
-        {
-          "include": "#colorname"
-        },
-        {
-          "include": "#place2"
-        },
+        {"include": "#number"},
+        {"include": "#colorname"},
+        {"include": "#place2"},
         {
           "match": "(\\.)([xy])\\b",
           "captures": {
-            "1": {
-              "name": "punctuation.separator.period.pikchr"
-            },
-            "2": {
-              "name": "constant.language.pikchr"
-            }
+            "1": {"name": "punctuation.separator.period.pikchr"},
+            "2": {"name": "constant.language.pikchr"}
           }
         },
-        {
-          "include": "#variable"
-        },
+        {"include": "#variable"},
         {
           "match": "[-+*\\/]",
           "name": "keyword.operator.arithmetic.pikchr"
         },
-        {
-          "include": "#id"
-        },
+        {"include": "#id"},
         {
           "match": ",",
           "name": "punctuation.separator.pikchr"
@@ -360,55 +208,31 @@
           "comment": "object->DOT_L->{numproperty,dashproperty,colorproperty}",
           "match": "\\b(\\.)(diameter|ht|height|radius|rad|thickness|width|wid|dashed|dotted|fill|color)\\b",
           "captures": {
-            "1": {
-              "name": "punctuation.separator.period.pikchr"
-            },
-            "2": {
-              "name": "support.constant.property-value.pikchr"
-            }
+            "1": {"name": "punctuation.separator.period.pikchr"},
+            "2": {"name": "support.constant.property-value.pikchr"}
           }
         },
         {
           "begin": "(\\()",
-          "beginCaptures": {
-            "1": {
-              "name": "punctuation.parenthesis.begin.pikch"
-            }
-          },
-          "patterns": [
-            {
-              "include": "#expr"
-            }
-          ],
+          "beginCaptures": {"1": {"name": "punctuation.parenthesis.begin.pikch"}},
+          "patterns": [{"include": "#expr"}],
           "end": "(\\))",
-          "endCaptures": {
-            "1": {
-              "name": "punctuation.parenthesis.end.pikchr"
-            }
-          }
+          "endCaptures": {"1": {"name": "punctuation.parenthesis.end.pikchr"}}
         }
       ]
     },
     "object": {
       "patterns": [
-        {
-          "include": "#objctname"
-        },
-        {
-          "include": "#nth"
-        },
+        {"include": "#objctname"},
+        {"include": "#nth"},
         {
           "patterns": [
             {
               "comment": "dot_u->placename",
               "match": "(\\.)(:?[A-Z]\\w*)",
               "captures": {
-                "1": {
-                  "name": "punctuation.separator.period.pikchr"
-                },
-                "2": {
-                  "name": "entity.name.tag.pikchr"
-                }
+                "1": {"name": "punctuation.separator.period.pikchr"},
+                "2": {"name": "entity.name.tag.pikchr"}
               }
             }
           ]
@@ -421,22 +245,14 @@
           "match": "\\bthis\\b",
           "name": "entity.pikchr"
         },
-        {
-          "include": "#placename"
-        }
+        {"include": "#placename"}
       ]
     },
     "attribute-then": {
       "begin": "\\b(?:then|go)\\b",
-      "beginCaptures": {
-        "0": {
-          "name": "keyword.pikchr"
-        }
-      },
+      "beginCaptures": {"0": {"name": "keyword.pikchr"}},
       "patterns": [
-        {
-          "include": "#edge"
-        },
+        {"include": "#edge"},
         {
           "match": "\\bheading\\b",
           "name": "keyword.pikchr"
@@ -459,12 +275,8 @@
         {
           "match": "((?:\\d*\\.)?\\d+(in|cm|px|pt|pc|mm|%)?)\\b",
           "captures": {
-            "1": {
-              "name": "constant.numeric.pikchr"
-            },
-            "2": {
-              "name": "keyword.other.unit.$2.pikchr"
-            }
+            "1": {"name": "constant.numeric.pikchr"},
+            "2": {"name": "keyword.other.unit.$2.pikchr"}
           }
         }
       ]
@@ -487,30 +299,14 @@
     },
     "attribute": {
       "patterns": [
-        {
-          "include": "#dashproperty"
-        },
-        {
-          "include": "#boolproperty"
-        },
-        {
-          "include": "#numproperty"
-        },
-        {
-          "include": "#attribute-then"
-        },
-        {
-          "include": "#until-even"
-        },
-        {
-          "include": "#colorproperty-then-rvalue"
-        },
-        {
-          "include": "#percent-sign"
-        },
-        {
-          "include": "#string-then-text-attributes"
-        },
+        {"include": "#dashproperty"},
+        {"include": "#boolproperty"},
+        {"include": "#numproperty"},
+        {"include": "#attribute-then"},
+        {"include": "#until-even"},
+        {"include": "#colorproperty-then-rvalue"},
+        {"include": "#percent-sign"},
+        {"include": "#string-then-text-attributes"},
         {
           "match": "\\b(:?close|chop|from|to|at|behind)\\b",
           "name": "keyword.pikchr"
@@ -519,12 +315,8 @@
           "match": "\\bwith\\b",
           "name": "keyword.pikchr"
         },
-        {
-          "include": "#direction"
-        },
-        {
-          "include": "#position"
-        }
+        {"include": "#direction"},
+        {"include": "#position"}
       ]
     },
     "dashproperty": {
@@ -546,9 +338,7 @@
           "match": "\\b\\d+(?:nd|rd|st|th)",
           "name": "constant.language.pikchr"
         },
-        {
-          "include": "#object-class"
-        }
+        {"include": "#object-class"}
       ]
     },
     "object-class": {
@@ -577,17 +367,9 @@
     },
     "string": {
       "begin": "\"",
-      "beginCaptures": {
-        "0": {
-          "name": "punctuation.definition.string.begin.pikchr"
-        }
-      },
+      "beginCaptures": {"0": {"name": "punctuation.definition.string.begin.pikchr"}},
       "end": "\"",
-      "endCaptures": {
-        "0": {
-          "name": "punctuation.definition.string.end.pikchr"
-        }
-      },
+      "endCaptures": {"0": {"name": "punctuation.definition.string.end.pikchr"}},
       "name": "string.quoted.double.pikchr",
       "patterns": [
         {
@@ -598,16 +380,8 @@
     },
     "statement-direction": {
       "begin": "\\G(?:down|left|right|up)\\b",
-      "captures": {
-        "0": {
-          "name": "support.constant.direction.pikchr"
-        }
-      },
-      "patterns": [
-        {
-          "include": "#syntax-error"
-        }
-      ],
+      "captures": {"0": {"name": "support.constant.direction.pikchr"}},
+      "patterns": [{"include": "#syntax-error"}],
       "end": "(?<!\\\\)(?=\\n)|(?=]|}|;)"
     },
     "direction": {
@@ -617,45 +391,25 @@
     "until-even": {
       "begin": "(until\\s+)?(even\\s+with)\\b",
       "beginCaptures": {
-        "1": {
-          "name": "keyword.pikchr"
-        },
-        "2": {
-          "name": "keyword.pikchr"
-        }
+        "1": {"name": "keyword.pikchr"},
+        "2": {"name": "keyword.pikchr"}
       },
-      "patterns": [
-        {
-          "include": "#position"
-        }
-      ],
+      "patterns": [{"include": "#position"}],
       "applyEndPatternLast": true,
       "end": "(?:)"
     },
     "numproperty": {
       "begin": "\\b(diameter|ht|height|rad|radius|thickness|width|wid)\\b[ \\t\\f]*",
-      "beginCaptures": {
-        "1": {
-          "name": "support.constant.property-value.pikchr"
-        }
-      },
+      "beginCaptures": {"1": {"name": "support.constant.property-value.pikchr"}},
       "patterns": [
-        {
-          "include": "#comment"
-        },
-        {
-          "include": "#expr"
-        }
+        {"include": "#comment"},
+        {"include": "#expr"}
       ],
       "applyEndPatternLast": true,
       "end": "(?:)"
     },
     "lvalue": {
-      "patterns": [
-        {
-          "include": "#id"
-        }
-      ]
+      "patterns": [{"include": "#id"}]
     },
     "id": {
       "patterns": [
@@ -671,99 +425,55 @@
     },
     "rvalue": {
       "patterns": [
-        {
-          "include": "#expr"
-        },
-        {
-          "include": "#placename"
-        }
+        {"include": "#expr"},
+        {"include": "#placename"}
       ]
     },
     "colorproperty-then-rvalue": {
       "begin": "\\b(fill|color)\\b[ \\t]*",
-      "beginCaptures": {
-        "1": {
-          "name": "support.constant.property-value.pikchr"
-        }
-      },
+      "beginCaptures": {"1": {"name": "support.constant.property-value.pikchr"}},
       "applyEndPatternLast": true,
-      "patterns": [
-        {
-          "include": "#rvalue"
-        }
-      ],
+      "patterns": [{"include": "#rvalue"}],
       "end": "(?:)"
     },
     "position": {
       "patterns": [
-        {
-          "include": "#place"
-        },
+        {"include": "#place"},
         {
           "match": "\\b(?:above|below|on|heading|way\\s+between|between|of\\s+the\\s+way\\s+between|and)\\b",
           "name": "keyword.pikchr"
         },
         {
           "begin": "\\(",
-          "beginCaptures": {
-            "0": {
-              "name": "punctuation.parenthesis.begin.pikchr"
-            }
-          },
+          "beginCaptures": {"0": {"name": "punctuation.parenthesis.begin.pikchr"}},
           "patterns": [
-            {
-              "include": "#whitespace"
-            },
-            {
-              "include": "#position"
-            },
-            {
-              "include": "#expr"
-            }
+            {"include": "#whitespace"},
+            {"include": "#position"},
+            {"include": "#expr"}
           ],
           "end": "\\)",
-          "endCaptures": {
-            "0": {
-              "name": "punctuation.parenthesis.end.pikchr"
-            }
-          }
+          "endCaptures": {"0": {"name": "punctuation.parenthesis.end.pikchr"}}
         },
         {
           "begin": "<",
           "end": ">",
-          "beginCaptures": {
-            "0": {
-              "name": "punctuation.bracket.angle.begin.pikchr"
-            }
-          },
-          "endCaptures": {
-            "0": {
-              "name": "punctuation.bracket.angle.end.pikchr"
-            }
-          },
+          "beginCaptures": {"0": {"name": "punctuation.bracket.angle.begin.pikchr"}},
+          "endCaptures": {"0": {"name": "punctuation.bracket.angle.end.pikchr"}},
           "patterns": [
             {
               "match": ",",
               "name": "punctuation.separator.pikchr"
             },
-            {
-              "include": "#position"
-            }
+            {"include": "#position"}
           ]
         },
-        {
-          "include": "#expr"
-        }
+        {"include": "#expr"}
       ]
     },
     "place": {
       "patterns": [
-        {
-          "include": "#place2"
-        },
-        {
-          "include": "#edge"
-        },
+        {"include": "#place2"},
+        {"include": "#edge"},
         {
           "comment": "edge-OF-object",
           "match": "\\bof\\b",
@@ -773,33 +483,19 @@
     },
     "place2": {
       "patterns": [
-        {
-          "include": "#object"
-        },
-        {
-          "include": "#dot_e-edge"
-        },
-        {
-          "include": "#nth"
-        },
+        {"include": "#object"},
+        {"include": "#dot_e-edge"},
+        {"include": "#nth"},
         {
           "begin": "\\bvertex\\b",
-          "beginCaptures": {
-            "0": {
-              "name": "keyword.pikchr"
-            }
-          },
+          "beginCaptures": {"0": {"name": "keyword.pikchr"}},
           "patterns": [
-            {
-              "match": "[ \\t]+"
-            },
+            {"match": "[ \\t]+"},
             {
               "match": "\\bof\\b",
               "name": "keyword.pikchr"
             },
-            {
-              "include": "#comment"
-            }
+            {"include": "#comment"}
           ],
           "applyEndPatternLast": true,
           "end": "(?:)"
@@ -809,12 +505,8 @@
     "dot_e-edge": {
       "match": "(\\.)(bot|bottom|c|center|e|east|end|left|n|ne|north|nw|right|s|se|south|start|sw|t|top|w|west)\\b",
       "captures": {
-        "1": {
-          "name": "punctuation.separator.period.pikchr"
-        },
-        "2": {
-          "name": "constant.language.pikchr"
-        }
+        "1": {"name": "punctuation.separator.period.pikchr"},
+        "2": {"name": "constant.language.pikchr"}
       }
     },
     "comment": {
@@ -833,12 +525,8 @@
     "whitespace": {
       "comment": "match T_WHITESPACE as seen in pikchr.y",
       "patterns": [
-        {
-          "match": "[ \\t\\f\\r]+"
-        },
-        {
-          "include": "#comment"
-        }
+        {"match": "[ \\t\\f\\r]+"},
+        {"include": "#comment"}
       ]
     }
   }
