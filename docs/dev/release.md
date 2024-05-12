@@ -9,7 +9,7 @@
 1. Run tests: `npm run test`
 1. Remove out directory: `rm -rf out`
 1. Create package (.vsix file): `npm run package`
-1. Ensure all files are there: `unzip -l fossil-#.#.#.vsix`. There should only be TWO .js files.
+1. Ensure all files are there: `unzip -l fossil-#.#.#.vsix`. There should be FOUR .js files.
 
 
 ## Make commits
