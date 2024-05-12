@@ -1,5 +1,16 @@
 # Changelog
 
+# v0.5.7
+
+### What's New
+
+- add github/git export in a wizard-like style
+
+### Bug Fix
+
+- simplify and fixed minor issues in pikchr syntax highlighting
+
+
 # v0.5.6
 
 ### What's New
