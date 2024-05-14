@@ -1127,8 +1127,8 @@
         "deploy": "vsce publish",
         "pretest": "npm run compile",
         "test": "node ./out/test/runTest.js",
-        "coverage": "node ./node_modules/c8/bin/c8.js --reporter lcov --check-coverage npm run test",
-        "coverage-ci": "node ./node_modules/c8/bin/c8.js --reporter json-summary --check-coverage npm run test && node ./out/test/summary_as_markdown.js coverage/coverage-summary.json",
+        "coverage": "node ./node_modules/c8/bin/c8.js --reporter lcov --exclude [] --check-coverage npm run test",
+        "coverage-ci": "node ./node_modules/c8/bin/c8.js --reporter json-summary --exclude [] --check-coverage npm run test && node ./out/test/summary_as_markdown.js coverage/coverage-summary.json",
         "lint": "eslint ./src --ext .ts src media",
         "lint:fix": "eslint --fix --ext .ts src media",
         "grammar-test": "vscode-tmgrammar-test ./pikchr/test/*.test.pikchr"
