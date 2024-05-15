@@ -47,7 +47,7 @@ export async function fossilInit(sandbox: sinon.SinonSandbox): Promise<void> {
     const fossilVersion = getExecutable().version;
     assert.ok(vscode.workspace.workspaceFolders);
     const fossilPath = Uri.joinPath(
-        vscode.workspace.workspaceFolders![0].uri,
+        vscode.workspace.workspaceFolders[0].uri,
         '/test.fossil'
     );
     assert.ok(
@@ -55,7 +55,7 @@ export async function fossilInit(sandbox: sinon.SinonSandbox): Promise<void> {
         `repo '${fossilPath.fsPath}' already exists`
     );
 
-    const showSaveDialogstub = sandbox
+    const showSaveDialogStub = sandbox
         .stub(window, 'showSaveDialog')
         .withArgs(sinon.match({ title: 'Select New Fossil File Location' }))
         .resolves(fossilPath);
@@ -82,9 +82,11 @@ export async function fossilInit(sandbox: sinon.SinonSandbox): Promise<void> {
     }
 
     await vscode.commands.executeCommand('fossil.init');
-    sinon.assert.calledOnce(showSaveDialogstub);
+    sinon.assert.calledOnce(showSaveDialogStub);
     if (fossilVersion >= [2, 18]) {
         sinon.assert.calledTwice(showInputBox);
+    } else {
+        sinon.assert.notCalled(showInputBox);
     }
     assert.ok(
         fs.existsSync(fossilPath.fsPath),
