@@ -103,7 +103,6 @@ export class Model implements Disposable {
 
     private possibleFossilRepositoryPaths = new Set<string>();
 
-    private enabled: boolean;
     private _state = State.UNINITIALIZED;
     get state(): State {
         return this._state;
@@ -120,15 +119,12 @@ export class Model implements Disposable {
     private renamingDisposable: Disposable | undefined;
 
     constructor(private readonly executable: FossilExecutable) {
-        this.enabled = typedConfig.enabled;
         workspace.onDidChangeConfiguration(
             this.onDidChangeConfiguration,
             this,
             this.disposables
         );
-        if (this.enabled) {
-            this.enable();
-        }
+        this.enable();
         this.onDidChangeConfiguration();
     }
 
@@ -152,19 +148,7 @@ export class Model implements Disposable {
                 this.disposables
             );
         }
-        const enabled = typedConfig.enabled;
-
-        if (enabled === this.enabled) {
-            return;
-        }
-
-        this.enabled = enabled;
-
-        if (enabled) {
-            this.enable();
-        } else {
-            this.disable();
-        }
+        this.enable();
     }
 
     private enable(): void {
