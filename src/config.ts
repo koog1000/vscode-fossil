@@ -3,7 +3,6 @@ import { FossilUsername } from './openedRepository';
 import { UnvalidatedFossilExecutablePath } from './fossilFinder';
 
 interface ConfigScheme {
-    enabled: boolean;
     path: UnvalidatedFossilExecutablePath | null;
     autoInOutInterval: number;
     username: FossilUsername | null;
@@ -25,15 +24,6 @@ class Config {
         return this.config.get<ConfigScheme[TName]>(
             name
         ) as ConfigScheme[TName];
-    }
-
-    /**
-     * This flag should be removed. It exists because there's no way to
-     * disable `git` internal extension in vscode using extensions UI
-     * and this code is a fork of internal extension.
-     */
-    get enabled(): boolean {
-        return this.get('enabled');
     }
 
     get path(): UnvalidatedFossilExecutablePath | null {

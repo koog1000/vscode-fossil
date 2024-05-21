@@ -39,17 +39,6 @@ async function init(
     model.onDidCloseRepository(onRepository, null, disposables);
     onRepository();
 
-    if (!typedConfig.enabled) {
-        const commandCenter = new CommandCenter(
-            executable,
-            model,
-            outputChannel,
-            context
-        );
-        disposables.push(commandCenter);
-        return;
-    }
-
     executable.onOutput(str => outputChannel.append(str), null, disposables);
 
     disposables.push(

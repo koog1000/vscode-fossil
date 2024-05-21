@@ -95,10 +95,6 @@ about cloning from the extension.
 
 # Settings
 
-`fossil.enabled { boolean }`
-
-  * Enables Fossil as a source control manager in VS Code.
-
 `fossil.autoRefresh { boolean }`
 
   * Enables automatic refreshing of Source Control tab and badge counter
