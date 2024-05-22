@@ -1,4 +1,4 @@
-import {
+import type {
     Distinct,
     FossilPath,
     FossilRoot,
@@ -6,16 +6,11 @@ import {
 } from './openedRepository';
 import * as path from 'path';
 import * as fs from 'fs/promises';
-import {
-    EventEmitter,
-    Event,
-    window,
-    OutputChannel,
-    ProgressLocation,
-} from 'vscode';
+import { window, OutputChannel, ProgressLocation } from 'vscode';
 import * as cp from 'child_process';
 import { dispose, IDisposable, toDisposable } from './util';
 import * as interaction from './interaction';
+import type { FossilExecutableInfo } from './fossilFinder';
 
 /** usually two numbers like [2,19] */
 export type FossilVersion = Distinct<number[], 'fossil version'>;
@@ -24,12 +19,6 @@ export type FossilStdOut = Distinct<
     'raw fossil stdout' | 'fossil status stdout' | 'RenderedHTML'
 >;
 export type FossilStdErr = Distinct<string, 'raw fossil stderr'>;
-
-export interface IFossilOptions {
-    readonly fossilPath: FossilExecutablePath;
-    readonly version: FossilVersion;
-    readonly outputChannel: OutputChannel;
-}
 
 /** cwd for executing fossil */
 export type FossilCWD =
@@ -138,18 +127,13 @@ export function toString(this: ExecFailure): string {
 }
 
 export class FossilExecutable {
-    private readonly fossilPath: FossilExecutablePath;
-    private readonly outputChannel: OutputChannel;
-    public readonly version: FossilVersion;
-    private readonly _onOutput = new EventEmitter<string>();
-    get onOutput(): Event<string> {
-        return this._onOutput.event;
-    }
+    private fossilPath!: FossilExecutablePath;
+    public version!: FossilVersion;
+    constructor(private readonly outputChannel: OutputChannel) {}
 
-    constructor(options: IFossilOptions) {
-        this.fossilPath = options.fossilPath;
-        this.outputChannel = options.outputChannel;
-        this.version = options.version;
+    setInfo(info: FossilExecutableInfo) {
+        this.fossilPath = info.path;
+        this.version = info.version;
     }
 
     async init(
@@ -402,7 +386,7 @@ export class FossilExecutable {
     }
 
     private log(output: string): void {
-        this._onOutput.fire(output);
+        this.outputChannel.appendLine(output);
     }
     private logArgs(args: FossilArgs, reason: string, info: string): void {
         if (args[0] == 'clone') {
@@ -411,9 +395,7 @@ export class FossilExecutable {
             args[1] = args[1].replace(/(.*:\/\/.+:)(.+)(@.*)/, '$1*********$3');
         }
         this.log(
-            `fossil ${args.join(' ')}: ${info}${
-                reason ? ' // ' + reason : ''
-            }\n`
+            `fossil ${args.join(' ')}: ${info}${reason ? ' // ' + reason : ''}`
         );
     }
 }
