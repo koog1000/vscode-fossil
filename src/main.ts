@@ -13,21 +13,25 @@ import { FossilFileSystemProvider } from './fileSystemProvider';
 import * as nls from 'vscode-nls';
 import typedConfig from './config';
 import { findFossil } from './fossilFinder';
+import { FossilExecutable } from './fossilExecutable';
 
 export const localize = nls.loadMessageBundle();
 
-async function init(
-    context: ExtensionContext,
-    disposables: Disposable[]
-): Promise<Model | undefined> {
-    // const { name, version, aiKey } = require(context.asAbsolutePath('./package.json')) as { name: string, version: string, aiKey: string };
+async function init(context: ExtensionContext): Promise<Model | undefined> {
+    const disposables: Disposable[] = [];
+    context.subscriptions.push(
+        new Disposable(() => Disposable.from(...disposables).dispose())
+    );
 
     const outputChannel = window.createOutputChannel('Fossil');
     disposables.push(outputChannel);
 
-    const executable = await findFossil(typedConfig.path, outputChannel);
+    const fossilInfo = await findFossil(typedConfig.path, outputChannel);
+    const executable = new FossilExecutable(outputChannel);
+
     const model = new Model(executable);
     disposables.push(model);
+    executable.setInfo(fossilInfo!);
 
     const onRepository = () =>
         commands.executeCommand(
@@ -39,8 +43,6 @@ async function init(
     model.onDidCloseRepository(onRepository, null, disposables);
     onRepository();
 
-    executable.onOutput(str => outputChannel.append(str), null, disposables);
-
     disposables.push(
         new CommandCenter(executable, model, outputChannel, context),
         new FossilFileSystemProvider(model)
@@ -51,10 +53,5 @@ async function init(
 export async function activate(
     context: ExtensionContext
 ): Promise<void | Model> {
-    const disposables: Disposable[] = [];
-    context.subscriptions.push(
-        new Disposable(() => Disposable.from(...disposables).dispose())
-    );
-
-    return init(context, disposables).catch(err => console.error(err));
+    return init(context).catch(err => console.error(err));
 }

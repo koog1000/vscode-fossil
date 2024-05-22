@@ -17,7 +17,7 @@ import {
     QuickPickItem,
     FileRenameEvent,
 } from 'vscode';
-import { FossilExecutable } from './fossilExecutable';
+import type { FossilExecutable } from './fossilExecutable';
 import { anyEvent, filterEvent, dispose, eventToPromise } from './util';
 import { memoize, debounce, sequentialize } from './decorators';
 import * as path from 'path';
