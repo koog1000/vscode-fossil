@@ -11,10 +11,68 @@ import {
 } from './common';
 import * as sinon from 'sinon';
 import * as assert from 'assert/strict';
-import { FossilCWD } from '../../fossilExecutable';
+import type { FossilCWD } from '../../fossilExecutable';
+import {
+    UnvalidatedFossilExecutablePath,
+    findFossil,
+} from '../../fossilFinder';
 import { Suite, afterEach, before } from 'mocha';
 import * as os from 'os';
 import * as fs from 'fs/promises';
+import * as cp from 'child_process';
+
+function ExecutableSuite(this: Suite): void {
+    test('Invalid executable path', async () => {
+        const outputChannel = {
+            appendLine: sinon.stub(),
+        };
+        await findFossil(
+            'non_existing_fossil' as UnvalidatedFossilExecutablePath,
+            outputChannel as unknown as vscode.OutputChannel
+        );
+        sinon.assert.calledTwice(outputChannel.appendLine);
+        sinon.assert.calledWithExactly(
+            outputChannel.appendLine.firstCall,
+            "`fossil.path` 'non_existing_fossil' is unavailable " +
+            "(Error: spawn non_existing_fossil ENOENT). " +
+            "Will try 'fossil' as the path"
+        );
+        sinon.assert.calledWithMatch(
+            outputChannel.appendLine.secondCall,
+            /^Using fossil \d.\d+ from fossil$/
+        );
+    }).timeout(2000);
+
+    test('Error is caught', async () => {
+        const outputChannel = {
+            appendLine: sinon.stub(),
+        };
+        const childProcess = {
+            on: sinon
+                .stub()
+                .withArgs('error')
+                .callsFake((_what, callback) => {
+                    callback(new Error('mocked error'));
+                }),
+            stdout: {
+                on: sinon.stub(),
+            },
+        };
+        this.ctx.sandbox
+            .stub(cp, 'spawn')
+            .returns(
+                childProcess as unknown as cp.ChildProcessWithoutNullStreams
+            );
+        await findFossil(
+            null,
+            outputChannel as unknown as vscode.OutputChannel
+        );
+        sinon.assert.calledOnceWithExactly(
+            outputChannel.appendLine,
+            "'fossil' is unavailable (Error: mocked error). Fossil extension commands will be disabled"
+        );
+    }).timeout(2000);
+}
 
 function InitSuite(this: Suite): void {
     test('Create repository (fossil.init)', async () => {
@@ -466,6 +524,7 @@ suite('Setup', function () {
     afterEach(() => {
         this.ctx.sandbox.restore();
     });
+    suite('Executable', ExecutableSuite);
     suite('Init', InitSuite);
     suite('Open', OpenSuite);
     suite('Clone', CloneSuite);
