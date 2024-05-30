@@ -56,11 +56,11 @@ class Config {
     }
 
     disableRenaming() {
-        this.config.update('enableRenaming', false, false);
+        return this.config.update('enableRenaming', false, false);
     }
 
     setGitExport(how: NonNullable<ConfigScheme['confirmGitExport']>) {
-        this.config.update('confirmGitExport', how, false);
+        return this.config.update('confirmGitExport', how, false);
     }
 
     get gitExport() {
