@@ -6,7 +6,7 @@
 
 // based on https://github.com/Microsoft/vscode/commit/41f0ff15d7327da30fdae73aa04ca570ce34fa0a
 
-import { ExtensionContext, window, Disposable, commands } from 'vscode';
+import { ExtensionContext, window, Disposable, commands, Uri } from 'vscode';
 import { Model } from './model';
 import { CommandCenter } from './commands';
 import { FossilFileSystemProvider } from './fileSystemProvider';
@@ -26,12 +26,40 @@ async function init(context: ExtensionContext): Promise<Model | undefined> {
     const outputChannel = window.createOutputChannel('Fossil');
     disposables.push(outputChannel);
 
-    const fossilInfo = await findFossil(typedConfig.path, outputChannel);
+    const fossilHist = typedConfig.path;
+    const fossilInfo = await findFossil(fossilHist, outputChannel.appendLine);
     const executable = new FossilExecutable(outputChannel);
 
-    const model = new Model(executable);
+    const model = new Model(executable, fossilHist);
     disposables.push(model);
-    executable.setInfo(fossilInfo!);
+    model.foundExecutable(fossilInfo);
+    if (!fossilInfo && !typedConfig.ignoreMissingFossilWarning) {
+        const download = localize('downloadFossil', 'Download Fossil');
+        const neverShowAgain = localize('neverShowAgain', "Don't Show Again");
+        const editPath = localize('editPath', 'Edit `fossil.path`');
+        const choice = await window.showWarningMessage(
+            localize(
+                'notfound',
+                "Fossil was not found. Install it or configure it using the 'fossil.path' setting."
+            ),
+            download,
+            editPath,
+            neverShowAgain
+        );
+        if (choice === download) {
+            commands.executeCommand(
+                'vscode.open',
+                Uri.parse('https://www.fossil-scm.org/')
+            );
+        } else if (choice === editPath) {
+            commands.executeCommand(
+                'workbench.action.openSettings',
+                'fossil.path'
+            );
+        } else if (choice === neverShowAgain) {
+            await typedConfig.disableMissingFossilWarning();
+        }
+    }
 
     const onRepository = () =>
         commands.executeCommand(

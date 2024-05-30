@@ -1,5 +1,4 @@
 import * as cp from 'child_process';
-import type { OutputChannel } from 'vscode';
 import type { Distinct } from './openedRepository';
 import type {
     FossilExecutablePath,
@@ -38,19 +37,19 @@ function getVersion(
 }
 
 export async function findFossil(
-    hint: UnvalidatedFossilExecutablePath | null,
-    outputChannel: OutputChannel
+    hint: UnvalidatedFossilExecutablePath,
+    logLine: (test: string) => void
 ): Promise<FossilExecutableInfo | undefined> {
     for (const [path, isHint] of [
         [hint, 1],
         ['fossil' as UnvalidatedFossilExecutablePath, 0],
     ] as const) {
-        if (path) {
+        if (path.length) {
             let stdout: string;
             try {
                 stdout = await getVersion(path);
             } catch (e: unknown) {
-                outputChannel.appendLine(
+                logLine(
                     isHint
                         ? `\`fossil.path\` '${path}' is unavailable (${e}). Will try 'fossil' as the path`
                         : `'${path}' is unavailable (${e}). Fossil extension commands will be disabled`
@@ -65,12 +64,12 @@ export async function findFossil(
                     .split('.')
                     .map(s => parseInt(s)) as FossilVersion;
             } else {
-                outputChannel.appendLine(
+                logLine(
                     `Failed to parse fossil version from output: '${stdout}'`
                 );
             }
 
-            outputChannel.appendLine(
+            logLine(
                 localize(
                     'using fossil',
                     'Using fossil {0} from {1}',
