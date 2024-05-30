@@ -367,7 +367,7 @@ class FossilPreview implements IDisposable {
                 kind === ColorThemeKind.Dark ||
                     kind === ColorThemeKind.HighContrast
             );
-            this.panel.webview.postMessage({
+            await this.panel.webview.postMessage({
                 html: rendered_html,
                 uri: this.uri.toString(),
             });
