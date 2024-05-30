@@ -255,7 +255,7 @@ export async function confirmRename(
         dontShowAgain
     );
     if (answer === dontShowAgain) {
-        typedConfig.disableRenaming();
+        await typedConfig.disableRenaming();
     }
     return answer === 'Yes';
 }
@@ -1197,7 +1197,7 @@ export async function confirmGitExport(): Promise<boolean> {
     if (!answer || answer == 'No') {
         return false;
     }
-    typedConfig.setGitExport(answer as any);
+    await typedConfig.setGitExport(answer as any);
     return answer == 'Automatically';
 }
 
