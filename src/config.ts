@@ -1,9 +1,10 @@
 import { workspace } from 'vscode';
-import { FossilUsername } from './openedRepository';
-import { UnvalidatedFossilExecutablePath } from './fossilFinder';
+import type { FossilUsername } from './openedRepository';
+import type { UnvalidatedFossilExecutablePath } from './fossilFinder';
 
 interface ConfigScheme {
-    path: UnvalidatedFossilExecutablePath | null;
+    ignoreMissingFossilWarning: boolean;
+    path: UnvalidatedFossilExecutablePath;
     autoInOutInterval: number;
     username: FossilUsername | null;
     autoRefresh: boolean;
@@ -21,13 +22,11 @@ class Config {
     ): ConfigScheme[TName] {
         // for keys existing in packages.json this function
         // will not return `undefined`
-        return this.config.get<ConfigScheme[TName]>(
-            name
-        ) as ConfigScheme[TName];
+        return this.config.get<ConfigScheme[TName]>(name)!;
     }
 
-    get path(): UnvalidatedFossilExecutablePath | null {
-        return this.get('path');
+    get path(): UnvalidatedFossilExecutablePath {
+        return this.get('path').trim() as UnvalidatedFossilExecutablePath;
     }
 
     /**
@@ -44,6 +43,14 @@ class Config {
 
     get enableRenaming(): boolean {
         return this.get('enableRenaming');
+    }
+
+    get ignoreMissingFossilWarning(): boolean {
+        return this.get('ignoreMissingFossilWarning');
+    }
+
+    disableMissingFossilWarning() {
+        return this.config.update('ignoreMissingFossilWarning', true, false);
     }
 
     /**

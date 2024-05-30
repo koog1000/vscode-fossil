@@ -385,7 +385,7 @@ export class FossilExecutable {
         return result as ExecSuccess;
     }
 
-    private log(output: string): void {
+    public log(output: string): void {
         this.outputChannel.appendLine(output);
     }
     private logArgs(args: FossilArgs, reason: string, info: string): void {

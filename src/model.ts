@@ -16,6 +16,8 @@ import {
     TextEditor,
     QuickPickItem,
     FileRenameEvent,
+    commands,
+    ConfigurationChangeEvent,
 } from 'vscode';
 import type { FossilExecutable } from './fossilExecutable';
 import { anyEvent, filterEvent, dispose, eventToPromise } from './util';
@@ -28,6 +30,11 @@ import { Repository, RepositoryState } from './repository';
 import { localize } from './main';
 import * as interaction from './interaction';
 import { OpenedRepository } from './openedRepository';
+import {
+    FossilExecutableInfo,
+    UnvalidatedFossilExecutablePath,
+    findFossil,
+} from './fossilFinder';
 
 class RepositoryPick implements QuickPickItem {
     @memoize get label(): string {
@@ -112,19 +119,27 @@ export class Model implements Disposable {
         this._state = state;
 
         this._onDidChangeState.fire(state);
-        // commands.executeCommand('setContext', 'fossil.state', state);
     }
 
     private readonly disposables: Disposable[] = [];
+    // event for when `fossil.found` is set
+    private readonly subscriptions: Disposable[] = [];
     private renamingDisposable: Disposable | undefined;
 
-    constructor(private readonly executable: FossilExecutable) {
+    /**
+     * @param executable executable that will be initialized later
+     * @param lastUsedHist used when configuration updates
+     */
+    constructor(
+        private readonly executable: FossilExecutable,
+        private lastUsedHist: UnvalidatedFossilExecutablePath | null
+    ) {
         workspace.onDidChangeConfiguration(
             this.onDidChangeConfiguration,
             this,
             this.disposables
         );
-        this.enable();
+
         this.onDidChangeConfiguration();
     }
 
@@ -139,7 +154,16 @@ export class Model implements Disposable {
         ) as Promise<any>;
     }
 
-    private onDidChangeConfiguration(): void {
+    /**
+     *
+     * @returns Promise that is used in extension tests only
+     */
+    private onDidChangeConfiguration(
+        event?: ConfigurationChangeEvent
+    ): Promise<void> | void {
+        if (event && !event.affectsConfiguration('fossil')) {
+            return;
+        }
         this.renamingDisposable?.dispose();
         if (typedConfig.enableRenaming) {
             this.renamingDisposable = workspace.onDidRenameFiles(
@@ -148,38 +172,68 @@ export class Model implements Disposable {
                 this.disposables
             );
         }
-        this.enable();
+        const fossilHint = typedConfig.path;
+        if (this.lastUsedHist != fossilHint) {
+            this.lastUsedHist = fossilHint;
+            return findFossil(
+                fossilHint,
+                this.executable.log.bind(this.executable)
+            ).then(this.foundExecutable.bind(this));
+        }
     }
 
-    private enable(): void {
-        workspace.onDidChangeWorkspaceFolders(
-            this.onDidChangeWorkspaceFolders,
-            this,
-            this.disposables
+    public async foundExecutable(
+        info: FossilExecutableInfo | undefined
+    ): Promise<void> {
+        await commands.executeCommand('setContext', 'fossil.found', !!info);
+        dispose(this.subscriptions);
+        if (info) {
+            await this.subscribe();
+            try {
+                this.executable.setInfo(info);
+                await this.doInitialScan();
+            } finally {
+                this._state = State.INITIALIZED;
+            }
+        }
+    }
+
+    private async subscribe() {
+        const subscribe = <T extends Disposable>(d: T) => (
+            this.subscriptions.push(d), d
+        );
+        subscribe(
+            workspace.onDidChangeWorkspaceFolders(
+                this.onDidChangeWorkspaceFolders,
+                this,
+                this.disposables
+            )
         );
 
-        window.onDidChangeVisibleTextEditors(
-            this.onDidChangeVisibleTextEditors,
-            this,
-            this.disposables
+        subscribe(
+            window.onDidChangeVisibleTextEditors(
+                this.onDidChangeVisibleTextEditors,
+                this,
+                this.disposables
+            )
         );
 
-        const checkoutWatcher =
-            workspace.createFileSystemWatcher('**/.fslckout');
-        this.disposables.push(checkoutWatcher);
+        const checkoutWatcher = subscribe(
+            workspace.createFileSystemWatcher('**/.fslckout')
+        );
 
         const onWorkspaceChange = anyEvent(
             checkoutWatcher.onDidChange,
             checkoutWatcher.onDidCreate,
             checkoutWatcher.onDidDelete
         );
-        onWorkspaceChange(
-            this.onPossibleFossilRepositoryChange,
-            this,
-            this.disposables
+        subscribe(
+            onWorkspaceChange(
+                this.onPossibleFossilRepositoryChange,
+                this,
+                this.disposables
+            )
         );
-
-        this.doInitialScan().finally(() => (this._state = State.INITIALIZED));
     }
 
     private async doInitialScan(): Promise<void> {
@@ -195,11 +249,10 @@ export class Model implements Disposable {
 
     private disable(): void {
         const openRepositories = [...this.openRepositories];
-        openRepositories.forEach(r => r.dispose());
-        this.openRepositories = [];
-
+        dispose(openRepositories);
         this.possibleFossilRepositoryPaths.clear();
         dispose(this.disposables);
+        dispose(this.subscriptions);
     }
 
     /**

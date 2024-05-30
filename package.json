@@ -367,11 +367,11 @@
             "commandPalette": [
                 {
                     "command": "fossil.clone",
-                    "when": "config.fossil.enabled"
+                    "when": "fossil.found"
                 },
                 {
                     "command": "fossil.init",
-                    "when": "config.fossil.enabled"
+                    "when": "fossil.found"
                 },
                 {
                     "command": "fossil.openUI",
@@ -571,7 +571,7 @@
                 },
                 {
                     "command": "fossil.render",
-                    "when": "fossilOpenRepositoryCount && !isInDiffEditor && resourceExtname =~ /^\\.(md|wiki|pikchr)$/ || config.fossil.enabled && resourceScheme == untitled"
+                    "when": "fossilOpenRepositoryCount && !isInDiffEditor && resourceExtname =~ /^\\.(md|wiki|pikchr)$/ || fossil.found && resourceScheme == untitled"
                 },
                 {
                     "command": "fossil.deleteFiles",
@@ -584,22 +584,34 @@
                 {
                     "command": "fossil.praise",
                     "when": "fossilOpenRepositoryCount"
+                },
+                {
+                    "command": "fossil.gitPublish",
+                    "when": "fossilOpenRepositoryCount"
+                },
+                {
+                    "command": "fossil.gitExport",
+                    "when": "fossilOpenRepositoryCount"
+                },
+                {
+                    "command": "fossil.open",
+                    "when": "fossil.found"
                 }
             ],
             "scm/title": [
                 {
                     "command": "fossil.init",
                     "group": "navigation",
-                    "when": "config.fossil.enabled && !scmProvider && fossilOpenRepositoryCount == 0"
+                    "when": "fossil.found && !scmProvider && fossilOpenRepositoryCount == 0"
                 },
                 {
                     "command": "fossil.open",
                     "group": "9_open",
-                    "when": "config.fossil.enabled && !scmProvider && fossilOpenRepositoryCount == 0"
+                    "when": "fossil.found && !scmProvider && fossilOpenRepositoryCount == 0"
                 },
                 {
                     "command": "fossil.clone",
-                    "when": "config.fossil.enabled",
+                    "when": "fossil.found",
                     "group": "9_open"
                 },
                 {
@@ -761,214 +773,214 @@
             "scm/change/title": [
                 {
                     "command": "fossil.revertChange",
-                    "when": "config.fossil.enabled && originalResourceScheme == fossil"
+                    "when": "fossil.found && originalResourceScheme == fossil"
                 }
             ],
             "scm/sourceControl": [
                 {
                     "command": "fossil.close",
                     "group": "navigation",
-                    "when": "config.fossil.enabled && scmProvider == fossil"
+                    "when": "fossil.found && scmProvider == fossil"
                 }
             ],
             "scm/resourceGroup/context": [
                 {
                     "command": "fossil.unstageAll",
-                    "when": "config.fossil.enabled && scmProvider == fossil && scmResourceGroup == staging",
+                    "when": "fossil.found && scmProvider == fossil && scmResourceGroup == staging",
                     "group": "1_modification"
                 },
                 {
                     "command": "fossil.unstageAll",
-                    "when": "config.fossil.enabled && scmProvider == fossil && scmResourceGroup == staging",
+                    "when": "fossil.found && scmProvider == fossil && scmResourceGroup == staging",
                     "group": "inline"
                 },
                 {
                     "command": "fossil.revertAll",
-                    "when": "config.fossil.enabled && scmProvider == fossil && scmResourceGroup == working",
+                    "when": "fossil.found && scmProvider == fossil && scmResourceGroup == working",
                     "group": "1_modification"
                 },
                 {
                     "command": "fossil.stageAll",
-                    "when": "config.fossil.enabled && scmProvider == fossil && scmResourceGroup == working",
+                    "when": "fossil.found && scmProvider == fossil && scmResourceGroup == working",
                     "group": "1_modification"
                 },
                 {
                     "command": "fossil.stageAll",
-                    "when": "config.fossil.enabled && scmProvider == fossil && scmResourceGroup == working",
+                    "when": "fossil.found && scmProvider == fossil && scmResourceGroup == working",
                     "group": "inline"
                 },
                 {
                     "command": "fossil.revertAll",
-                    "when": "config.fossil.enabled && scmProvider == fossil && (scmResourceGroup == working || scmResourceGroup == conflict)",
+                    "when": "fossil.found && scmProvider == fossil && (scmResourceGroup == working || scmResourceGroup == conflict)",
                     "group": "inline"
                 },
                 {
                     "command": "fossil.addAll",
-                    "when": "config.fossil.enabled && scmProvider == fossil && scmResourceGroup == untracked",
+                    "when": "fossil.found && scmProvider == fossil && scmResourceGroup == untracked",
                     "group": "1_modification"
                 },
                 {
                     "command": "fossil.clean",
-                    "when": "config.fossil.enabled && scmProvider == fossil && scmResourceGroup == untracked",
+                    "when": "fossil.found && scmProvider == fossil && scmResourceGroup == untracked",
                     "group": "1_modification"
                 },
                 {
                     "command": "fossil.deleteFiles",
-                    "when": "config.fossil.enabled && scmProvider == fossil && scmResourceGroup == untracked",
+                    "when": "fossil.found && scmProvider == fossil && scmResourceGroup == untracked",
                     "group": "inline@0"
                 },
                 {
                     "command": "fossil.addAll",
-                    "when": "config.fossil.enabled && scmProvider == fossil && scmResourceGroup == untracked",
+                    "when": "fossil.found && scmProvider == fossil && scmResourceGroup == untracked",
                     "group": "inline@1"
                 },
                 {
                     "command": "fossil.openFiles",
-                    "when": "config.fossil.enabled && scmProvider == fossil",
+                    "when": "fossil.found && scmProvider == fossil",
                     "group": "navigation"
                 },
                 {
                     "command": "fossil.openChange",
-                    "when": "config.fossil.enabled && scmProvider == fossil && scmResourceGroup != untracked",
+                    "when": "fossil.found && scmProvider == fossil && scmResourceGroup != untracked",
                     "group": "navigation"
                 }
             ],
             "scm/resourceState/context": [
                 {
                     "command": "fossil.openChange",
-                    "when": "config.fossil.enabled && scmProvider == fossil && scmResourceGroup == staging",
+                    "when": "fossil.found && scmProvider == fossil && scmResourceGroup == staging",
                     "group": "navigation"
                 },
                 {
                     "command": "fossil.unstage",
-                    "when": "config.fossil.enabled && scmProvider == fossil && scmResourceGroup == staging",
+                    "when": "fossil.found && scmProvider == fossil && scmResourceGroup == staging",
                     "group": "1_modification"
                 },
                 {
                     "command": "fossil.unstage",
-                    "when": "config.fossil.enabled && scmProvider == fossil && scmResourceGroup == staging",
+                    "when": "fossil.found && scmProvider == fossil && scmResourceGroup == staging",
                     "group": "inline"
                 },
                 {
                     "command": "fossil.openChange",
-                    "when": "config.fossil.enabled && scmProvider == fossil && scmResourceGroup == working",
+                    "when": "fossil.found && scmProvider == fossil && scmResourceGroup == working",
                     "group": "navigation"
                 },
                 {
                     "command": "fossil.stage",
-                    "when": "config.fossil.enabled && scmProvider == fossil && scmResourceGroup == working",
+                    "when": "fossil.found && scmProvider == fossil && scmResourceGroup == working",
                     "group": "1_modification"
                 },
                 {
                     "command": "fossil.revert",
-                    "when": "config.fossil.enabled && scmProvider == fossil && scmResourceGroup != untracked",
+                    "when": "fossil.found && scmProvider == fossil && scmResourceGroup != untracked",
                     "group": "1_modification"
                 },
                 {
                     "command": "fossil.openFile",
-                    "when": "config.fossil.enabled && scmProvider == fossil && scmResourceGroup != untracked",
+                    "when": "fossil.found && scmProvider == fossil && scmResourceGroup != untracked",
                     "group": "inline@0"
                 },
                 {
                     "command": "fossil.revert",
-                    "when": "config.fossil.enabled && scmProvider == fossil && scmResourceGroup != untracked",
+                    "when": "fossil.found && scmProvider == fossil && scmResourceGroup != untracked",
                     "group": "inline@1"
                 },
                 {
                     "command": "fossil.stage",
-                    "when": "config.fossil.enabled && scmProvider == fossil && scmResourceGroup == working",
+                    "when": "fossil.found && scmProvider == fossil && scmResourceGroup == working",
                     "group": "inline@2"
                 },
                 {
                     "command": "fossil.deleteFile",
-                    "when": "config.fossil.enabled && scmProvider == fossil && scmResourceGroup == untracked",
+                    "when": "fossil.found && scmProvider == fossil && scmResourceGroup == untracked",
                     "group": "inline@0"
                 },
                 {
                     "command": "fossil.add",
-                    "when": "config.fossil.enabled && scmProvider == fossil && scmResourceGroup == untracked",
+                    "when": "fossil.found && scmProvider == fossil && scmResourceGroup == untracked",
                     "group": "inline@2"
                 },
                 {
                     "command": "fossil.stage",
-                    "when": "config.fossil.enabled && scmProvider == fossil && scmResourceGroup == untracked",
+                    "when": "fossil.found && scmProvider == fossil && scmResourceGroup == untracked",
                     "group": "1_modification"
                 },
                 {
                     "command": "fossil.ignore",
-                    "when": "config.fossil.enabled && scmProvider == fossil && scmResourceGroup == untracked",
+                    "when": "fossil.found && scmProvider == fossil && scmResourceGroup == untracked",
                     "group": "1_modification"
                 },
                 {
                     "command": "fossil.openFiles",
-                    "when": "config.fossil.enabled && scmProvider == fossil",
+                    "when": "fossil.found && scmProvider == fossil",
                     "group": "navigation"
                 },
                 {
                     "command": "fossil.forget",
-                    "when": "config.fossil.enabled && scmProvider == fossil && scmResourceGroup == working",
+                    "when": "fossil.found && scmProvider == fossil && scmResourceGroup == working",
                     "group": "2_modification"
                 },
                 {
                     "command": "fossil.relocate",
-                    "when": "config.fossil.enabled && scmProvider == fossil && scmResourceState == MISSING",
+                    "when": "fossil.found && scmProvider == fossil && scmResourceState == MISSING",
                     "group": "2_modification"
                 }
             ],
             "scm/resourceFolder/context": [
                 {
                     "command": "fossil.unstage",
-                    "when": "config.fossil.enabled && scmProvider == fossil && scmResourceGroup == staging",
+                    "when": "fossil.found && scmProvider == fossil && scmResourceGroup == staging",
                     "group": "1_modification"
                 },
                 {
                     "command": "fossil.unstage",
-                    "when": "config.fossil.enabled && scmProvider == fossil && scmResourceGroup == staging",
+                    "when": "fossil.found && scmProvider == fossil && scmResourceGroup == staging",
                     "group": "inline"
                 },
                 {
                     "command": "fossil.revert",
-                    "when": "config.fossil.enabled && scmProvider == fossil && scmResourceGroup == working",
+                    "when": "fossil.found && scmProvider == fossil && scmResourceGroup == working",
                     "group": "1_modification"
                 },
                 {
                     "command": "fossil.stage",
-                    "when": "config.fossil.enabled && scmProvider == fossil && scmResourceGroup == working",
+                    "when": "fossil.found && scmProvider == fossil && scmResourceGroup == working",
                     "group": "1_modification"
                 },
                 {
                     "command": "fossil.stage",
-                    "when": "config.fossil.enabled && scmProvider == fossil && scmResourceGroup == working",
+                    "when": "fossil.found && scmProvider == fossil && scmResourceGroup == working",
                     "group": "inline"
                 },
                 {
                     "command": "fossil.revert",
-                    "when": "config.fossil.enabled && scmProvider == fossil && scmResourceGroup == working",
+                    "when": "fossil.found && scmProvider == fossil && scmResourceGroup == working",
                     "group": "inline"
                 },
                 {
                     "command": "fossil.add",
-                    "when": "config.fossil.enabled && scmProvider == fossil && scmResourceGroup == untracked",
+                    "when": "fossil.found && scmProvider == fossil && scmResourceGroup == untracked",
                     "group": "1_modification"
                 },
                 {
                     "command": "fossil.clean",
-                    "when": "config.fossil.enabled && scmProvider == fossil && scmResourceGroup == untracked",
+                    "when": "fossil.found && scmProvider == fossil && scmResourceGroup == untracked",
                     "group": "1_modification"
                 },
                 {
                     "command": "fossil.add",
-                    "when": "config.fossil.enabled && scmProvider == fossil && scmResourceGroup == untracked",
+                    "when": "fossil.found && scmProvider == fossil && scmResourceGroup == untracked",
                     "group": "inline"
                 },
                 {
                     "command": "fossil.openFiles",
-                    "when": "config.fossil.enabled && scmProvider == fossil",
+                    "when": "fossil.found && scmProvider == fossil",
                     "group": "navigation"
                 },
                 {
                     "command": "fossil.openChange",
-                    "when": "config.fossil.enabled && scmProvider == fossil && scmResourceGroup != untracked",
+                    "when": "fossil.found && scmProvider == fossil && scmResourceGroup != untracked",
                     "group": "navigation"
                 }
             ],
@@ -989,7 +1001,7 @@
                 },
                 {
                     "command": "fossil.render",
-                    "when": "fossilOpenRepositoryCount && !isInDiffEditor && resourceExtname =~ /^\\.(md|wiki|pikchr)$/ || config.fossil.enabled && resourceScheme == untitled",
+                    "when": "fossilOpenRepositoryCount && !isInDiffEditor && resourceExtname =~ /^\\.(md|wiki|pikchr)$/ || fossil.found && resourceScheme == untitled",
                     "group": "navigation"
                 },
                 {
@@ -1024,11 +1036,6 @@
         "configuration": {
             "title": "Fossil",
             "properties": {
-                "fossil.enabled": {
-                    "type": "boolean",
-                    "description": "%config.enabled%",
-                    "default": true
-                },
                 "fossil.autoInOutInterval": {
                     "type": "number",
                     "description": "%config.autoInOutInterval%",
@@ -1044,13 +1051,14 @@
                     "description": "%config.enableRenaming%",
                     "default": true
                 },
+                "fossil.ignoreMissingFossilWarning": {
+                    "type": "boolean",
+                    "description": "Ignores the warning when Fossil is missing",
+                    "default": false
+                },
                 "fossil.path": {
-                    "type": [
-                        "string",
-                        "null"
-                    ],
-                    "description": "%config.path%",
-                    "default": null
+                    "type": "string",
+                    "description": "%config.path%"
                 },
                 "fossil.username": {
                     "type": [
@@ -1122,7 +1130,7 @@
         "vscode:prepublish": "npm run bundle -- --minify",
         "bundle": "node ./esbuild.config.js",
         "esbuild-preview": "esbuild ./media/preview.ts --bundle --outfile=media/preview.js --platform=browser --format=iife",
-        "compile": "tsc -p ./ && npm run esbuild-preview",
+        "compile": "npm run esbuild-preview && tsc -p ./",
         "package": "vsce package --allow-star-activation",
         "deploy": "vsce publish",
         "pretest": "npm run compile",

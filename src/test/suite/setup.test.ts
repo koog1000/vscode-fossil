@@ -1,6 +1,7 @@
 import * as vscode from 'vscode';
 import { window, Uri } from 'vscode';
 import {
+    SinonStubT,
     cleanRoot,
     cleanupFossil,
     fakeExecutionResult,
@@ -11,42 +12,50 @@ import {
 } from './common';
 import * as sinon from 'sinon';
 import * as assert from 'assert/strict';
-import type { FossilCWD } from '../../fossilExecutable';
-import {
-    UnvalidatedFossilExecutablePath,
-    findFossil,
-} from '../../fossilFinder';
-import { Suite, afterEach, before } from 'mocha';
+import type {
+    FossilCWD,
+    FossilExecutablePath,
+    FossilVersion,
+} from '../../fossilExecutable';
+import type { UnvalidatedFossilExecutablePath } from '../../fossilFinder';
+import * as fossilFinder from '../../fossilFinder';
+import { Suite, afterEach, after, before } from 'mocha';
 import * as os from 'os';
 import * as fs from 'fs/promises';
 import * as cp from 'child_process';
+import { activate } from '../../main';
+import * as commands from '../../commands';
+import * as fileSystemProvider from '../../fileSystemProvider';
 
 function ExecutableSuite(this: Suite): void {
+    const resetIgnoreMissingFossilWarning = async () => {
+        const config = vscode.workspace.getConfiguration('fossil');
+        await config.update('ignoreMissingFossilWarning', false, false);
+    };
+    before(resetIgnoreMissingFossilWarning);
+    after(resetIgnoreMissingFossilWarning);
+
     test('Invalid executable path', async () => {
-        const outputChannel = {
-            appendLine: sinon.stub(),
-        };
-        await findFossil(
+        const appendLine = sinon.stub();
+        await fossilFinder.findFossil(
             'non_existing_fossil' as UnvalidatedFossilExecutablePath,
-            outputChannel as unknown as vscode.OutputChannel
+            appendLine
         );
-        sinon.assert.calledTwice(outputChannel.appendLine);
+        sinon.assert.calledTwice(appendLine);
         sinon.assert.calledWithExactly(
-            outputChannel.appendLine.firstCall,
+            appendLine.firstCall,
             "`fossil.path` 'non_existing_fossil' is unavailable " +
-            "(Error: spawn non_existing_fossil ENOENT). " +
-            "Will try 'fossil' as the path"
+                '(Error: spawn non_existing_fossil ENOENT). ' +
+                "Will try 'fossil' as the path"
         );
         sinon.assert.calledWithMatch(
-            outputChannel.appendLine.secondCall,
+            appendLine.secondCall,
             /^Using fossil \d.\d+ from fossil$/
         );
     }).timeout(2000);
 
-    test('Error is caught', async () => {
-        const outputChannel = {
-            appendLine: sinon.stub(),
-        };
+    test('Execution error is caught and shown', async () => {
+        const appendLine = sinon.stub();
         const childProcess = {
             on: sinon
                 .stub()
@@ -63,15 +72,190 @@ function ExecutableSuite(this: Suite): void {
             .returns(
                 childProcess as unknown as cp.ChildProcessWithoutNullStreams
             );
-        await findFossil(
-            null,
-            outputChannel as unknown as vscode.OutputChannel
+        await fossilFinder.findFossil(
+            '' as UnvalidatedFossilExecutablePath,
+            appendLine
         );
         sinon.assert.calledOnceWithExactly(
-            outputChannel.appendLine,
-            "'fossil' is unavailable (Error: mocked error). Fossil extension commands will be disabled"
+            appendLine,
+            "'fossil' is unavailable (Error: mocked error). " +
+                'Fossil extension commands will be disabled'
         );
     }).timeout(2000);
+
+    class NoFossil {
+        public readonly ff: SinonStubT<typeof fossilFinder.findFossil>;
+        public readonly svm: SinonStubT<
+            (...args: string[]) => string | undefined
+        >;
+        public context: ReturnType<typeof NoFossil.createContext>;
+
+        constructor(sandbox: sinon.SinonSandbox) {
+            sandbox
+                .stub(commands, 'CommandCenter')
+                .returns({ dispose: sinon.stub() });
+            sandbox
+                .stub(fileSystemProvider, 'FossilFileSystemProvider')
+                .returns({ dispose: sinon.stub() });
+            this.context = NoFossil.createContext();
+            this.ff = sandbox.stub(fossilFinder, 'findFossil').resolves();
+            this.svm = sandbox
+                .stub(vscode.window, 'showWarningMessage')
+                .resolves() as unknown as SinonStubT<
+                (...args: string[]) => string | undefined
+            >;
+        }
+
+        static createContext() {
+            return {
+                subscriptions: { push: sinon.stub() },
+                extensionUri: Uri.parse('file://from_test'),
+            } as const;
+        }
+        async activate() {
+            const model = await activate(
+                this.context as unknown as vscode.ExtensionContext
+            );
+            assert.ok(model);
+            return model;
+        }
+    }
+
+    test('User can cancel "no fossil" warning', async () => {
+        const noFossil = new NoFossil(this.ctx.sandbox);
+        await noFossil.activate();
+        sinon.assert.calledOnceWithMatch(
+            noFossil.svm,
+            'Fossil was not found. Install it or configure it ' +
+                "using the 'fossil.path' setting.",
+            'Download Fossil',
+            'Edit `fossil.path`',
+            "Don't Show Again"
+        );
+    });
+
+    test('Download Fossil button is working', async () => {
+        const noFossil = new NoFossil(this.ctx.sandbox);
+        noFossil.svm.resolves('Download Fossil');
+        const cmd = this.ctx.sandbox
+            .stub(vscode.commands, 'executeCommand')
+            .withArgs('vscode.open')
+            .resolves();
+        await noFossil.activate();
+        sinon.assert.calledOnce(noFossil.svm);
+        sinon.assert.calledOnceWithExactly(
+            cmd,
+            'vscode.open',
+            Uri.parse('https://www.fossil-scm.org/')
+        );
+    });
+
+    test('"Don\'t Show Again" button is working', async () => {
+        const configStub = {
+            update: sinon.stub(),
+            get: sinon.stub().withArgs('path').returns(''),
+        };
+        this.ctx.sandbox
+            .stub(vscode.workspace, 'getConfiguration')
+            .callThrough()
+            .withArgs('fossil')
+            .returns(configStub as any);
+        const noFossil = new NoFossil(this.ctx.sandbox);
+        noFossil.svm.resolves("Don't Show Again");
+        await noFossil.activate();
+        sinon.assert.calledOnce(noFossil.svm);
+        sinon.assert.calledOnceWithExactly(
+            configStub.update,
+            'ignoreMissingFossilWarning',
+            true,
+            false
+        );
+    });
+
+    const stubActivationActions = () => {
+        const ff = this.ctx.sandbox.stub(fossilFinder, 'findFossil').resolves();
+        const odcc = this.ctx.sandbox
+            .stub(vscode.workspace, 'onDidChangeConfiguration')
+            .returns({ dispose: this.ctx.sandbox.stub() });
+        const rfsp = this.ctx.sandbox.stub(
+            vscode.workspace,
+            'registerFileSystemProvider'
+        );
+        const rwvps = this.ctx.sandbox.stub(
+            window,
+            'registerWebviewPanelSerializer'
+        );
+        const svm = this.ctx.sandbox
+            .stub(vscode.window, 'showWarningMessage')
+            .resolves();
+        const configStub = {
+            update: sinon.stub(),
+            get: sinon.stub().withArgs('path').returns(''),
+        };
+        this.ctx.sandbox
+            .stub(vscode.workspace, 'getConfiguration')
+            .callThrough()
+            .withArgs('fossil')
+            .returns(configStub as any);
+
+        return { ff, odcc, rfsp, rwvps, svm, configStub };
+    };
+
+    test("User can modify `fossil.path` live after fossil was't found", async () => {
+        // create config stub so we can modify `fossil.path` programmatically
+
+        const { ff, odcc, rfsp, rwvps, svm, configStub } =
+            stubActivationActions();
+        const context = NoFossil.createContext();
+        const model = await activate(
+            context as unknown as vscode.ExtensionContext
+        );
+        sinon.assert.calledOnce(ff);
+        sinon.assert.calledOnce(odcc);
+        sinon.assert.calledOnce(rwvps);
+        sinon.assert.calledOnce(rfsp);
+        sinon.assert.calledOnce(svm);
+        assert.ok(model);
+
+        const onDidChangeConfiguration = odcc.args[0][0];
+        const ec = this.ctx.sandbox.spy(vscode.commands, 'executeCommand');
+
+        ff.resolves({
+            path: 'a_fossil_path' as FossilExecutablePath,
+            version: [2, 20] as FossilVersion,
+        });
+        configStub.get.withArgs('path').returns('fossil');
+        await onDidChangeConfiguration.call(odcc.args[0][1], undefined as any);
+
+        sinon.assert.calledWithExactly(ec, 'setContext', 'fossil.found', true);
+
+        sinon.assert.calledTwice(ff);
+        sinon.assert.calledOnce(odcc);
+        sinon.assert.calledOnce(rwvps);
+        sinon.assert.calledOnce(rfsp);
+        sinon.assert.calledOnce(svm);
+    });
+
+    test("Fossil state can be changed from 'found' to 'not found'", async () => {
+        const { ff, odcc, rfsp, rwvps, svm, configStub } =
+            stubActivationActions();
+        const context = NoFossil.createContext();
+        const model = await activate(
+            context as unknown as vscode.ExtensionContext
+        );
+        assert.ok(model);
+        const ec = this.ctx.sandbox.spy(vscode.commands, 'executeCommand');
+
+        ff.resolves(undefined); // do not find any fossil executable
+        configStub.get.withArgs('path').returns('bad_fossil_executable');
+
+        const onDidChangeConfiguration = odcc.args[0][0];
+        await onDidChangeConfiguration.call(odcc.args[0][1], undefined as any);
+        sinon.assert.calledWithExactly(ec, 'setContext', 'fossil.found', false);
+        sinon.assert.calledOnce(rfsp);
+        sinon.assert.calledOnce(rwvps);
+        sinon.assert.calledOnce(svm);
+    });
 }
 
 function InitSuite(this: Suite): void {
