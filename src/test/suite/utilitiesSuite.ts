@@ -180,11 +180,11 @@ function decoratorsSuite(this: Suite) {
         assert.equal(fakeTimers.countTimers(), 1);
         const p1 = dt.debounced_method();
         const p2 = dt.debounced_method();
-        const resPromise = Promise.race([p0, p1, p2]);
+        const resPromise = Promise.all([p0, p1, p2]);
         assert.equal(fakeTimers.countTimers(), 1);
-        const debounceTimer = await fakeTimers.nextAsync();
+        const debounceTimer = fakeTimers.next();
+        assert.deepEqual(await resPromise, [undefined, undefined, undefined]);
         assert.equal(fakeTimers.countTimers(), 0);
-        assert.equal(await resPromise, undefined);
         assert.equal(debounceTimer, startTimeStamp + 50, 'main timer worked');
         assert.equal(dt.debounce_count, 1, 'reached main timer only');
     });
