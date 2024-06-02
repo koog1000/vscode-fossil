@@ -1197,7 +1197,7 @@ export async function confirmGitExport(): Promise<boolean> {
     if (!answer || answer == 'No') {
         return false;
     }
-    await typedConfig.setGitExport(answer as any);
+    await typedConfig.setGitExport(answer);
     return answer == 'Automatically';
 }
 
