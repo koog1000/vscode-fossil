@@ -2,6 +2,7 @@ import * as vscode from 'vscode';
 import { Uri, window, workspace, commands } from 'vscode';
 import * as sinon from 'sinon';
 import {
+    ExecStub,
     add,
     cleanupFossil,
     fakeExecutionResult,
@@ -12,6 +13,42 @@ import {
 import * as assert from 'assert/strict';
 import * as fs from 'fs/promises';
 import { Suite, before, beforeEach } from 'mocha';
+
+export const commitStagedTest = async (
+    sandbox: sinon.SinonSandbox,
+    command: 'fossil.commit' | 'fossil.commitStaged',
+    execStub?: ExecStub
+) => {
+    const repository = getRepository();
+    assert.equal(
+        repository.sourceControl.inputBox.value,
+        '',
+        'empty input box'
+    );
+    execStub ??= getExecStub(sandbox);
+    const statusStub = fakeFossilStatus(execStub, 'ADDED a\nADDED b\n');
+    const commitStub = execStub
+        .withArgs(sinon.match.array.startsWith(['commit']))
+        .resolves(fakeExecutionResult());
+    await repository.updateModelState();
+    await commands.executeCommand('fossil.stageAll');
+    const sib = sandbox.stub(window, 'showInputBox').resolves('test message');
+    await commands.executeCommand(command);
+    sinon.assert.calledTwice(statusStub);
+    sinon.assert.calledOnceWithExactly(sib, {
+        value: undefined,
+        placeHolder: 'Commit message',
+        prompt: 'Please provide a commit message',
+        ignoreFocusOut: true,
+    });
+    sinon.assert.calledOnceWithExactly(commitStub, [
+        'commit',
+        'a',
+        'b',
+        '-m',
+        'test message',
+    ]);
+};
 
 export function CommitSuite(this: Suite): void {
     const clearInputBox = () => {
@@ -47,48 +84,12 @@ export function CommitSuite(this: Suite): void {
         assert.equal(repository.sourceControl.inputBox.value, '');
     });
 
-    const commitStagedTest = async (
-        command: 'fossil.commit' | 'fossil.commitStaged'
-    ) => {
-        const repository = getRepository();
-        assert.equal(
-            repository.sourceControl.inputBox.value,
-            '',
-            'empty input box'
-        );
-        const execStub = getExecStub(this.ctx.sandbox);
-        const statusStub = fakeFossilStatus(execStub, 'ADDED a\nADDED b\n');
-        const commitStub = execStub
-            .withArgs(sinon.match.array.startsWith(['commit']))
-            .resolves(fakeExecutionResult());
-        await repository.updateModelState();
-        await commands.executeCommand('fossil.stageAll');
-        const sib = this.ctx.sandbox
-            .stub(window, 'showInputBox')
-            .resolves('test message');
-        await commands.executeCommand(command);
-        sinon.assert.calledTwice(statusStub);
-        sinon.assert.calledOnceWithExactly(sib, {
-            value: undefined,
-            placeHolder: 'Commit message',
-            prompt: 'Please provide a commit message',
-            ignoreFocusOut: true,
-        });
-        sinon.assert.calledOnceWithExactly(commitStub, [
-            'commit',
-            'a',
-            'b',
-            '-m',
-            'test message',
-        ]);
-    };
-
     test('Commit command - commit staging group with dialog', async () => {
-        await commitStagedTest('fossil.commit');
+        await commitStagedTest(this.ctx.sandbox, 'fossil.commit');
     });
 
     test('CommitStaged command - commit staging group with dialog', async () => {
-        await commitStagedTest('fossil.commitStaged');
+        await commitStagedTest(this.ctx.sandbox, 'fossil.commitStaged');
     });
 
     test('CommitAll command - commit staging group with dialog', async () => {
