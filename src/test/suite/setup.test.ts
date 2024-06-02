@@ -423,7 +423,6 @@ function OpenSuite(this: Suite): void {
             '&&Open Repository'
         ).resolves();
         await fs.writeFile(Uri.joinPath(root, 'junk').fsPath, '');
-        console.log('before `fossil.open`');
         const executable = getExecutable();
         const execStub = this.ctx.sandbox
             .stub(executable, 'exec')
