@@ -213,7 +213,10 @@ function RenderSuite(this: Suite) {
             postMessageStub
                 .onFirstCall()
                 .callsFake((message: any): Thenable<boolean> => {
-                    const ret = postMessageStub.wrappedMethod(message);
+                    const ret = postMessageStub.wrappedMethod.call(
+                        panel.webview,
+                        message
+                    );
                     c(message);
                     return ret;
                 });
