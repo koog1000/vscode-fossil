@@ -1,5 +1,4 @@
-import * as vscode from 'vscode';
-import { window, Uri } from 'vscode';
+import { window, Uri, workspace, ExtensionContext, commands } from 'vscode';
 import {
     SinonStubT,
     cleanRoot,
@@ -24,12 +23,12 @@ import * as os from 'os';
 import * as fs from 'fs/promises';
 import * as cp from 'child_process';
 import { activate } from '../../main';
-import * as commands from '../../commands';
+import * as extensionCommands from '../../commands';
 import * as fileSystemProvider from '../../fileSystemProvider';
 
 function ExecutableSuite(this: Suite): void {
     const resetIgnoreMissingFossilWarning = async () => {
-        const config = vscode.workspace.getConfiguration('fossil');
+        const config = workspace.getConfiguration('fossil');
         await config.update('ignoreMissingFossilWarning', false, false);
     };
     before(resetIgnoreMissingFossilWarning);
@@ -92,7 +91,7 @@ function ExecutableSuite(this: Suite): void {
 
         constructor(sandbox: sinon.SinonSandbox) {
             sandbox
-                .stub(commands, 'CommandCenter')
+                .stub(extensionCommands, 'CommandCenter')
                 .returns({ dispose: sinon.stub() });
             sandbox
                 .stub(fileSystemProvider, 'FossilFileSystemProvider')
@@ -100,7 +99,7 @@ function ExecutableSuite(this: Suite): void {
             this.context = NoFossil.createContext();
             this.ff = sandbox.stub(fossilFinder, 'findFossil').resolves();
             this.svm = sandbox
-                .stub(vscode.window, 'showWarningMessage')
+                .stub(window, 'showWarningMessage')
                 .resolves() as unknown as SinonStubT<
                 (...args: string[]) => string | undefined
             >;
@@ -114,7 +113,7 @@ function ExecutableSuite(this: Suite): void {
         }
         async activate() {
             const model = await activate(
-                this.context as unknown as vscode.ExtensionContext
+                this.context as unknown as ExtensionContext
             );
             assert.ok(model);
             return model;
@@ -138,7 +137,7 @@ function ExecutableSuite(this: Suite): void {
         const noFossil = new NoFossil(this.ctx.sandbox);
         noFossil.svm.resolves('Download Fossil');
         const cmd = this.ctx.sandbox
-            .stub(vscode.commands, 'executeCommand')
+            .stub(commands, 'executeCommand')
             .withArgs('vscode.open')
             .resolves();
         await noFossil.activate();
@@ -154,7 +153,7 @@ function ExecutableSuite(this: Suite): void {
         const noFossil = new NoFossil(this.ctx.sandbox);
         noFossil.svm.resolves('Edit "fossil.path"');
         const cmd = this.ctx.sandbox
-            .stub(vscode.commands, 'executeCommand')
+            .stub(commands, 'executeCommand')
             .withArgs('workbench.action.openSettings')
             .resolves();
         await noFossil.activate();
@@ -172,7 +171,7 @@ function ExecutableSuite(this: Suite): void {
             get: sinon.stub().withArgs('path').returns(''),
         };
         this.ctx.sandbox
-            .stub(vscode.workspace, 'getConfiguration')
+            .stub(workspace, 'getConfiguration')
             .callThrough()
             .withArgs('fossil')
             .returns(configStub as any);
@@ -191,10 +190,10 @@ function ExecutableSuite(this: Suite): void {
     const stubActivationActions = () => {
         const ff = this.ctx.sandbox.stub(fossilFinder, 'findFossil').resolves();
         const odcc = this.ctx.sandbox
-            .stub(vscode.workspace, 'onDidChangeConfiguration')
+            .stub(workspace, 'onDidChangeConfiguration')
             .returns({ dispose: this.ctx.sandbox.stub() });
         const rfsp = this.ctx.sandbox.stub(
-            vscode.workspace,
+            workspace,
             'registerFileSystemProvider'
         );
         const rwvps = this.ctx.sandbox.stub(
@@ -202,14 +201,14 @@ function ExecutableSuite(this: Suite): void {
             'registerWebviewPanelSerializer'
         );
         const svm = this.ctx.sandbox
-            .stub(vscode.window, 'showWarningMessage')
+            .stub(window, 'showWarningMessage')
             .resolves();
         const configStub = {
             update: sinon.stub(),
             get: sinon.stub().withArgs('path').returns(''),
         };
         this.ctx.sandbox
-            .stub(vscode.workspace, 'getConfiguration')
+            .stub(workspace, 'getConfiguration')
             .callThrough()
             .withArgs('fossil')
             .returns(configStub as any);
@@ -223,9 +222,7 @@ function ExecutableSuite(this: Suite): void {
         const { ff, odcc, rfsp, rwvps, svm, configStub } =
             stubActivationActions();
         const context = NoFossil.createContext();
-        const model = await activate(
-            context as unknown as vscode.ExtensionContext
-        );
+        const model = await activate(context as unknown as ExtensionContext);
         sinon.assert.calledOnce(ff);
         sinon.assert.calledOnce(odcc);
         sinon.assert.calledOnce(rwvps);
@@ -234,7 +231,7 @@ function ExecutableSuite(this: Suite): void {
         assert.ok(model);
 
         const onDidChangeConfiguration = odcc.args[0][0];
-        const ec = this.ctx.sandbox.spy(vscode.commands, 'executeCommand');
+        const ec = this.ctx.sandbox.spy(commands, 'executeCommand');
 
         ff.resolves({
             path: 'a_fossil_path' as FossilExecutablePath,
@@ -256,11 +253,9 @@ function ExecutableSuite(this: Suite): void {
         const { ff, odcc, rfsp, rwvps, svm, configStub } =
             stubActivationActions();
         const context = NoFossil.createContext();
-        const model = await activate(
-            context as unknown as vscode.ExtensionContext
-        );
+        const model = await activate(context as unknown as ExtensionContext);
         assert.ok(model);
-        const ec = this.ctx.sandbox.spy(vscode.commands, 'executeCommand');
+        const ec = this.ctx.sandbox.spy(commands, 'executeCommand');
 
         ff.resolves(undefined); // do not find any fossil executable
         configStub.get.withArgs('path').returns('bad_fossil_executable');
@@ -285,7 +280,7 @@ function InitSuite(this: Suite): void {
             .stub(window, 'showSaveDialog')
             .withArgs(sinon.match({ title: 'Select New Fossil File Location' }))
             .resolves();
-        await vscode.commands.executeCommand('fossil.init');
+        await commands.executeCommand('fossil.init');
         sinon.assert.calledOnce(showSaveDialogStub);
     }).timeout(200);
 
@@ -299,7 +294,7 @@ function InitSuite(this: Suite): void {
             .withArgs(sinon.match({ prompt: 'Project Name' }))
             .resolves();
 
-        await vscode.commands.executeCommand('fossil.init');
+        await commands.executeCommand('fossil.init');
         sinon.assert.calledOnce(showSaveDialogStub);
         sinon.assert.calledOnce(showInputBox);
     }).timeout(200);
@@ -316,7 +311,7 @@ function InitSuite(this: Suite): void {
         showInputBox
             .withArgs(sinon.match({ prompt: 'Project Description' }))
             .resolves();
-        await vscode.commands.executeCommand('fossil.init');
+        await commands.executeCommand('fossil.init');
         sinon.assert.calledOnce(showSaveDialogStub);
         sinon.assert.calledTwice(showInputBox);
     }).timeout(200);
@@ -348,7 +343,7 @@ function InitSuite(this: Suite): void {
         );
         const showInformationMessage = (
             this.ctx.sandbox.stub(
-                vscode.window,
+                window,
                 'showInformationMessage'
             ) as sinon.SinonStub
         )
@@ -358,7 +353,7 @@ function InitSuite(this: Suite): void {
             )
             .resolves('Open Repository');
 
-        await vscode.commands.executeCommand('fossil.init');
+        await commands.executeCommand('fossil.init');
         sinon.assert.calledOnce(showSaveDialogStub);
         sinon.assert.calledTwice(showInputBox);
         sinon.assert.calledOnce(showInformationMessage);
@@ -385,7 +380,7 @@ function OpenSuite(this: Suite): void {
         sod.withArgs(
             sinon.match({ openLabel: 'Repository Location' })
         ).resolves();
-        await vscode.commands.executeCommand('fossil.open');
+        await commands.executeCommand('fossil.open');
         sinon.assert.calledOnce(sod);
     });
 
@@ -397,13 +392,13 @@ function OpenSuite(this: Suite): void {
         sod.withArgs(
             sinon.match({ title: 'Select Fossil Root Directory' })
         ).resolves();
-        await vscode.commands.executeCommand('fossil.open');
+        await commands.executeCommand('fossil.open');
         sinon.assert.calledTwice(sod);
     });
 
     test('Open forced - canceled by user', async () => {
-        assert.ok(vscode.workspace.workspaceFolders);
-        const root = vscode.workspace.workspaceFolders[0].uri;
+        assert.ok(workspace.workspaceFolders);
+        const root = workspace.workspaceFolders[0].uri;
         const location = Uri.joinPath(root, '/test.fossil');
         const sod = this.ctx.sandbox.stub(window, 'showOpenDialog');
         sod.withArgs(
@@ -427,7 +422,7 @@ function OpenSuite(this: Suite): void {
         const execStub = this.ctx.sandbox
             .stub(executable, 'exec')
             .callThrough();
-        await vscode.commands.executeCommand('fossil.open');
+        await commands.executeCommand('fossil.open');
         sinon.assert.calledWithExactly(
             execStub.firstCall,
             root.fsPath as FossilCWD,
@@ -443,7 +438,7 @@ function OpenSuite(this: Suite): void {
 
         test('Check unsaved', async () => {
             const executable = getExecutable();
-            const uri = vscode.workspace.workspaceFolders![0].uri;
+            const uri = workspace.workspaceFolders![0].uri;
             const cwd = uri.fsPath as FossilCWD;
             const filename = Uri.joinPath(uri, 'open_and_close').fsPath;
             await fs.writeFile(filename, '');
@@ -451,10 +446,10 @@ function OpenSuite(this: Suite): void {
             assert.match(addRes.stdout, /ADDED/);
 
             const swm: sinon.SinonStub = this.ctx.sandbox
-                .stub(vscode.window, 'showWarningMessage')
+                .stub(window, 'showWarningMessage')
                 .resolves();
 
-            await vscode.commands.executeCommand('fossil.close');
+            await commands.executeCommand('fossil.close');
             sinon.assert.calledOnceWithExactly(
                 swm,
                 sinon.match(
@@ -466,14 +461,14 @@ function OpenSuite(this: Suite): void {
         test('Close', async () => {
             const repository = getRepository();
             const executable = getExecutable();
-            const uri = vscode.workspace.workspaceFolders![0].uri;
+            const uri = workspace.workspaceFolders![0].uri;
             const cwd = uri.fsPath as FossilCWD;
             await cleanupFossil(repository);
             const closeStub = this.ctx.sandbox
                 .spy(executable, 'exec')
                 .withArgs(cwd, sinon.match.array.startsWith(['close']));
 
-            await vscode.commands.executeCommand('fossil.close');
+            await commands.executeCommand('fossil.close');
             sinon.assert.calledOnce(closeStub);
 
             const statusResult = await executable.exec(cwd, ['status']);
@@ -488,17 +483,14 @@ function OpenSuite(this: Suite): void {
 function CloneSuite(this: Suite): void {
     test('Empty URI', async () => {
         const showInputBox = this.ctx.sandbox
-            .stub(vscode.window, 'showInputBox')
+            .stub(window, 'showInputBox')
             .resolves('');
-        await vscode.commands.executeCommand('fossil.clone');
+        await commands.executeCommand('fossil.clone');
         sinon.assert.calledOnce(showInputBox);
     });
 
     test('URI without auth', async () => {
-        const showInputBox = this.ctx.sandbox.stub(
-            vscode.window,
-            'showInputBox'
-        );
+        const showInputBox = this.ctx.sandbox.stub(window, 'showInputBox');
         const inputURI = showInputBox
             .withArgs(sinon.match({ prompt: 'Repository URI' }))
             .resolves('https://example.com/fossil');
@@ -510,7 +502,7 @@ function CloneSuite(this: Suite): void {
             .resolves('testpsw');
         const showInformationMessage = (
             this.ctx.sandbox.stub(
-                vscode.window,
+                window,
                 'showInformationMessage'
             ) as sinon.SinonStub
         )
@@ -521,7 +513,7 @@ function CloneSuite(this: Suite): void {
             .resolves();
 
         const showSaveDialogStub = this.ctx.sandbox
-            .stub(vscode.window, 'showSaveDialog')
+            .stub(window, 'showSaveDialog')
             .withArgs(sinon.match({ title: 'Select New Fossil File Location' }))
             .resolves(Uri.joinPath(Uri.file(os.tmpdir()), 'test_path'));
 
@@ -529,7 +521,7 @@ function CloneSuite(this: Suite): void {
 
         const execStub = this.ctx.sandbox.stub(executable, 'exec');
 
-        await vscode.commands.executeCommand('fossil.clone');
+        await commands.executeCommand('fossil.clone');
         sinon.assert.calledOnce(inputURI);
         sinon.assert.calledOnce(inputUsername);
         sinon.assert.calledOnce(inputPassword);
@@ -544,16 +536,13 @@ function CloneSuite(this: Suite): void {
     });
 
     test('URI with username and password', async () => {
-        const showInputBox = this.ctx.sandbox.stub(
-            vscode.window,
-            'showInputBox'
-        );
+        const showInputBox = this.ctx.sandbox.stub(window, 'showInputBox');
         const inputURI = showInputBox
             .withArgs(sinon.match({ prompt: 'Repository URI' }))
             .resolves('https://testuser:testpsw@example.com/fossil');
         const showInformationMessage = (
             this.ctx.sandbox.stub(
-                vscode.window,
+                window,
                 'showInformationMessage'
             ) as sinon.SinonStub
         )
@@ -565,7 +554,7 @@ function CloneSuite(this: Suite): void {
 
         const tmpUri = Uri.joinPath(Uri.file(os.tmpdir()), 'test_path');
         const showSaveDialogStub = this.ctx.sandbox
-            .stub(vscode.window, 'showSaveDialog')
+            .stub(window, 'showSaveDialog')
             .withArgs(sinon.match({ title: 'Select New Fossil File Location' }))
             .resolves(tmpUri);
 
@@ -573,7 +562,7 @@ function CloneSuite(this: Suite): void {
 
         const execStub = this.ctx.sandbox.stub(executable, 'exec');
 
-        await vscode.commands.executeCommand('fossil.clone');
+        await commands.executeCommand('fossil.clone');
         sinon.assert.calledOnce(inputURI);
         sinon.assert.calledOnce(showSaveDialogStub);
         sinon.assert.calledOnce(showInformationMessage);
@@ -586,10 +575,7 @@ function CloneSuite(this: Suite): void {
     });
 
     test('URI with username only', async () => {
-        const showInputBox = this.ctx.sandbox.stub(
-            vscode.window,
-            'showInputBox'
-        );
+        const showInputBox = this.ctx.sandbox.stub(window, 'showInputBox');
         const inputURI = showInputBox
             .withArgs(sinon.match({ prompt: 'Repository URI' }))
             .resolves('https://testuser@example.com/fossil');
@@ -598,7 +584,7 @@ function CloneSuite(this: Suite): void {
             .resolves('testpsw');
         const showInformationMessage = (
             this.ctx.sandbox.stub(
-                vscode.window,
+                window,
                 'showInformationMessage'
             ) as sinon.SinonStub
         )
@@ -609,7 +595,7 @@ function CloneSuite(this: Suite): void {
             .resolves();
 
         const showSaveDialogStub = this.ctx.sandbox
-            .stub(vscode.window, 'showSaveDialog')
+            .stub(window, 'showSaveDialog')
             .withArgs(sinon.match({ title: 'Select New Fossil File Location' }))
             .resolves(Uri.joinPath(Uri.file(os.tmpdir()), 'test_path'));
 
@@ -617,7 +603,7 @@ function CloneSuite(this: Suite): void {
 
         const execStub = this.ctx.sandbox.stub(executable, 'exec');
 
-        await vscode.commands.executeCommand('fossil.clone');
+        await commands.executeCommand('fossil.clone');
         sinon.assert.calledOnce(inputURI);
         sinon.assert.calledOnce(inputPassword);
         sinon.assert.calledOnce(showSaveDialogStub);
@@ -631,26 +617,20 @@ function CloneSuite(this: Suite): void {
     });
 
     test('Cancel username', async () => {
-        const showInputBox = this.ctx.sandbox.stub(
-            vscode.window,
-            'showInputBox'
-        );
+        const showInputBox = this.ctx.sandbox.stub(window, 'showInputBox');
         const inputURI = showInputBox
             .withArgs(sinon.match({ prompt: 'Repository URI' }))
             .resolves('https://example.com/fossil');
         const inputUsername = showInputBox
             .withArgs(sinon.match({ prompt: 'Username' }))
             .resolves();
-        await vscode.commands.executeCommand('fossil.clone');
+        await commands.executeCommand('fossil.clone');
         sinon.assert.calledOnce(inputURI);
         sinon.assert.calledOnce(inputUsername);
     });
 
     test('Empty password', async () => {
-        const showInputBox = this.ctx.sandbox.stub(
-            vscode.window,
-            'showInputBox'
-        );
+        const showInputBox = this.ctx.sandbox.stub(window, 'showInputBox');
         const inputURI = showInputBox
             .withArgs(sinon.match({ prompt: 'Repository URI' }))
             .resolves('https://example.com/fossil');
@@ -662,7 +642,7 @@ function CloneSuite(this: Suite): void {
             .resolves('');
         const showInformationMessage = (
             this.ctx.sandbox.stub(
-                vscode.window,
+                window,
                 'showInformationMessage'
             ) as sinon.SinonStub
         )
@@ -673,7 +653,7 @@ function CloneSuite(this: Suite): void {
             .resolves();
 
         const showSaveDialogStub = this.ctx.sandbox
-            .stub(vscode.window, 'showSaveDialog')
+            .stub(window, 'showSaveDialog')
             .withArgs(sinon.match({ title: 'Select New Fossil File Location' }))
             .resolves(Uri.joinPath(Uri.file(os.tmpdir()), 'test_path'));
 
@@ -681,7 +661,7 @@ function CloneSuite(this: Suite): void {
 
         const execStub = this.ctx.sandbox.stub(executable, 'exec');
 
-        await vscode.commands.executeCommand('fossil.clone');
+        await commands.executeCommand('fossil.clone');
         sinon.assert.calledOnce(inputURI);
         sinon.assert.calledOnce(inputUsername);
         sinon.assert.calledOnce(inputPassword);
@@ -696,22 +676,19 @@ function CloneSuite(this: Suite): void {
     });
 
     test('Cancel on path', async () => {
-        const showInputBox = this.ctx.sandbox.stub(
-            vscode.window,
-            'showInputBox'
-        );
+        const showInputBox = this.ctx.sandbox.stub(window, 'showInputBox');
         const inputURI = showInputBox
             .withArgs(sinon.match({ prompt: 'Repository URI' }))
             .resolves('https://testuser:testpsw@example.com/fossil');
         const showSaveDialogStub = this.ctx.sandbox
-            .stub(vscode.window, 'showSaveDialog')
+            .stub(window, 'showSaveDialog')
             .withArgs(sinon.match({ title: 'Select New Fossil File Location' }))
             .resolves();
 
         const executable = getExecutable();
         const execStub = this.ctx.sandbox.spy(executable, 'exec');
 
-        await vscode.commands.executeCommand('fossil.clone');
+        await commands.executeCommand('fossil.clone');
         sinon.assert.calledOnce(inputURI);
         sinon.assert.calledOnce(showSaveDialogStub);
         sinon.assert.notCalled(execStub);
