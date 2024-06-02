@@ -114,8 +114,7 @@ export function getExecutable(): FossilExecutable {
     return executable;
 }
 
-type ExecFunc = OpenedRepository['exec'];
-type ExecStub = sinon.SinonStub<Parameters<ExecFunc>, ReturnType<ExecFunc>>;
+export type ExecStub = SinonStubT<OpenedRepository['exec']>;
 export function getExecStub(sandbox: sinon.SinonSandbox): ExecStub {
     const repository = getRepository();
     const openedRepository: OpenedRepository = (repository as any).repository;
@@ -123,10 +122,7 @@ export function getExecStub(sandbox: sinon.SinonSandbox): ExecStub {
 }
 
 type RawExecFunc = FossilExecutable['rawExec'];
-type RawExecStub = sinon.SinonStub<
-    Parameters<RawExecFunc>,
-    ReturnType<RawExecFunc>
->;
+type RawExecStub = SinonStubT<RawExecFunc>;
 export function getRawExecStub(sandbox: sinon.SinonSandbox): RawExecStub {
     const repository = getRepository();
     const executable: FossilExecutable = (repository as any).repository
