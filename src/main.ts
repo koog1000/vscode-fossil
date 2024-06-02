@@ -36,7 +36,7 @@ async function init(context: ExtensionContext): Promise<Model | undefined> {
     if (!fossilInfo && !typedConfig.ignoreMissingFossilWarning) {
         const download = localize('downloadFossil', 'Download Fossil');
         const neverShowAgain = localize('neverShowAgain', "Don't Show Again");
-        const editPath = localize('editPath', 'Edit `fossil.path`');
+        const editPath = localize('editPath', 'Edit "fossil.path"');
         const choice = await window.showWarningMessage(
             localize(
                 'notfound',

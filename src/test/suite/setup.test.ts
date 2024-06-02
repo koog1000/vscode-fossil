@@ -129,7 +129,7 @@ function ExecutableSuite(this: Suite): void {
             'Fossil was not found. Install it or configure it ' +
                 "using the 'fossil.path' setting.",
             'Download Fossil',
-            'Edit `fossil.path`',
+            'Edit "fossil.path"',
             "Don't Show Again"
         );
     });
@@ -147,6 +147,22 @@ function ExecutableSuite(this: Suite): void {
             cmd,
             'vscode.open',
             Uri.parse('https://www.fossil-scm.org/')
+        );
+    });
+
+    test('Edit settings button is working', async () => {
+        const noFossil = new NoFossil(this.ctx.sandbox);
+        noFossil.svm.resolves('Edit "fossil.path"');
+        const cmd = this.ctx.sandbox
+            .stub(vscode.commands, 'executeCommand')
+            .withArgs('workbench.action.openSettings')
+            .resolves();
+        await noFossil.activate();
+        sinon.assert.calledOnce(noFossil.svm);
+        sinon.assert.calledOnceWithExactly(
+            cmd,
+            'workbench.action.openSettings',
+            'fossil.path'
         );
     });
 
