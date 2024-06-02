@@ -7,15 +7,22 @@ import {
     Terminal,
     Uri,
     window,
+    workspace,
 } from 'vscode';
 import * as sinon from 'sinon';
-import { SinonStubT, fakeExecutionResult, getExecStub } from './common';
+import {
+    SinonStubT,
+    fakeExecutionResult,
+    getExecStub,
+    getRepository,
+} from './common';
 import * as assert from 'assert/strict';
 import { Suite } from 'mocha';
 import { Credentials } from '../../gitExport';
 import { Octokit, RestEndpointMethodTypes } from '@octokit/rest';
 import { promises } from 'fs';
 import { RequestError } from '@octokit/request-error';
+import { commitStagedTest } from './commitSuite';
 
 const useSpecified = { __sentinel: true } as const;
 
@@ -442,28 +449,7 @@ function GitCancelSuite(this: Suite): void {
     });
 }
 
-export function GitExportSuite(this: Suite): void {
-    test('No session', async () => {
-        // warning! must be first test
-        const helper = new GitExportTestHelper(this.ctx.sandbox);
-        helper.fakeTerminal();
-        helper.getSessionStub.resolves(undefined);
-        const sem = this.ctx.sandbox.stub(window, 'showErrorMessage');
-        await commands.executeCommand('fossil.gitPublish');
-        sinon.assert.calledOnce(helper.getSessionStub);
-        sinon.assert.calledOnceWithMatch(
-            sem,
-            "No github session available, fossil won't export"
-        );
-    });
-
-    test('Export to git (successful)', async () => {
-        const execStub = getExecStub(this.ctx.sandbox);
-        execStub.withArgs(['git', 'export']).resolves(fakeExecutionResult({}));
-        await commands.executeCommand('fossil.gitExport');
-        sinon.assert.calledOnce(execStub);
-    });
-
+function GitPublishSuite(this: Suite): void {
     test('Publish repository to github by user as public', async () => {
         const helper = new GitExportTestHelper(this.ctx.sandbox);
         const term = helper.fakeTerminal();
@@ -600,4 +586,121 @@ export function GitExportSuite(this: Suite): void {
     });
 
     suite('Cancel', GitCancelSuite);
+}
+
+function GitExportAfterCommitSuite(this: Suite): void {
+    const doCommit = async () => {
+        const repository = getRepository();
+        const configCall = this.ctx.sandbox
+            .stub(repository, 'config')
+            .withArgs('last-git-export-repo')
+            .resolves(new Map([['last-git-export-repo', '1']]));
+        const gitExportStub = getExecStub(this.ctx.sandbox)
+            .withArgs(['git', 'export'])
+            .resolves();
+        await commitStagedTest(
+            this.ctx.sandbox,
+            'fossil.commitStaged',
+            gitExportStub
+        );
+        return { configCall, gitExportStub };
+    };
+
+    test('Answer Yes', async () => {
+        const sim = this.ctx.sandbox.stub(window, 'showInformationMessage');
+        sim.resolves('Yes' as any);
+        const { configCall, gitExportStub } = await doCommit();
+        sinon.assert.calledOnce(configCall);
+        sinon.assert.calledOnce(gitExportStub);
+    });
+
+    test('Answer No', async () => {
+        const sim = this.ctx.sandbox.stub(window, 'showInformationMessage');
+        sim.resolves('No' as any);
+        const { configCall, gitExportStub } = await doCommit();
+        sinon.assert.calledOnce(configCall);
+        sinon.assert.notCalled(gitExportStub);
+    });
+
+    const stubConfig = (configStub: any) =>
+        this.ctx.sandbox
+            .stub(workspace, 'getConfiguration')
+            .callThrough()
+            .withArgs('fossil')
+            .returns(configStub);
+
+    test('Can run `git export` automatically', async () => {
+        const configStub = {
+            get: sinon.stub(),
+        };
+        configStub.get.withArgs('confirmGitExport').returns('Automatically');
+        stubConfig(configStub);
+        const { configCall, gitExportStub } = await doCommit();
+        sinon.assert.calledOnce(configCall);
+        sinon.assert.calledOnce(gitExportStub);
+    });
+
+    test('Can ignore `git export`', async () => {
+        const configStub = {
+            get: sinon.stub(),
+        };
+        configStub.get.withArgs('confirmGitExport').returns('Never');
+        stubConfig(configStub);
+        const { configCall, gitExportStub } = await doCommit();
+        sinon.assert.calledOnce(configCall);
+        sinon.assert.notCalled(gitExportStub);
+    });
+
+    const testAnswer = async (answer: 'Always' | 'Never') => {
+        const configStub = {
+            update: sinon.stub(),
+            get: sinon.stub().returns(''),
+        };
+        stubConfig(configStub);
+        const sim = this.ctx.sandbox.stub(window, 'showInformationMessage');
+        sim.resolves(answer as any);
+        const { configCall, gitExportStub } = await doCommit();
+        sinon.assert.calledOnce(configCall);
+        sinon.assert.notCalled(gitExportStub);
+        sinon.assert.calledOnceWithExactly(
+            configStub.update,
+            'confirmGitExport',
+            answer,
+            false
+        );
+    };
+
+    test('Answer Never', async () => {
+        await testAnswer('Never');
+    });
+
+    test('Answer Always', async () => {
+        await testAnswer('Always');
+    });
+}
+
+export function GitExportSuite(this: Suite): void {
+    test('No session', async () => {
+        // warning! must be first test
+        const helper = new GitExportTestHelper(this.ctx.sandbox);
+        helper.fakeTerminal();
+        helper.getSessionStub.resolves(undefined);
+        const sem = this.ctx.sandbox.stub(window, 'showErrorMessage');
+        await commands.executeCommand('fossil.gitPublish');
+        sinon.assert.calledOnce(helper.getSessionStub);
+        sinon.assert.calledOnceWithMatch(
+            sem,
+            "No github session available, fossil won't export"
+        );
+    });
+
+    test('Export to git (successful)', async () => {
+        const execStub = getExecStub(this.ctx.sandbox);
+        execStub.withArgs(['git', 'export']).resolves(fakeExecutionResult({}));
+        await commands.executeCommand('fossil.gitExport');
+        sinon.assert.calledOnce(execStub);
+    });
+
+    suite('Publish', GitPublishSuite);
+    suite('Export After Commit', GitExportAfterCommitSuite);
 }
