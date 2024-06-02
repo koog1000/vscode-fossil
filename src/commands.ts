@@ -731,7 +731,7 @@ export class CommandCenter {
             scmResources,
             s => s.status !== ResourceStatus.ADDED
         );
-        if (discardResources.length > 0) {
+        if (discardResources.length) {
             const confirmFilenames = discardResources.map(r =>
                 path.basename(r.resourceUri.fsPath)
             );
