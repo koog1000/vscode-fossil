@@ -630,9 +630,8 @@ function GitExportAfterCommitSuite(this: Suite): void {
             .returns(configStub);
 
     test('Can run `git export` automatically', async () => {
-        const configStub = {
-            get: sinon.stub(),
-        };
+        const configStub = { get: sinon.stub() };
+        configStub.get.withArgs('username').returns('');
         configStub.get.withArgs('confirmGitExport').returns('Automatically');
         stubConfig(configStub);
         const { configCall, gitExportStub } = await doCommit();
@@ -641,9 +640,8 @@ function GitExportAfterCommitSuite(this: Suite): void {
     });
 
     test('Can ignore `git export`', async () => {
-        const configStub = {
-            get: sinon.stub(),
-        };
+        const configStub = { get: sinon.stub() };
+        configStub.get.withArgs('username').returns('');
         configStub.get.withArgs('confirmGitExport').returns('Never');
         stubConfig(configStub);
         const { configCall, gitExportStub } = await doCommit();
