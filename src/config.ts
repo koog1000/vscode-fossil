@@ -6,7 +6,7 @@ interface ConfigScheme {
     ignoreMissingFossilWarning: boolean;
     path: UnvalidatedFossilExecutablePath;
     autoInOutInterval: number;
-    username: FossilUsername | null;
+    username: FossilUsername; // must be ignored when empty
     autoRefresh: boolean;
     enableRenaming: boolean;
     confirmGitExport: 'Automatically' | 'Never' | null;
@@ -58,7 +58,7 @@ class Config {
      * * This should only be used if the user is different
      *   than the fossil default user.
      */
-    get username(): FossilUsername | null {
+    get username(): FossilUsername {
         return this.get('username');
     }
 

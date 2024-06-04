@@ -102,14 +102,14 @@ about cloning from the extension.
   `"true"` &mdash; enabled
   `"false"` &mdash; disabled, manual refresh still available.
 
-`fossil.path { string / null }`
+`fossil.path { string }`
 
   * Specifies an explicit `fossil` file path to use.
   * This should only be used if `fossil` cannot be found automatically.
-  * The default behaviour is to search for `fossil` in commonly-known
-    install locations and on the PATH.
+  * The default behaviour is to search for `fossil` on the PATH.
+  * Takes effect immediately.
 
-`fossil.username { string / null }`
+`fossil.username { string }`
 
   * Specifies an explicit user to use for fossil commits.
   * This should only be used if the user is different than the fossil default user.

@@ -1061,12 +1061,8 @@
                     "description": "%config.path%"
                 },
                 "fossil.username": {
-                    "type": [
-                        "string",
-                        "null"
-                    ],
-                    "description": "%config.username%",
-                    "default": null
+                    "type": "string",
+                    "description": "%config.username%"
                 },
                 "fossil.confirmGitExport": {
                     "type": "string",
