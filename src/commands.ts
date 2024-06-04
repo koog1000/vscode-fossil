@@ -10,7 +10,6 @@ import {
     Disposable,
     window,
     workspace,
-    OutputChannel,
     SourceControlResourceState,
     SourceControlResourceGroup,
     TextDocumentShowOptions,
@@ -18,6 +17,7 @@ import {
     Selection,
     ExtensionContext,
     SourceControl,
+    LogOutputChannel,
 } from 'vscode';
 import { LineChange, revertChanges } from './revert';
 import * as path from 'path';
@@ -182,7 +182,7 @@ export class CommandCenter {
     constructor(
         private readonly executable: FossilExecutable,
         private readonly model: Model,
-        private readonly outputChannel: OutputChannel,
+        private readonly outputChannel: LogOutputChannel,
         context: ExtensionContext
     ) {
         this.previewManager = new FossilPreviewManager(context, executable);
@@ -1398,7 +1398,7 @@ export class CommandCenter {
                 }
             }
         } else {
-            this.outputChannel.appendLine(
+            this.outputChannel.error(
                 "couldn't create wiki entity - no active preview"
             );
         }
