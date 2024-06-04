@@ -12,7 +12,7 @@ import {
 } from './common';
 import * as assert from 'assert/strict';
 import * as fs from 'fs/promises';
-import { Suite, before, beforeEach } from 'mocha';
+import { Suite, beforeEach } from 'mocha';
 
 export const commitStagedTest = async (
     sandbox: sinon.SinonSandbox,
@@ -50,12 +50,27 @@ export const commitStagedTest = async (
     ]);
 };
 
+const singleFileCommitSetup = async (sandbox: sinon.SinonSandbox) => {
+    const repository = getRepository();
+    const execStub = getExecStub(sandbox);
+    const statusStub = fakeFossilStatus(execStub, 'ADDED minimal.txt\n');
+    await repository.updateModelState();
+    sinon.assert.calledOnce(statusStub);
+    assert.equal(repository.workingGroup.resourceStates.length, 1);
+    await commands.executeCommand('fossil.stageAll');
+    assert.equal(repository.workingGroup.resourceStates.length, 0);
+    assert.equal(repository.stagingGroup.resourceStates.length, 1);
+    const commitStub = execStub
+        .withArgs(sinon.match.array.startsWith(['commit']))
+        .resolves(fakeExecutionResult());
+    return { commitStub, repository };
+};
+
 export function CommitSuite(this: Suite): void {
     const clearInputBox = () => {
         const repository = getRepository();
         repository.sourceControl.inputBox.value = '';
     };
-    before(clearInputBox);
     beforeEach(clearInputBox);
 
     test('Commit using input box', async () => {
@@ -356,5 +371,29 @@ export function CommitSuite(this: Suite): void {
             { modal: true },
             '&&Delete'
         );
+    });
+
+    test('Commit with specified username', async () => {
+        const configStub = {
+            get: sinon.stub().withArgs('username').returns('testUsername'),
+        };
+        this.ctx.sandbox
+            .stub(workspace, 'getConfiguration')
+            .callThrough()
+            .withArgs('fossil')
+            .returns(configStub as any);
+        const { commitStub, repository } = await singleFileCommitSetup(
+            this.ctx.sandbox
+        );
+        repository.sourceControl.inputBox.value = 'custom username test';
+        await commands.executeCommand('fossil.commitWithInput');
+        sinon.assert.calledOnceWithExactly(commitStub, [
+            'commit',
+            '--user-override',
+            'testUsername',
+            'minimal.txt',
+            '-m',
+            'custom username test',
+        ]);
     });
 }
