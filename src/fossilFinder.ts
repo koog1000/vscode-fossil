@@ -6,6 +6,7 @@ import type {
     FossilVersion,
 } from './fossilExecutable';
 import { localize } from './main';
+import { LogOutputChannel } from 'vscode';
 
 export type UnvalidatedFossilExecutablePath = Distinct<
     string,
@@ -38,7 +39,7 @@ function getVersion(
 
 export async function findFossil(
     hint: UnvalidatedFossilExecutablePath,
-    logLine: (test: string) => void
+    outputChannel: LogOutputChannel
 ): Promise<FossilExecutableInfo | undefined> {
     for (const [path, isHint] of [
         [hint, 1],
@@ -49,11 +50,15 @@ export async function findFossil(
             try {
                 stdout = await getVersion(path);
             } catch (e: unknown) {
-                logLine(
-                    isHint
-                        ? `\`fossil.path\` '${path}' is unavailable (${e}). Will try 'fossil' as the path`
-                        : `'${path}' is unavailable (${e}). Fossil extension commands will be disabled`
-                );
+                if (isHint) {
+                    outputChannel.warn(
+                        `\`fossil.path\` '${path}' is unavailable (${e}). Will try 'fossil' as the path`
+                    );
+                } else {
+                    outputChannel.error(
+                        `'${path}' is unavailable (${e}). Fossil extension commands will be disabled`
+                    );
+                }
                 continue;
             }
 
@@ -64,12 +69,12 @@ export async function findFossil(
                     .split('.')
                     .map(s => parseInt(s)) as FossilVersion;
             } else {
-                logLine(
+                outputChannel.error(
                     `Failed to parse fossil version from output: '${stdout}'`
                 );
             }
 
-            logLine(
+            outputChannel.info(
                 localize(
                     'using fossil',
                     'Using fossil {0} from {1}',

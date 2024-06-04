@@ -1,4 +1,11 @@
-import { window, Uri, workspace, ExtensionContext, commands } from 'vscode';
+import {
+    window,
+    Uri,
+    workspace,
+    ExtensionContext,
+    commands,
+    LogOutputChannel,
+} from 'vscode';
 import {
     SinonStubT,
     cleanRoot,
@@ -35,26 +42,28 @@ function ExecutableSuite(this: Suite): void {
     after(resetIgnoreMissingFossilWarning);
 
     test('Invalid executable path', async () => {
-        const appendLine = sinon.stub();
+        const outputChanel = {
+            info: sinon.stub(),
+            warn: sinon.stub(),
+        };
         await fossilFinder.findFossil(
             'non_existing_fossil' as UnvalidatedFossilExecutablePath,
-            appendLine
+            outputChanel as unknown as LogOutputChannel
         );
-        sinon.assert.calledTwice(appendLine);
-        sinon.assert.calledWithExactly(
-            appendLine.firstCall,
+        sinon.assert.calledOnceWithExactly(
+            outputChanel.warn,
             "`fossil.path` 'non_existing_fossil' is unavailable " +
                 '(Error: spawn non_existing_fossil ENOENT). ' +
                 "Will try 'fossil' as the path"
         );
         sinon.assert.calledWithMatch(
-            appendLine.secondCall,
+            outputChanel.info,
             /^Using fossil \d.\d+ from fossil$/
         );
     }).timeout(2000);
 
     test('Execution error is caught and shown', async () => {
-        const appendLine = sinon.stub();
+        const outputChanel = { error: sinon.stub() };
         const childProcess = {
             on: sinon
                 .stub()
@@ -73,10 +82,10 @@ function ExecutableSuite(this: Suite): void {
             );
         await fossilFinder.findFossil(
             '' as UnvalidatedFossilExecutablePath,
-            appendLine
+            outputChanel as unknown as LogOutputChannel
         );
         sinon.assert.calledOnceWithExactly(
-            appendLine,
+            outputChanel.error,
             "'fossil' is unavailable (Error: mocked error). " +
                 'Fossil extension commands will be disabled'
         );

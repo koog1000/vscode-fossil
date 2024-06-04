@@ -175,10 +175,9 @@ export class Model implements Disposable {
         const fossilHint = typedConfig.path;
         if (this.lastUsedHist != fossilHint) {
             this.lastUsedHist = fossilHint;
-            return findFossil(
-                fossilHint,
-                this.executable.log.bind(this.executable)
-            ).then(this.foundExecutable.bind(this));
+            return findFossil(fossilHint, this.executable.outputChannel).then(
+                this.foundExecutable.bind(this)
+            );
         }
     }
 

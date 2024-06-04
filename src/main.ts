@@ -23,11 +23,11 @@ async function init(context: ExtensionContext): Promise<Model | undefined> {
         new Disposable(() => Disposable.from(...disposables).dispose())
     );
 
-    const outputChannel = window.createOutputChannel('Fossil');
+    const outputChannel = window.createOutputChannel('Fossil', { log: true });
     disposables.push(outputChannel);
 
     const fossilHist = typedConfig.path;
-    const fossilInfo = await findFossil(fossilHist, outputChannel.appendLine);
+    const fossilInfo = await findFossil(fossilHist, outputChannel);
     const executable = new FossilExecutable(outputChannel);
 
     const model = new Model(executable, fossilHist);

@@ -6,7 +6,7 @@ import type {
 } from './openedRepository';
 import * as path from 'path';
 import * as fs from 'fs/promises';
-import { window, OutputChannel, ProgressLocation } from 'vscode';
+import { window, LogOutputChannel, ProgressLocation } from 'vscode';
 import * as cp from 'child_process';
 import { dispose, IDisposable, toDisposable } from './util';
 import * as interaction from './interaction';
@@ -129,7 +129,7 @@ export function toString(this: ExecFailure): string {
 export class FossilExecutable {
     private fossilPath!: FossilExecutablePath;
     public version!: FossilVersion;
-    constructor(private readonly outputChannel: OutputChannel) {}
+    constructor(public readonly outputChannel: LogOutputChannel) {}
 
     setInfo(info: FossilExecutableInfo) {
         this.fossilPath = info.path;
@@ -362,7 +362,7 @@ export class FossilExecutable {
             })();
 
             if (options.logErrors !== false && result.stderr) {
-                this.log(`${result.stderr}\n`);
+                this.outputChannel.error(result.stderr);
             }
             const failure: ExecFailure = {
                 ...result,
@@ -385,8 +385,8 @@ export class FossilExecutable {
         return result as ExecSuccess;
     }
 
-    public log(output: string): void {
-        this.outputChannel.appendLine(output);
+    private log(output: string): void {
+        this.outputChannel.info(output);
     }
     private logArgs(args: FossilArgs, reason: string, info: string): void {
         if (args[0] == 'clone') {
