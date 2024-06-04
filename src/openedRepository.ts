@@ -259,14 +259,14 @@ export class OpenedRepository {
     async commit(
         message: FossilCommitMessage,
         fileList: RelativePath[],
-        user: FossilUsername | null,
+        user: FossilUsername,
         newBranch: NewBranchOptions | undefined
     ): Promise<ExecResult> {
         // always pass a message, otherwise fossil
         // internal editor will spawn
         return this.exec([
             'commit',
-            ...(user ? ['--user-override', user] : []),
+            ...(user.length ? ['--user-override', user] : []),
             ...(newBranch
                 ? [
                       ...(newBranch.branch
