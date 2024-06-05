@@ -26,7 +26,7 @@ _Work in progress_.
 | fossil.fileLog | Show file history... |
 | fossil.forget | Forget Files |
 | fossil.ignore | Add to ignore-glob | •&nbsp;Command palette<br>•&nbsp;Untracked submenu | 1. Modify `/.fossil-settings/ignore-glob`<br>2. Add `ignore-glob` to the current checkout (not staging)<br>3. Show ignore-glob file
-| fossil.init | Initialize Fossil Repository |
+| fossil.init | Initialize Fossil Repository | •&nbsp;Main SCM menu<br>•&nbsp;Command palette | 1. Ask `.fossil` path<br>2. Ask project name<br>3. Ask project description<br>4. Run `fossil init`<br>5. Ask to open repository
 | fossil.integrate | Integrate into working directory... |
 | fossil.log | Log... |
 | fossil.merge | Merge into working directory... |
