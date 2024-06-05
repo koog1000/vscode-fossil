@@ -1,5 +1,17 @@
 # Changelog
 
+# v0.6.0
+
+### What's New
+
+- Configuration changes:
+  * `fossil.path` option can change `fossil` path without restart
+  * `fossil.path` and `fossil.username` options are of string type now, i.e. easily editable in "Settings" panel
+  * Remove `fossil.enabled` option
+- Warn user when `fossil` executable is not found
+- Log output with timestamp and log level
+
+
 # v0.5.7
 
 ### What's New
