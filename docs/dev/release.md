@@ -1,6 +1,6 @@
 # How to release vscode-fossil extension
 
-## Desribe the changes
+## Describe the changes
 1. Update version in `package.json`
 1. Update `CHANGELOG.md`
 
