@@ -403,6 +403,7 @@ export class Repository implements IDisposable, InteractionAPI {
         this._sourceControl.acceptInputCommand = {
             command: 'fossil.commitWithInput',
             title: localize('commit', 'Commit'),
+            arguments: [this satisfies Repository],
         };
         this._sourceControl.quickDiffProvider = this;
 

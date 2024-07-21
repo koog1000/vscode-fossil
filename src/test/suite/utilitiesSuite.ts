@@ -209,4 +209,12 @@ export function utilitiesSuite(this: Suite): void {
         sinon.assert.calledOnce(createTerminalstub);
         sinon.assert.calledOnceWithExactly(sendText, 'fossil ui');
     });
+    test('Commit input box knows which repository to use', () => {
+        const repository = getRepository();
+        assert.deepStrictEqual(repository.sourceControl.acceptInputCommand, {
+            command: 'fossil.commitWithInput',
+            title: 'Commit',
+            arguments: [repository],
+        });
+    });
 }
