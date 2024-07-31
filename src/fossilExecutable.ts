@@ -19,6 +19,7 @@ export type FossilStdOut = Distinct<
     'raw fossil stdout' | 'fossil status stdout' | 'RenderedHTML'
 >;
 export type FossilStdErr = Distinct<string, 'raw fossil stderr'>;
+export type Reason = Distinct<string, 'exec reason'> | undefined;
 
 /** cwd for executing fossil */
 export type FossilCWD =
@@ -185,7 +186,7 @@ export class FossilExecutable {
         fossilCwd: FossilCWD,
         args: FossilArgs
     ): Promise<Buffer | undefined> {
-        const res = await this._loggingExec(args, '', { cwd: fossilCwd });
+        const res = await this._loggingExec(args, { cwd: fossilCwd });
         if (!res.exitCode) {
             return res.stdout;
         }
@@ -295,13 +296,13 @@ export class FossilExecutable {
 
     private async _loggingExec(
         args: FossilArgs,
-        reason: string,
-        options: FossilSpawnOptions
+        options: FossilSpawnOptions,
+        reason?: Reason
     ) {
         const startTimeHR = process.hrtime();
         const waitAndLog = (timeout: number): ReturnType<typeof setTimeout> => {
             return setTimeout(() => {
-                this.logArgs(args, reason, 'still running');
+                this.logArgs(args, 'still running', reason);
                 logTimeout = waitAndLog(timeout * 4);
             }, timeout);
         };
@@ -312,8 +313,8 @@ export class FossilExecutable {
         const durationHR = process.hrtime(startTimeHR);
         this.logArgs(
             args,
-            reason,
-            `${Math.floor(msFromHighResTime(durationHR))}ms`
+            `${Math.floor(msFromHighResTime(durationHR))}ms`,
+            reason
         );
         return resultRaw;
     }
@@ -321,13 +322,17 @@ export class FossilExecutable {
     public async exec(
         cwd: FossilCWD,
         args: FossilArgs,
-        reason = '',
+        reason?: Reason,
         options: Omit<FossilSpawnOptions, 'cwd'> = {} as const
     ): Promise<ExecResult> {
-        const resultRaw = await this._loggingExec(args, reason, {
-            cwd,
-            ...options,
-        });
+        const resultRaw = await this._loggingExec(
+            args,
+            {
+                cwd,
+                ...options,
+            },
+            reason
+        );
         const result: ExecResult = {
             ...resultRaw,
             stdout: resultRaw.stdout.toString('utf8') as FossilStdOut,
@@ -388,7 +393,7 @@ export class FossilExecutable {
     private log(output: string): void {
         this.outputChannel.info(output);
     }
-    private logArgs(args: FossilArgs, reason: string, info: string): void {
+    private logArgs(args: FossilArgs, info: string, reason: Reason): void {
         if (args[0] == 'clone') {
             // replace password with 9 asterisks
             args = [...args];

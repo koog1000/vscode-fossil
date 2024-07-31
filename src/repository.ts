@@ -73,7 +73,7 @@ import type { InteractionAPI, NewBranchOptions } from './interaction';
 import { FossilUriParams, toFossilUri } from './uri';
 
 import { localize } from './main';
-import type { ExecFailure, ExecResult } from './fossilExecutable';
+import type { ExecFailure, ExecResult, Reason } from './fossilExecutable';
 const iconsRootPath = path.join(path.dirname(__dirname), 'resources', 'icons');
 
 type AvailableIcons =
@@ -427,7 +427,7 @@ export class Repository implements IDisposable, InteractionAPI {
         );
         this._sourceControl.statusBarCommands = statusBar.commands;
 
-        this.updateModelState('opening repository');
+        this.updateModelState('opening repository' as Reason);
 
         this.disposables.push(new AutoIncomingOutgoing(this));
     }
@@ -440,7 +440,7 @@ export class Repository implements IDisposable, InteractionAPI {
     }
 
     @throttle
-    async status(reason: string): Promise<ExecResult> {
+    async status(reason: Reason): Promise<ExecResult> {
         const statusPromise = this.repository.getStatus(reason);
         await this.runWithProgress(Operation.Status, () => statusPromise);
         this.updateInputBoxPlaceholder();
@@ -467,7 +467,7 @@ export class Repository implements IDisposable, InteractionAPI {
     @throttle
     private async updateWhenIdleAndWait(): Promise<void> {
         await this.whenIdleAndFocused();
-        await this.updateModelState('idle update');
+        await this.updateModelState('idle update' as Reason);
         await delay(5000);
     }
 
@@ -1065,7 +1065,7 @@ export class Repository implements IDisposable, InteractionAPI {
      */
     @throttle
     public async updateModelState(
-        reason = 'model state is updating'
+        reason: Reason = 'model state is updating' as Reason
     ): Promise<ExecFailure | undefined> {
         const result = await this.repository.getStatus(reason);
         if (result.exitCode) {

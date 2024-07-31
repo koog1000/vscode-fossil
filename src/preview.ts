@@ -1,4 +1,9 @@
-import { FossilExecutable, FossilCWD, FossilArgs } from './fossilExecutable';
+import {
+    FossilExecutable,
+    FossilCWD,
+    FossilArgs,
+    Reason,
+} from './fossilExecutable';
 import * as path from 'path';
 import {
     Uri,
@@ -271,7 +276,7 @@ class FossilPreview implements IDisposable {
                     mimetype,
                     ...(where == 'Technote' ? ['--technote', 'now'] : []),
                 ],
-                '',
+                '' as Reason,
                 {
                     stdin_data: source,
                 }
@@ -303,10 +308,15 @@ class FossilPreview implements IDisposable {
                 ];
             }
 
-            const result = await this.executable.exec(this.dirname, args, '', {
-                stdin_data: this.current_content[0],
-                logErrors: false,
-            });
+            const result = await this.executable.exec(
+                this.dirname,
+                args,
+                'preview' as Reason,
+                {
+                    stdin_data: this.current_content[0],
+                    logErrors: false,
+                }
+            );
             let html: RenderedHTML;
             if (!result.exitCode) {
                 html = result.stdout as RenderedHTML;

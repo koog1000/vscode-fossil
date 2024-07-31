@@ -11,6 +11,7 @@ import * as assert from 'assert/strict';
 import * as fs from 'fs/promises';
 import { OpenedRepository } from '../../openedRepository';
 import { Suite, before } from 'mocha';
+import { Reason } from '../../fossilExecutable';
 
 function PullAndPushSuite(this: Suite): void {
     const noRemotes = async (
@@ -432,7 +433,7 @@ export function StageSuite(this: Suite): void {
         const execStub = getExecStub(this.ctx.sandbox);
         await fakeFossilStatus(execStub, status);
         const repository = getRepository();
-        await repository.updateModelState('test');
+        await repository.updateModelState('test' as Reason);
     };
 
     test('Stage from working group', async () => {
