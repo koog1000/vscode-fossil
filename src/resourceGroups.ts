@@ -10,7 +10,7 @@ import { FossilResource } from './repository';
 
 import { localize } from './main';
 
-export interface IGroupStatusesParams {
+interface IGroupStatusesParams {
     repositoryRoot: FossilRoot;
     statusGroups: IStatusGroups;
     fileStatuses: FileStatus[];

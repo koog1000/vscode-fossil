@@ -61,7 +61,6 @@ import {
     createEmptyStatusGroups,
     IStatusGroups,
     groupStatuses,
-    IGroupStatusesParams,
 } from './resourceGroups';
 import {
     AutoInOutState,
@@ -1078,7 +1077,7 @@ export class Repository implements IDisposable, InteractionAPI {
 
         this._currentBranch = await currentBranchPromise;
 
-        const groupInput: IGroupStatusesParams = {
+        const groupInput = {
             repositoryRoot: this.repository.root,
             fileStatuses: fossilStatus.statuses,
             statusGroups: this._groups,
