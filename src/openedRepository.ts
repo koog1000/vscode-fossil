@@ -15,6 +15,7 @@ import {
     FossilSpawnOptions,
     FossilArgs,
     ExecResult,
+    Reason,
 } from './fossilExecutable';
 import { NewBranchOptions } from './interaction';
 import { FossilCWD } from './fossilExecutable';
@@ -205,7 +206,7 @@ export class OpenedRepository {
         const result = await executable.exec(
             cwd,
             ['info'],
-            `getting root for '${anypath}'`
+            `getting root for '${anypath}'` as Reason
         );
         const root = result.stdout.match(/local-root:\s*(.+)\/\s/);
         if (root) {
@@ -216,7 +217,7 @@ export class OpenedRepository {
 
     async exec(
         args: FossilArgs,
-        reason = '',
+        reason?: Reason,
         options: Omit<FossilSpawnOptions, 'cwd'> = {} as const
     ): Promise<ExecResult> {
         return this.executable.exec(this.root, args, reason, options);
@@ -539,7 +540,7 @@ export class OpenedRepository {
 
     /** Report the change status of files in the current checkout */
     @throttle
-    async getStatus(reason: string): Promise<ExecResult> {
+    async getStatus(reason: Reason): Promise<ExecResult> {
         return this.exec(['status', '--differ', '--merge'], reason);
     }
 
@@ -655,7 +656,7 @@ export class OpenedRepository {
     async config<T extends ConfigKey>(keys: T[]): Promise<Map<T, string>> {
         const result = await this.exec(
             ['sqlite', '--readonly'],
-            'reading configuration for github',
+            'reading configuration for github' as Reason,
             {
                 stdin_data:
                     '.mode json\n' +

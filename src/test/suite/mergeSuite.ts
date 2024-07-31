@@ -14,6 +14,7 @@ import * as assert from 'assert/strict';
 import * as fs from 'fs/promises';
 import { FossilBranch, OpenedRepository } from '../../openedRepository';
 import { Suite } from 'mocha';
+import { Reason } from '../../fossilExecutable';
 
 export function MergeSuite(this: Suite): void {
     test('Merge error is shown', async () => {
@@ -112,7 +113,7 @@ export function MergeSuite(this: Suite): void {
         sinon.assert.calledOnce(sqp);
         sinon.assert.calledOnce(sib);
 
-        await repository.updateModelState('test');
+        await repository.updateModelState('test' as Reason);
         assertGroups(repository, new Map(), new Map());
     }).timeout(5000);
 

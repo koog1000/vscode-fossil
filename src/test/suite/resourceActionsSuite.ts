@@ -8,7 +8,7 @@ import {
     TextDocumentShowOptions,
 } from 'vscode';
 import * as sinon from 'sinon';
-import { FossilCWD } from '../../fossilExecutable';
+import { FossilCWD, Reason } from '../../fossilExecutable';
 import {
     assertGroups,
     cleanupFossil,
@@ -76,7 +76,7 @@ export function resourceActionsSuite(this: Suite): void {
         let statusStub = fakeFossilStatus(execStub, 'EXTRA a.txt\nEXTRA b.txt');
 
         const repository = getRepository();
-        await repository.updateModelState('test');
+        await repository.updateModelState('test' as Reason);
         sinon.assert.calledOnce(statusStub);
         assert.equal(repository.untrackedGroup.resourceStates.length, 2);
         assertGroups(repository, new Map(), new Map());
@@ -105,7 +105,7 @@ export function resourceActionsSuite(this: Suite): void {
         await cleanupFossil(repository);
         const execStub = getExecStub(this.ctx.sandbox);
         const statusStub = fakeFossilStatus(execStub, 'ADDED a\nADDED b');
-        await repository.updateModelState('test');
+        await repository.updateModelState('test' as Reason);
         sinon.assert.calledOnce(statusStub);
         assert.equal(repository.workingGroup.resourceStates.length, 2);
         assert.equal(repository.stagingGroup.resourceStates.length, 0);

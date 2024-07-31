@@ -14,6 +14,7 @@ import * as fs from 'fs/promises';
 import { OpenedRepository, ResourceStatus } from '../../openedRepository';
 import { delay, eventToPromise } from '../../util';
 import { Suite, before } from 'mocha';
+import { Reason } from '../../fossilExecutable';
 
 export function RenameSuite(this: Suite): void {
     before(async () => {
@@ -81,7 +82,7 @@ export function RenameSuite(this: Suite): void {
         sinon.assert.calledOnceWithExactly(
             status,
             ['status', '--differ', '--merge'],
-            'file rename event'
+            'file rename event' as Reason
         );
         sinon.assert.calledOnceWithExactly(
             sim,

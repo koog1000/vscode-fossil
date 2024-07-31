@@ -19,7 +19,7 @@ import {
     commands,
     ConfigurationChangeEvent,
 } from 'vscode';
-import type { FossilExecutable } from './fossilExecutable';
+import type { FossilExecutable, Reason } from './fossilExecutable';
 import { anyEvent, filterEvent, dispose, eventToPromise } from './util';
 import { memoize, debounce, sequentialize } from './decorators';
 import * as path from 'path';
@@ -343,7 +343,9 @@ export class Model implements Disposable {
         for (const { oldUri, newUri } of e.files) {
             const repository = this.getRepository(oldUri);
             if (repository) {
-                await repository.updateModelState('file rename event');
+                await repository.updateModelState(
+                    'file rename event' as Reason
+                );
                 if (
                     repository.isInAnyGroup(oldUri) ||
                     repository.isDirInAnyGroup(oldUri)
