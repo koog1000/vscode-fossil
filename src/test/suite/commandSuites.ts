@@ -323,7 +323,6 @@ export function CleanSuite(this: Suite): void {
             { modal: true },
             '&&Delete Files'
         );
-        sinon.assert.calledOnceWithExactly;
         sinon.assert.calledOnceWithMatch(cleanCallStub, [
             'clean',
             ...repository.untrackedGroup.resourceStates.map(
@@ -362,7 +361,6 @@ export function CleanSuite(this: Suite): void {
             { modal: true },
             '&&Delete Files'
         );
-        sinon.assert.calledOnceWithExactly;
         sinon.assert.calledOnceWithMatch(cleanCallStub, [
             'clean',
             ...repository.untrackedGroup.resourceStates.map(
