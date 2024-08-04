@@ -3,11 +3,11 @@ import { commands, window, workspace, Uri } from 'vscode';
 import * as assert from 'assert/strict';
 import * as fs from 'fs/promises';
 import * as vscode from 'vscode';
-import { languages } from 'vscode';
+import type { languages } from 'vscode';
 import * as sinon from 'sinon';
 import { add, getRepository } from './common';
-import { OpenedRepository } from '../../openedRepository';
-import { LineChange } from '../../revert';
+import type { OpenedRepository } from '../../openedRepository';
+import type { LineChange } from '../../revert';
 import { delay } from '../../util';
 
 function PraiseSuite(this: Suite) {
