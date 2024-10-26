@@ -561,7 +561,7 @@ export class OpenedRepository {
                 info.set(key, value);
             }
         }
-        const checkoutStr: string | undefined = info.get('checkout')!;
+        const checkoutStr = info.get('checkout')!;
         const spaceIdx = checkoutStr.indexOf(' ');
         const checkout = {
             checkin: checkoutStr.slice(0, spaceIdx) as FossilCheckin,
