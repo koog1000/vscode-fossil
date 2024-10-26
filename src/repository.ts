@@ -731,16 +731,16 @@ export class Repository implements IDisposable, InteractionAPI {
 
     @throttle
     async cleanAll(): Promise<void> {
-        await this.runWithProgress(Operation.Clean, async () => {
-            this.repository.cleanAll();
-        });
+        await this.runWithProgress(Operation.Clean, async () =>
+            this.repository.cleanAll()
+        );
     }
 
     @throttle
     async clean(paths: string[]): Promise<void> {
-        await this.runWithProgress(Operation.Clean, async () => {
-            this.repository.clean(paths);
-        });
+        await this.runWithProgress(Operation.Clean, async () =>
+            this.repository.clean(paths)
+        );
     }
 
     async newBranch(newBranch: NewBranchOptions): Promise<ExecResult> {
