@@ -3,10 +3,11 @@ import { Uri } from 'vscode';
 import * as sinon from 'sinon';
 import * as assert from 'assert/strict';
 import * as fs from 'fs';
-import { getRepository } from './common';
+import { getExecStub, getRepository } from './common';
 import { Suite, afterEach, beforeEach } from 'mocha';
 import { debounce, memoize, sequentialize, throttle } from '../../decorators';
 import { delay } from '../../util';
+import { Reason } from '../../fossilExecutable';
 
 function undoSuite(this: Suite) {
     test('Undo and redo warning', async () => {
@@ -38,16 +39,25 @@ function undoSuite(this: Suite) {
         await fs.promises.writeFile(undoTxtPath, 'line\n');
 
         const repository = getRepository();
-        await repository.updateModelState();
+        const execStub = getExecStub(this.ctx.sandbox);
+
+        await repository.updateModelState('Test' as Reason);
         assert.equal(repository.untrackedGroup.resourceStates.length, 1);
 
         showWarningMessage.onFirstCall().resolves('&&Delete file');
 
+        assert.ok(fs.existsSync(undoTxtPath));
         await vscode.commands.executeCommand(
             'fossil.deleteFiles',
             repository.untrackedGroup
         );
-        sinon.assert.calledOnce(showWarningMessage);
+        sinon.assert.calledOnceWithExactly(
+            showWarningMessage,
+            'Are you sure you want to DELETE undo-fuarw.txt?\nThis is IRREVERSIBLE!\nThis file will be FOREVER LOST if you proceed.',
+            { modal: true },
+            '&&Delete file'
+        );
+        sinon.assert.calledWithExactly(execStub, ['clean', undoTxtPath]);
         assert.ok(!fs.existsSync(undoTxtPath));
 
         const showInformationMessage: sinon.SinonStub = this.ctx.sandbox.stub(
