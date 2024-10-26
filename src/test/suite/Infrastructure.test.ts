@@ -26,9 +26,11 @@ suite('Infrastructure', () => {
             .resolves();
         const executable = getExecutable();
         const result = await executable.exec(cwd, ['fizzbuzz'] as any);
+        const fossilPath = (executable as any).fossilPath as string;
         assert.deepEqual(result, {
             message: 'Failed to execute fossil',
-            stderr: 'fossil: unknown command: fizzbuzz\nfossil: use "help" for more information\n' as FossilStdErr,
+            stderr: (`${fossilPath}: unknown command: fizzbuzz\n` +
+                `${fossilPath}: use "help" for more information\n`) as FossilStdErr,
             stdout: '' as FossilStdOut,
             exitCode: 1,
             args: ['fizzbuzz' as any],
