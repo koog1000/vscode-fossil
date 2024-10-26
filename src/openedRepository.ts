@@ -20,7 +20,9 @@ import {
 import { NewBranchOptions } from './interaction';
 import { FossilCWD } from './fossilExecutable';
 
-export type Distinct<T, DistinctName> = T & { __TYPE__: DistinctName };
+export type Distinct<T, DistinctName extends string> = T & {
+    __TYPE__: DistinctName;
+};
 /** path to .fossil */
 export type FossilPath = Distinct<string, 'path to .fossil'>;
 /** local repository root */
