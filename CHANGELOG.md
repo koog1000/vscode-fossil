@@ -1,5 +1,12 @@
 # Changelog
 
+# v0.6.1
+
+### Bug Fixes
+
+- Commit message input requested repository selection when multiple repositories were open.
+- Five fossil commands did not wait for completion; this does not impact users.
+
 # v0.6.0
 
 ### What's New
