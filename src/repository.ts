@@ -693,12 +693,13 @@ export class Repository implements IDisposable, InteractionAPI {
             return this.stagingGroup.resourceStates.map(r =>
                 this.mapResourceToRepoRelativePath(r)
             );
-        } else if (scope === CommitScope.WORKING_GROUP) {
+        }
+        if (scope === CommitScope.WORKING_GROUP) {
             return this.workingGroup.resourceStates.map(r =>
                 this.mapResourceToRepoRelativePath(r)
             );
         }
-        return [];
+        return []; // scope === CommitScope.ALL
     }
 
     @throttle
