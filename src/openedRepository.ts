@@ -410,7 +410,7 @@ export class OpenedRepository {
      * paths[] will cause damage
      */
     async cleanAll(): Promise<void> {
-        this.exec(['clean']);
+        await this.exec(['clean']);
     }
 
     async ignore(paths: RelativePath[]): Promise<void> {

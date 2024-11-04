@@ -899,7 +899,7 @@ export class Repository implements IDisposable, InteractionAPI {
     ): Promise<void> {
         return this.runWithProgress(Operation.Commit, async () => {
             const fileList = this.scopeToFileList(scope);
-            this.repository.stash(message, operation, fileList);
+            return this.repository.stash(message, operation, fileList);
         });
     }
 
