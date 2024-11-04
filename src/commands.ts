@@ -1089,7 +1089,7 @@ export class CommandCenter {
         const items = await repository.stashList();
         const stashId = await interaction.pickStashItem(items, operation);
         if (stashId) {
-            repository.stashApplyOrDrop(operation, stashId);
+            return repository.stashApplyOrDrop(operation, stashId);
         }
     }
 
