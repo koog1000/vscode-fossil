@@ -897,10 +897,13 @@ export class Repository implements IDisposable, InteractionAPI {
         scope: Exclude<CommitScope, CommitScope.UNKNOWN>,
         operation: 'save' | 'snapshot'
     ): Promise<void> {
-        return this.runWithProgress(Operation.Commit, async () => {
-            const fileList = this.scopeToFileList(scope);
-            return this.repository.stash(message, operation, fileList);
-        });
+        return this.runWithProgress(Operation.Commit, async () =>
+            this.repository.stash(
+                message,
+                operation,
+                this.scopeToFileList(scope)
+            )
+        );
     }
 
     async stashList(): Promise<StashItem[]> {
