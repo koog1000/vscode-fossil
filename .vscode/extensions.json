@@ -1,5 +1,6 @@
 {
 	"recommendations": [
 		"RedCMD.tmlanguage-syntax-highlighter",
+		"pflannery.vscode-versionlens",
 	]
 }
