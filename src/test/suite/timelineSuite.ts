@@ -23,8 +23,7 @@ export function timelineSuite(this: Suite): void {
     let file2uri: vscode.Uri;
 
     before(async () => {
-        const repository = getRepository();
-        await cleanupFossil(repository);
+        await cleanupFossil(getRepository());
         await add('file1.txt', 'line1\n', 'file1.txt: first');
         await add('file1.txt', 'line1\nline2\n', 'file1.txt: second', 'SKIP');
         await add(

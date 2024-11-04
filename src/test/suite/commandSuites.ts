@@ -14,7 +14,7 @@ import {
 import * as assert from 'assert/strict';
 import * as fs from 'fs/promises';
 import { OpenedRepository, ResourceStatus } from '../../openedRepository';
-import { Suite, Func, Test } from 'mocha';
+import { Suite, before, Func, Test } from 'mocha';
 import { toFossilUri } from '../../uri';
 
 declare module 'mocha' {
@@ -46,11 +46,9 @@ export function StatusSuite(this: Suite): void {
         await fs.unlink(path.fsPath);
         const repository = getRepository();
         await repository.updateModelState();
-        assertGroups(
-            repository,
-            new Map([[path.fsPath, ResourceStatus.MISSING]]),
-            new Map()
-        );
+        assertGroups(repository, {
+            working: [[path.fsPath, ResourceStatus.MISSING]],
+        });
     }).timeout(5000);
 
     test('Rename is visible in Source Control panel', async () => {
@@ -60,7 +58,7 @@ export function StatusSuite(this: Suite): void {
         const newFilename = 'sriciscp-renamed.txt';
         const oldUri = await add(oldFilename, 'test\n', `add ${oldFilename}`);
         await repository.updateModelState();
-        assertGroups(repository, new Map(), new Map());
+        assertGroups(repository, {});
 
         const openedRepository: OpenedRepository = (repository as any)
             .repository;
@@ -68,11 +66,9 @@ export function StatusSuite(this: Suite): void {
         await openedRepository.exec(['mv', oldFilename, newFilename, '--hard']);
         await repository.updateModelState();
         const barPath = Uri.joinPath(oldUri, '..', newFilename).fsPath;
-        assertGroups(
-            repository,
-            new Map([[barPath, ResourceStatus.RENAMED]]),
-            new Map()
-        );
+        assertGroups(repository, {
+            working: [[barPath, ResourceStatus.RENAMED]],
+        });
     }).timeout(15000);
 
     test('Merge is visible in Source Control panel', async () => {
@@ -100,14 +96,12 @@ export function StatusSuite(this: Suite): void {
         await openedRepository.exec(['update', 'trunk']);
         await openedRepository.exec(['merge', 'test_brunch']);
         await repository.updateModelState();
-        assertGroups(
-            repository,
-            new Map([
+        assertGroups(repository, {
+            working: [
                 [barPath, ResourceStatus.ADDED],
                 [fooPath, ResourceStatus.MODIFIED],
-            ]),
-            new Map()
-        );
+            ],
+        });
     }).timeout(10000);
 
     test.if(process.platform != 'win32', 'Meta', async () => {
@@ -186,51 +180,69 @@ export function StatusSuite(this: Suite): void {
         await fs.mkdir(not_file_path);
 
         await repository.updateModelState();
-        assertGroups(
-            repository,
-            new Map([
+        assertGroups(repository, {
+            working: [
                 [executable_path, ResourceStatus.MODIFIED],
                 [unexec_path, ResourceStatus.MODIFIED],
                 [symlink_path, ResourceStatus.MODIFIED],
                 [unlink_path, ResourceStatus.MODIFIED],
                 [not_file_path, ResourceStatus.MISSING],
-            ]),
-            new Map()
-        );
+            ],
+        });
         new Map();
         await fs.rmdir(not_file_path);
     }).timeout(20000);
 
     const testRename = async (
-        status: string,
-        before: string,
-        after: string
+        status: `${'RENAMED' | 'EDITED'} ${'a' | 'a.txt  ->  b'}.txt`,
+        before: 'a.txt',
+        after: 'a.txt' | 'b.txt',
+        resourceStatus: ResourceStatus
     ) => {
         const repository = getRepository();
         const execStub = getExecStub(this.ctx.sandbox);
         await fakeFossilStatus(execStub, status);
         await repository.updateModelState();
-        const folder = vscode.workspace.workspaceFolders![0].uri;
-        const uriBefore = Uri.joinPath(folder, before).toString();
-        const uriAfter = Uri.joinPath(folder, after).toString();
-        assert.equal(repository.workingGroup.resourceStates.length, 1);
+        const root = vscode.workspace.workspaceFolders![0].uri;
+        const uriBefore = Uri.joinPath(root, before);
+        const uriAfter = Uri.joinPath(root, after);
+        assertGroups(repository, {
+            working: [[uriAfter.fsPath, resourceStatus]],
+        });
         const resource = repository.workingGroup.resourceStates[0];
-        assert.equal(resource.resourceUri.toString(), uriAfter);
-        assert.equal(resource.original.toString(), uriBefore);
+        assert.equal(resource.original.toString(), uriBefore.toString());
         assert.ok(resource.renameResourceUri);
-        assert.equal(resource.renameResourceUri.toString(), uriAfter);
+        assert.equal(
+            resource.renameResourceUri.toString(),
+            uriAfter.toString()
+        );
     };
 
     test('Renamed (pre 2.19)', async () => {
-        await testRename('RENAMED a.txt', 'a.txt', 'a.txt');
+        await testRename(
+            'RENAMED a.txt',
+            'a.txt',
+            'a.txt',
+            ResourceStatus.RENAMED
+        );
     });
 
     test('Renamed (since 2.19)', async () => {
-        await testRename('RENAMED a.txt  ->  b.txt', 'a.txt', 'b.txt');
+        await testRename(
+            'RENAMED a.txt  ->  b.txt',
+            'a.txt',
+            'b.txt',
+            ResourceStatus.RENAMED
+        );
     });
 
     test('Renamed (since 2.23)', async () => {
-        await testRename('EDITED a.txt  ->  b.txt', 'a.txt', 'b.txt');
+        await testRename(
+            'EDITED a.txt  ->  b.txt',
+            'a.txt',
+            'b.txt',
+            ResourceStatus.MODIFIED
+        );
     });
 }
 
@@ -279,6 +291,12 @@ export function TagSuite(this: Suite): void {
 }
 
 export function CleanSuite(this: Suite): void {
+    let rootUri: Uri;
+
+    before(() => {
+        rootUri = workspace.workspaceFolders![0].uri;
+    });
+
     test('Clean', async () => {
         const swm: sinon.SinonStub = this.ctx.sandbox.stub(
             window,
@@ -306,7 +324,12 @@ export function CleanSuite(this: Suite): void {
             .resolves();
         await fakeFossilStatus(execStub, 'EXTRA a.txt\nEXTRA b.txt');
         await repository.updateModelState();
-        assert.equal(repository.untrackedGroup.resourceStates.length, 2);
+        assertGroups(repository, {
+            untracked: [
+                [Uri.joinPath(rootUri, 'a.txt').fsPath, ResourceStatus.EXTRA],
+                [Uri.joinPath(rootUri, 'b.txt').fsPath, ResourceStatus.EXTRA],
+            ],
+        });
         const swm: sinon.SinonStub = this.ctx.sandbox.stub(
             window,
             'showWarningMessage'
@@ -342,7 +365,13 @@ export function CleanSuite(this: Suite): void {
             'EXTRA a.txt\nEXTRA b.txt\nEXTRA c.txt'
         );
         await repository.updateModelState();
-        assert.equal(repository.untrackedGroup.resourceStates.length, 3);
+        assertGroups(repository, {
+            untracked: [
+                [Uri.joinPath(rootUri, 'a.txt').fsPath, ResourceStatus.EXTRA],
+                [Uri.joinPath(rootUri, 'b.txt').fsPath, ResourceStatus.EXTRA],
+                [Uri.joinPath(rootUri, 'c.txt').fsPath, ResourceStatus.EXTRA],
+            ],
+        });
         const showWarningMessage: sinon.SinonStub = this.ctx.sandbox.stub(
             window,
             'showWarningMessage'

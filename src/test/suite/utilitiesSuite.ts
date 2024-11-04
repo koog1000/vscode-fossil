@@ -3,11 +3,17 @@ import { Uri } from 'vscode';
 import * as sinon from 'sinon';
 import * as assert from 'assert/strict';
 import * as fs from 'fs';
-import { getExecStub, getExecutable, getRepository } from './common';
+import {
+    assertGroups,
+    getExecStub,
+    getExecutable,
+    getRepository,
+} from './common';
 import { Suite, afterEach, beforeEach } from 'mocha';
 import { debounce, memoize, sequentialize, throttle } from '../../decorators';
 import { delay } from '../../util';
 import { Reason } from '../../fossilExecutable';
+import { ResourceStatus } from '../../openedRepository';
 
 function undoSuite(this: Suite) {
     test('Undo and redo warning', async () => {
@@ -42,7 +48,9 @@ function undoSuite(this: Suite) {
         const execStub = getExecStub(this.ctx.sandbox);
 
         await repository.updateModelState('Test' as Reason);
-        assert.equal(repository.untrackedGroup.resourceStates.length, 1);
+        assertGroups(repository, {
+            untracked: [[undoTxtPath, ResourceStatus.EXTRA]],
+        });
 
         showWarningMessage.onFirstCall().resolves('&&Delete file');
 
@@ -53,7 +61,9 @@ function undoSuite(this: Suite) {
         );
         sinon.assert.calledOnceWithExactly(
             showWarningMessage,
-            'Are you sure you want to DELETE undo-fuarw.txt?\nThis is IRREVERSIBLE!\nThis file will be FOREVER LOST if you proceed.',
+            'Are you sure you want to DELETE undo-fuarw.txt?\n' +
+                'This is IRREVERSIBLE!\n' +
+                'This file will be FOREVER LOST if you proceed.',
             { modal: true },
             '&&Delete file'
         );

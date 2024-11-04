@@ -4,6 +4,7 @@ import * as sinon from 'sinon';
 import {
     ExecStub,
     add,
+    assertGroups,
     cleanupFossil,
     fakeExecutionResult,
     fakeFossilStatus,
@@ -12,7 +13,9 @@ import {
 } from './common';
 import * as assert from 'assert/strict';
 import * as fs from 'fs/promises';
-import { Suite, beforeEach } from 'mocha';
+import { Suite, before, beforeEach } from 'mocha';
+import { Reason } from '../../fossilExecutable';
+import { ResourceStatus } from '../../openedRepository';
 
 export const commitStagedTest = async (
     sandbox: sinon.SinonSandbox,
@@ -50,16 +53,26 @@ export const commitStagedTest = async (
     ]);
 };
 
-const singleFileCommitSetup = async (sandbox: sinon.SinonSandbox) => {
+const singleFileCommitSetup = async (
+    sandbox: sinon.SinonSandbox,
+    rootUri: Uri
+) => {
     const repository = getRepository();
     const execStub = getExecStub(sandbox);
     const statusStub = fakeFossilStatus(execStub, 'ADDED minimal.txt\n');
-    await repository.updateModelState();
+    await repository.updateModelState('test' as Reason);
     sinon.assert.calledOnce(statusStub);
-    assert.equal(repository.workingGroup.resourceStates.length, 1);
+    assertGroups(repository, {
+        working: [
+            [Uri.joinPath(rootUri, 'minimal.txt').fsPath, ResourceStatus.ADDED],
+        ],
+    });
     await commands.executeCommand('fossil.stageAll');
-    assert.equal(repository.workingGroup.resourceStates.length, 0);
-    assert.equal(repository.stagingGroup.resourceStates.length, 1);
+    assertGroups(repository, {
+        staging: [
+            [Uri.joinPath(rootUri, 'minimal.txt').fsPath, ResourceStatus.ADDED],
+        ],
+    });
     const commitStub = execStub
         .withArgs(sinon.match.array.startsWith(['commit']))
         .resolves(fakeExecutionResult());
@@ -67,6 +80,12 @@ const singleFileCommitSetup = async (sandbox: sinon.SinonSandbox) => {
 };
 
 export function CommitSuite(this: Suite): void {
+    let rootUri: Uri;
+
+    before(() => {
+        rootUri = workspace.workspaceFolders![0].uri;
+    });
+
     const clearInputBox = () => {
         const repository = getRepository();
         repository.sourceControl.inputBox.value = '';
@@ -79,7 +98,14 @@ export function CommitSuite(this: Suite): void {
         const statusStub = fakeFossilStatus(execStub, 'ADDED fake.txt\n');
         await repository.updateModelState();
         sinon.assert.calledOnce(statusStub);
-        assert.equal(repository.workingGroup.resourceStates.length, 1);
+        assertGroups(repository, {
+            working: [
+                [
+                    Uri.joinPath(rootUri, 'fake.txt').fsPath,
+                    ResourceStatus.ADDED,
+                ],
+            ],
+        });
         const commitStub = execStub
             .withArgs(['commit', 'fake.txt', '-m', 'non empty message'])
             .resolves(fakeExecutionResult());
@@ -124,8 +150,14 @@ export function CommitSuite(this: Suite): void {
         const sib = this.ctx.sandbox
             .stub(window, 'showInputBox')
             .resolves('test message all');
-        assert.equal(repository.workingGroup.resourceStates.length, 1);
-        assert.equal(repository.stagingGroup.resourceStates.length, 1);
+        assertGroups(repository, {
+            working: [
+                [Uri.joinPath(rootUri, 'a').fsPath, ResourceStatus.ADDED],
+            ],
+            staging: [
+                [Uri.joinPath(rootUri, 'b').fsPath, ResourceStatus.ADDED],
+            ],
+        });
         await commands.executeCommand('fossil.commitAll');
         sinon.assert.calledOnce(sib);
         sinon.assert.calledOnceWithExactly(commitStub, [
@@ -141,7 +173,7 @@ export function CommitSuite(this: Suite): void {
         const statusStub = fakeFossilStatus(execStub, '\n');
         await repository.updateModelState();
         sinon.assert.calledOnce(statusStub);
-        assert.equal(repository.workingGroup.resourceStates.length, 0);
+        assertGroups(repository, {});
 
         const sim: sinon.SinonStub = this.ctx.sandbox
             .stub(window, 'showInformationMessage')
@@ -156,10 +188,7 @@ export function CommitSuite(this: Suite): void {
 
     test('Commit empty message', async () => {
         const repository = getRepository();
-        const uri = Uri.joinPath(
-            workspace.workspaceFolders![0].uri,
-            'empty_commit.txt'
-        );
+        const uri = Uri.joinPath(rootUri, 'empty_commit.txt');
         await fs.writeFile(uri.fsPath, 'content');
 
         const execStub = getExecStub(this.ctx.sandbox);
@@ -167,7 +196,9 @@ export function CommitSuite(this: Suite): void {
         const resource = repository.untrackedGroup.getResource(uri);
 
         await commands.executeCommand('fossil.add', resource);
-        assert.equal(repository.stagingGroup.resourceStates.length, 1);
+        assertGroups(repository, {
+            staging: [[uri.fsPath, ResourceStatus.ADDED]],
+        });
         const commitStub = execStub.withArgs([
             'commit',
             'empty_commit.txt',
@@ -191,7 +222,6 @@ export function CommitSuite(this: Suite): void {
     }).timeout(6000);
 
     test('Commit creating new branch', async () => {
-        const rootUri = workspace.workspaceFolders![0].uri;
         const branchPath = Uri.joinPath(rootUri, 'branch.txt');
         await fs.writeFile(branchPath.fsPath, 'branch content\n');
 
@@ -383,7 +413,8 @@ export function CommitSuite(this: Suite): void {
             .withArgs('fossil')
             .returns(configStub as any);
         const { commitStub, repository } = await singleFileCommitSetup(
-            this.ctx.sandbox
+            this.ctx.sandbox,
+            rootUri
         );
         repository.sourceControl.inputBox.value = 'custom username test';
         await commands.executeCommand('fossil.commitWithInput');
