@@ -3,7 +3,7 @@ import { Uri } from 'vscode';
 import * as sinon from 'sinon';
 import * as assert from 'assert/strict';
 import * as fs from 'fs';
-import { getExecStub, getRepository } from './common';
+import { getExecStub, getExecutable, getRepository } from './common';
 import { Suite, afterEach, beforeEach } from 'mocha';
 import { debounce, memoize, sequentialize, throttle } from '../../decorators';
 import { delay } from '../../util';
@@ -68,9 +68,11 @@ function undoSuite(this: Suite) {
         showInformationMessage.onFirstCall().resolves('Undo');
         await vscode.commands.executeCommand('fossil.undo');
         assert.ok(fs.existsSync(undoTxtPath));
+        const executable = getExecutable();
+        const fossilPath = (executable as any).fossilPath as string;
         assert.equal(
             showInformationMessage.firstCall.args[0],
-            `Undo 'fossil clean ${undoTxtPath}'?`
+            `Undo '${fossilPath} clean ${undoTxtPath}'?`
         );
 
         showInformationMessage.onSecondCall().resolves('Redo');
@@ -78,7 +80,7 @@ function undoSuite(this: Suite) {
         assert.ok(!fs.existsSync(undoTxtPath));
         assert.equal(
             showInformationMessage.secondCall.args[0],
-            `Redo 'fossil clean ${undoTxtPath}'?`
+            `Redo '${fossilPath} clean ${undoTxtPath}'?`
         );
     }).timeout(7000);
 }

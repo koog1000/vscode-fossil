@@ -41,7 +41,7 @@ suite('Infrastructure', () => {
         });
         sinon.assert.calledOnceWithExactly(
             showErrorMessage,
-            'Fossil: fossil: unknown command: fizzbuzz',
+            `Fossil: ${fossilPath}: unknown command: fizzbuzz`,
             'Open Fossil Log'
         );
     });
