@@ -11,6 +11,7 @@ import {
     FossilStdOut,
     FossilExecutablePath,
     ExecResult,
+    Reason,
 } from '../../fossilExecutable';
 import { Model } from '../../model';
 import { Repository } from '../../repository';
@@ -290,7 +291,13 @@ export async function add(
         addRes.stdout.trimEnd(),
         new RegExp(`${action}\\s+${filename}`)
     );
-    await openedRepository.exec(['commit', filename, '-m', commitMessage]);
+    const commitRes = await openedRepository.exec([
+        'commit',
+        filename,
+        '-m',
+        commitMessage,
+    ]);
+    assert.equal(commitRes.exitCode, 0, 'Commit failed');
     return fileUri;
 }
 
@@ -298,13 +305,26 @@ export async function cleanupFossil(repository: Repository): Promise<void> {
     const openedRepository: OpenedRepository = (repository as any).repository;
     if (
         repository.workingGroup.resourceStates.length ||
-        repository.stagingGroup.resourceStates.length
+        repository.stagingGroup.resourceStates.length ||
+        repository.untrackedGroup.resourceStates.length
     ) {
-        await openedRepository.exec(['clean']);
-        await openedRepository.exec(['revert']);
-        await repository.updateModelState();
-        assert.equal(repository.workingGroup.resourceStates.length, 0);
-        assert.equal(repository.stagingGroup.resourceStates.length, 0);
+        const revertRes = await openedRepository.exec(['revert']);
+        assert.equal(revertRes.exitCode, 0);
+
+        const cleanRes1 = await openedRepository.exec(
+            ['clean', '--verbose'],
+            'Test: cleanupFossil' as Reason
+        );
+        assert.equal(cleanRes1.exitCode, 0);
+
+        const updateRes = await repository.updateModelState(
+            'Test: cleanupFossil' as Reason
+        );
+        assert.equal(updateRes, undefined);
+        // if we fail on the next line, it could be that there's fake status
+        assertGroups(repository, {}, 'Cleanup failed inside `cleanupFossil`');
+    } else {
+        assertGroups(repository, {}, 'Totally unexpected state');
     }
     for (const group of vscode.window.tabGroups.all) {
         const allClosed = await vscode.window.tabGroups.close(group);
@@ -314,14 +334,37 @@ export async function cleanupFossil(repository: Repository): Promise<void> {
 
 export function assertGroups(
     repository: Repository,
-    working: Map<string, ResourceStatus>,
-    staging: Map<string, ResourceStatus>
+    groups: {
+        working?: Readonly<[string, ResourceStatus]>[];
+        staging?: Readonly<[string, ResourceStatus]>[];
+        untracked?: Readonly<[string, ResourceStatus]>[];
+        conflict?: Readonly<[string, ResourceStatus]>[];
+    },
+    message?: string
 ): void {
-    const to_map = (grp: FossilResourceGroup) => {
+    const group_to_map = (grp: FossilResourceGroup) => {
         return new Map<string, ResourceStatus>(
             grp.resourceStates.map(res => [res.resourceUri.fsPath, res.status])
         );
     };
-    assert.deepStrictEqual(to_map(repository.workingGroup), working);
-    assert.deepStrictEqual(to_map(repository.stagingGroup), staging);
+    assert.deepStrictEqual(
+        group_to_map(repository.workingGroup),
+        new Map(groups.working),
+        message
+    );
+    assert.deepStrictEqual(
+        group_to_map(repository.stagingGroup),
+        new Map(groups.staging),
+        message
+    );
+    assert.deepStrictEqual(
+        group_to_map(repository.untrackedGroup),
+        new Map(groups.untracked),
+        message
+    );
+    assert.deepStrictEqual(
+        group_to_map(repository.conflictGroup),
+        new Map(groups.conflict),
+        message
+    );
 }

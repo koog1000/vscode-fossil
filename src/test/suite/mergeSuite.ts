@@ -13,10 +13,15 @@ import {
 import * as assert from 'assert/strict';
 import * as fs from 'fs/promises';
 import { FossilBranch, OpenedRepository } from '../../openedRepository';
-import { Suite } from 'mocha';
+import { Suite, before } from 'mocha';
 import { Reason } from '../../fossilExecutable';
 
 export function MergeSuite(this: Suite): void {
+    before(function () {
+        const repository = getRepository();
+        assertGroups(repository, {});
+    });
+
     test('Merge error is shown', async () => {
         const mergeExec = getRawExecStub(this.ctx.sandbox)
             .withArgs(sinon.match.array.startsWith(['merge']))
@@ -33,6 +38,7 @@ export function MergeSuite(this: Suite): void {
             .onFirstCall()
             .callsFake(items => {
                 assert.ok(items instanceof Array);
+                assert.equal(items.length, 2);
                 assert.equal(items[0].label, '$(git-branch) trunk');
                 return Promise.resolve(items[0]);
             });
@@ -97,7 +103,7 @@ export function MergeSuite(this: Suite): void {
 
         await commands.executeCommand('fossil.refresh');
         await repository.updateModelState();
-        assertGroups(repository, new Map(), new Map());
+        assertGroups(repository, {});
 
         const sqp: sinon.SinonStub = this.ctx.sandbox.stub(
             window,
@@ -114,7 +120,7 @@ export function MergeSuite(this: Suite): void {
         sinon.assert.calledOnce(sib);
 
         await repository.updateModelState('test' as Reason);
-        assertGroups(repository, new Map(), new Map());
+        assertGroups(repository, {});
     }).timeout(5000);
 
     test('Cancel merge when a merge is in progress', async () => {

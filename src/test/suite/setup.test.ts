@@ -468,11 +468,10 @@ function OpenSuite(this: Suite): void {
         }).timeout(3500);
 
         test('Close', async () => {
-            const repository = getRepository();
             const executable = getExecutable();
             const uri = workspace.workspaceFolders![0].uri;
             const cwd = uri.fsPath as FossilCWD;
-            await cleanupFossil(repository);
+            await cleanupFossil(getRepository());
             const closeStub = this.ctx.sandbox
                 .spy(executable, 'exec')
                 .withArgs(cwd, sinon.match.array.startsWith(['close']));

@@ -1,6 +1,7 @@
 import { Uri, window, workspace, commands } from 'vscode';
 import * as sinon from 'sinon';
 import {
+    assertGroups,
     cleanupFossil,
     fakeExecutionResult,
     fakeFossilStatus,
@@ -9,8 +10,8 @@ import {
 } from './common';
 import * as assert from 'assert/strict';
 import * as fs from 'fs/promises';
-import { OpenedRepository } from '../../openedRepository';
-import { Suite, before } from 'mocha';
+import { OpenedRepository, ResourceStatus } from '../../openedRepository';
+import { Suite, after, before } from 'mocha';
 import { Reason } from '../../fossilExecutable';
 
 function PullAndPushSuite(this: Suite): void {
@@ -208,8 +209,7 @@ export function UpdateSuite(this: Suite): void {
     });
 
     test('Change branch to hash', async () => {
-        const repository = getRepository();
-        await cleanupFossil(repository);
+        await cleanupFossil(getRepository());
         const execStub = getExecStub(this.ctx.sandbox);
         const updateCall = execStub
             .withArgs(['update', '1234567890'])
@@ -279,16 +279,15 @@ export function UpdateSuite(this: Suite): void {
 }
 
 export function StashSuite(this: Suite): void {
+    let uri: Uri;
+
     test('Save', async () => {
         const repository = getRepository();
-        const uri = Uri.joinPath(
-            workspace.workspaceFolders![0].uri,
-            'stash.txt'
-        );
+        uri = Uri.joinPath(workspace.workspaceFolders![0].uri, 'stash.txt');
         await fs.writeFile(uri.fsPath, 'stash me');
 
-        const siw = this.ctx.sandbox.stub(window, 'showInputBox');
-        siw.onFirstCall().resolves('stashSave commit message');
+        const sib = this.ctx.sandbox.stub(window, 'showInputBox');
+        sib.onFirstCall().resolves('stashSave commit message');
 
         const stashSave = getExecStub(this.ctx.sandbox).withArgs([
             'stash',
@@ -303,6 +302,9 @@ export function StashSuite(this: Suite): void {
         await commands.executeCommand('fossil.add', resource);
         await commands.executeCommand('fossil.stashSave');
         sinon.assert.calledOnce(stashSave);
+        assertGroups(repository, {
+            untracked: [[uri.fsPath, ResourceStatus.EXTRA]],
+        });
     }).timeout(6000);
 
     test('Apply', async () => {
@@ -311,6 +313,7 @@ export function StashSuite(this: Suite): void {
         const sqp = this.ctx.sandbox.stub(window, 'showQuickPick');
         sqp.onFirstCall().callsFake(items => {
             assert.ok(items instanceof Array);
+            assert.equal(items.length, 1);
             assert.match(
                 items[0].label,
                 /\$\(circle-outline\) 1 • [a-f0-9]{12}/
@@ -319,6 +322,10 @@ export function StashSuite(this: Suite): void {
         });
         await commands.executeCommand('fossil.stashApply');
         sinon.assert.calledOnce(stashApply);
+        const repository = getRepository();
+        assertGroups(repository, {
+            working: [[uri.fsPath, ResourceStatus.ADDED]],
+        });
     }).timeout(6000);
 
     test('Drop', async () => {
@@ -358,8 +365,9 @@ export function StashSuite(this: Suite): void {
 
     test('Snapshot', async () => {
         const repository = getRepository();
-        assert.equal(repository.workingGroup.resourceStates.length, 1);
-        assert.equal(repository.stagingGroup.resourceStates.length, 0);
+        assertGroups(repository, {
+            working: [[uri.fsPath, ResourceStatus.ADDED]],
+        });
         const execStub = getExecStub(this.ctx.sandbox);
         const stashSnapshot = execStub.withArgs([
             'stash',
@@ -385,6 +393,10 @@ export function StashSuite(this: Suite): void {
         sinon.assert.calledOnce(swm);
         sinon.assert.calledOnce(stashSnapshot);
     }).timeout(15000);
+
+    after(async () => {
+        await cleanupFossil(getRepository());
+    });
 }
 
 export function PatchSuite(this: Suite): void {
@@ -424,9 +436,16 @@ export function PatchSuite(this: Suite): void {
 }
 
 export function StageSuite(this: Suite): void {
+    let a_txt: string;
+    let b_txt: string;
+    let c_txt: string;
+
     before(async () => {
-        const repository = getRepository();
-        await cleanupFossil(repository);
+        await cleanupFossil(getRepository());
+        const rootUri = workspace.workspaceFolders![0].uri;
+        a_txt = Uri.joinPath(rootUri, 'a.txt').fsPath;
+        b_txt = Uri.joinPath(rootUri, 'b.txt').fsPath;
+        c_txt = Uri.joinPath(rootUri, 'c.txt').fsPath;
     });
 
     const statusSetup = async (status: string) => {
@@ -440,15 +459,25 @@ export function StageSuite(this: Suite): void {
         await commands.executeCommand('fossil.unstageAll');
         await statusSetup('ADDED a.txt\nEDITED b.txt\nEDITED c.txt');
         const repository = getRepository();
-        assert.equal(repository.workingGroup.resourceStates.length, 3);
-        assert.equal(repository.stagingGroup.resourceStates.length, 0);
+        assertGroups(repository, {
+            working: [
+                [a_txt, ResourceStatus.ADDED],
+                [b_txt, ResourceStatus.MODIFIED],
+                [c_txt, ResourceStatus.MODIFIED],
+            ],
+        });
         await commands.executeCommand(
             'fossil.stage',
             repository.workingGroup.resourceStates[0],
             repository.workingGroup.resourceStates[1]
         );
-        assert.equal(repository.workingGroup.resourceStates.length, 1);
-        assert.equal(repository.stagingGroup.resourceStates.length, 2);
+        assertGroups(repository, {
+            working: [[c_txt, ResourceStatus.MODIFIED]],
+            staging: [
+                [a_txt, ResourceStatus.ADDED],
+                [b_txt, ResourceStatus.MODIFIED],
+            ],
+        });
     });
 
     test('Stage (nothing)', async () => {
@@ -459,32 +488,43 @@ export function StageSuite(this: Suite): void {
         await commands.executeCommand('fossil.unstage');
     });
 
-    test('Stage all', async () => {
+    test('Stage all / Unstage all', async () => {
         await commands.executeCommand('fossil.unstageAll');
         await statusSetup('ADDED a.txt\nEDITED b.txt\nEDITED c.txt');
         const repository = getRepository();
-        assert.equal(repository.workingGroup.resourceStates.length, 3);
-        assert.equal(repository.stagingGroup.resourceStates.length, 0);
+        const allStatuses = [
+            [a_txt, ResourceStatus.ADDED] as const,
+            [b_txt, ResourceStatus.MODIFIED] as const,
+            [c_txt, ResourceStatus.MODIFIED] as const,
+        ];
+        assertGroups(repository, { working: allStatuses });
         await commands.executeCommand('fossil.stageAll');
-        assert.equal(repository.workingGroup.resourceStates.length, 0);
-        assert.equal(repository.stagingGroup.resourceStates.length, 3);
+        assertGroups(repository, { staging: allStatuses });
+        await commands.executeCommand('fossil.unstageAll');
+        assertGroups(repository, { working: allStatuses });
     });
 
     test('Unstage', async () => {
         const repository = getRepository();
-        await commands.executeCommand('fossil.unstageAll');
-        assert.equal(repository.stagingGroup.resourceStates.length, 0);
         await statusSetup('ADDED a.txt\nEDITED b.txt\nEDITED c.txt');
-        assert.equal(repository.workingGroup.resourceStates.length, 3);
-        assert.equal(repository.stagingGroup.resourceStates.length, 0);
+        const allStatuses = [
+            [a_txt, ResourceStatus.ADDED] as const,
+            [b_txt, ResourceStatus.MODIFIED] as const,
+            [c_txt, ResourceStatus.MODIFIED] as const,
+        ];
+        assertGroups(repository, { working: allStatuses });
         await commands.executeCommand('fossil.stageAll');
-        assert.equal(repository.workingGroup.resourceStates.length, 0);
-        assert.equal(repository.stagingGroup.resourceStates.length, 3);
+        assertGroups(repository, { staging: allStatuses });
         await commands.executeCommand(
             'fossil.unstage',
             repository.stagingGroup.resourceStates[1]
         );
-        assert.equal(repository.workingGroup.resourceStates.length, 1);
-        assert.equal(repository.stagingGroup.resourceStates.length, 2);
+        assertGroups(repository, {
+            working: [[b_txt, ResourceStatus.MODIFIED]],
+            staging: [
+                [a_txt, ResourceStatus.ADDED],
+                [c_txt, ResourceStatus.MODIFIED],
+            ],
+        });
     });
 }

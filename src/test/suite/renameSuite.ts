@@ -17,15 +17,16 @@ import { Suite, before } from 'mocha';
 import { Reason } from '../../fossilExecutable';
 
 export function RenameSuite(this: Suite): void {
+    let rootUri: Uri;
+
     before(async () => {
-        const repository = getRepository();
-        await cleanupFossil(repository);
+        await cleanupFossil(getRepository());
+        rootUri = workspace.workspaceFolders![0].uri;
     });
 
     test('Rename a file', async () => {
         const oldFilename = 'not_renamed.txt';
         const newFilename = 'renamed.txt';
-        const rootUri = workspace.workspaceFolders![0].uri;
         await add(oldFilename, 'foo content\n', `add: ${oldFilename}`, 'ADDED');
 
         const sim: sinon.SinonStub = this.ctx.sandbox.stub(
@@ -46,25 +47,27 @@ export function RenameSuite(this: Suite): void {
         await eventToPromise(repository.onDidRunOperation);
         await repository.updateModelState();
 
-        assertGroups(
-            repository,
-            new Map([[newFilePath.fsPath, ResourceStatus.RENAMED]]),
-            new Map()
-        );
+        assertGroups(repository, {
+            working: [[newFilePath.fsPath, ResourceStatus.RENAMED]],
+        });
+        await cleanupFossil(repository);
     }).timeout(6000);
 
     test("Don't show again", async () => {
+        const repository = getRepository();
+        assertGroups(repository, {}, "Previous test didn't cleanup or failed");
+
         const config = () => workspace.getConfiguration('fossil');
         assert.equal(config().get('enableRenaming'), true, 'contract');
-        const rootUri = workspace.workspaceFolders![0].uri;
         const execStub = getExecStub(this.ctx.sandbox);
         const oldFilename = 'do_not_show.txt';
-        await fs.writeFile(Uri.joinPath(rootUri, oldFilename).fsPath, '123');
+        const oldUri = Uri.joinPath(rootUri, oldFilename);
+        await fs.writeFile(oldUri.fsPath, '123');
         const newFilename = 'test_failed.txt';
 
         const edit = new vscode.WorkspaceEdit();
         const newFilePath = Uri.joinPath(rootUri, newFilename);
-        edit.renameFile(Uri.joinPath(rootUri, oldFilename), newFilePath);
+        edit.renameFile(oldUri, newFilePath);
 
         const sim = (
             this.ctx.sandbox.stub(
@@ -104,12 +107,19 @@ export function RenameSuite(this: Suite): void {
         }
         assert.equal(config().get('enableRenaming'), false, 'no update');
         await config().update('enableRenaming', true);
+        assertGroups(repository, {
+            working: [[oldUri.fsPath, ResourceStatus.MODIFIED]],
+        });
+        execStub.restore();
+        await cleanupFossil(repository);
     }).timeout(3000);
 
     test('Rename directory', async () => {
+        const repository = getRepository();
+        assertGroups(repository, {}, "Previous test didn't cleanup or failed");
+
         const oldDirname = 'not_renamed';
         const newDirname = 'renamed';
-        const rootUri = workspace.workspaceFolders![0].uri;
         const oldDirUrl = Uri.joinPath(rootUri, oldDirname);
         const newDirUrl = Uri.joinPath(rootUri, newDirname);
         await fs.mkdir(oldDirUrl.fsPath);
@@ -124,7 +134,6 @@ export function RenameSuite(this: Suite): void {
         await Promise.all(
             oldUris.map(uri => fs.writeFile(uri.fsPath, `foo ${uri}\n`))
         );
-        const repository = getRepository();
         const openedRepository: OpenedRepository = (repository as any)
             .repository;
         await openedRepository.exec(['add', oldDirname]);
@@ -150,21 +159,22 @@ export function RenameSuite(this: Suite): void {
 
         await answeredYes;
         await eventToPromise(repository.onDidRunOperation);
-        await repository.updateModelState();
+        await repository.updateModelState('Test' as Reason);
 
-        const ref: [string, ResourceStatus][] = newUris.map((url: Uri) => [
-            url.fsPath,
-            ResourceStatus.RENAMED,
-        ]);
-        assertGroups(repository, new Map(ref), new Map());
+        assertGroups(repository, {
+            working: newUris.map((url: Uri) => [
+                url.fsPath,
+                ResourceStatus.RENAMED,
+            ]),
+        });
+        await cleanupFossil(repository);
     }).timeout(10000);
 
     test('Relocate', async () => {
         const repository = getRepository();
-        await cleanupFossil(repository);
+        assertGroups(repository, {}, "Previous test didn't cleanup or failed");
         const oldFilename = 'not_relocated.txt';
         const newFilename = 'relocated.txt';
-        const rootUri = workspace.workspaceFolders![0].uri;
         const newUri = Uri.joinPath(rootUri, newFilename);
         const oldUri = await add(
             oldFilename,
@@ -173,12 +183,11 @@ export function RenameSuite(this: Suite): void {
             'ADDED'
         );
         await fs.rename(oldUri.fsPath, newUri.fsPath);
-        await repository.updateModelState();
-        assertGroups(
-            repository,
-            new Map([[oldUri.fsPath, ResourceStatus.MISSING]]),
-            new Map()
-        );
+        await repository.updateModelState('Test' as Reason);
+        assertGroups(repository, {
+            working: [[oldUri.fsPath, ResourceStatus.MISSING]],
+            untracked: [[newUri.fsPath, ResourceStatus.EXTRA]],
+        });
         this.ctx.sandbox
             .stub(window, 'showQuickPick')
             .onFirstCall()
@@ -195,11 +204,9 @@ export function RenameSuite(this: Suite): void {
             repository.workingGroup.resourceStates[0]
         );
         sinon.assert.calledOnce(sod);
-        assertGroups(
-            repository,
-            new Map([[newUri.fsPath, ResourceStatus.RENAMED]]),
-            new Map()
-        );
+        assertGroups(repository, {
+            working: [[newUri.fsPath, ResourceStatus.RENAMED]],
+        });
     }).timeout(10000);
 
     test('Relocate nothing', async () => {
