@@ -19,7 +19,7 @@
 1. Make a pull request
 1. "Merge and rebase" on a successful pull request
 1. Switch to `master`
-1. Tag `git tag v#.#.#; git push origin $_`
+1. Tag `git tag v#.#.# && git push origin $_`
 
 
 ## Release
