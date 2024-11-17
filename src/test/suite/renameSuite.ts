@@ -18,8 +18,10 @@ import { Reason } from '../../fossilExecutable';
 
 export function RenameSuite(this: Suite): void {
     let rootUri: Uri;
+    const config = () => workspace.getConfiguration('fossil');
 
     before(async () => {
+        await config().update('enableRenaming', true);
         await cleanupFossil(getRepository());
         rootUri = workspace.workspaceFolders![0].uri;
     });
@@ -57,7 +59,6 @@ export function RenameSuite(this: Suite): void {
         const repository = getRepository();
         assertGroups(repository, {}, "Previous test didn't cleanup or failed");
 
-        const config = () => workspace.getConfiguration('fossil');
         assert.equal(config().get('enableRenaming'), true, 'contract');
         const execStub = getExecStub(this.ctx.sandbox);
         const oldFilename = 'do_not_show.txt';
@@ -87,6 +88,14 @@ export function RenameSuite(this: Suite): void {
             ['status', '--differ', '--merge'],
             'file rename event' as Reason
         );
+
+        // renaming triggers an async event, that is not awaited. await it.
+        for (let i = 0; i < 200; ++i) {
+            if (sim.callCount != 0) {
+                break;
+            }
+            await delay(5);
+        }
         sinon.assert.calledOnceWithExactly(
             sim,
             '"do_not_show.txt" was renamed to "test_failed.txt" on ' +
@@ -99,11 +108,11 @@ export function RenameSuite(this: Suite): void {
             "Don't show again"
         );
 
-        for (let i = 1; i < 100; ++i) {
+        for (let i = 1; i < 200; ++i) {
             if (config().get('enableRenaming') === false) {
                 break;
             }
-            await delay(i * 11);
+            await delay(5);
         }
         assert.equal(config().get('enableRenaming'), false, 'no update');
         await config().update('enableRenaming', true);

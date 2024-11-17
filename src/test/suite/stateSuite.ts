@@ -280,10 +280,15 @@ export function UpdateSuite(this: Suite): void {
 
 export function StashSuite(this: Suite): void {
     let uri: Uri;
+    /**
+     * Create a file and stash it
+     */
+    before(() => {
+        uri = Uri.joinPath(workspace.workspaceFolders![0].uri, 'stash.txt');
+    });
 
     test('Save', async () => {
         const repository = getRepository();
-        uri = Uri.joinPath(workspace.workspaceFolders![0].uri, 'stash.txt');
         await fs.writeFile(uri.fsPath, 'stash me');
 
         const sib = this.ctx.sandbox.stub(window, 'showInputBox');
@@ -307,6 +312,9 @@ export function StashSuite(this: Suite): void {
         });
     }).timeout(6000);
 
+    /**
+     * Apply previously stashed item, while keeping it in the list
+     */
     test('Apply', async () => {
         const execStub = getExecStub(this.ctx.sandbox);
         const stashApply = execStub.withArgs(['stash', 'apply', '1']);
@@ -328,12 +336,16 @@ export function StashSuite(this: Suite): void {
         });
     }).timeout(6000);
 
+    /**
+     * Remove previously created stash from the list
+     */
     test('Drop', async () => {
         const execStub = getExecStub(this.ctx.sandbox);
         const stashApply = execStub.withArgs(['stash', 'drop', '1']);
         const sqp = this.ctx.sandbox.stub(window, 'showQuickPick');
         sqp.onFirstCall().callsFake(items => {
             assert.ok(items instanceof Array);
+            assert.equal(items.length, 1);
             assert.match(
                 items[0].label,
                 /\$\(circle-outline\) 1 • [a-f0-9]{12}/
@@ -344,8 +356,17 @@ export function StashSuite(this: Suite): void {
         });
         await commands.executeCommand('fossil.stashDrop');
         sinon.assert.calledOnce(stashApply);
+        sinon.assert.calledOnce(sqp);
+
+        const repository = getRepository();
+        assertGroups(repository, {
+            working: [[uri.fsPath, ResourceStatus.ADDED]],
+        });
     }).timeout(6000);
 
+    /**
+     * Stash a file ant then pop this stash
+     */
     test('Pop', async () => {
         const execStub = getExecStub(this.ctx.sandbox);
         const repository = getRepository();
@@ -361,6 +382,9 @@ export function StashSuite(this: Suite): void {
         const stashPop = execStub.withArgs(['stash', 'pop']);
         await commands.executeCommand('fossil.stashPop');
         sinon.assert.calledOnce(stashPop);
+        assertGroups(repository, {
+            working: [[uri.fsPath, ResourceStatus.ADDED]],
+        });
     }).timeout(15000);
 
     test('Snapshot', async () => {

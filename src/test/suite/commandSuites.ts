@@ -16,6 +16,7 @@ import * as fs from 'fs/promises';
 import { OpenedRepository, ResourceStatus } from '../../openedRepository';
 import { Suite, before, Func, Test } from 'mocha';
 import { toFossilUri } from '../../uri';
+import { Reason } from '../../fossilExecutable';
 
 declare module 'mocha' {
     interface TestFunction {
@@ -167,19 +168,13 @@ export function StatusSuite(this: Suite): void {
         await fs.writeFile(unlink_path, '/etc/passwd');
 
         // NOT A FILE
-        const not_file_path = Uri.joinPath(uri, 'not_file').fsPath;
-        await fs.writeFile(not_file_path, 'not_file_path');
-        await openedRepository.exec(['add', not_file_path]);
-        await openedRepository.exec([
-            'commit',
-            not_file_path,
-            '-m',
-            'added not_file',
-        ]);
+        const not_file_path = (
+            await add('not_file', 'not_file_path', 'added not_file')
+        ).fsPath;
         await fs.unlink(not_file_path);
         await fs.mkdir(not_file_path);
 
-        await repository.updateModelState();
+        await repository.updateModelState('Test' as Reason);
         assertGroups(repository, {
             working: [
                 [executable_path, ResourceStatus.MODIFIED],
@@ -189,7 +184,6 @@ export function StatusSuite(this: Suite): void {
                 [not_file_path, ResourceStatus.MISSING],
             ],
         });
-        new Map();
         await fs.rmdir(not_file_path);
     }).timeout(20000);
 
