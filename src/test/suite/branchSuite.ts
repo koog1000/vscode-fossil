@@ -193,7 +193,7 @@ export function BranchSuite(this: Suite): void {
             sinon.match.array.startsWith(['branch', 'new', 'trunk', 'current'])
         );
         const updateStub = execStub
-            .withArgs(sinon.match.array.startsWith(['update']))
+            .withArgs(sinon.match.array.startsWith(['update', 'trunk']))
             .resolves(fakeExecutionResult());
 
         await commands.executeCommand('fossil.branch');

@@ -188,13 +188,18 @@ export function CommitSuite(this: Suite): void {
 
     test('Commit empty message', async () => {
         const repository = getRepository();
+        assertGroups(repository, {});
         const uri = Uri.joinPath(rootUri, 'empty_commit.txt');
         await fs.writeFile(uri.fsPath, 'content');
 
         const execStub = getExecStub(this.ctx.sandbox);
-        await repository.updateModelState();
-        const resource = repository.untrackedGroup.getResource(uri);
+        await repository.updateModelState('Test' as Reason);
+        assertGroups(repository, {
+            untracked: [[uri.fsPath, ResourceStatus.EXTRA]],
+        });
 
+        const resource = repository.untrackedGroup.getResource(uri);
+        assert.ok(resource);
         await commands.executeCommand('fossil.add', resource);
         assertGroups(repository, {
             staging: [[uri.fsPath, ResourceStatus.ADDED]],

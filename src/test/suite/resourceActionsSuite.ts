@@ -66,12 +66,12 @@ export function resourceActionsSuite(this: Suite): void {
         await fs.writeFile(uri.fsPath, 'fossil_add');
 
         const repository = getRepository();
-        await repository.updateModelState();
+        await repository.updateModelState('Test' as Reason);
         const resource = repository.untrackedGroup.getResource(uri);
         assert.ok(resource);
 
         await commands.executeCommand('fossil.add', resource);
-        await repository.updateModelState();
+        await repository.updateModelState('Test' as Reason);
         assert.ok(!repository.untrackedGroup.includesUri(uri));
         assert.ok(repository.stagingGroup.includesUri(uri));
     }).timeout(5000);
@@ -81,7 +81,7 @@ export function resourceActionsSuite(this: Suite): void {
         let statusStub = fakeFossilStatus(execStub, 'EXTRA a.txt\nEXTRA b.txt');
 
         const repository = getRepository();
-        await repository.updateModelState('test' as Reason);
+        await repository.updateModelState('Test' as Reason);
         sinon.assert.calledOnce(statusStub);
         assertGroups(repository, {
             untracked: [
