@@ -58,6 +58,7 @@ _Work in progress_.
 | fossil.stashPop | Stash Pop | •&nbsp;Main SCM menu<br>•&nbsp;Command palette |
 | fossil.stashSave | Stash Push | •&nbsp;Main SCM menu<br>•&nbsp;Command palette |
 | fossil.stashSnapshot | Stash Snapshot | •&nbsp;Main SCM menu<br>•&nbsp;Command palette |
+| fossil.sync | Sync | | •&nbsp;Command palette
 | fossil.undo | Undo | •&nbsp;Main SCM menu<br>•&nbsp;Command palette | execute `fossil undo`
 | fossil.unstage | Unstage Changes |
 | fossil.unstageAll | Unstage All Changes |

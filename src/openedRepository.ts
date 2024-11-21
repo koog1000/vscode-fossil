@@ -254,8 +254,20 @@ export class OpenedRepository {
         return (result.stdout + result.stderr).trim();
     }
 
-    async update(checkin?: FossilCheckin): Promise<void> {
-        await this.exec(['update', ...(checkin ? [checkin] : [])]);
+    async update(
+        checkin?: FossilCheckin,
+        dryRun?: true,
+        reason?: Reason
+    ): Promise<ExecResult> {
+        return this.exec(
+            [
+                'update',
+                ...(checkin ? [checkin] : []),
+                ...(dryRun ? ['--dry-run', '--latest'] : []),
+            ],
+            reason,
+            { logErrors: !dryRun }
+        );
     }
 
     async commit(

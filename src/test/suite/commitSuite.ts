@@ -34,7 +34,9 @@ export const commitStagedTest = async (
         .withArgs(sinon.match.array.startsWith(['commit']))
         .resolves(fakeExecutionResult());
     await repository.updateModelState();
+    sinon.assert.calledOnce(statusStub);
     await commands.executeCommand('fossil.stageAll');
+    sinon.assert.calledOnce(statusStub);
     const sib = sandbox.stub(window, 'showInputBox').resolves('test message');
     await commands.executeCommand(command);
     sinon.assert.calledTwice(statusStub);

@@ -179,6 +179,13 @@ export class Model implements Disposable {
                 this.foundExecutable.bind(this)
             );
         }
+        if (!event || event.affectsConfiguration('fossil.autoSyncInterval')) {
+            for (const repository of this.repositories) {
+                repository.updateAutoSyncInterval(
+                    typedConfig.autoSyncIntervalMs
+                );
+            }
+        }
     }
 
     public async foundExecutable(

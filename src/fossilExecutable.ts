@@ -30,8 +30,13 @@ export type FossilExecutablePath = Distinct<string, 'fossil executable path'>;
 
 export interface FossilSpawnOptions extends cp.SpawnOptionsWithoutStdio {
     readonly cwd: FossilCWD;
-    readonly logErrors?: boolean; // whether to log stderr to the fossil outputChannel
-    readonly stdin_data?: string; // dump data to stdin
+    /**
+     * Whether to log stderr to the fossil outputChannel and
+     * whether to show message box with an error
+     */
+    readonly logErrors?: boolean;
+    /** Supply data to stdin */
+    readonly stdin_data?: string;
 }
 
 interface FossilRawResult {
@@ -106,6 +111,7 @@ type FossilCommand =
     | 'sqlite'
     | 'stash'
     | 'status'
+    | 'sync'
     | 'tag'
     | 'test-markdown-render'
     | 'test-wiki-render'
@@ -367,7 +373,9 @@ export class FossilExecutable {
             })();
 
             if (options.logErrors !== false && result.stderr) {
-                this.outputChannel.error(result.stderr);
+                this.outputChannel.error(
+                    `(${args.join(', ')}): ${result.stderr}`
+                );
             }
             const failure: ExecFailure = {
                 ...result,

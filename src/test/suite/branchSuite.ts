@@ -200,6 +200,11 @@ export function BranchSuite(this: Suite): void {
         sinon.assert.calledOnce(cib);
         sinon.assert.calledOnce(swm);
         sinon.assert.calledOnce(newBranchStub);
-        sinon.assert.calledOnceWithExactly(updateStub, ['update', 'trunk']);
+        sinon.assert.calledOnceWithExactly(
+            updateStub,
+            ['update', 'trunk'],
+            undefined,
+            { logErrors: true }
+        );
     });
 }

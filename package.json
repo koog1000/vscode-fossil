@@ -1036,9 +1036,9 @@
         "configuration": {
             "title": "Fossil",
             "properties": {
-                "fossil.autoInOutInterval": {
+                "fossil.autoSyncInterval": {
                     "type": "number",
-                    "description": "%config.autoInOutInterval%",
+                    "description": "%config.autoSyncInterval%",
                     "default": 180
                 },
                 "fossil.autoRefresh": {
