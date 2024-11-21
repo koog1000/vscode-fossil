@@ -1,262 +1,153 @@
 /*---------------------------------------------------------------------------------------------
- *  Copyright (c) Ben Crowl. All rights reserved.
- *  Original Copyright (c) Microsoft Corporation. All rights reserved.
+ *  Copyright (c) Arseniy Terekhin. All rights reserved.
  *  Licensed under the MIT License. See LICENSE.txt in the project root for license information.
  *--------------------------------------------------------------------------------------------*/
 
-import { Disposable, Command, EventEmitter, Event } from 'vscode';
-import { anyEvent, dispose } from './util';
-import { AutoInOutStatuses, AutoInOutState } from './autoinout';
-import { Repository, Operation } from './repository';
+import type { Command, SourceControl } from 'vscode';
+import { Repository, Changes } from './repository';
 import { ageFromNow, Old } from './humanise';
-
 import { localize } from './main';
-import { CommandId } from './commands';
+import { FossilStdErr } from './fossilExecutable';
 
-const enum SyncStatus {
-    None = 0,
-    Pushing = 1,
-    Pulling = 2,
-}
+/**
+ * A bar with 'sync' icon;
+ * - should run `fossil up` command for specific repository when clicked [ok]
+ * - the tooltip should show 'changes' that are shown when running `fossil up --dry-run`
+ * - should show number of remote changes (if != 0)
+ * - should be animated when sync/update is running
+ * - sync should be rescheduled after `sync` or `update` commands
+ * - handle case when there's no sync URL
+ */
+class SyncBar {
+    private text = '';
+    private errorText: FossilStdErr | undefined;
+    private changes: Changes = '' as Changes;
+    private nextSyncTime: Date | undefined; // undefined = no auto syncing
 
-class ScopeStatusBar {
-    private _onDidChange = new EventEmitter<void>();
-    get onDidChange(): Event<void> {
-        return this._onDidChange.event;
+    constructor(private repository: Repository) {}
+
+    /**
+     * @param changes like `17 files modified.` or ` None. Already up-to-date`
+     */
+    public onChangesUpdated(changes: Changes, errorText?: FossilStdErr) {
+        const numChanges = changes.match(/\d+/);
+        this.text = numChanges && errorText === undefined ? numChanges[0] : '';
+        this.changes = changes;
+        this.errorText = errorText;
     }
-    private disposables: Disposable[] = [];
 
-    constructor(private repository: Repository) {
-        repository.onDidChangeStatus(
-            this._onDidChange.fire,
-            this._onDidChange,
-            this.disposables
-        );
+    public onSyncTimeUpdated(date: Date | undefined) {
+        this.nextSyncTime = date;
     }
 
-    get command(): Command | undefined {
-        const { currentBranch, fossilStatus } = this.repository;
-        if (!currentBranch) {
-            return;
-        }
-        const icon = fossilStatus?.isMerge ? '$(git-merge)' : '$(git-branch)';
-        const title =
-            icon +
-            ' ' +
-            currentBranch +
-            (this.repository.workingGroup.resourceStates.length ? '+' : '');
-        let age = '';
-        if (fossilStatus) {
-            const d = new Date(
-                fossilStatus.checkout.date.replace(' UTC', '.000Z')
-            );
-            age = ageFromNow(d, Old.EMPTY_STRING);
-        }
-
+    public get command(): Command {
+        const message = this.nextSyncTime
+            ? `Next sync ${this.nextSyncTime.toTimeString().split(' ')[0]}`
+            : `Auto sync disabled`;
+        const tooltip =
+            this.errorText === undefined
+                ? `${this.changes}\n${message}\nUpdate`
+                : `Error: ${this.errorText}`;
         return {
-            command: 'fossil.branchChange',
-            tooltip: localize(
-                'branch change {0} {1}{2} {3}',
-                '\n{0}\n{1}{2}\nTags:\n \u2022 {3}\nChange Branch...',
-                fossilStatus?.checkout.checkin,
-                fossilStatus?.checkout.date,
-                age && ` (${age})`,
-                fossilStatus?.tags.join('\n \u2022 ')
-            ),
-            title,
-            arguments: [this.repository],
+            command: 'fossil.update',
+            title: `$(sync) ${this.text}`.trim(),
+            tooltip: tooltip,
+            arguments: [this.repository satisfies Repository],
         };
     }
-
-    dispose(): void {
-        this.disposables.forEach(d => d.dispose());
-    }
 }
 
-interface SyncStatusBarState {
-    autoInOut: AutoInOutState;
-    syncStatus: SyncStatus;
-    nextCheckTime: Date;
-}
+function branchCommand(repository: Repository): Command {
+    const { currentBranch, fossilStatus } = repository;
+    const icon = fossilStatus!.isMerge ? '$(git-merge)' : '$(git-branch)';
+    const title =
+        icon +
+        ' ' +
+        (currentBranch || 'unknown') +
+        (repository.conflictGroup.resourceStates.length
+            ? '!'
+            : repository.workingGroup.resourceStates.length
+            ? '+'
+            : '');
+    let checkoutAge = '';
+    const d = new Date(fossilStatus!.checkout.date.replace(' UTC', '.000Z'));
+    checkoutAge = ageFromNow(d, Old.EMPTY_STRING);
 
-class SyncStatusBar {
-    private static StartState: SyncStatusBarState = {
-        autoInOut: {
-            status: AutoInOutStatuses.Disabled,
-            error: '',
-        },
-        nextCheckTime: new Date(),
-        syncStatus: SyncStatus.None,
+    return {
+        command: 'fossil.branchChange',
+        tooltip: localize(
+            'branch change {0} {1}{2} {3}',
+            '{0}\n{1}{2}\nTags:\n \u2022 {3}\nChange Branch...',
+            fossilStatus!.checkout.checkin,
+            fossilStatus!.checkout.date,
+            checkoutAge && ` (${checkoutAge})`,
+            fossilStatus!.tags.join('\n \u2022 ')
+        ),
+        title,
+        arguments: [repository satisfies Repository],
     };
-
-    private _onDidChange = new EventEmitter<void>();
-    get onDidChange(): Event<void> {
-        return this._onDidChange.event;
-    }
-    private disposables: Disposable[] = [];
-
-    private _state: SyncStatusBarState = SyncStatusBar.StartState;
-    private get state() {
-        return this._state;
-    }
-    private set state(state: SyncStatusBarState) {
-        this._state = state;
-        this._onDidChange.fire();
-    }
-
-    constructor(private repository: Repository) {
-        repository.onDidChange(this.onModelChange, this, this.disposables);
-        repository.onDidChangeOperations(
-            this.onOperationsChange,
-            this,
-            this.disposables
-        );
-        this._onDidChange.fire();
-    }
-
-    private getSyncStatus(): SyncStatus {
-        if (this.repository.operations.has(Operation.Push)) {
-            return SyncStatus.Pushing;
-        }
-
-        if (this.repository.operations.has(Operation.Pull)) {
-            return SyncStatus.Pulling;
-        }
-
-        return SyncStatus.None;
-    }
-
-    private onOperationsChange(): void {
-        this.state = {
-            ...this.state,
-            syncStatus: this.getSyncStatus(),
-            autoInOut: this.repository.autoInOutState,
-        };
-    }
-
-    private onModelChange(): void {
-        this.state = {
-            ...this.state,
-            autoInOut: this.repository.autoInOutState,
-        };
-    }
-
-    private describeAutoInOutStatus(): {
-        icon: string;
-        message?: string;
-        status: AutoInOutStatuses;
-    } {
-        const { autoInOut } = this.state;
-        switch (autoInOut.status) {
-            case AutoInOutStatuses.Enabled:
-                if (autoInOut.nextCheckTime) {
-                    const time = autoInOut.nextCheckTime.toLocaleTimeString();
-                    const message = localize(
-                        'synced next check',
-                        'Synced (next check {0})',
-                        time
-                    );
-
-                    return {
-                        icon: '$(sync)',
-                        message,
-                        status: AutoInOutStatuses.Enabled,
-                    };
-                } else {
-                    return {
-                        icon: '',
-                        message: 'Enabled but no next sync time',
-                        status: AutoInOutStatuses.Enabled,
-                    };
-                }
-
-            case AutoInOutStatuses.Error:
-                return {
-                    icon: '$(stop)',
-                    message: `${localize('remote error', 'Remote error')}: ${
-                        autoInOut.error
-                    }`,
-                    status: AutoInOutStatuses.Error,
-                };
-
-            case AutoInOutStatuses.Disabled:
-            default: {
-                const message = localize('sync', 'Sync');
-                return {
-                    icon: '$(sync-ignored)',
-                    message,
-                    status: AutoInOutStatuses.Disabled,
-                };
-            }
-        }
-    }
-
-    get command(): Command | undefined {
-        const autoInOut = this.describeAutoInOutStatus();
-        let icon = autoInOut.icon;
-        let text = '';
-        let command: CommandId | '' = 'fossil.update';
-        let tooltip = autoInOut.message;
-
-        const { syncStatus } = this.state;
-        if (syncStatus) {
-            icon = '$(sync~spin)';
-            text = '';
-            command = '';
-            tooltip = localize('syncing', 'Syncing changes...');
-        }
-
-        return {
-            command,
-            title: `${icon} ${text}`.trim(),
-            tooltip,
-            arguments: [this.repository],
-        };
-    }
-
-    dispose(): void {
-        this.disposables.forEach(d => d.dispose());
-    }
 }
 
 export class StatusBarCommands {
-    private readonly syncStatusBar: SyncStatusBar;
-    private readonly scopeStatusBar: ScopeStatusBar;
-    private readonly disposables: Disposable[] = [];
+    private readonly syncBar: SyncBar;
 
-    constructor(repository: Repository) {
-        this.syncStatusBar = new SyncStatusBar(repository);
-        this.scopeStatusBar = new ScopeStatusBar(repository);
+    constructor(
+        private readonly repository: Repository,
+        private readonly sourceControl: SourceControl
+    ) {
+        this.syncBar = new SyncBar(repository);
+        this.update();
     }
 
-    get onDidChange(): Event<void> {
-        return anyEvent(
-            this.syncStatusBar.onDidChange,
-            this.scopeStatusBar.onDidChange
-        );
+    public onChangesUpdated(changes: Changes, errorText?: FossilStdErr) {
+        this.syncBar.onChangesUpdated(changes, errorText);
+        this.update();
     }
 
-    get commands(): Command[] {
-        const result: Command[] = [];
+    public onSyncTimeUpdated(date: Date | undefined) {
+        this.syncBar.onSyncTimeUpdated(date);
+        this.update();
+    }
 
-        const update = this.scopeStatusBar.command;
+    /**
+     * Should be called whenever commands text/actions/tooltips
+     * are updated
+     */
+    public update(): void {
+        let commands: Command[];
+        if (this.repository.fossilStatus) {
+            const update = branchCommand(this.repository);
+            const sideEffects = this.repository.operations;
+            const messages = [];
+            for (const [, se] of sideEffects) {
+                if (se.syncText) {
+                    messages.push(se.syncText);
+                }
+            }
+            messages.sort();
+            const sync = messages.length
+                ? {
+                      title: '$(sync~spin)',
+                      command: '',
+                      tooltip: messages.join('\n'),
+                  }
+                : this.syncBar.command;
 
-        if (update) {
-            result.push(update);
+            commands = [update, sync];
+        } else {
+            // this class was just initialized, repository status is unknown
+            commands = [
+                {
+                    command: '',
+                    tooltip: localize(
+                        'loading {0}',
+                        'Loading {0}',
+                        this.repository.root
+                    ),
+                    title: '$(sync~spin)',
+                },
+            ];
         }
-
-        const sync = this.syncStatusBar.command;
-
-        if (sync) {
-            result.push(sync);
-        }
-
-        return result;
-    }
-
-    dispose(): void {
-        this.syncStatusBar.dispose();
-        this.scopeStatusBar.dispose();
-        dispose(this.disposables);
+        this.sourceControl.statusBarCommands = commands;
     }
 }

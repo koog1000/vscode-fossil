@@ -109,6 +109,7 @@ type CommandKey =
     | 'stashPop'
     | 'stashSave'
     | 'stashSnapshot'
+    | 'sync'
     | 'undo'
     | 'unstage'
     | 'unstageAll'
@@ -1402,6 +1403,11 @@ export class CommandCenter {
                 "couldn't create wiki entity - no active preview"
             );
         }
+    }
+
+    @command(Inline.Repository)
+    async sync(repository: Repository): Promise<void> {
+        await repository.sync();
     }
 
     @command()

@@ -1,11 +1,13 @@
 import { workspace } from 'vscode';
-import type { FossilUsername } from './openedRepository';
+import type { FossilUsername, Distinct } from './openedRepository';
 import type { UnvalidatedFossilExecutablePath } from './fossilFinder';
+
+export type AutoSyncIntervalMs = Distinct<number, 'AutoSyncIntervalMs'>;
 
 interface ConfigScheme {
     ignoreMissingFossilWarning: boolean;
     path: UnvalidatedFossilExecutablePath;
-    autoInOutInterval: number;
+    autoSyncInterval: number;
     username: FossilUsername; // must be ignored when empty
     autoRefresh: boolean;
     enableRenaming: boolean;
@@ -37,8 +39,8 @@ class Config {
         return this.get('autoRefresh');
     }
 
-    get autoInOutIntervalMs(): number {
-        return this.get('autoInOutInterval') * 1000;
+    get autoSyncIntervalMs(): AutoSyncIntervalMs {
+        return (this.get('autoSyncInterval') * 1000) as AutoSyncIntervalMs;
     }
 
     get enableRenaming(): boolean {
