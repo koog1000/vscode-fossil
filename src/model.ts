@@ -350,9 +350,7 @@ export class Model implements Disposable {
         for (const { oldUri, newUri } of e.files) {
             const repository = this.getRepository(oldUri);
             if (repository) {
-                await repository.updateModelState(
-                    'file rename event' as Reason
-                );
+                await repository.updateStatus('file rename event' as Reason);
                 if (
                     repository.isInAnyGroup(oldUri) ||
                     repository.isDirInAnyGroup(oldUri)

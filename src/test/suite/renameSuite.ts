@@ -47,7 +47,7 @@ export function RenameSuite(this: Suite): void {
         const repository = getRepository();
         await answeredYes;
         await eventToPromise(repository.onDidRunOperation);
-        await repository.updateModelState();
+        await repository.updateStatus('Test' as Reason);
 
         assertGroups(repository, {
             working: [[newFilePath.fsPath, ResourceStatus.RENAMED]],
@@ -168,7 +168,7 @@ export function RenameSuite(this: Suite): void {
 
         await answeredYes;
         await eventToPromise(repository.onDidRunOperation);
-        await repository.updateModelState('Test' as Reason);
+        await repository.updateStatus('Test' as Reason);
 
         assertGroups(repository, {
             working: newUris.map((url: Uri) => [
@@ -192,7 +192,7 @@ export function RenameSuite(this: Suite): void {
             'ADDED'
         );
         await fs.rename(oldUri.fsPath, newUri.fsPath);
-        await repository.updateModelState('Test' as Reason);
+        await repository.updateStatus('Test' as Reason);
         assertGroups(repository, {
             working: [[oldUri.fsPath, ResourceStatus.MISSING]],
             untracked: [[newUri.fsPath, ResourceStatus.EXTRA]],

@@ -6,6 +6,7 @@ import * as fs from 'fs/promises';
 import type { Suite } from 'mocha';
 import type { FossilResourceGroup } from '../../resourceGroups';
 import type { FossilResource } from '../../repository';
+import { Reason } from '../../fossilExecutable';
 
 export function RevertSuite(this: Suite): void {
     test('Single source', async () => {
@@ -17,7 +18,7 @@ export function RevertSuite(this: Suite): void {
         await fs.writeFile(url.fsPath, 'something new');
 
         const repository = getRepository();
-        await repository.updateModelState();
+        await repository.updateStatus('Test' as Reason);
         const resource = repository.workingGroup.getResource(url);
         assert.ok(resource);
 
@@ -56,7 +57,7 @@ export function RevertSuite(this: Suite): void {
                 execStub,
                 fake_status.join('\n')
             );
-            await repository.updateModelState();
+            await repository.updateStatus('Test' as Reason);
             sinon.assert.calledOnce(statusCall);
             const resources = fileUris.map(uri => {
                 const resource = repository.workingGroup.getResource(uri);
@@ -145,7 +146,7 @@ export function RevertSuite(this: Suite): void {
         const revertStub = execStub
             .withArgs(sinon.match.array.startsWith(['revert']))
             .resolves();
-        await repository.updateModelState();
+        await repository.updateStatus('Test' as Reason);
         sinon.assert.calledOnce(statusStub);
         await commands.executeCommand('fossil.revertAll', ...groups);
         sinon.assert.calledOnceWithExactly(

@@ -33,7 +33,7 @@ export const commitStagedTest = async (
     const commitStub = execStub
         .withArgs(sinon.match.array.startsWith(['commit']))
         .resolves(fakeExecutionResult());
-    await repository.updateModelState();
+    await repository.updateStatus();
     sinon.assert.calledOnce(statusStub);
     await commands.executeCommand('fossil.stageAll');
     sinon.assert.calledOnce(statusStub);
@@ -62,7 +62,7 @@ const singleFileCommitSetup = async (
     const repository = getRepository();
     const execStub = getExecStub(sandbox);
     const statusStub = fakeFossilStatus(execStub, 'ADDED minimal.txt\n');
-    await repository.updateModelState('test' as Reason);
+    await repository.updateStatus('test' as Reason);
     sinon.assert.calledOnce(statusStub);
     assertGroups(repository, {
         working: [
@@ -98,7 +98,7 @@ export function CommitSuite(this: Suite): void {
         const repository = getRepository();
         const execStub = getExecStub(this.ctx.sandbox);
         const statusStub = fakeFossilStatus(execStub, 'ADDED fake.txt\n');
-        await repository.updateModelState();
+        await repository.updateStatus('Test' as Reason);
         sinon.assert.calledOnce(statusStub);
         assertGroups(repository, {
             working: [
@@ -143,7 +143,7 @@ export function CommitSuite(this: Suite): void {
         const commitStub = execStub
             .withArgs(sinon.match.array.startsWith(['commit']))
             .resolves(fakeExecutionResult());
-        await repository.updateModelState();
+        await repository.updateStatus('Test' as Reason);
         assert.ok(repository.workingGroup.resourceStates[1]);
         await commands.executeCommand(
             'fossil.stage',
@@ -173,7 +173,7 @@ export function CommitSuite(this: Suite): void {
         const repository = getRepository();
         const execStub = getExecStub(this.ctx.sandbox);
         const statusStub = fakeFossilStatus(execStub, '\n');
-        await repository.updateModelState();
+        await repository.updateStatus('Test' as Reason);
         sinon.assert.calledOnce(statusStub);
         assertGroups(repository, {});
 
@@ -195,7 +195,7 @@ export function CommitSuite(this: Suite): void {
         await fs.writeFile(uri.fsPath, 'content');
 
         const execStub = getExecStub(this.ctx.sandbox);
-        await repository.updateModelState('Test' as Reason);
+        await repository.updateStatus('Test' as Reason);
         assertGroups(repository, {
             untracked: [[uri.fsPath, ResourceStatus.EXTRA]],
         });
@@ -234,7 +234,7 @@ export function CommitSuite(this: Suite): void {
 
         const repository = getRepository();
         repository.sourceControl.inputBox.value = 'creating new branch';
-        await repository.updateModelState();
+        await repository.updateStatus('Test' as Reason);
         const resource = repository.untrackedGroup.getResource(branchPath);
         assert.ok(resource);
         await commands.executeCommand('fossil.add', resource);
@@ -272,7 +272,7 @@ export function CommitSuite(this: Suite): void {
         await fs.writeFile(uri1.fsPath, 'warning test');
         await fs.writeFile(uri2.fsPath, 'warning test');
         const repository = getRepository();
-        await repository.updateModelState();
+        await repository.updateStatus('Test' as Reason);
         const resource1 = repository.workingGroup.getResource(uri1);
         assert.ok(resource1);
         await commands.executeCommand('fossil.stage', resource1);
@@ -330,7 +330,7 @@ export function CommitSuite(this: Suite): void {
         const repository = getRepository();
         const execStub = getExecStub(this.ctx.sandbox);
         const statusStub = fakeFossilStatus(execStub, 'ADDED a\nCONFLICT b');
-        await repository.updateModelState();
+        await repository.updateStatus('Test' as Reason);
         sinon.assert.calledOnce(statusStub);
         repository.sourceControl.inputBox.value = 'must not be committed';
         const swm: sinon.SinonStub = this.ctx.sandbox
@@ -354,7 +354,7 @@ export function CommitSuite(this: Suite): void {
             execStub,
             'ADDED a\nMISSING b\nMISSING c'
         );
-        await repository.updateModelState();
+        await repository.updateStatus('Test' as Reason);
         sinon.assert.calledOnce(statusStub);
         const swm: sinon.SinonStub = this.ctx.sandbox
             .stub(window, 'showWarningMessage')
@@ -392,7 +392,7 @@ export function CommitSuite(this: Suite): void {
         const repository = getRepository();
         const execStub = getExecStub(this.ctx.sandbox);
         const statusStub = fakeFossilStatus(execStub, 'ADDED a\nMISSING b');
-        await repository.updateModelState();
+        await repository.updateStatus('Test' as Reason);
         sinon.assert.calledOnce(statusStub);
         repository.sourceControl.inputBox.value = 'must not commit';
         const swm: sinon.SinonStub = this.ctx.sandbox

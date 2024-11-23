@@ -102,7 +102,7 @@ export function MergeSuite(this: Suite): void {
         await openedRepository.exec(['update', 'trunk']);
 
         await commands.executeCommand('fossil.refresh');
-        await repository.updateModelState();
+        await repository.updateStatus('Test' as Reason); // ToDo: after refresh???
         assertGroups(repository, {});
 
         const sqp: sinon.SinonStub = this.ctx.sandbox.stub(
@@ -119,7 +119,7 @@ export function MergeSuite(this: Suite): void {
         sinon.assert.calledOnce(sqp);
         sinon.assert.calledOnce(sib);
 
-        await repository.updateModelState('test' as Reason);
+        await repository.updateStatus('test' as Reason);
         assertGroups(repository, {});
     }).timeout(5000);
 
@@ -129,7 +129,7 @@ export function MergeSuite(this: Suite): void {
             .withArgs(['branch', 'ls', '-t'])
             .resolves(fakeExecutionResult({ stdout: ' * a\n   b\n   c\n' }));
         fakeFossilStatus(execStub, 'INTEGRATE 0123456789');
-        await getRepository().updateModelState();
+        await getRepository().updateStatus('Test' as Reason);
         const sqp = this.ctx.sandbox.stub(window, 'showQuickPick');
         const swm: sinon.SinonStub = this.ctx.sandbox
             .stub(window, 'showWarningMessage')
@@ -154,7 +154,7 @@ export function MergeSuite(this: Suite): void {
             .withArgs(['branch', 'ls', '-t'])
             .resolves(fakeExecutionResult({ stdout: ' * a\n   b\n   c\n' }));
         fakeFossilStatus(execStub, 'INTEGRATE 0123456789');
-        await repository.updateModelState();
+        await repository.updateStatus('Test' as Reason);
         const mergeStub = execStub
             .withArgs(['merge', 'c', '--integrate'])
             .resolves(fakeExecutionResult());
@@ -208,7 +208,7 @@ export function MergeSuite(this: Suite): void {
             .resolves(fakeExecutionResult({ stdout: ' * a\n   b\n   c\n' }));
         fakeFossilStatus(execStub, '');
         const repository = getRepository();
-        await repository.updateModelState();
+        await repository.updateStatus('Test' as Reason);
         let hash = '';
         const mergeCallStub = execStub
             .withArgs(sinon.match.array.startsWith(['merge']))

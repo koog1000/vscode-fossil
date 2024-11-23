@@ -173,7 +173,7 @@ export function UpdateSuite(this: Suite): void {
         const execStub = getExecStub(this.ctx.sandbox);
         await fakeFossilStatus(execStub, 'ADDED fake.txt\nCHERRYPICK aaa');
         const repository = getRepository();
-        await repository.updateModelState();
+        await repository.updateStatus('Test' as Reason);
         assert.ok(repository.fossilStatus?.isMerge);
 
         const updateCall = execStub.withArgs(['update', 'trunk']).resolves();
@@ -301,7 +301,7 @@ export function StashSuite(this: Suite): void {
             'stashSave commit message',
             'stash.txt',
         ]);
-        await repository.updateModelState();
+        await repository.updateStatus('Test' as Reason);
         const resource = repository.untrackedGroup.getResource(uri);
         assert.ok(resource);
         await commands.executeCommand('fossil.add', resource);
@@ -476,7 +476,7 @@ export function StageSuite(this: Suite): void {
         const execStub = getExecStub(this.ctx.sandbox);
         await fakeFossilStatus(execStub, status);
         const repository = getRepository();
-        await repository.updateModelState('test' as Reason);
+        await repository.updateStatus('Test' as Reason);
     };
 
     test('Stage from working group', async () => {

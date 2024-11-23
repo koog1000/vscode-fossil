@@ -388,8 +388,8 @@ export class Repository implements IDisposable, InteractionAPI {
             this.statusBar,
             this.disposables
         );
-        this.updateModelState('opening repository' as Reason).then(() =>
-            this.updateAutoSyncInterval(typedConfig.autoSyncIntervalMs)
+        this.updateModelState(UpdateAll, 'opening repository' as Reason).then(
+            () => this.updateAutoSyncInterval(typedConfig.autoSyncIntervalMs)
         );
     }
 
@@ -428,7 +428,7 @@ export class Repository implements IDisposable, InteractionAPI {
     @throttle
     private async updateWhenIdleAndWait(): Promise<void> {
         await this.whenIdleAndFocused();
-        await this.updateModelState('idle update' as Reason);
+        await this.updateModelState(UpdateStatus, 'idle update' as Reason);
         await delay(5000);
     }
 
@@ -902,40 +902,10 @@ export class Repository implements IDisposable, InteractionAPI {
 
                 try {
                     const operationResult = await runOperation();
-                    const sidePromises: Promise<void>[] = [];
-                    if (sideEffects.status) {
-                        sidePromises.push(
-                            this.updateStatus(
-                                'Triggered by previous operation' as Reason
-                            ).then(err => {
-                                if (err) {
-                                    if (
-                                        err.fossilErrorCode ===
-                                        'NotAFossilRepository'
-                                    ) {
-                                        this.state = RepositoryState.Disposed;
-                                    } else {
-                                        throw new Error(
-                                            `Unexpected fossil result: ${String(
-                                                err
-                                            )}`
-                                        );
-                                    }
-                                }
-                            })
-                        );
-                    }
-                    if (sideEffects.changes) {
-                        sidePromises.push(
-                            this.updateChanges(
-                                'Triggered by previous operation' as Reason
-                            )
-                        );
-                    }
-                    if (sideEffects.branch) {
-                        sidePromises.push(this.updateBranch());
-                    }
-                    await Promise.all(sidePromises);
+                    await this.updateModelState(
+                        sideEffects,
+                        'Triggered by previous operation' as Reason
+                    );
                     return operationResult;
                 } finally {
                     this._operations.delete(key);
@@ -1045,15 +1015,35 @@ export class Repository implements IDisposable, InteractionAPI {
      */
     @throttle
     public async updateModelState(
+        sideEffects: SideEffects,
         reason: Reason = 'model state is updating' as Reason
-    ): Promise<ExecFailure | undefined> {
-        const res = await this.updateStatus(reason);
-        await this.updateChanges(reason);
-        await this.updateBranch();
-        return res;
+    ): Promise<void> {
+        const sidePromises: Promise<void>[] = [];
+        if (sideEffects.status) {
+            sidePromises.push(
+                this.updateStatus(reason).then(err => {
+                    if (err) {
+                        if (err.fossilErrorCode === 'NotAFossilRepository') {
+                            this.state = RepositoryState.Disposed;
+                        } else {
+                            throw new Error(
+                                `Unexpected fossil result: ${String(err)}`
+                            );
+                        }
+                    }
+                })
+            );
+        }
+        if (sideEffects.changes) {
+            sidePromises.push(this.updateChanges(reason));
+        }
+        if (sideEffects.branch) {
+            sidePromises.push(this.updateBranch());
+        }
+        await Promise.all(sidePromises);
     }
 
-    private async updateStatus(
+    public async updateStatus(
         reason?: Reason
     ): Promise<ExecFailure | undefined> {
         const result = await this.repository.getStatus(reason);
