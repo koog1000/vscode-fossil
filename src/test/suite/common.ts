@@ -317,7 +317,7 @@ export async function cleanupFossil(repository: Repository): Promise<void> {
         );
         assert.equal(cleanRes1.exitCode, 0);
 
-        const updateRes = await repository.updateModelState(
+        const updateRes = await repository.updateStatus(
             'Test: cleanupFossil' as Reason
         );
         assert.equal(updateRes, undefined);

@@ -47,7 +47,7 @@ function undoSuite(this: Suite) {
         const repository = getRepository();
         const execStub = getExecStub(this.ctx.sandbox);
 
-        await repository.updateModelState('Test' as Reason);
+        await repository.updateStatus('Test' as Reason);
         assertGroups(repository, {
             untracked: [[undoTxtPath, ResourceStatus.EXTRA]],
         });

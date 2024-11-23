@@ -46,7 +46,7 @@ export function StatusSuite(this: Suite): void {
         );
         await fs.unlink(path.fsPath);
         const repository = getRepository();
-        await repository.updateModelState();
+        await repository.updateStatus('Test' as Reason);
         assertGroups(repository, {
             working: [[path.fsPath, ResourceStatus.MISSING]],
         });
@@ -58,14 +58,14 @@ export function StatusSuite(this: Suite): void {
         const oldFilename = 'sriciscp-new.txt';
         const newFilename = 'sriciscp-renamed.txt';
         const oldUri = await add(oldFilename, 'test\n', `add ${oldFilename}`);
-        await repository.updateModelState();
+        await repository.updateStatus('Test' as Reason);
         assertGroups(repository, {});
 
         const openedRepository: OpenedRepository = (repository as any)
             .repository;
 
         await openedRepository.exec(['mv', oldFilename, newFilename, '--hard']);
-        await repository.updateModelState();
+        await repository.updateStatus('Test' as Reason);
         const barPath = Uri.joinPath(oldUri, '..', newFilename).fsPath;
         assertGroups(repository, {
             working: [[barPath, ResourceStatus.RENAMED]],
@@ -96,7 +96,7 @@ export function StatusSuite(this: Suite): void {
 
         await openedRepository.exec(['update', 'trunk']);
         await openedRepository.exec(['merge', 'test_brunch']);
-        await repository.updateModelState();
+        await repository.updateStatus('Test' as Reason);
         assertGroups(repository, {
             working: [
                 [barPath, ResourceStatus.ADDED],
@@ -174,7 +174,7 @@ export function StatusSuite(this: Suite): void {
         await fs.unlink(not_file_path);
         await fs.mkdir(not_file_path);
 
-        await repository.updateModelState('Test' as Reason);
+        await repository.updateStatus('Test' as Reason);
         assertGroups(repository, {
             working: [
                 [executable_path, ResourceStatus.MODIFIED],
@@ -196,7 +196,7 @@ export function StatusSuite(this: Suite): void {
         const repository = getRepository();
         const execStub = getExecStub(this.ctx.sandbox);
         await fakeFossilStatus(execStub, status);
-        await repository.updateModelState();
+        await repository.updateStatus('Test' as Reason);
         const root = vscode.workspace.workspaceFolders![0].uri;
         const uriBefore = Uri.joinPath(root, before);
         const uriAfter = Uri.joinPath(root, after);
@@ -317,7 +317,7 @@ export function CleanSuite(this: Suite): void {
             .withArgs(sinon.match.array.startsWith(['clean']))
             .resolves();
         await fakeFossilStatus(execStub, 'EXTRA a.txt\nEXTRA b.txt');
-        await repository.updateModelState();
+        await repository.updateStatus('Test' as Reason);
         assertGroups(repository, {
             untracked: [
                 [Uri.joinPath(rootUri, 'a.txt').fsPath, ResourceStatus.EXTRA],
@@ -358,7 +358,7 @@ export function CleanSuite(this: Suite): void {
             execStub,
             'EXTRA a.txt\nEXTRA b.txt\nEXTRA c.txt'
         );
-        await repository.updateModelState();
+        await repository.updateStatus('Test' as Reason);
         assertGroups(repository, {
             untracked: [
                 [Uri.joinPath(rootUri, 'a.txt').fsPath, ResourceStatus.EXTRA],
@@ -429,7 +429,7 @@ export function DiffSuite(this: Suite): void {
         const uri = Uri.joinPath(rootUri, 'a_path.txt');
         const execStub = getExecStub(this.ctx.sandbox);
         const statusCall = fakeFossilStatus(execStub, 'ADDED a_path.txt');
-        await repository.updateModelState();
+        await repository.updateStatus('Test' as Reason);
         sinon.assert.calledOnce(statusCall);
 
         const testTd = { isUntitled: false } as vscode.TextDocument;
