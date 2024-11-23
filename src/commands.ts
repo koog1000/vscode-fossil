@@ -48,7 +48,7 @@ import * as humanise from './humanise';
 import { partition } from './util';
 import { toFossilUri } from './uri';
 import { FossilPreviewManager } from './preview';
-import type { FossilCWD, FossilExecutable, Reason } from './fossilExecutable';
+import type { FossilCWD, FossilExecutable } from './fossilExecutable';
 
 import { localize } from './main';
 import type { Credentials } from './gitExport';
@@ -197,7 +197,7 @@ export class CommandCenter {
 
     @command(Inline.Repository)
     async refresh(repository: Repository): Promise<void> {
-        await repository.status('forced refresh' as Reason);
+        await repository.refresh();
     }
 
     @command()
