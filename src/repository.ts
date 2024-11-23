@@ -401,11 +401,8 @@ export class Repository implements IDisposable, InteractionAPI {
     }
 
     @throttle
-    async status(reason: Reason): Promise<ExecResult> {
-        const statusPromise = this.repository.getStatus(reason);
-        await this.runWithProgress({}, () => statusPromise);
-        this.updateInputBoxPlaceholder();
-        return statusPromise;
+    async refresh(): Promise<void> {
+        await this.runWithProgress(UpdateAll, () => Promise.resolve());
     }
 
     private onFSChange(_uri: Uri): void {
@@ -1068,6 +1065,7 @@ export class Repository implements IDisposable, InteractionAPI {
         if (this._currentBranch !== currentBranch) {
             this._currentBranch = currentBranch;
         }
+        this.updateInputBoxPlaceholder();
     }
 
     private get count(): number {
