@@ -195,7 +195,7 @@ export function StatusSuite(this: Suite): void {
     ) => {
         const repository = getRepository();
         const execStub = getExecStub(this.ctx.sandbox);
-        await fakeFossilStatus(execStub, status);
+        fakeFossilStatus(execStub, status);
         await repository.updateStatus('Test' as Reason);
         const root = vscode.workspace.workspaceFolders![0].uri;
         const uriBefore = Uri.joinPath(root, before);
@@ -316,7 +316,7 @@ export function CleanSuite(this: Suite): void {
         const cleanCallStub = execStub
             .withArgs(sinon.match.array.startsWith(['clean']))
             .resolves();
-        await fakeFossilStatus(execStub, 'EXTRA a.txt\nEXTRA b.txt');
+        fakeFossilStatus(execStub, 'EXTRA a.txt\nEXTRA b.txt');
         await repository.updateStatus('Test' as Reason);
         assertGroups(repository, {
             untracked: [
@@ -354,10 +354,7 @@ export function CleanSuite(this: Suite): void {
         const cleanCallStub = execStub
             .withArgs(sinon.match.array.startsWith(['clean']))
             .resolves();
-        await fakeFossilStatus(
-            execStub,
-            'EXTRA a.txt\nEXTRA b.txt\nEXTRA c.txt'
-        );
+        fakeFossilStatus(execStub, 'EXTRA a.txt\nEXTRA b.txt\nEXTRA c.txt');
         await repository.updateStatus('Test' as Reason);
         assertGroups(repository, {
             untracked: [

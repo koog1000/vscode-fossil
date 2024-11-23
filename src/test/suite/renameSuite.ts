@@ -77,10 +77,7 @@ export function RenameSuite(this: Suite): void {
             ) as sinon.SinonStub
         ).resolves("Don't show again");
 
-        const status = await fakeFossilStatus(
-            execStub,
-            `EDITED ${oldFilename}\n`
-        );
+        const status = fakeFossilStatus(execStub, `EDITED ${oldFilename}\n`);
         const success = await workspace.applyEdit(edit);
         assert.ok(success);
         sinon.assert.calledOnceWithExactly(
