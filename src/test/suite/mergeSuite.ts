@@ -101,7 +101,7 @@ export function MergeSuite(this: Suite): void {
         ]);
         await openedRepository.exec(['update', 'trunk']);
 
-        await commands.executeCommand('fossil.refresh');
+        await repository.updateStatus('Test' as Reason);
         assertGroups(repository, {});
 
         const sqp: sinon.SinonStub = this.ctx.sandbox.stub(
