@@ -5,6 +5,8 @@ import {
     add,
     assertGroups,
     cleanupFossil,
+    fakeFossilBranch,
+    fakeFossilChanges,
     fakeFossilStatus,
     fakeRawExecutionResult,
     getExecStub,
@@ -237,6 +239,18 @@ export function StatusSuite(this: Suite): void {
             'b.txt',
             ResourceStatus.MODIFIED
         );
+    });
+
+    test('"Refresh" command refreshes everything', async () => {
+        const execStub = getExecStub(this.ctx.sandbox);
+        const status = fakeFossilStatus(execStub, 'EXTRA refresh.txt\n');
+        const branch = fakeFossilBranch(execStub, 'refresh');
+        const changes = fakeFossilChanges(execStub, '12 changes');
+        await commands.executeCommand('fossil.refresh');
+        sinon.assert.calledThrice(execStub);
+        sinon.assert.calledOnce(status);
+        sinon.assert.calledOnce(branch);
+        sinon.assert.calledOnce(changes);
     });
 }
 
