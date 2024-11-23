@@ -135,10 +135,7 @@ export function resourceActionsSuite(this: Suite): void {
         const forgetCallStub = execStub
             .withArgs(sinon.match.array.startsWith(['forget']))
             .resolves();
-        await fakeFossilStatus(
-            execStub,
-            'ADDED a.txt\nEDITED b.txt\nEXTRA c.txt'
-        );
+        fakeFossilStatus(execStub, 'ADDED a.txt\nEDITED b.txt\nEXTRA c.txt');
         await repository.updateStatus('Test' as Reason);
         await commands.executeCommand(
             'fossil.forget',

@@ -171,7 +171,7 @@ export function UpdateSuite(this: Suite): void {
 
     const selectTrunk = async () => {
         const execStub = getExecStub(this.ctx.sandbox);
-        await fakeFossilStatus(execStub, 'ADDED fake.txt\nCHERRYPICK aaa');
+        fakeFossilStatus(execStub, 'ADDED fake.txt\nCHERRYPICK aaa');
         const repository = getRepository();
         await repository.updateStatus('Test' as Reason);
         assert.ok(repository.fossilStatus?.isMerge);
@@ -474,7 +474,7 @@ export function StageSuite(this: Suite): void {
 
     const statusSetup = async (status: string) => {
         const execStub = getExecStub(this.ctx.sandbox);
-        await fakeFossilStatus(execStub, status);
+        fakeFossilStatus(execStub, status);
         const repository = getRepository();
         await repository.updateStatus('Test' as Reason);
     };
