@@ -77,11 +77,11 @@ function branchCommand(repository: Repository): Command {
         command: 'fossil.branchChange',
         tooltip: localize(
             'branch change {0} {1}{2} {3}',
-            '{0}\n{1}{2}\nTags:\n \u2022 {3}\nChange Branch...',
+            '{0}\n{1}{2}\nTags:\n • {3}\nChange Branch...',
             fossilStatus!.checkout.checkin,
             fossilStatus!.checkout.date,
             checkoutAge && ` (${checkoutAge})`,
-            fossilStatus!.tags.join('\n \u2022 ')
+            fossilStatus!.tags.join('\n • ')
         ),
         title,
         arguments: [repository satisfies Repository],
