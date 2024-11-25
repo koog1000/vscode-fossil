@@ -57,6 +57,11 @@ class SyncBar {
     }
 }
 
+/**
+ * Create `vscode.Command` that executes 'fossil.branchChange'
+ * decorated with icon, branch name, and repository status
+ * with branch details in the tooltip
+ */
 function branchCommand(repository: Repository): Command {
     const { currentBranch, fossilStatus } = repository;
     const icon = fossilStatus!.isMerge ? '$(git-merge)' : '$(git-branch)';
