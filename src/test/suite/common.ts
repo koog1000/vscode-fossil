@@ -184,7 +184,10 @@ export function fakeFossilStatus(execStub: ExecStub, status: string): ExecStub {
         .resolves(fakeExecutionResult({ stdout: header + status, args }));
 }
 
-export function fakeFossilBranch(execStub: ExecStub, branch: string): ExecStub {
+export function fakeFossilBranch(
+    execStub: ExecStub,
+    branch: 'refresh'
+): ExecStub {
     return execStub
         .withArgs(['branch', 'current'])
         .resolves(fakeExecutionResult({ stdout: branch }));
@@ -192,7 +195,7 @@ export function fakeFossilBranch(execStub: ExecStub, branch: string): ExecStub {
 
 export function fakeFossilChanges(
     execStub: ExecStub,
-    changes: string
+    changes: `${number} files modified.` | 'None. Already up-to-date'
 ): ExecStub {
     return execStub
         .withArgs(['update', '--dry-run', '--latest'])
@@ -379,4 +382,11 @@ export function assertGroups(
         new Map(groups.conflict),
         message
     );
+}
+
+export function statusBarCommands() {
+    const repository = getRepository();
+    const commands = repository.sourceControl.statusBarCommands;
+    assert.ok(commands);
+    return commands;
 }

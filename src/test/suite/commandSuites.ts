@@ -245,7 +245,7 @@ export function StatusSuite(this: Suite): void {
         const execStub = getExecStub(this.ctx.sandbox);
         const status = fakeFossilStatus(execStub, 'EXTRA refresh.txt\n');
         const branch = fakeFossilBranch(execStub, 'refresh');
-        const changes = fakeFossilChanges(execStub, '12 changes');
+        const changes = fakeFossilChanges(execStub, '12 files modified.');
         await commands.executeCommand('fossil.refresh');
         sinon.assert.calledThrice(execStub);
         sinon.assert.calledOnce(status);

@@ -4,9 +4,11 @@ import {
     assertGroups,
     cleanupFossil,
     fakeExecutionResult,
+    fakeFossilChanges,
     fakeFossilStatus,
     getExecStub,
     getRepository,
+    statusBarCommands,
 } from './common';
 import * as assert from 'assert/strict';
 import * as fs from 'fs/promises';
@@ -148,8 +150,66 @@ function PullAndPushSuite(this: Suite): void {
     });
 }
 
+export function StatusBarSuite(this: Suite): void {
+    let fakeTimers: sinon.SinonFakeTimers;
+    const N = new Date('2024-11-23T16:51:31.000Z');
+
+    before(() => {
+        fakeTimers = sinon.useFakeTimers({
+            now: N,
+            shouldClearNativeTimers: true,
+        });
+    });
+
+    after(() => {
+        fakeTimers.restore();
+    });
+
+    test('Status Bar Exists', async () => {
+        const [branchBar, syncBar] = statusBarCommands();
+        assert.equal(branchBar.command, 'fossil.branchChange');
+        assert.equal(branchBar.title, '$(git-branch) trunk');
+        assert.equal(branchBar.tooltip?.split('\n').pop(), 'Change Branch...');
+        assert.deepEqual(branchBar.arguments, [getRepository()]);
+        assert.equal(syncBar.command, 'fossil.update');
+        assert.equal(syncBar.title, '$(sync)');
+        assert.match(
+            syncBar.tooltip!,
+            /^None. Already up-to-date\nNext sync \d\d:\d\d:\d\d\nUpdate$/
+        );
+        assert.deepEqual(syncBar.arguments, [getRepository()]);
+    });
+
+    test('Sync', async () => {
+        const execStub = getExecStub(this.ctx.sandbox);
+        const syncCall = execStub.withArgs(['sync']).resolves();
+        const changesCall = fakeFossilChanges(execStub, '18 files modified.');
+        await commands.executeCommand('fossil.sync');
+        sinon.assert.calledOnceWithExactly(syncCall, ['sync'], undefined, {
+            logErrors: true,
+        });
+        sinon.assert.calledOnceWithExactly(
+            changesCall,
+            ['update', '--dry-run', '--latest'],
+            'sync happened' as Reason,
+            { logErrors: false }
+        );
+        const nextSyncString = new Date(N.getTime() + 180 * 1000)
+            .toTimeString()
+            .split(' ')[0];
+
+        const syncBar = statusBarCommands()[1];
+        assert.equal(syncBar.title, '$(sync) 18');
+        assert.equal(
+            syncBar.tooltip,
+            `18 files modified.\nNext sync ${nextSyncString}\nUpdate`
+        );
+    });
+}
+
 export function UpdateSuite(this: Suite): void {
     suite('Pull and Push', PullAndPushSuite);
+    suite('Status Bar', StatusBarSuite);
 
     test('Change branch to trunk', async () => {
         const execStub = getExecStub(this.ctx.sandbox);
