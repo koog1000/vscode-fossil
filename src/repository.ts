@@ -707,13 +707,15 @@ export class Repository implements IDisposable, InteractionAPI {
     }
 
     async newBranch(newBranch: NewBranchOptions): Promise<ExecResult> {
-        return this.runWithProgress({ branch: true }, () =>
+        // Creating a new branch doesn't change anything.
+        return this.runWithProgress({}, () =>
             this.repository.newBranch(newBranch)
         );
     }
 
     async update(checkin?: FossilCheckin): Promise<void> {
-        await this.runWithProgress(UpdateChanges, () =>
+        // Update command can change everything
+        await this.runWithProgress(UpdateAll, () =>
             this.repository.update(checkin)
         );
     }
