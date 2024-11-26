@@ -173,15 +173,19 @@ export function fakeRawExecutionResult({
     };
 }
 
-export function fakeFossilStatus(execStub: ExecStub, status: string): ExecStub {
+export function fakeStatusResult(status: string): ExecResult {
+    const args: FossilArgs = ['status', '--differ', '--merge'];
     const header =
         'checkout:     0000000000000000000000000000000000000000 2023-05-26 12:43:56 UTC\n' +
         'parent:       0000000000000000000000000000000000000001 2023-05-26 12:43:56 UTC\n' +
         'tags:         trunk, this is a test, custom tag\n';
-    const args: FossilArgs = ['status', '--differ', '--merge'];
+    return fakeExecutionResult({ stdout: header + status, args });
+}
+
+export function fakeFossilStatus(execStub: ExecStub, status: string): ExecStub {
     return execStub
-        .withArgs(args)
-        .resolves(fakeExecutionResult({ stdout: header + status, args }));
+        .withArgs(['status', '--differ', '--merge'])
+        .resolves(fakeStatusResult(status));
 }
 
 export function fakeFossilBranch(

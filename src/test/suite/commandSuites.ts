@@ -5,13 +5,16 @@ import {
     add,
     assertGroups,
     cleanupFossil,
+    fakeExecutionResult,
     fakeFossilBranch,
     fakeFossilChanges,
     fakeFossilStatus,
     fakeRawExecutionResult,
+    fakeStatusResult,
     getExecStub,
     getRawExecStub,
     getRepository,
+    statusBarCommands,
 } from './common';
 import * as assert from 'assert/strict';
 import * as fs from 'fs/promises';
@@ -251,7 +254,85 @@ export function StatusSuite(this: Suite): void {
         sinon.assert.calledOnce(status);
         sinon.assert.calledOnce(branch);
         sinon.assert.calledOnce(changes);
+
+        // reset everything, not leaving 'refresh' as current branch
+        branch.resolves(fakeExecutionResult({ stdout: 'trunk' }));
+        changes.resolves(
+            fakeExecutionResult({ stdout: 'changes: None. Already up-to-date' })
+        );
+        status.resolves(fakeStatusResult(''));
+        await commands.executeCommand('fossil.refresh');
+        assertGroups(getRepository(), {});
     });
+
+    test('Branch change is reflected in status bar', async () => {
+        // 1. Check current branch name
+        const branchCommandBefore = statusBarCommands()[0];
+        assert.equal(branchCommandBefore.title, '$(git-branch) trunk');
+
+        // 2. Create branch
+        const branchName = 'statusbar1';
+        const cib = this.ctx.sandbox.stub(window, 'createInputBox');
+        cib.onFirstCall().callsFake(() => {
+            const inputBox: vscode.InputBox = cib.wrappedMethod();
+            const stub = sinon.stub(inputBox);
+            stub.show.callsFake(() => {
+                stub.value = branchName;
+                const onDidAccept = stub.onDidAccept.getCall(0).args[0];
+                onDidAccept();
+            });
+            return stub;
+        });
+
+        const execStub = getExecStub(this.ctx.sandbox);
+        fakeFossilStatus(execStub, '\n'); // ensure branch doesn't get '+'
+        const branchCreation = execStub.withArgs([
+            'branch',
+            'new',
+            branchName,
+            'current',
+        ]);
+        await commands.executeCommand('fossil.branch');
+        sinon.assert.calledOnce(branchCreation);
+
+        // 3. Change the branch
+        const branchSwitch = execStub.withArgs(['update', branchName]);
+        const sqp = this.ctx.sandbox.stub(window, 'showQuickPick');
+        sqp.onFirstCall().callsFake(items => {
+            assert.ok(items instanceof Array);
+            const item = items.find(
+                item => item.label == `$(git-branch) ${branchName}`
+            );
+            assert.ok(item);
+            assert.equal(item.description, '');
+            assert.equal(item.detail, undefined);
+            return Promise.resolve(item);
+        });
+        await commands.executeCommand('fossil.branchChange');
+        sinon.assert.calledOnce(sqp);
+        sinon.assert.calledOnce(branchSwitch);
+
+        // 4. Check branch name is changed
+        const branchCommandAfter = statusBarCommands()[0];
+        assert.equal(branchCommandAfter.title, `$(git-branch) ${branchName}`);
+
+        // 5. Change branch back to 'trunk'
+        sqp.onSecondCall().callsFake(items => {
+            assert.ok(items instanceof Array);
+            const item = items.find(
+                item => item.label == '$(git-branch) trunk'
+            );
+            assert.ok(item);
+            assert.equal(item.label, `$(git-branch) trunk`);
+            assert.equal(item.description, '');
+            assert.equal(item.detail, undefined);
+            return Promise.resolve(item);
+        });
+        await commands.executeCommand('fossil.branchChange');
+        sinon.assert.calledTwice(sqp);
+        const branchCommandLast = statusBarCommands()[0];
+        assert.equal(branchCommandLast.title, `$(git-branch) trunk`);
+    }).timeout(20000);
 }
 
 export function TagSuite(this: Suite): void {
