@@ -1119,7 +1119,7 @@ export class CommandCenter {
 
         const checkin = await interaction.pickUpdateCheckin(refs);
         if (checkin) {
-            repository.update(checkin);
+            await repository.update(checkin);
         }
     }
 
