@@ -571,7 +571,7 @@
                 },
                 {
                     "command": "fossil.render",
-                    "when": "fossilOpenRepositoryCount && !isInDiffEditor && resourceExtname =~ /^\\.(md|wiki|pikchr)$/ || fossil.found && resourceScheme == untitled"
+                    "when": "fossil.found && !isInDiffEditor && resourceExtname == '.md' || fossil.found && !isInDiffEditor && resourceExtname =~ /^\\.(md|wiki|pikchr)$/ || fossilOpenRepositoryCount && resourceScheme == untitled"
                 },
                 {
                     "command": "fossil.deleteFiles",
