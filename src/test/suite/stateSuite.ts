@@ -4,6 +4,7 @@ import {
     assertGroups,
     cleanupFossil,
     fakeExecutionResult,
+    fakeFossilBranch,
     fakeFossilChanges,
     fakeFossilStatus,
     getExecStub,
@@ -173,25 +174,26 @@ export function StatusBarSuite(this: Suite): void {
         assert.deepEqual(branchBar.arguments, [getRepository()]);
         assert.equal(syncBar.command, 'fossil.update');
         assert.equal(syncBar.title, '$(sync)');
+        assert.ok(syncBar.tooltip);
         assert.match(
-            syncBar.tooltip!,
-            /^None. Already up-to-date\nNext sync \d\d:\d\d:\d\d\nUpdate$/
+            syncBar.tooltip,
+            /^Next sync \d\d:\d\d:\d\d\nNone\. Already up-to-date\nUpdate$/
         );
         assert.deepEqual(syncBar.arguments, [getRepository()]);
     });
 
     test('Sync', async () => {
         const execStub = getExecStub(this.ctx.sandbox);
-        const syncCall = execStub.withArgs(['sync']).resolves();
+        const syncCall = execStub
+            .withArgs(['sync'])
+            .resolves(fakeExecutionResult());
         const changesCall = fakeFossilChanges(execStub, '18 files modified.');
         await commands.executeCommand('fossil.sync');
-        sinon.assert.calledOnceWithExactly(syncCall, ['sync'], undefined, {
-            logErrors: true,
-        });
+        sinon.assert.calledOnceWithExactly(syncCall, ['sync']);
         sinon.assert.calledOnceWithExactly(
             changesCall,
             ['update', '--dry-run', '--latest'],
-            'sync happened' as Reason,
+            'Triggered by previous operation' as Reason,
             { logErrors: false }
         );
         const nextSyncString = new Date(N.getTime() + 180 * 1000)
@@ -202,7 +204,68 @@ export function StatusBarSuite(this: Suite): void {
         assert.equal(syncBar.title, '$(sync) 18');
         assert.equal(
             syncBar.tooltip,
-            `18 files modified.\nNext sync ${nextSyncString}\nUpdate`
+            `Next sync ${nextSyncString}\n18 files modified.\nUpdate`
+        );
+    });
+
+    test('Icon spins when sync is in progress', async () => {
+        const execStub = getExecStub(this.ctx.sandbox);
+        const syncStub = execStub.withArgs(['sync']).callsFake(async () => {
+            const syncBar = statusBarCommands()[1];
+            assert.equal(syncBar.title, '$(sync~spin)');
+            return fakeExecutionResult();
+        });
+        const changeStub = fakeFossilChanges(
+            execStub,
+            'None. Already up-to-date'
+        );
+        await commands.executeCommand('fossil.sync');
+        sinon.assert.calledOnce(syncStub);
+        sinon.assert.calledOnce(changeStub);
+        sinon.assert.calledTwice(execStub);
+    });
+
+    test('Icon spins when update is in progress', async () => {
+        const execStub = getExecStub(this.ctx.sandbox);
+        const syncStub = execStub.withArgs(['update']).callsFake(async () => {
+            const syncBar = statusBarCommands()[1];
+            assert.equal(syncBar.title, '$(sync~spin)');
+            return fakeExecutionResult();
+        });
+        const changeStub = fakeFossilChanges(
+            execStub,
+            'None. Already up-to-date'
+        );
+        const statusStub = fakeFossilStatus(execStub, '');
+        const branchStub = fakeFossilBranch(execStub, 'trunk');
+        await commands.executeCommand('fossil.update');
+        sinon.assert.calledOnce(syncStub);
+        sinon.assert.calledOnce(changeStub);
+        sinon.assert.calledOnce(statusStub);
+        sinon.assert.calledOnce(branchStub);
+        sinon.assert.callCount(execStub, 4);
+    });
+
+    test('Error in tooltip when `sync` failed', async () => {
+        const execStub = getExecStub(this.ctx.sandbox);
+        const syncStub = execStub
+            .withArgs(['sync'])
+            .resolves(
+                fakeExecutionResult({ stderr: 'test failure', exitCode: 1 })
+            );
+        const changeStub = fakeFossilChanges(
+            execStub,
+            'None. Already up-to-date'
+        );
+        await commands.executeCommand('fossil.sync');
+        sinon.assert.calledOnce(syncStub);
+        sinon.assert.notCalled(changeStub); // sync failed, nothing changed
+        sinon.assert.calledOnce(execStub);
+        const syncBar = statusBarCommands()[1];
+        assert.ok(syncBar.tooltip);
+        assert.match(
+            syncBar.tooltip,
+            /Next sync \d\d:\d\d:\d\d\nSync error: test failure\nNone\. Already up-to-date\nUpdate/
         );
     });
 }

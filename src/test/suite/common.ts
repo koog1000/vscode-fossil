@@ -190,7 +190,7 @@ export function fakeFossilStatus(execStub: ExecStub, status: string): ExecStub {
 
 export function fakeFossilBranch(
     execStub: ExecStub,
-    branch: 'refresh'
+    branch: 'refresh' | 'trunk'
 ): ExecStub {
     return execStub
         .withArgs(['branch', 'current'])

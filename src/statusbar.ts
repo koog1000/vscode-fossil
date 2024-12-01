@@ -4,10 +4,10 @@
  *--------------------------------------------------------------------------------------------*/
 
 import type { Command, SourceControl } from 'vscode';
-import { Repository, Changes } from './repository';
+import { Repository } from './repository';
 import { ageFromNow, Old } from './humanise';
 import { localize } from './main';
-import { FossilStdErr } from './fossilExecutable';
+import { ExecResult } from './fossilExecutable';
 
 /**
  * A bar with 'sync' icon;
@@ -19,21 +19,41 @@ import { FossilStdErr } from './fossilExecutable';
  * - handle case when there's no sync URL
  */
 class SyncBar {
+    private icon: 'sync' | 'warning' = 'sync'; // 'sync-ignored' is nice, but not intuitive
     private text = '';
-    private errorText: FossilStdErr | undefined;
-    private changes: Changes = '' as Changes;
+    private syncMessage: `${string}\n` | '' = '';
+    /**
+     * match for /changes:\s*(string)/
+     * like `17 files modified.` or ` None. Already up-to-date`
+     */
+    private changes: string = ''; //
     private nextSyncTime: Date | undefined; // undefined = no auto syncing
 
     constructor(private repository: Repository) {}
 
-    /**
-     * @param changes like `17 files modified.` or ` None. Already up-to-date`
-     */
-    public onChangesUpdated(changes: Changes, errorText?: FossilStdErr) {
-        const numChanges = changes.match(/\d+/);
-        this.text = numChanges && errorText === undefined ? numChanges[0] : '';
-        this.changes = changes;
-        this.errorText = errorText;
+    public onChangesReady(updateResult: ExecResult) {
+        if (!updateResult.exitCode) {
+            const match = updateResult.stdout.match(/^changes:\s*((\d*).*)/m);
+            this.changes = match?.[1] ?? 'unknown changes';
+            this.text = match?.[2] ?? ''; // digits of nothing
+        } else {
+            this.changes = this.text = '';
+        }
+    }
+
+    public onSyncReady(result: ExecResult) {
+        this.icon = 'sync';
+        if (!result.exitCode) {
+            this.syncMessage = '';
+        } else {
+            if (/^Usage: /.test(result.stderr)) {
+                // likely only local repo
+                this.syncMessage = 'repository with no remote\n';
+            } else {
+                this.icon = 'warning';
+                this.syncMessage = `Sync error: ${result.stderr}\n`;
+            }
+        }
     }
 
     public onSyncTimeUpdated(date: Date | undefined) {
@@ -41,17 +61,13 @@ class SyncBar {
     }
 
     public get command(): Command {
-        const message = this.nextSyncTime
+        const timeMessage = this.nextSyncTime
             ? `Next sync ${this.nextSyncTime.toTimeString().split(' ')[0]}`
             : `Auto sync disabled`;
-        const tooltip =
-            this.errorText === undefined
-                ? `${this.changes}\n${message}\nUpdate`
-                : `Error: ${this.errorText}`;
         return {
             command: 'fossil.update',
-            title: `$(sync) ${this.text}`.trim(),
-            tooltip: tooltip,
+            title: `$(${this.icon}) ${this.text}`.trim(),
+            tooltip: `${timeMessage}\n${this.syncMessage}${this.changes}\nUpdate`,
             arguments: [this.repository satisfies Repository],
         };
     }
@@ -104,13 +120,18 @@ export class StatusBarCommands {
         this.update();
     }
 
-    public onChangesUpdated(changes: Changes, errorText?: FossilStdErr) {
-        this.syncBar.onChangesUpdated(changes, errorText);
+    public onChangesReady(updateResult: ExecResult) {
+        this.syncBar.onChangesReady(updateResult);
         this.update();
     }
 
     public onSyncTimeUpdated(date: Date | undefined) {
         this.syncBar.onSyncTimeUpdated(date);
+        this.update();
+    }
+
+    public onSyncReady(syncResult: ExecResult) {
+        this.syncBar.onSyncReady(syncResult);
         this.update();
     }
 
