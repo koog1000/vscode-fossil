@@ -19,6 +19,7 @@ import { RenameSuite } from './renameSuite';
 import { BranchSuite } from './branchSuite';
 import { RevertSuite } from './revertSuite';
 import { GitExportSuite } from './gitExportSuite';
+import { StatusBarSuite } from './statusBarSuite';
 
 suite('Fossil.OpenedRepo', function (this: Suite) {
     this.ctx.sandbox = sinon.createSandbox();
@@ -31,6 +32,7 @@ suite('Fossil.OpenedRepo', function (this: Suite) {
 
     suite('Utilities', utilitiesSuite);
     suite('Update', UpdateSuite);
+    suite('Status Bar', StatusBarSuite);
     suite('Resource Actions', resourceActionsSuite);
     suite('Timeline', timelineSuite);
     suite('Revert', RevertSuite);
