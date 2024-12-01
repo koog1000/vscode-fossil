@@ -290,6 +290,7 @@ export async function fossilOpenForce(
         if (/check-ins:\s+1\s*$/.test(res.stdout)) {
             break;
         }
+        /* c8 ignore next 2 */
         await delay((i + 1) * 111);
     }
     assert.match(res!.stdout, /check-ins:\s+1\s*$/);

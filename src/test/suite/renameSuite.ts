@@ -91,6 +91,7 @@ export function RenameSuite(this: Suite): void {
             if (sim.callCount != 0) {
                 break;
             }
+            /* c8 ignore next 2 */
             await delay(5);
         }
         sinon.assert.calledOnceWithExactly(
