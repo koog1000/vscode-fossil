@@ -7,7 +7,9 @@ import {
     fakeFossilBranch,
     fakeFossilChanges,
     fakeFossilStatus,
+    fakeRawExecutionResult,
     getExecStub,
+    getRawExecStub,
     getRepository,
     statusBarCommands,
 } from './common';
@@ -266,6 +268,35 @@ export function StatusBarSuite(this: Suite): void {
         assert.match(
             syncBar.tooltip,
             /Next sync \d\d:\d\d:\d\d\nSync error: test failure\nNone\. Already up-to-date\nUpdate/
+        );
+    });
+
+    test('Local repository syncing', async () => {
+        const rawExecStub = getRawExecStub(this.ctx.sandbox);
+        const syncStub = rawExecStub.withArgs(['sync']).resolves(
+            fakeRawExecutionResult({
+                stderr: 'Usage: fossil sync URL\n',
+                exitCode: 1,
+            })
+        );
+        const sem = this.ctx.sandbox
+            .stub(window, 'showErrorMessage')
+            .resolves();
+        const execStub = getExecStub(this.ctx.sandbox);
+        const changeStub = fakeFossilChanges(
+            execStub,
+            'None. Already up-to-date'
+        );
+
+        await commands.executeCommand('fossil.sync');
+        sinon.assert.notCalled(changeStub);
+        sinon.assert.calledOnce(sem);
+        sinon.assert.calledOnce(syncStub);
+        const syncBar = statusBarCommands()[1];
+        assert.ok(syncBar.tooltip);
+        assert.match(
+            syncBar.tooltip,
+            /Next sync \d\d:\d\d:\d\d\nrepository with no remote\nNone\. Already up-to-date\nUpdate/
         );
     });
 }
