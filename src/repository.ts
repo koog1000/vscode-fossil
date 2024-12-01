@@ -52,7 +52,7 @@ import {
     delay,
 } from './util';
 import { memoize, throttle, debounce } from './decorators';
-import { StatusBarCommands } from './statusbar';
+import { StatusBarCommands } from './statusBar';
 import typedConfig, { AutoSyncIntervalMs } from './config';
 
 import * as path from 'path';
