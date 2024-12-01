@@ -265,6 +265,11 @@
                 "icon": "$(plus)"
             },
             {
+                "command": "fossil.sync",
+                "title": "%command.sync%",
+                "category": "Fossil"
+            },
+            {
                 "command": "fossil.undo",
                 "title": "%command.undo%",
                 "category": "Fossil"
@@ -630,18 +635,23 @@
                     "when": "scmProvider == fossil"
                 },
                 {
-                    "command": "fossil.pull",
+                    "command": "fossil.sync",
                     "group": "1_sync@2",
                     "when": "scmProvider == fossil"
                 },
                 {
-                    "command": "fossil.push",
+                    "command": "fossil.pull",
                     "group": "1_sync@3",
                     "when": "scmProvider == fossil"
                 },
                 {
-                    "command": "fossil.pushTo",
+                    "command": "fossil.push",
                     "group": "1_sync@4",
+                    "when": "scmProvider == fossil"
+                },
+                {
+                    "command": "fossil.pushTo",
+                    "group": "1_sync@5",
                     "when": "scmProvider == fossil"
                 },
                 {
