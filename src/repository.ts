@@ -312,7 +312,7 @@ export class Repository implements IDisposable, InteractionAPI {
         return this._operations;
     }
 
-    toUri(rawPath: string): Uri {
+    toUri(rawPath: RelativePath): Uri {
         return Uri.file(path.join(this.repository.root, rawPath));
     }
 
@@ -934,7 +934,7 @@ export class Repository implements IDisposable, InteractionAPI {
 
     /** When user selects one of the modified files using 'fossil.log' command */
     async diffToParent(
-        filePath: string,
+        filePath: RelativePath,
         checkin: FossilCheckin
     ): Promise<void> {
         const uri = this.toUri(filePath);
