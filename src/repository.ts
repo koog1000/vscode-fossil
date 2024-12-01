@@ -887,7 +887,7 @@ export class Repository implements IDisposable, InteractionAPI {
 
     private async runWithProgress<T>(
         sideEffects: SideEffects,
-        runOperation: () => Promise<T> = () => Promise.resolve<any>(null),
+        runOperation: () => Promise<T>,
         runSideEffects: (arg0: T) => boolean = () => true
     ): Promise<T> {
         if (this.state !== RepositoryState.Idle) {
