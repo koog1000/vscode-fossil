@@ -299,6 +299,31 @@ export function StatusBarSuite(this: Suite): void {
             /Next sync \d\d:\d\d:\d\d\nrepository with no remote\nNone\. Already up-to-date\nUpdate/
         );
     });
+
+    test('Nonsensical "change" is ignored', async () => {
+        const execStub = getExecStub(this.ctx.sandbox);
+        const syncCall = execStub
+            .withArgs(['sync'])
+            .resolves(fakeExecutionResult());
+        const changesCall = execStub
+            .withArgs(['update', '--dry-run', '--latest'])
+            .resolves(fakeExecutionResult({ stdout: 'bad changes' }));
+        await commands.executeCommand('fossil.sync');
+        sinon.assert.calledOnceWithExactly(syncCall, ['sync']);
+        sinon.assert.calledOnceWithExactly(
+            changesCall,
+            ['update', '--dry-run', '--latest'],
+            'Triggered by previous operation' as Reason,
+            { logErrors: false }
+        );
+        const syncBar = statusBarCommands()[1];
+        assert.equal(syncBar.title, '$(sync)');
+        assert.ok(syncBar.tooltip);
+        assert.match(
+            syncBar.tooltip,
+            /Next sync \d\d:\d\d:\d\d\nunknown changes\nUpdate/
+        );
+    });
 }
 
 export function UpdateSuite(this: Suite): void {
