@@ -1085,9 +1085,19 @@ export class Repository implements IDisposable, InteractionAPI {
 
     public updateAutoSyncInterval(interval: AutoSyncIntervalMs): void {
         clearTimeout(this.autoSyncTimer);
-        const nextSyncTime = new Date(Date.now() + interval);
+        // ensure interval is ether 0 or minimum 15 seconds
+        interval =
+            interval && (Math.max(interval, 15000) as AutoSyncIntervalMs);
+        const nextSyncTime = interval
+            ? new Date(Date.now() + interval)
+            : undefined;
         this.statusBar.onSyncTimeUpdated(nextSyncTime);
-        this.autoSyncTimer = setTimeout(() => this.periodicSync(), interval);
+        if (interval) {
+            this.autoSyncTimer = setTimeout(
+                () => this.periodicSync(),
+                interval
+            );
+        }
     }
 
     /**

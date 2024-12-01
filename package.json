@@ -1049,7 +1049,8 @@
                 "fossil.autoSyncInterval": {
                     "type": "number",
                     "description": "%config.autoSyncInterval%",
-                    "default": 180
+                    "default": 180,
+                    "minimum": 0
                 },
                 "fossil.autoRefresh": {
                     "type": "boolean",
