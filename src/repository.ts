@@ -21,7 +21,6 @@ import {
     Commit,
     CommitDetails,
     ConfigKey,
-    Distinct,
     FossilBranch,
     FossilCheckin,
     FossilClass,
@@ -70,8 +69,6 @@ import { FossilUriParams, toFossilUri } from './uri';
 import { localize } from './main';
 import type { ExecFailure, ExecResult, Reason } from './fossilExecutable';
 const iconsRootPath = path.join(path.dirname(__dirname), 'resources', 'icons');
-
-export type Changes = Distinct<string, 'changes from `fossil up --dry-run`'>;
 
 type AvailableIcons =
     | 'status-added'
@@ -279,6 +276,9 @@ export class Repository implements IDisposable, InteractionAPI {
         return this._sourceControl;
     }
 
+    /**
+     * An operation started or stopped running
+     */
     @memoize
     private get onDidChangeOperations(): Event<void> {
         return anyEvent(
@@ -715,8 +715,9 @@ export class Repository implements IDisposable, InteractionAPI {
 
     async update(checkin?: FossilCheckin): Promise<void> {
         // Update command can change everything
-        await this.runWithProgress(UpdateAll, () =>
-            this.repository.update(checkin)
+        await this.runWithProgress(
+            { syncText: 'Updating...', ...UpdateAll },
+            () => this.repository.update(checkin)
         );
     }
 
@@ -886,7 +887,8 @@ export class Repository implements IDisposable, InteractionAPI {
 
     private async runWithProgress<T>(
         sideEffects: SideEffects,
-        runOperation: () => Promise<T> = () => Promise.resolve<any>(null)
+        runOperation: () => Promise<T> = () => Promise.resolve<any>(null),
+        runSideEffects: (arg0: T) => boolean = () => true
     ): Promise<T> {
         if (this.state !== RepositoryState.Idle) {
             throw new Error('Repository not initialized');
@@ -901,10 +903,12 @@ export class Repository implements IDisposable, InteractionAPI {
 
                 try {
                     const operationResult = await runOperation();
-                    await this.updateModelState(
-                        sideEffects,
-                        'Triggered by previous operation' as Reason
-                    );
+                    if (runSideEffects(operationResult)) {
+                        await this.updateModelState(
+                            sideEffects,
+                            'Triggered by previous operation' as Reason
+                        );
+                    }
                     return operationResult;
                 } finally {
                     this._operations.delete(key);
@@ -1083,7 +1087,7 @@ export class Repository implements IDisposable, InteractionAPI {
         clearTimeout(this.autoSyncTimer);
         const nextSyncTime = new Date(Date.now() + interval);
         this.statusBar.onSyncTimeUpdated(nextSyncTime);
-        this.autoSyncTimer = setTimeout(() => this.sync(), interval);
+        this.autoSyncTimer = setTimeout(() => this.periodicSync(), interval);
     }
 
     /**
@@ -1091,35 +1095,29 @@ export class Repository implements IDisposable, InteractionAPI {
      * and updates the status bar
      */
     private async updateChanges(reason: Reason): Promise<void> {
-        const updateOutput = await this.repository.update(
+        const updateResult = await this.repository.update(
             undefined,
             true,
             reason
         );
-        if (updateOutput.exitCode) {
-            this.statusBar.onChangesUpdated(
-                'error' as Changes,
-                updateOutput.stderr
-            );
-        } else {
-            const match = updateOutput.stdout.match(/^changes:\s*(.*)/m);
-            const changes = (match ? match[1] : 'unknown status') as Changes;
-            this.statusBar.onChangesUpdated(changes);
-        }
+        this.statusBar.onChangesReady(updateResult);
     }
 
-    /**
-     * runs `fossil sync`. when 'auto' is set to true, errors are ignored
-     * and exec reason is set to 'periodic sync'.
-     * after that the `changes` are updated and auto sync is rescheduled
-     */
-    async sync(auto?: true): Promise<void> {
-        await this.repository.exec(
-            ['sync'],
-            auto ? ('periodic sync' as Reason) : undefined,
-            { logErrors: !auto }
-        );
+    async periodicSync(): Promise<void> {
+        await this.repository.exec(['sync'], 'periodic sync' as Reason, {
+            logErrors: false,
+        });
         await this.updateChanges('sync happened' as Reason);
+        this.updateAutoSyncInterval(typedConfig.autoSyncIntervalMs);
+    }
+
+    async sync(): Promise<void> {
+        const res = await this.runWithProgress(
+            { changes: true, syncText: 'Syncing' },
+            async () => this.repository.exec(['sync']),
+            res => !res.exitCode
+        );
+        this.statusBar.onSyncReady(res);
         this.updateAutoSyncInterval(typedConfig.autoSyncIntervalMs);
     }
 
