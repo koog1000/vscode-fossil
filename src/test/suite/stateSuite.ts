@@ -9,6 +9,7 @@ import {
     fakeFossilStatus,
     fakeRawExecutionResult,
     getExecStub,
+    getModel,
     getRawExecStub,
     getRepository,
     statusBarCommands,
@@ -198,7 +199,7 @@ export function StatusBarSuite(this: Suite): void {
             'Triggered by previous operation' as Reason,
             { logErrors: false }
         );
-        const nextSyncString = new Date(N.getTime() + 180 * 1000)
+        const nextSyncString = new Date(N.getTime() + 3 * 60 * 1000)
             .toTimeString()
             .split(' ')[0];
 
@@ -267,7 +268,7 @@ export function StatusBarSuite(this: Suite): void {
         assert.ok(syncBar.tooltip);
         assert.match(
             syncBar.tooltip,
-            /Next sync \d\d:\d\d:\d\d\nSync error: test failure\nNone\. Already up-to-date\nUpdate/
+            /^Next sync \d\d:\d\d:\d\d\nSync error: test failure\nNone\. Already up-to-date\nUpdate$/
         );
     });
 
@@ -296,7 +297,7 @@ export function StatusBarSuite(this: Suite): void {
         assert.ok(syncBar.tooltip);
         assert.match(
             syncBar.tooltip,
-            /Next sync \d\d:\d\d:\d\d\nrepository with no remote\nNone\. Already up-to-date\nUpdate/
+            /^Next sync \d\d:\d\d:\d\d\nrepository with no remote\nNone\. Already up-to-date\nUpdate$/
         );
     });
 
@@ -321,7 +322,65 @@ export function StatusBarSuite(this: Suite): void {
         assert.ok(syncBar.tooltip);
         assert.match(
             syncBar.tooltip,
-            /Next sync \d\d:\d\d:\d\d\nunknown changes\nUpdate/
+            /^Next sync \d\d:\d\d:\d\d\nunknown changes\nUpdate$/
+        );
+
+        // restore changes
+        changesCall.resolves(
+            fakeExecutionResult({
+                stdout: 'changes: None. Already up-to-date\n',
+            })
+        );
+        await commands.executeCommand('fossil.sync');
+        assert.match(
+            statusBarCommands()[1].tooltip!,
+            /^Next sync \d\d:\d\d:\d\d\nNone. Already up-to-date\nUpdate$/
+        );
+    });
+
+    const changeAutoSyncIntervalSeconds = (seconds: number) => {
+        const currentConfig = workspace.getConfiguration('fossil');
+        const configStub = {
+            get: sinon.stub(),
+        };
+        const getIntervalStub = configStub.get
+            .withArgs('autoSyncInterval')
+            .returns(seconds);
+        configStub.get.callsFake((key: string) => currentConfig.get(key));
+        this.ctx.sandbox
+            .stub(workspace, 'getConfiguration')
+            .callThrough()
+            .withArgs('fossil')
+            .returns(configStub as any);
+
+        const model = getModel();
+        model['onDidChangeConfiguration']({
+            affectsConfiguration: (key: string) =>
+                ['fossil.autoSyncInterval', 'fossil'].includes(key),
+        });
+        sinon.assert.calledOnce(getIntervalStub);
+    };
+
+    test('Can change `fossil.autoSyncInterval` to 5 minutes', async () => {
+        changeAutoSyncIntervalSeconds(5 * 60);
+        const nextSyncString = new Date(N.getTime() + 5 * 60 * 1000)
+            .toTimeString()
+            .split(' ')[0];
+        const syncBar = statusBarCommands()[1];
+        assert.equal(syncBar.title, '$(sync)');
+        assert.equal(
+            syncBar.tooltip,
+            `Next sync ${nextSyncString}\nNone. Already up-to-date\nUpdate`
+        );
+    });
+
+    test('Can change `fossil.autoSyncInterval` to 0 minutes (disable)', async () => {
+        changeAutoSyncIntervalSeconds(0);
+        const syncBar = statusBarCommands()[1];
+        assert.equal(syncBar.title, '$(sync)');
+        assert.equal(
+            syncBar.tooltip,
+            `Auto sync disabled\nNone. Already up-to-date\nUpdate`
         );
     });
 }
