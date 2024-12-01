@@ -19,6 +19,7 @@
     "command.commitStaged": "Commit Staged",
     "command.commitAll": "Commit All",
     "command.commitBranch": "Commit Creating New Branch...",
+    "command.sync": "Sync",
     "command.undo": "Undo",
     "command.update": "Update",
     "command.redo": "Redo",
