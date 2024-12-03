@@ -245,4 +245,24 @@ export function StatusBarSuite(this: Suite): void {
             `Auto sync disabled\nNone. Already up-to-date\nUpdate`
         );
     });
+
+    test('Periodic syncing calls `Repository.periodicSync`', async () => {
+        const timeoutStub = sinon
+            .stub(global, 'setTimeout')
+            .callThrough()
+            .withArgs(sinon.match.func, 3 * 60 * 1000);
+        changeAutoSyncIntervalSeconds(3 * 60);
+        sinon.assert.calledOnce(timeoutStub);
+
+        const execStub = getExecStub(this.ctx.sandbox);
+        const changesStub = fakeFossilChanges(execStub);
+        const syncCall = execStub
+            .withArgs(['sync'])
+            .resolves(fakeExecutionResult());
+        // calling `Repository.periodicSync`
+        await (timeoutStub.firstCall.args[0] as () => () => Promise<void>)();
+        sinon.assert.calledOnce(changesStub);
+        sinon.assert.calledOnce(syncCall);
+        sinon.assert.calledTwice(execStub);
+    });
 }
