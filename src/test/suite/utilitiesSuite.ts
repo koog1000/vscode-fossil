@@ -224,11 +224,11 @@ export function utilitiesSuite(this: Suite): void {
         const terminal = {
             sendText: sendText as unknown,
         } as vscode.Terminal;
-        const createTerminalstub = this.ctx.sandbox
+        const createTerminalStub = this.ctx.sandbox
             .stub(vscode.window, 'createTerminal')
             .returns(terminal);
         await vscode.commands.executeCommand('fossil.openUI');
-        sinon.assert.calledOnce(createTerminalstub);
+        sinon.assert.calledOnce(createTerminalStub);
         sinon.assert.calledOnceWithExactly(sendText, 'fossil ui');
     });
     test('Commit input box knows which repository to use', () => {
