@@ -1114,10 +1114,15 @@ export class Repository implements IDisposable, InteractionAPI {
     }
 
     async periodicSync(): Promise<void> {
-        await this.repository.exec(['sync'], 'periodic sync' as Reason, {
-            logErrors: false,
-        });
+        const syncResult = await this.repository.exec(
+            ['sync'],
+            'periodic sync' as Reason,
+            {
+                logErrors: false,
+            }
+        );
         await this.updateChanges('sync happened' as Reason);
+        this.statusBar.onSyncReady(syncResult);
         this.updateAutoSyncInterval(typedConfig.autoSyncIntervalMs);
     }
 
