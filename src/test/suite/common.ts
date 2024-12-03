@@ -243,6 +243,7 @@ export async function fossilOpen(sandbox: sinon.SinonSandbox): Promise<void> {
         await setupFossilOpen(sandbox);
 
     await vscode.commands.executeCommand('fossil.open');
+    const repository = getRepository();
     sinon.assert.calledTwice(sod);
     sinon.assert.calledOnceWithExactly(openStub, rootPath.fsPath as FossilCWD, [
         'open',
@@ -250,6 +251,17 @@ export async function fossilOpen(sandbox: sinon.SinonSandbox): Promise<void> {
     ]);
     const res = await executable.exec(rootPath.fsPath as FossilCWD, ['info']);
     assert.match(res.stdout, /check-ins:\s+1\s*$/);
+
+    for (let i = 0; i < 1500; ++i) {
+        // wait for repository full initialization, i.e.
+        // successful `repository.updateAutoSyncInterval` call
+        if (repository['autoSyncTimer'] !== undefined) {
+            break;
+        }
+        /* c8 ignore next 2*/
+        await delay(3);
+    }
+    assert.notEqual(repository['autoSyncTimer'], undefined);
     sandbox.restore();
 }
 
