@@ -59,16 +59,12 @@ export function describeMerge(
     localBranchName: FossilBranch,
     otherBranchName: FossilCheckin
 ): FossilCommitMessage {
-    if (localBranchName === otherBranchName) {
-        return localize('merge', 'Merge') as FossilCommitMessage;
-    } else {
-        return localize(
-            'merge into',
-            'Merge {0} into {1}',
-            otherBranchName,
-            localBranchName
-        ) as FossilCommitMessage;
-    }
+    return localize(
+        'merge into',
+        'Merge {0} into {1}',
+        otherBranchName,
+        localBranchName
+    ) as FossilCommitMessage;
 }
 
 export const enum Old {
