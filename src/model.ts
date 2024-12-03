@@ -323,7 +323,7 @@ export class Model implements Disposable {
         possibleRepositoryFolders.forEach(p =>
             this.tryOpenRepository(p.uri.fsPath)
         );
-        openRepositoriesToDispose.forEach(r => r.dispose());
+        dispose(openRepositoriesToDispose);
     }
 
     private onDidChangeVisibleTextEditors(
