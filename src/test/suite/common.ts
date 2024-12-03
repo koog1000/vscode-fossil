@@ -202,7 +202,9 @@ export function fakeFossilBranch(
 
 export function fakeFossilChanges(
     execStub: ExecStub,
-    changes: `${number} files modified.` | 'None. Already up-to-date'
+    changes:
+        | `${number} files modified.`
+        | 'None. Already up-to-date' = 'None. Already up-to-date'
 ): ExecStub {
     return execStub
         .withArgs(['update', '--dry-run', '--latest'])
