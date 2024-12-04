@@ -152,6 +152,11 @@ export function timelineSuite(this: Suite): void {
         });
         showQuickPick.onSecondCall().callsFake(items => {
             assert.ok(items instanceof Array);
+            const aItem = items.find(
+                item => item.label === '    Ａ  amend.txt'
+            );
+            assert.ok(aItem);
+            assert.equal(aItem.description, '.');
             assert.equal(items[1].label, '$(edit) Edit commit message');
             return Promise.resolve(items[1]);
         });
