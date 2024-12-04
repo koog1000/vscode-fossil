@@ -29,13 +29,11 @@ export class Credentials {
      */
     async initialize(disposables: Disposable[]): Promise<void> {
         if (!this.registered) {
-            disposables.push(
-                authentication.onDidChangeSessions(async e => {
-                    if (e.provider.id === GITHUB_AUTH_PROVIDER_ID) {
-                        await this.tryCreateOctokit();
-                    }
-                })
-            );
+            authentication.onDidChangeSessions(async e => {
+                if (e.provider.id === GITHUB_AUTH_PROVIDER_ID) {
+                    await this.tryCreateOctokit();
+                }
+            }, disposables);
         }
         if (!this.octokit) {
             await this.tryCreateOctokit();
