@@ -6,6 +6,7 @@ import {
     fakeFossilChanges,
     fakeFossilStatus,
     fakeRawExecutionResult,
+    fakeUpdateResult,
     getExecStub,
     getModel,
     getRawExecStub,
@@ -95,7 +96,7 @@ export function StatusBarSuite(this: Suite): void {
         const syncStub = execStub.withArgs(['update']).callsFake(async () => {
             const syncBar = statusBarCommands()[1];
             assert.equal(syncBar.title, '$(sync~spin)');
-            return fakeExecutionResult();
+            return fakeUpdateResult();
         });
         const changeStub = fakeFossilChanges(
             execStub,
@@ -105,10 +106,10 @@ export function StatusBarSuite(this: Suite): void {
         const branchStub = fakeFossilBranch(execStub, 'trunk');
         await commands.executeCommand('fossil.update');
         sinon.assert.calledOnce(syncStub);
-        sinon.assert.calledOnce(changeStub);
+        sinon.assert.notCalled(changeStub);
         sinon.assert.calledOnce(statusStub);
         sinon.assert.calledOnce(branchStub);
-        sinon.assert.callCount(execStub, 4);
+        sinon.assert.calledThrice(execStub);
     });
 
     test('Error in tooltip when `sync` failed', async () => {
@@ -188,11 +189,7 @@ export function StatusBarSuite(this: Suite): void {
         );
 
         // restore changes
-        changesCall.resolves(
-            fakeExecutionResult({
-                stdout: 'changes: None. Already up-to-date\n',
-            })
-        );
+        changesCall.resolves(fakeUpdateResult());
         await commands.executeCommand('fossil.sync');
         assert.match(
             statusBarCommands()[1].tooltip!,

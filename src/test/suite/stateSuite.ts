@@ -5,6 +5,7 @@ import {
     cleanupFossil,
     fakeExecutionResult,
     fakeFossilStatus,
+    fakeUpdateResult,
     getExecStub,
     getRepository,
 } from './common';
@@ -66,7 +67,9 @@ function PullAndPushSuite(this: Suite): void {
 
     test('Update', async () => {
         const execStub = getExecStub(this.ctx.sandbox);
-        const updateCall = execStub.withArgs(['update']).resolves();
+        const updateCall = execStub
+            .withArgs(['update'])
+            .resolves(fakeUpdateResult());
 
         await commands.executeCommand('fossil.update');
         sinon.assert.calledOnce(updateCall);
@@ -153,7 +156,9 @@ export function UpdateSuite(this: Suite): void {
 
     test('Change branch to trunk', async () => {
         const execStub = getExecStub(this.ctx.sandbox);
-        const updateCall = execStub.withArgs(['update', 'trunk']).resolves();
+        const updateCall = execStub
+            .withArgs(['update', 'trunk'])
+            .resolves(fakeUpdateResult());
 
         const sqp = this.ctx.sandbox.stub(window, 'showQuickPick');
         sqp.onFirstCall().callsFake(items => {
@@ -176,7 +181,9 @@ export function UpdateSuite(this: Suite): void {
         await repository.updateStatus('Test' as Reason);
         assert.ok(repository.fossilStatus?.isMerge);
 
-        const updateCall = execStub.withArgs(['update', 'trunk']).resolves();
+        const updateCall = execStub
+            .withArgs(['update', 'trunk'])
+            .resolves(fakeUpdateResult());
 
         const showQuickPick = this.ctx.sandbox.stub(window, 'showQuickPick');
         showQuickPick.onFirstCall().callsFake(items => {
@@ -213,7 +220,7 @@ export function UpdateSuite(this: Suite): void {
         const execStub = getExecStub(this.ctx.sandbox);
         const updateCall = execStub
             .withArgs(['update', '1234567890'])
-            .resolves();
+            .resolves(fakeUpdateResult());
 
         const showQuickPick = this.ctx.sandbox.stub(window, 'showQuickPick');
         showQuickPick.onFirstCall().callsFake(items => {
@@ -269,7 +276,9 @@ export function UpdateSuite(this: Suite): void {
             assert.equal(items[7].label, '$(tag) c c c');
             return Promise.resolve(items[5]);
         });
-        const updateCall = execStub.withArgs(['update', 'a']).resolves();
+        const updateCall = execStub
+            .withArgs(['update', 'a'])
+            .resolves(fakeUpdateResult());
         await commands.executeCommand('fossil.branchChange');
         sinon.assert.calledOnce(tagsStub);
         sinon.assert.calledOnce(branchesStub);

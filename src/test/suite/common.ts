@@ -200,15 +200,21 @@ export function fakeFossilBranch(
         .resolves(fakeExecutionResult({ stdout: branch }));
 }
 
+type Changes = `${number} files modified.` | 'None. Already up-to-date';
+
+export function fakeUpdateResult(
+    changes: Changes = 'None. Already up-to-date'
+) {
+    return fakeExecutionResult({ stdout: `changes: ${changes}\n` });
+}
+
 export function fakeFossilChanges(
     execStub: ExecStub,
-    changes:
-        | `${number} files modified.`
-        | 'None. Already up-to-date' = 'None. Already up-to-date'
+    changes: Changes = 'None. Already up-to-date'
 ): ExecStub {
     return execStub
         .withArgs(['update', '--dry-run', '--latest'])
-        .resolves(fakeExecutionResult({ stdout: `changes: ${changes}\n` }));
+        .resolves(fakeUpdateResult(changes));
 }
 
 async function setupFossilOpen(sandbox: sinon.SinonSandbox) {
