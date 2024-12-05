@@ -200,6 +200,10 @@ export function RenameSuite(this: Suite): void {
             .onFirstCall()
             .callsFake(items => {
                 assert.ok(items instanceof Array);
+                assert.equal(items.length, 3);
+                assert.equal(items[0].label, '$(folder-opened) Open Dialog');
+                assert.equal(items[1].label, 'Extras');
+                assert.equal(items[2].label, '$(symbol-file) relocated.txt');
                 return Promise.resolve(items[0]);
             });
 
