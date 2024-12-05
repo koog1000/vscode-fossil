@@ -715,10 +715,11 @@ export class Repository implements IDisposable, InteractionAPI {
 
     async update(checkin?: FossilCheckin): Promise<void> {
         // Update command can change everything
-        await this.runWithProgress(
-            { syncText: 'Updating...', ...UpdateAll },
+        const updateResult = await this.runWithProgress(
+            { syncText: 'Updating...', ...UpdateStatusAndBranch },
             () => this.repository.update(checkin)
         );
+        this.statusBar.onChangesReady(updateResult);
     }
 
     async close(): Promise<boolean> {
