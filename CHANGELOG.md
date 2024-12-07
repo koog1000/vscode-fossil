@@ -1,5 +1,21 @@
 # Changelog
 
+# v0.7.0
+
+### What's New
+
+- Sync bar shows the number of file changes that will be applied after an "update" using "changes" from `fossil up --dry-run`.
+- Sync bar tooltip shows full "changes" string
+- "fossil.autoInOutInterval" is now "fossil.autoSyncInterval", and it controls how often `fossil sync` runs. Three minutes by default.
+- Reduce number of `fossil branch current` calls
+- Add "sync" command
+
+### Bug Fix
+
+- Fossil status bar wasn't visible after a folder was opened
+- Look like "Refresh" button was a placebo, fixed now
+
+
 # v0.6.1
 
 ### Bug Fixes
