@@ -263,7 +263,7 @@ export class OpenedRepository {
             [
                 'update',
                 ...(checkin ? [checkin] : []),
-                ...(dryRun ? ['--dry-run', '--latest'] : []),
+                ...(dryRun ? ['--dry-run'] : []),
             ],
             reason,
             { logErrors: !dryRun }

@@ -213,7 +213,7 @@ export function fakeFossilChanges(
     changes: Changes = 'None. Already up-to-date'
 ): ExecStub {
     return execStub
-        .withArgs(['update', '--dry-run', '--latest'])
+        .withArgs(['update', '--dry-run'])
         .resolves(fakeUpdateResult(changes));
 }
 

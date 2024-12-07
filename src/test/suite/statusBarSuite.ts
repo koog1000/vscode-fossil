@@ -58,7 +58,7 @@ export function StatusBarSuite(this: Suite): void {
         sinon.assert.calledOnceWithExactly(syncCall, ['sync']);
         sinon.assert.calledOnceWithExactly(
             changesCall,
-            ['update', '--dry-run', '--latest'],
+            ['update', '--dry-run'],
             'Triggered by previous operation' as Reason,
             { logErrors: false }
         );
@@ -170,13 +170,13 @@ export function StatusBarSuite(this: Suite): void {
             .withArgs(['sync'])
             .resolves(fakeExecutionResult());
         const changesCall = execStub
-            .withArgs(['update', '--dry-run', '--latest'])
+            .withArgs(['update', '--dry-run'])
             .resolves(fakeExecutionResult({ stdout: 'bad changes' }));
         await commands.executeCommand('fossil.sync');
         sinon.assert.calledOnceWithExactly(syncCall, ['sync']);
         sinon.assert.calledOnceWithExactly(
             changesCall,
-            ['update', '--dry-run', '--latest'],
+            ['update', '--dry-run'],
             'Triggered by previous operation' as Reason,
             { logErrors: false }
         );
