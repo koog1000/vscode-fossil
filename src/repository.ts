@@ -1047,6 +1047,14 @@ export class Repository implements IDisposable, InteractionAPI {
         await Promise.all(sidePromises);
     }
 
+    /**
+     * Why throttle:
+     * `fossil update` can execute `UPDATE` sql statement, for example
+     * "UPDATE vfile SET mtime=%lld, chnged=%d WHERE id=%d"
+     * which requires database locking, and running multiple fossil statuses
+     * at the same time will lead to "database is locked" sqlite error.
+     */
+    @throttle
     public async updateStatus(
         reason?: Reason
     ): Promise<ExecFailure | undefined> {
