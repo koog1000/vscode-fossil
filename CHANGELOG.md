@@ -1,5 +1,12 @@
 # Changelog
 
+# v0.7.1
+
+### Bug Fix
+
+- Prevent multiple `fossil status` from running in parallel to prevent "database is locked" error
+
+
 # v0.7.0
 
 ### What's New
