@@ -388,8 +388,11 @@ export class Repository implements IDisposable, InteractionAPI {
             this.statusBar,
             this.disposables
         );
-        this.updateModelState(UpdateAll, 'opening repository' as Reason).then(
-            () => this.updateAutoSyncInterval(typedConfig.autoSyncIntervalMs)
+        this.updateModelState(
+            UpdateAll,
+            'opening repository' as Reason
+        ).finally(() =>
+            this.updateAutoSyncInterval(typedConfig.autoSyncIntervalMs)
         );
     }
 
