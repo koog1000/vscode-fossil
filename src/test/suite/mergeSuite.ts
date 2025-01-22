@@ -91,7 +91,7 @@ export function MergeSuite(this: Suite): void {
         const rootUri = workspace.workspaceFolders![0].uri;
         const fooPath = Uri.joinPath(rootUri, fooFilename).fsPath;
         await fs.writeFile(fooPath, 'foo content\n');
-        await openedRepository.exec(['add', fooFilename as RelativePath]);
+        await openedRepository.exec(['add', '--', fooFilename as RelativePath]);
         await openedRepository.exec([
             'commit',
             '-m',
@@ -100,7 +100,7 @@ export function MergeSuite(this: Suite): void {
         ]);
         const barPath = Uri.joinPath(rootUri, fooFilename).fsPath;
         await fs.writeFile(barPath, 'bar content\n');
-        await openedRepository.exec(['add', barFilename as RelativePath]);
+        await openedRepository.exec(['add', '--', barFilename as RelativePath]);
         await fs.appendFile(fooPath, 'foo content 2\n');
         await openedRepository.exec([
             'commit',
@@ -208,6 +208,7 @@ export function MergeSuite(this: Suite): void {
             'commit',
             '-m',
             'Merge c into trunk' as FossilCommitMessage,
+            '--',
         ]);
     }).timeout(5000);
 

@@ -97,7 +97,11 @@ export function StatusSuite(this: Suite): void {
         const barPath = Uri.joinPath(rootUri, 'bar-xa.txt').fsPath;
         await fs.writeFile(barPath, 'test bar\n');
         await fs.appendFile(fooPath, 'appended\n');
-        await openedRepository.exec(['add', 'bar-xa.txt' as RelativePath]);
+        await openedRepository.exec([
+            'add',
+            '--',
+            'bar-xa.txt' as RelativePath,
+        ]);
         await openedRepository.exec([
             'commit',
             '-m',
@@ -132,12 +136,17 @@ export function StatusSuite(this: Suite): void {
         // EXECUTABLE
         const executable_path = Uri.joinPath(uri, 'executable').fsPath;
         await fs.writeFile(executable_path, 'executable_path');
-        await openedRepository.exec(['add', executable_path as RelativePath]);
+        await openedRepository.exec([
+            'add',
+            '--',
+            executable_path as RelativePath,
+        ]);
         await openedRepository.exec([
             'commit',
-            executable_path as RelativePath,
             '-m',
             'added executable' as FossilCommitMessage,
+            '--',
+            executable_path as RelativePath,
         ]);
         await fs.chmod(executable_path, 0o744);
 
@@ -145,24 +154,30 @@ export function StatusSuite(this: Suite): void {
         const unexec_path = Uri.joinPath(uri, 'status_unexec').fsPath;
         await fs.writeFile(unexec_path, 'unexec_path');
         await fs.chmod(unexec_path, 0o744);
-        await openedRepository.exec(['add', unexec_path as RelativePath]);
+        await openedRepository.exec(['add', '--', unexec_path as RelativePath]);
         await openedRepository.exec([
             'commit',
-            unexec_path as RelativePath,
             '-m',
             'added status_unexec' as FossilCommitMessage,
+            '--',
+            unexec_path as RelativePath,
         ]);
         await fs.chmod(unexec_path, 0o644);
 
         // SYMLINK
         const symlink_path = Uri.joinPath(uri, 'symlink').fsPath;
         await fs.writeFile(symlink_path, 'symlink_path');
-        await openedRepository.exec(['add', symlink_path as RelativePath]);
+        await openedRepository.exec([
+            'add',
+            '--',
+            symlink_path as RelativePath,
+        ]);
         await openedRepository.exec([
             'commit',
-            symlink_path as RelativePath,
             '-m',
             'added symlink' as FossilCommitMessage,
+            '--',
+            symlink_path as RelativePath,
         ]);
         await fs.unlink(symlink_path);
         await fs.symlink('/etc/passwd', symlink_path);
@@ -170,12 +185,13 @@ export function StatusSuite(this: Suite): void {
         // UNLINK
         const unlink_path = Uri.joinPath(uri, 'unlink').fsPath;
         await fs.symlink('/etc/passwd', unlink_path);
-        await openedRepository.exec(['add', unlink_path as RelativePath]);
+        await openedRepository.exec(['add', '--', unlink_path as RelativePath]);
         await openedRepository.exec([
             'commit',
-            unlink_path as RelativePath,
             '-m',
             'added unlink' as FossilCommitMessage,
+            '--',
+            unlink_path as RelativePath,
         ]);
         await fs.rm(unlink_path);
         await fs.writeFile(unlink_path, '/etc/passwd');
@@ -508,9 +524,10 @@ export function FileSystemSuite(this: Suite): void {
             cat,
             [
                 'cat',
-                'test.txt' as RelativePath,
                 '-r',
                 'current' as FossilCheckin,
+                '--',
+                'test.txt' as RelativePath,
             ],
             { cwd: sinon.match.string }
         );

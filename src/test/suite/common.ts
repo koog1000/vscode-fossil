@@ -337,6 +337,7 @@ export async function add(
     await fs.promises.writeFile(fileUri.fsPath, content);
     const addRes = await openedRepository.exec([
         'add',
+        '--',
         filename as RelativePath,
     ]);
     assert.match(
@@ -345,9 +346,10 @@ export async function add(
     );
     const commitRes = await openedRepository.exec([
         'commit',
-        filename as RelativePath,
         '-m',
         commitMessage as FossilCommitMessage,
+        '--',
+        filename as RelativePath,
     ]);
     assert.equal(commitRes.exitCode, 0, 'Commit failed');
     return fileUri;
@@ -360,7 +362,7 @@ export async function cleanupFossil(repository: Repository): Promise<void> {
         repository.stagingGroup.resourceStates.length ||
         repository.untrackedGroup.resourceStates.length
     ) {
-        const revertRes = await openedRepository.exec(['revert']);
+        const revertRes = await openedRepository.exec(['revert', '--']);
         assert.equal(revertRes.exitCode, 0);
 
         const cleanRes1 = await openedRepository.exec(

@@ -158,6 +158,7 @@ export function RevertSuite(this: Suite): void {
         );
         sinon.assert.calledOnceWithExactly(revertStub, [
             'revert',
+            '--',
             ...(files as RelativePath[]),
         ]);
     }

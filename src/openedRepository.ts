@@ -233,7 +233,7 @@ export class OpenedRepository {
     }
 
     async add(paths?: RelativePath[]): Promise<void> {
-        await this.exec(['add', ...(paths || [])]);
+        await this.exec(['add', '--', ...(paths || [])]);
     }
 
     async ls(paths: DocumentFsPath[]): Promise<string[]> {
@@ -247,8 +247,9 @@ export class OpenedRepository {
     ): Promise<Buffer | undefined> {
         return this.executable.cat(this.root, [
             'cat',
-            relativePath,
             ...(checkin ? (['-r', checkin] as const) : ([] as const)),
+            '--',
+            relativePath,
         ]);
     }
 
@@ -304,9 +305,10 @@ export class OpenedRepository {
                           : ([] as const)),
                   ] as const)
                 : ([] as const)),
-            ...fileList,
             '-m',
             message,
+            '--',
+            ...fileList,
         ]);
     }
 
@@ -398,7 +400,7 @@ export class OpenedRepository {
         const pathsByGroup = groupBy(paths, p => path.dirname(p));
         const groups = Object.keys(pathsByGroup).map(k => pathsByGroup[k]);
         const tasks = groups.map(
-            paths => () => this.exec(['revert', ...paths])
+            paths => () => this.exec(['revert', '--', ...paths])
         );
 
         for (const task of tasks) {
@@ -410,7 +412,7 @@ export class OpenedRepository {
         const pathsByGroup = groupBy(paths, p => path.dirname(p));
         const groups = Object.keys(pathsByGroup).map(k => pathsByGroup[k]);
         const tasks = groups.map(
-            paths => () => this.exec(['forget', ...paths])
+            paths => () => this.exec(['forget', '--', ...paths])
         );
 
         for (const task of tasks) {

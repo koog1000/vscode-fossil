@@ -50,11 +50,12 @@ function PraiseSuite(this: Suite) {
                     'commit',
                     '--user-override',
                     `u${n}` as FossilUsername,
-                    path as RelativePath,
                     '-m',
                     `praise ${n}` as FossilCommitMessage,
+                    '--',
+                    path as RelativePath,
                 ]);
-            await openedRepository.exec(['add', path as RelativePath]);
+            await openedRepository.exec(['add', '--', path as RelativePath]);
             await ci(1);
             await fs.appendFile(path, [...'second', ''].join('\n'));
             await ci(2);

@@ -148,7 +148,7 @@ export function RenameSuite(this: Suite): void {
         );
         const openedRepository: OpenedRepository = (repository as any)
             .repository;
-        await openedRepository.exec(['add', oldDirname as RelativePath]);
+        await openedRepository.exec(['add', '--', oldDirname as RelativePath]);
         await openedRepository.exec([
             'commit',
             '-m',
