@@ -9,10 +9,13 @@
     },
     "cSpell.words": [
         "anypath",
+        "bgcolor",
+        "branchcolor",
         "Checkin",
         "cherrypick",
         "Crowl",
         "esbuild",
+        "fossilpatch",
         "fslckout",
         "humanise",
         "outfile",
