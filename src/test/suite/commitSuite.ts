@@ -15,7 +15,12 @@ import * as assert from 'assert/strict';
 import * as fs from 'fs/promises';
 import { Suite, before, beforeEach } from 'mocha';
 import { Reason } from '../../fossilExecutable';
-import { ResourceStatus } from '../../openedRepository';
+import {
+    FossilCommitMessage,
+    FossilUsername,
+    RelativePath,
+    ResourceStatus,
+} from '../../openedRepository';
 
 export const commitStagedTest = async (
     sandbox: sinon.SinonSandbox,
@@ -48,10 +53,10 @@ export const commitStagedTest = async (
     });
     sinon.assert.calledOnceWithExactly(commitStub, [
         'commit',
-        'a',
-        'b',
+        'a' as RelativePath,
+        'b' as RelativePath,
         '-m',
-        'test message',
+        'test message' as FossilCommitMessage,
     ]);
 };
 
@@ -165,7 +170,7 @@ export function CommitSuite(this: Suite): void {
         sinon.assert.calledOnceWithExactly(commitStub, [
             'commit',
             '-m',
-            'test message all',
+            'test message all' as FossilCommitMessage,
         ]);
     });
 
@@ -377,14 +382,18 @@ export function CommitSuite(this: Suite): void {
             { modal: true },
             '&&Delete'
         );
-        sinon.assert.calledOnceWithExactly(forgetStub, ['forget', 'b', 'c']);
+        sinon.assert.calledOnceWithExactly(forgetStub, [
+            'forget',
+            'b' as RelativePath,
+            'c' as RelativePath,
+        ]);
         sinon.assert.calledOnceWithExactly(commitStub, [
             'commit',
-            'a',
-            'b',
-            'c',
+            'a' as RelativePath,
+            'b' as RelativePath,
+            'c' as RelativePath,
             '-m',
-            'remove files',
+            'remove files' as FossilCommitMessage,
         ]);
     });
 
@@ -428,10 +437,10 @@ export function CommitSuite(this: Suite): void {
         sinon.assert.calledOnceWithExactly(commitStub, [
             'commit',
             '--user-override',
-            'testUsername',
-            'minimal.txt',
+            'testUsername' as FossilUsername,
+            'minimal.txt' as RelativePath,
             '-m',
-            'custom username test',
+            'custom username test' as FossilCommitMessage,
         ]);
     });
 }

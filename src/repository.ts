@@ -67,7 +67,12 @@ import type { InteractionAPI, NewBranchOptions } from './interaction';
 import { FossilUriParams, toFossilUri } from './uri';
 
 import { localize } from './main';
-import type { ExecFailure, ExecResult, Reason } from './fossilExecutable';
+import type {
+    DocumentFsPath,
+    ExecFailure,
+    ExecResult,
+    Reason,
+} from './fossilExecutable';
 const iconsRootPath = path.join(path.dirname(__dirname), 'resources', 'icons');
 
 type AvailableIcons =
@@ -491,7 +496,9 @@ export class Repository implements IDisposable, InteractionAPI {
         );
     }
     async ls(...uris: Uri[]): Promise<Uri[]> {
-        const lsResult = await this.repository.ls(uris.map(url => url.fsPath));
+        const lsResult = await this.repository.ls(
+            uris.map(url => url.fsPath as DocumentFsPath)
+        );
         const rootUri = Uri.file(this.root);
         return lsResult.map(path => Uri.joinPath(rootUri, path));
     }
@@ -703,7 +710,7 @@ export class Repository implements IDisposable, InteractionAPI {
     }
 
     @throttle
-    async clean(paths: string[]): Promise<void> {
+    async clean(paths: DocumentFsPath[]): Promise<void> {
         await this.runWithProgress(UpdateStatus, async () =>
             this.repository.clean(paths)
         );
@@ -814,7 +821,7 @@ export class Repository implements IDisposable, InteractionAPI {
         return this.repository.updateCommitMessage(checkin, commitMessage);
     }
 
-    async praise(path: string): Promise<Praise[]> {
+    async praise(path: DocumentFsPath): Promise<Praise[]> {
         return this.repository.praise(path);
     }
 
@@ -842,13 +849,13 @@ export class Repository implements IDisposable, InteractionAPI {
         });
     }
 
-    async patchCreate(path: string): Promise<void> {
+    async patchCreate(path: UserPath): Promise<void> {
         return this.runWithProgress(UpdateStatus, async () =>
             this.repository.patchCreate(path)
         );
     }
 
-    async patchApply(path: string): Promise<void> {
+    async patchApply(path: UserPath): Promise<void> {
         return this.runWithProgress(UpdateStatus, async () =>
             this.repository.patchApply(path)
         );
@@ -1139,12 +1146,12 @@ export class Repository implements IDisposable, InteractionAPI {
     }
 
     async sync(): Promise<void> {
-        const res = await this.runWithProgress(
+        const syncResult = await this.runWithProgress(
             { changes: true, syncText: 'Syncing' },
             async () => this.repository.exec(['sync']),
             res => !res.exitCode
         );
-        this.statusBar.onSyncReady(res);
+        this.statusBar.onSyncReady(syncResult);
         this.updateAutoSyncInterval(typedConfig.autoSyncIntervalMs);
     }
 

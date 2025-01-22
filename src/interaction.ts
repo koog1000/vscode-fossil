@@ -40,6 +40,7 @@ import {
     StashID,
     FossilRemote,
     FossilRemoteName,
+    FossilColor,
 } from './openedRepository';
 import * as humanise from './humanise';
 import { Repository, LogEntriesOptions } from './repository';
@@ -49,7 +50,10 @@ import {
     ExecFailure,
     FossilArgs,
     FossilCWD,
+    FossilProjectDescription,
+    FossilProjectName,
     FossilStdOut,
+    FossilWikiTitle,
 } from './fossilExecutable';
 import { ThemeIcon } from 'vscode';
 import { QuickInputButton } from 'vscode';
@@ -73,7 +77,7 @@ export const enum CommitSources {
 
 export interface NewBranchOptions {
     readonly branch: FossilBranch;
-    readonly color: string;
+    readonly color: FossilColor | '';
     readonly isPrivate: boolean;
 }
 
@@ -316,7 +320,7 @@ ${escapeHtml(stdout)}
     return resp;
 }
 
-async function inputCommon(
+async function inputCommon<TRet extends string = string>(
     this: void,
     key:
         | 'repourl'
@@ -327,42 +331,49 @@ async function inputCommon(
         | 'commit hash',
     message: string,
     extra: InputBoxOptions = {}
-): Promise<string | undefined> {
+): Promise<TRet | undefined> {
     return window.showInputBox({
         prompt: localize(key, message),
         ignoreFocusOut: true,
         ...extra,
-    });
+    }) as Thenable<TRet | undefined>;
 }
 
 export async function inputProjectName(
     this: void
-): Promise<string | undefined> {
-    return inputCommon('project name', 'Project Name', {
+): Promise<FossilProjectName | undefined> {
+    return inputCommon<FossilProjectName>('project name', 'Project Name', {
         placeHolder: 'Leave empty to not set Project Name',
     });
 }
 
 export async function inputProjectDescription(
     this: void
-): Promise<string | undefined> {
-    return inputCommon('project description', 'Project Description', {
-        placeHolder: 'Leave empty to not set Project Description',
-    });
+): Promise<FossilProjectDescription | undefined> {
+    return inputCommon<FossilProjectDescription>(
+        'project description',
+        'Project Description',
+        {
+            placeHolder: 'Leave empty to not set Project Description',
+        }
+    );
 }
 
 export async function inputWikiComment(
     this: void,
     what: 'Technote' | 'Wiki'
-): Promise<string | undefined> {
+): Promise<FossilWikiTitle | undefined> {
     switch (what) {
         case 'Technote':
-            return inputCommon(
+            return inputCommon<FossilWikiTitle>(
                 'technote comment',
                 'Timeline comment of the technote'
             );
         case 'Wiki':
-            return inputCommon('wiki entry', 'Name of the wiki entry');
+            return inputCommon<FossilWikiTitle>(
+                'wiki entry',
+                'Name of the wiki entry'
+            );
     }
 }
 
@@ -376,7 +387,9 @@ export async function inputPatchCreate(): Promise<UserPath | undefined> {
     return uri?.fsPath as UserPath | undefined;
 }
 
-export async function inputPatchApply(this: void): Promise<string | undefined> {
+export async function inputPatchApply(
+    this: void
+): Promise<UserPath | undefined> {
     const uris = await window.showOpenDialog({
         defaultUri: Uri.file('patch.fossilpatch'),
         canSelectMany: false,
@@ -384,7 +397,7 @@ export async function inputPatchApply(this: void): Promise<string | undefined> {
         title: localize('apply binary patch', 'Apply binary patch'),
     });
     if (uris?.length == 1) {
-        return uris[0].fsPath;
+        return uris[0].fsPath as UserPath;
     }
     return undefined;
 }
@@ -523,7 +536,7 @@ export async function inputNewBranchOptions(
         iconPath: new ThemeIcon('eye-closed'),
         tooltip: 'Make Branch public',
     };
-    let color = '';
+    let color: FossilColor | '' = '';
     let curBranch = '';
     const askBranch = () => {
         inputBox.value = curBranch;
@@ -591,7 +604,7 @@ export async function inputNewBranchOptions(
         });
         inputBox.onDidAccept(() => {
             if (!inputBox.buttons.length) {
-                const value = inputBox.value;
+                const value = inputBox.value as FossilColor;
                 color = isValidColor(value) ? value : '';
                 askBranch();
             } else {
@@ -1346,13 +1359,13 @@ class UserInputItem extends RunnableQuickPickItem implements QuickPickItem {
     readonly label = '$(pencil) Checkout by hash';
 
     async run(): Promise<CheckinItem<FossilCheckin> | undefined> {
-        const userInput = await inputCommon(
+        const userInput = await inputCommon<FossilCheckin>(
             'commit hash',
             'Enter hash/check-in/tag to update to',
             { placeHolder: 'hash/check-in/tag' }
         );
         if (userInput) {
-            return new CheckinItem(userInput as FossilCheckin);
+            return new CheckinItem(userInput);
         }
         return;
     }

@@ -6,7 +6,12 @@ import * as vscode from 'vscode';
 import type { languages } from 'vscode';
 import * as sinon from 'sinon';
 import { add, getRepository } from './common';
-import type { OpenedRepository } from '../../openedRepository';
+import type {
+    FossilCommitMessage,
+    FossilUsername,
+    OpenedRepository,
+    RelativePath,
+} from '../../openedRepository';
 import type { LineChange } from '../../revert';
 import { delay } from '../../util';
 
@@ -43,13 +48,13 @@ function PraiseSuite(this: Suite) {
             const ci = (n: number) =>
                 openedRepository.exec([
                     'commit',
-                    path,
-                    '-m',
-                    `praise ${n}`,
                     '--user-override',
-                    `u${n}`,
+                    `u${n}` as FossilUsername,
+                    path as RelativePath,
+                    '-m',
+                    `praise ${n}` as FossilCommitMessage,
                 ]);
-            await openedRepository.exec(['add', path]);
+            await openedRepository.exec(['add', path as RelativePath]);
             await ci(1);
             await fs.appendFile(path, [...'second', ''].join('\n'));
             await ci(2);
