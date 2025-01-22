@@ -48,7 +48,13 @@ import * as humanise from './humanise';
 import { partition } from './util';
 import { toFossilUri } from './uri';
 import { FossilPreviewManager } from './preview';
-import type { FossilCWD, FossilExecutable } from './fossilExecutable';
+import type {
+    DocumentFsPath as DocumentFsPath,
+    FossilCWD,
+    FossilExecutable,
+    FossilProjectDescription,
+    FossilProjectName,
+} from './fossilExecutable';
 
 import { localize } from './main';
 import type { Credentials } from './gitExport';
@@ -412,8 +418,8 @@ export class CommandCenter {
             return;
         }
         const fossilCwd = path.dirname(fossilPath) as FossilCWD;
-        let projectName = '';
-        let projectDesc = '';
+        let projectName: FossilProjectName | undefined;
+        let projectDesc: FossilProjectDescription | undefined;
         if (this.executable.version >= [2, 18]) {
             const userProjectName = await interaction.inputProjectName();
             if (userProjectName === undefined) {
@@ -633,7 +639,7 @@ export class CommandCenter {
     ): Promise<void> {
         const paths = resources
             .filter(resource => resource.resourceUri.scheme === 'file')
-            .map(resource => resource.resourceUri.fsPath);
+            .map(resource => resource.resourceUri.fsPath as DocumentFsPath);
         if (await interaction.confirmDeleteResources(paths)) {
             await repository.clean(paths);
         }
@@ -1425,7 +1431,7 @@ export class CommandCenter {
         if (!repository) {
             return;
         }
-        const praises = await repository.praise(uri.fsPath);
+        const praises = await repository.praise(uri.fsPath as DocumentFsPath);
         await praise.PraiseAnnotator.create(repository, editor, praises);
     }
 

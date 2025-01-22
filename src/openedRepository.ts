@@ -16,6 +16,7 @@ import {
     FossilArgs,
     ExecResult,
     Reason,
+    DocumentFsPath,
 } from './fossilExecutable';
 import { NewBranchOptions } from './interaction';
 import { FossilCWD } from './fossilExecutable';
@@ -34,17 +35,24 @@ export type UserPath = Distinct<string, 'user path'>;
 export type ResourcePath = Distinct<string, 'resourceUri.fsPath'>;
 export type AnyPath = RelativePath | ResourcePath | UserPath;
 
+export type FossilURIString = Distinct<string, 'Fossil URI string'>;
 /** URI for the close
  *
  * * http[s]://[userid[:password]@]host[:port][/path]
  * * ssh://[userid@]host[:port]/path/to/repo.fossil[?fossil=path/fossil.exe]
  * * [file://]path/to/repo.fossil
  */
-export type FossilURI = Distinct<Uri, 'Fossil URI'>;
+export interface FossilURI extends Uri {
+    __TYPE__: 'Fossil URI';
+    toString(): FossilURIString;
+}
+
 /** Name shown by `fossil remote ls` command */
 export type FossilRemoteName = Distinct<string, 'Fossil Remote Name'>;
 /** https://fossil-scm.org/home/doc/trunk/www/checkin_names.wiki */
 export type FossilBranch = Distinct<string, 'Fossil Branch Name'>;
+/** Color used as `--bgcolor` or `--branchcolor` arguments */
+export type FossilColor = Distinct<string, 'Fossil Branch Color'>;
 /** https://fossil-scm.org/home/doc/trunk/www/checkin_names.wiki#special */
 export type FossilSpecialTags = 'current' | 'parent' | 'tip';
 export type FossilTag = Distinct<string, 'Fossil Tag Name'> | 'closed';
@@ -228,7 +236,7 @@ export class OpenedRepository {
         await this.exec(['add', ...(paths || [])]);
     }
 
-    async ls(paths: string[]): Promise<string[]> {
+    async ls(paths: DocumentFsPath[]): Promise<string[]> {
         const result = await this.exec(['ls', ...paths]);
         return result.stdout.split('\n').filter(Boolean);
     }
@@ -240,7 +248,7 @@ export class OpenedRepository {
         return this.executable.cat(this.root, [
             'cat',
             relativePath,
-            ...(checkin ? ['-r', checkin] : []),
+            ...(checkin ? (['-r', checkin] as const) : ([] as const)),
         ]);
     }
 
@@ -262,8 +270,8 @@ export class OpenedRepository {
         return this.exec(
             [
                 'update',
-                ...(checkin ? [checkin] : []),
-                ...(dryRun ? ['--dry-run'] : []),
+                ...(checkin ? ([checkin] as const) : ([] as const)),
+                ...(dryRun ? (['--dry-run'] as const) : ([] as const)),
             ],
             reason,
             { logErrors: !dryRun }
@@ -280,18 +288,22 @@ export class OpenedRepository {
         // internal editor will spawn
         return this.exec([
             'commit',
-            ...(user.length ? ['--user-override', user] : []),
+            ...(user.length
+                ? (['--user-override', user] as const)
+                : ([] as const)),
             ...(newBranch
-                ? [
+                ? ([
                       ...(newBranch.branch
-                          ? ['--branch', newBranch.branch]
-                          : []),
+                          ? (['--branch', newBranch.branch] as const)
+                          : ([] as const)),
                       ...(newBranch.color
-                          ? ['--branchcolor', newBranch.color]
-                          : []),
-                      ...(newBranch.isPrivate ? ['--private'] : []),
-                  ]
-                : []),
+                          ? (['--branchcolor', newBranch.color] as const)
+                          : ([] as const)),
+                      ...(newBranch.isPrivate
+                          ? (['--private'] as const)
+                          : ([] as const)),
+                  ] as const)
+                : ([] as const)),
             ...fileList,
             '-m',
             message,
@@ -312,8 +324,10 @@ export class OpenedRepository {
             'new',
             newBranch.branch,
             'current',
-            ...(newBranch.isPrivate ? ['--private'] : []),
-            ...(newBranch.color ? ['--bgcolor', newBranch.color] : []),
+            ...(newBranch.isPrivate ? (['--private'] as const) : ([] as const)),
+            ...(newBranch.color
+                ? (['--bgcolor', newBranch.color] as const)
+                : ([] as const)),
         ]);
     }
 
@@ -332,7 +346,7 @@ export class OpenedRepository {
         await this.exec(['amend', checkin, '--comment', commitMessage]);
     }
 
-    async praise(path: string): Promise<Praise[]> {
+    async praise(path: DocumentFsPath): Promise<Praise[]> {
         const diffPromise = this.exec(['diff', '--json', path]);
         const praiseRes = await this.exec(['praise', path]);
         if (praiseRes.exitCode) {
@@ -411,7 +425,7 @@ export class OpenedRepository {
         await this.exec(['rename', oldPath, newPath]);
     }
 
-    async clean(paths: string[]): Promise<void> {
+    async clean(paths: DocumentFsPath[]): Promise<void> {
         if (paths.length) {
             await this.exec(['clean', ...paths]);
         }
@@ -449,7 +463,7 @@ export class OpenedRepository {
     ): Promise<FossilUndoCommand | undefined | 'NoUndo'> {
         const result = await this.exec([
             command,
-            ...(dryRun ? ['--dry-run'] : []),
+            ...(dryRun ? (['--dry-run'] as const) : ([] as const)),
         ]);
         if (result.exitCode == 0 && !dryRun) {
             return;
@@ -477,7 +491,10 @@ export class OpenedRepository {
     }
 
     async push(name: FossilRemoteName | undefined): Promise<void> {
-        await this.exec(['push', ...(name ? [name] : [])]);
+        await this.exec([
+            'push',
+            ...(name ? ([name] as const) : ([] as const)),
+        ]);
     }
 
     async merge(
@@ -487,21 +504,21 @@ export class OpenedRepository {
         const extraArgs = (() => {
             switch (integrate) {
                 case MergeAction.Cherrypick:
-                    return ['--cherrypick'];
+                    return ['--cherrypick'] as const;
                 case MergeAction.Integrate:
-                    return ['--integrate'];
+                    return ['--integrate'] as const;
                 default:
-                    return [];
+                    return [] as const;
             }
         })();
         return this.exec(['merge', checkin, ...extraArgs]);
     }
 
-    async patchCreate(path: string): Promise<void> {
+    async patchCreate(path: UserPath): Promise<void> {
         await this.exec(['patch', 'create', path]);
     }
 
-    async patchApply(path: string): Promise<void> {
+    async patchApply(path: UserPath): Promise<void> {
         await this.exec(['patch', 'apply', path]);
     }
 
@@ -548,7 +565,7 @@ export class OpenedRepository {
         operation: 'apply' | 'drop',
         stashId: StashID
     ): Promise<void> {
-        await this.exec(['stash', operation, stashId.toString()]);
+        await this.exec(['stash', operation, `${stashId}`]);
     }
 
     /** Report the change status of files in the current checkout */
@@ -605,10 +622,10 @@ export class OpenedRepository {
     }: TimelineOptions): Promise<Commit[] | CommitDetails[]> {
         const result = await this.exec([
             'timeline',
-            ...(checkin ? ['before', checkin] : []),
-            ...(limit ? ['-n', `${limit}`] : []),
-            ...(filePath ? ['-p', filePath] : []),
-            ...(verbose ? ['--verbose'] : []),
+            ...(checkin ? (['before', checkin] as const) : ([] as const)),
+            ...(limit ? (['-n', `${limit}`] as const) : ([] as const)),
+            ...(filePath ? (['-p', filePath] as const) : ([] as const)),
+            ...(verbose ? (['--verbose'] as const) : ([] as const)),
             '--type',
             'ci',
             '--format',
@@ -729,7 +746,7 @@ export class OpenedRepository {
             'branch',
             'ls',
             '-t',
-            ...(opts.closed ? ['-c'] : []),
+            ...(opts.closed ? (['-c'] as const) : ([] as const)),
         ]);
         const branches = Array.from(
             branchesResult.stdout.matchAll(

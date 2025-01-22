@@ -18,7 +18,15 @@ import {
 } from './common';
 import * as assert from 'assert/strict';
 import * as fs from 'fs/promises';
-import { OpenedRepository, ResourceStatus } from '../../openedRepository';
+import {
+    FossilBranch,
+    FossilCheckin,
+    FossilCommitMessage,
+    FossilTag,
+    OpenedRepository,
+    RelativePath,
+    ResourceStatus,
+} from '../../openedRepository';
 import { Suite, before, Func, Test } from 'mocha';
 import { toFossilUri } from '../../uri';
 import { Reason } from '../../fossilExecutable';
@@ -60,8 +68,8 @@ export function StatusSuite(this: Suite): void {
     test('Rename is visible in Source Control panel', async () => {
         const repository = getRepository();
         await cleanupFossil(repository);
-        const oldFilename = 'sriciscp-new.txt';
-        const newFilename = 'sriciscp-renamed.txt';
+        const oldFilename = 'sriciscp-new.txt' as RelativePath;
+        const newFilename = 'sriciscp-renamed.txt' as RelativePath;
         const oldUri = await add(oldFilename, 'test\n', `add ${oldFilename}`);
         await repository.updateStatus('Test' as Reason);
         assertGroups(repository, {});
@@ -89,18 +97,18 @@ export function StatusSuite(this: Suite): void {
         const barPath = Uri.joinPath(rootUri, 'bar-xa.txt').fsPath;
         await fs.writeFile(barPath, 'test bar\n');
         await fs.appendFile(fooPath, 'appended\n');
-        await openedRepository.exec(['add', 'bar-xa.txt']);
+        await openedRepository.exec(['add', 'bar-xa.txt' as RelativePath]);
         await openedRepository.exec([
             'commit',
             '-m',
-            'add: bar-xa.txt, mod foo-xa.txt',
+            'add: bar-xa.txt, mod foo-xa.txt' as FossilCommitMessage,
             '--branch',
-            'test_brunch',
+            'test_brunch' as FossilBranch,
             '--no-warnings',
         ]);
 
-        await openedRepository.exec(['update', 'trunk']);
-        await openedRepository.exec(['merge', 'test_brunch']);
+        await openedRepository.exec(['update', 'trunk' as FossilBranch]);
+        await openedRepository.exec(['merge', 'test_brunch' as FossilCheckin]);
         await repository.updateStatus('Test' as Reason);
         assertGroups(repository, {
             working: [
@@ -124,12 +132,12 @@ export function StatusSuite(this: Suite): void {
         // EXECUTABLE
         const executable_path = Uri.joinPath(uri, 'executable').fsPath;
         await fs.writeFile(executable_path, 'executable_path');
-        await openedRepository.exec(['add', executable_path]);
+        await openedRepository.exec(['add', executable_path as RelativePath]);
         await openedRepository.exec([
             'commit',
-            executable_path,
+            executable_path as RelativePath,
             '-m',
-            'added executable',
+            'added executable' as FossilCommitMessage,
         ]);
         await fs.chmod(executable_path, 0o744);
 
@@ -137,24 +145,24 @@ export function StatusSuite(this: Suite): void {
         const unexec_path = Uri.joinPath(uri, 'status_unexec').fsPath;
         await fs.writeFile(unexec_path, 'unexec_path');
         await fs.chmod(unexec_path, 0o744);
-        await openedRepository.exec(['add', unexec_path]);
+        await openedRepository.exec(['add', unexec_path as RelativePath]);
         await openedRepository.exec([
             'commit',
-            unexec_path,
+            unexec_path as RelativePath,
             '-m',
-            'added status_unexec',
+            'added status_unexec' as FossilCommitMessage,
         ]);
         await fs.chmod(unexec_path, 0o644);
 
         // SYMLINK
         const symlink_path = Uri.joinPath(uri, 'symlink').fsPath;
         await fs.writeFile(symlink_path, 'symlink_path');
-        await openedRepository.exec(['add', symlink_path]);
+        await openedRepository.exec(['add', symlink_path as RelativePath]);
         await openedRepository.exec([
             'commit',
-            symlink_path,
+            symlink_path as RelativePath,
             '-m',
-            'added symlink',
+            'added symlink' as FossilCommitMessage,
         ]);
         await fs.unlink(symlink_path);
         await fs.symlink('/etc/passwd', symlink_path);
@@ -162,12 +170,12 @@ export function StatusSuite(this: Suite): void {
         // UNLINK
         const unlink_path = Uri.joinPath(uri, 'unlink').fsPath;
         await fs.symlink('/etc/passwd', unlink_path);
-        await openedRepository.exec(['add', unlink_path]);
+        await openedRepository.exec(['add', unlink_path as RelativePath]);
         await openedRepository.exec([
             'commit',
-            unlink_path,
+            unlink_path as RelativePath,
             '-m',
-            'added unlink',
+            'added unlink' as FossilCommitMessage,
         ]);
         await fs.rm(unlink_path);
         await fs.writeFile(unlink_path, '/etc/passwd');
@@ -271,7 +279,7 @@ export function StatusSuite(this: Suite): void {
         assert.equal(branchCommandBefore.title, '$(git-branch) trunk');
 
         // 2. Create branch
-        const branchName = 'statusbar1';
+        const branchName = 'statusbar1' as FossilBranch;
         const cib = this.ctx.sandbox.stub(window, 'createInputBox');
         cib.onFirstCall().callsFake(() => {
             const inputBox: vscode.InputBox = cib.wrappedMethod();
@@ -358,8 +366,8 @@ export function TagSuite(this: Suite): void {
             'tag',
             'add',
             '--raw',
-            'closed',
-            'trunk',
+            'closed' as FossilTag,
+            'trunk' as FossilBranch,
         ]);
     });
     test('Reopen branch', async () => {
@@ -373,8 +381,8 @@ export function TagSuite(this: Suite): void {
             'tag',
             'cancel',
             '--raw',
-            'closed',
-            'trunk',
+            'closed' as FossilTag,
+            'trunk' as FossilBranch,
         ]);
     });
 }
@@ -498,7 +506,12 @@ export function FileSystemSuite(this: Suite): void {
         const document = await workspace.openTextDocument(fossilUri);
         sinon.assert.calledOnceWithExactly(
             cat,
-            ['cat', 'test.txt', '-r', 'current'],
+            [
+                'cat',
+                'test.txt' as RelativePath,
+                '-r',
+                'current' as FossilCheckin,
+            ],
             { cwd: sinon.match.string }
         );
         assert.equal(document.getText(), 'document text\n');

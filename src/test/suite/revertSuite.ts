@@ -7,6 +7,7 @@ import type { Suite } from 'mocha';
 import type { FossilResourceGroup } from '../../resourceGroups';
 import type { FossilResource } from '../../repository';
 import { Reason } from '../../fossilExecutable';
+import { RelativePath } from '../../openedRepository';
 
 export function RevertSuite(this: Suite): void {
     test('Single source', async () => {
@@ -155,7 +156,10 @@ export function RevertSuite(this: Suite): void {
             { modal: true },
             '&&Discard Changes'
         );
-        sinon.assert.calledOnceWithExactly(revertStub, ['revert', ...files]);
+        sinon.assert.calledOnceWithExactly(revertStub, [
+            'revert',
+            ...(files as RelativePath[]),
+        ]);
     }
 
     test('Revert all (no groups)', async () => {

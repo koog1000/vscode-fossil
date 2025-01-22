@@ -11,7 +11,15 @@ import {
 } from './common';
 import * as assert from 'assert/strict';
 import * as fs from 'fs/promises';
-import { OpenedRepository, ResourceStatus } from '../../openedRepository';
+import {
+    FossilCheckin,
+    FossilCommitMessage,
+    FossilRemoteName,
+    OpenedRepository,
+    RelativePath,
+    ResourceStatus,
+    StashID,
+} from '../../openedRepository';
 import { Suite, after, before } from 'mocha';
 import { Reason } from '../../fossilExecutable';
 
@@ -62,7 +70,10 @@ function PullAndPushSuite(this: Suite): void {
         await commands.executeCommand('fossil.pull');
         sinon.assert.calledOnce(listCall);
         sinon.assert.notCalled(sem);
-        sinon.assert.calledOnceWithExactly(pullCall, ['pull', 'default']);
+        sinon.assert.calledOnceWithExactly(pullCall, [
+            'pull',
+            'default' as FossilRemoteName,
+        ]);
     });
 
     test('Update', async () => {
@@ -97,7 +108,10 @@ function PullAndPushSuite(this: Suite): void {
 
     test('PushTo (one remote)', async () => {
         const pushCall = await oneRemote('fossil.pushTo');
-        sinon.assert.calledOnceWithExactly(pushCall, ['push', 'default']);
+        sinon.assert.calledOnceWithExactly(pushCall, [
+            'push',
+            'default' as FossilRemoteName,
+        ]);
     });
 
     test('PushTo (two remotes)', async () => {
@@ -122,7 +136,10 @@ function PullAndPushSuite(this: Suite): void {
         await commands.executeCommand('fossil.pushTo');
         sinon.assert.calledOnce(listCall);
         sinon.assert.calledOnce(sqp);
-        sinon.assert.calledOnceWithExactly(pushCall, ['push', 'origin']);
+        sinon.assert.calledOnceWithExactly(pushCall, [
+            'push',
+            'origin' as FossilRemoteName,
+        ]);
     });
 
     test('PushTo (two remotes, do not pick)', async () => {
@@ -157,7 +174,7 @@ export function UpdateSuite(this: Suite): void {
     test('Change branch to trunk', async () => {
         const execStub = getExecStub(this.ctx.sandbox);
         const updateCall = execStub
-            .withArgs(['update', 'trunk'])
+            .withArgs(['update', 'trunk' as FossilCheckin])
             .resolves(fakeUpdateResult());
 
         const sqp = this.ctx.sandbox.stub(window, 'showQuickPick');
@@ -182,7 +199,7 @@ export function UpdateSuite(this: Suite): void {
         assert.ok(repository.fossilStatus?.isMerge);
 
         const updateCall = execStub
-            .withArgs(['update', 'trunk'])
+            .withArgs(['update', 'trunk' as FossilCheckin])
             .resolves(fakeUpdateResult());
 
         const showQuickPick = this.ctx.sandbox.stub(window, 'showQuickPick');
@@ -219,7 +236,7 @@ export function UpdateSuite(this: Suite): void {
         await cleanupFossil(getRepository());
         const execStub = getExecStub(this.ctx.sandbox);
         const updateCall = execStub
-            .withArgs(['update', '1234567890'])
+            .withArgs(['update', '1234567890' as FossilCheckin])
             .resolves(fakeUpdateResult());
 
         const showQuickPick = this.ctx.sandbox.stub(window, 'showQuickPick');
@@ -277,7 +294,7 @@ export function UpdateSuite(this: Suite): void {
             return Promise.resolve(items[5]);
         });
         const updateCall = execStub
-            .withArgs(['update', 'a'])
+            .withArgs(['update', 'a' as FossilCheckin])
             .resolves(fakeUpdateResult());
         await commands.executeCommand('fossil.branchChange');
         sinon.assert.calledOnce(tagsStub);
@@ -326,7 +343,11 @@ export function StashSuite(this: Suite): void {
      */
     test('Apply', async () => {
         const execStub = getExecStub(this.ctx.sandbox);
-        const stashApply = execStub.withArgs(['stash', 'apply', '1']);
+        const stashApply = execStub.withArgs([
+            'stash',
+            'apply',
+            `${1 as StashID}`,
+        ]);
         const sqp = this.ctx.sandbox.stub(window, 'showQuickPick');
         sqp.onFirstCall().callsFake(items => {
             assert.ok(items instanceof Array);
@@ -350,7 +371,11 @@ export function StashSuite(this: Suite): void {
      */
     test('Drop', async () => {
         const execStub = getExecStub(this.ctx.sandbox);
-        const stashApply = execStub.withArgs(['stash', 'drop', '1']);
+        const stashApply = execStub.withArgs([
+            'stash',
+            'drop',
+            `${1 as StashID}`,
+        ]);
         const sqp = this.ctx.sandbox.stub(window, 'showQuickPick');
         sqp.onFirstCall().callsFake(items => {
             assert.ok(items instanceof Array);
@@ -385,8 +410,8 @@ export function StashSuite(this: Suite): void {
             'stash',
             'save',
             '-m',
-            'in test',
-            'stash.txt',
+            'in test' as FossilCommitMessage,
+            'stash.txt' as RelativePath,
         ]);
         const stashPop = execStub.withArgs(['stash', 'pop']);
         await commands.executeCommand('fossil.stashPop');

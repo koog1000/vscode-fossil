@@ -4,6 +4,7 @@ import * as sinon from 'sinon';
 import { fakeExecutionResult, getExecStub } from './common';
 import * as assert from 'assert/strict';
 import { Suite } from 'mocha';
+import { FossilBranch } from '../../openedRepository';
 
 export function BranchSuite(this: Suite): void {
     test('Create public branch', async () => {
@@ -202,7 +203,7 @@ export function BranchSuite(this: Suite): void {
         sinon.assert.calledOnce(newBranchStub);
         sinon.assert.calledOnceWithExactly(
             updateStub,
-            ['update', 'trunk'],
+            ['update', 'trunk' as FossilBranch],
             undefined,
             { logErrors: true }
         );

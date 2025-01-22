@@ -1,8 +1,20 @@
 import type {
+    AnyPath,
     Distinct,
+    FossilBranch,
+    FossilCheckin,
+    FossilColor,
+    FossilCommitMessage,
     FossilPath,
+    FossilRemoteName,
     FossilRoot,
+    FossilTag,
     FossilURI,
+    FossilURIString,
+    FossilUsername,
+    RelativePath,
+    StashID,
+    UserPath,
 } from './openedRepository';
 import * as path from 'path';
 import * as fs from 'fs/promises';
@@ -19,7 +31,18 @@ export type FossilStdOut = Distinct<
     'raw fossil stdout' | 'fossil status stdout' | 'RenderedHTML'
 >;
 export type FossilStdErr = Distinct<string, 'raw fossil stderr'>;
+/** Reason for executing a command */
 export type Reason = Distinct<string, 'exec reason'> | undefined;
+/** Title for `fossil wiki create` PAGENAME */
+export type FossilWikiTitle = Distinct<string, 'Wiki TItle'>;
+/** vscode.TestDocument.uri.fspath */
+export type DocumentFsPath = Distinct<
+    string,
+    'vscode.TestDocument.uri.fspath.'
+>;
+
+export type FossilProjectName = Distinct<string, 'project name'>;
+export type FossilProjectDescription = Distinct<string, 'project description'>;
 
 /** cwd for executing fossil */
 export type FossilCWD =
@@ -79,48 +102,117 @@ const enum Inline {
     ENOENT = -1002, // special code for NodeJS.ErrnoException
 }
 
-type FossilCommand =
-    | 'add'
-    | 'amend'
-    | 'branch'
-    | 'cat'
-    | 'clean'
-    | 'clone'
-    | 'close'
-    | 'commit'
-    | 'diff'
-    // | 'extras' - we get it from `fossil status --differ`
-    | 'forget'
-    | 'git'
-    | 'info'
-    | 'init'
-    | 'ls'
-    | 'merge'
-    | 'mv'
-    | 'open'
-    | 'patch'
-    | 'pikchr'
-    | 'praise'
-    | 'pull'
-    | 'push'
-    | 'redo'
-    | 'remote'
-    | 'rename'
-    | 'revert'
-    | 'settings'
-    | 'sqlite'
-    | 'stash'
-    | 'status'
-    | 'sync'
-    | 'tag'
-    | 'test-markdown-render'
-    | 'test-wiki-render'
-    | 'timeline'
-    | 'undo'
-    | 'update'
-    | 'wiki';
+export type FossilArgs =
+    | ['add' | 'forget', ...RelativePath[]]
+    | ['amend', FossilCheckin, '--comment', FossilCommitMessage]
+    | ['branch', 'ls', '-t', ...(['-c'] | [])]
+    | [
+          'branch',
+          'new',
+          FossilBranch,
+          'current',
+          ...(['--private'] | []),
+          ...(['--bgcolor', FossilColor] | [])
+      ]
+    | ['branch', 'current']
+    | ['cat', RelativePath, ...(['-r', FossilCheckin] | [])]
+    | ['cat'] // test only, command to test a failure
+    | ['clean', ...DocumentFsPath[]]
+    | ['clean', '--verbose'] // test only
+    | ['clone', FossilURIString, FossilPath, '--verbose']
+    | ['close']
+    | [
+          'commit',
+          ...(['--user-override', FossilUsername] | []),
+          ...(['--branch', FossilBranch] | []),
+          ...(['--branchcolor', FossilColor] | []),
+          ...(['--private'] | []),
+          ...RelativePath[],
+          '-m',
+          FossilCommitMessage
+      ]
+    | [
+          'commit',
+          '-m',
+          FossilCommitMessage,
+          ...(['--branch', FossilBranch] | []),
+          '--no-warnings'
+      ] // test only
+    | ['diff', '--json', DocumentFsPath]
+    | ['git', 'export']
+    | ['sync']
+    | [
+          'info',
+          ...([FossilCheckin] | []),
+          ...(['--comment-format', '-wordbreak'] | [])
+      ]
+    | [
+          'init',
+          FossilPath,
+          ...(['--project-name', FossilProjectName] | []),
+          ...(['--project-desc', FossilProjectDescription] | [])
+      ]
+    | ['ls', ...DocumentFsPath[]]
+    | [
+          'merge',
+          FossilCheckin,
+          ...(['--cherrypick'] | []),
+          ...(['--integrate'] | [])
+      ]
+    | ['mv', RelativePath, RelativePath, '--hard'] // test only
+    | ['open', FossilPath, ...(['--force'] | [])]
+    | ['patch', 'apply' | 'create', UserPath]
+    | ['pikchr', ...(['-dark'] | [])]
+    | ['praise', DocumentFsPath]
+    | ['pull', FossilRemoteName]
+    | ['push', FossilRemoteName]
+    | ['push']
+    | ['remote', 'list']
+    | ['rename', AnyPath, RelativePath | UserPath]
+    | ['revert', ...RelativePath[]]
+    | ['settings', 'allow-symlinks', 'on']
+    | ['sqlite', '--readonly']
+    | ['stash', 'drop' | 'apply', `${StashID}`]
+    | [
+          'stash',
+          'save' | 'snapshot',
+          '-m',
+          FossilCommitMessage,
+          ...RelativePath[]
+      ]
+    | ['stash', 'pop']
+    | ['stash', 'list']
+    | ['status', '--differ', '--merge']
+    | ['tag', 'add', '--raw', FossilTag, FossilBranch]
+    | ['tag', 'cancel', '--raw', FossilTag, FossilBranch]
+    | ['tag', 'list']
+    | [
+          'test-markdown-render' | 'test-wiki-render',
+          ...(['--dark-pikchr'] | []),
+          '-'
+      ]
+    | [
+          'timeline',
+          ...(['before', FossilCheckin] | []),
+          ...(['-n', `${number}`] | []),
+          ...(['-p', RelativePath] | []),
+          ...(['--verbose'] | []),
+          '--type',
+          'ci',
+          '--format',
+          '%H+++%d+++%b+++%a+++%c'
+      ]
+    | ['undo' | 'redo', ...(['--dry-run'] | [])]
+    | ['update', ...([FossilCheckin] | []), ...(['--dry-run'] | [])]
+    | [
+          'wiki',
+          'create',
+          FossilWikiTitle,
+          '--mimetype',
+          'text/x-fossil-wiki' | 'text/x-markdown' | 'text/plain',
+          ...(['--technote', 'now'] | [])
+      ];
 
-export type FossilArgs = [FossilCommand, ...string[]];
 export type RawExecResult = FossilRawResult & {
     stdout: Buffer;
     stderr: Buffer;
@@ -146,14 +238,18 @@ export class FossilExecutable {
     async init(
         fossilRoot: FossilCWD,
         fossilPath: FossilPath,
-        projectName: string, // since fossil 2.18
-        projectDesc: string // since fossil 2.18
+        projectName: FossilProjectName | undefined, // since fossil 2.18
+        projectDesc: FossilProjectDescription | undefined // since fossil 2.18
     ): Promise<void> {
         await this.exec(fossilRoot, [
             'init',
             fossilPath,
-            ...(projectName ? ['--project-name', projectName] : []),
-            ...(projectDesc ? ['--project-desc', projectDesc] : []),
+            ...(projectName
+                ? (['--project-name', projectName] as const)
+                : ([] as const)),
+            ...(projectDesc
+                ? (['--project-desc', projectDesc] as const)
+                : ([] as const)),
         ]);
     }
 
@@ -405,7 +501,10 @@ export class FossilExecutable {
         if (args[0] == 'clone') {
             // replace password with 9 asterisks
             args = [...args];
-            args[1] = args[1].replace(/(.*:\/\/.+:)(.+)(@.*)/, '$1*********$3');
+            args[1] = args[1].replace(
+                /(.*:\/\/.+:)(.+)(@.*)/,
+                '$1*********$3'
+            ) as FossilURIString;
         }
         this.log(
             `fossil ${args.join(' ')}: ${info}${reason ? ' // ' + reason : ''}`

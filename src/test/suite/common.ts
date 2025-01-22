@@ -15,7 +15,13 @@ import {
 } from '../../fossilExecutable';
 import { Model } from '../../model';
 import { Repository } from '../../repository';
-import { OpenedRepository, ResourceStatus } from '../../openedRepository';
+import {
+    FossilCommitMessage,
+    FossilPath,
+    OpenedRepository,
+    RelativePath,
+    ResourceStatus,
+} from '../../openedRepository';
 import { FossilResourceGroup } from '../../resourceGroups';
 import { delay } from '../../util';
 
@@ -171,7 +177,7 @@ export function fakeRawExecutionResult({
         exitCode: exitCode ?? 0,
         stdout: Buffer.from(stdout ?? ''),
         stderr: Buffer.from(stderr ?? ''),
-        args: args ?? ['status'],
+        args: args ?? ['status', '--differ', '--merge'],
         cwd: '' as FossilCWD,
     };
 }
@@ -255,7 +261,7 @@ export async function fossilOpen(sandbox: sinon.SinonSandbox): Promise<void> {
     sinon.assert.calledTwice(sod);
     sinon.assert.calledOnceWithExactly(openStub, rootPath.fsPath as FossilCWD, [
         'open',
-        fossilPath.fsPath,
+        fossilPath.fsPath as FossilPath,
     ]);
     const res = await executable.exec(rootPath.fsPath as FossilCWD, ['info']);
     assert.match(res.stdout, /check-ins:\s+1\s*$/);
@@ -296,12 +302,12 @@ export async function fossilOpenForce(
     sinon.assert.calledWithExactly(
         openStub.firstCall,
         rootPath.fsPath as FossilCWD,
-        ['open', fossilPath.fsPath]
+        ['open', fossilPath.fsPath as FossilPath]
     );
     sinon.assert.calledWithExactly(
         openStub.secondCall,
         rootPath.fsPath as FossilCWD,
-        ['open', fossilPath.fsPath, '--force']
+        ['open', fossilPath.fsPath as FossilPath, '--force']
     );
     // on some systems 'info' is not available immediately
     let res: ExecResult;
@@ -329,16 +335,19 @@ export async function add(
     const rootUri = vscode.workspace.workspaceFolders![0].uri;
     const fileUri = Uri.joinPath(rootUri, filename);
     await fs.promises.writeFile(fileUri.fsPath, content);
-    const addRes = await openedRepository.exec(['add', filename]);
+    const addRes = await openedRepository.exec([
+        'add',
+        filename as RelativePath,
+    ]);
     assert.match(
         addRes.stdout.trimEnd(),
         new RegExp(`${action}\\s+${filename}`)
     );
     const commitRes = await openedRepository.exec([
         'commit',
-        filename,
+        filename as RelativePath,
         '-m',
-        commitMessage,
+        commitMessage as FossilCommitMessage,
     ]);
     assert.equal(commitRes.exitCode, 0, 'Commit failed');
     return fileUri;

@@ -3,6 +3,7 @@ import {
     FossilCWD,
     FossilArgs,
     Reason,
+    FossilWikiTitle,
 } from './fossilExecutable';
 import * as path from 'path';
 import {
@@ -252,7 +253,7 @@ class FossilPreview implements IDisposable {
 
     public async wikiCreate(
         where: 'Wiki' | 'Technote',
-        title: string
+        title: FossilWikiTitle
     ): Promise<boolean> {
         const mimetype = (() => {
             switch (this.renderer) {
@@ -274,7 +275,9 @@ class FossilPreview implements IDisposable {
                     title,
                     '--mimetype',
                     mimetype,
-                    ...(where == 'Technote' ? ['--technote', 'now'] : []),
+                    ...(where == 'Technote'
+                        ? (['--technote', 'now'] as const)
+                        : ([] as const)),
                 ],
                 '' as Reason,
                 {
@@ -299,11 +302,14 @@ class FossilPreview implements IDisposable {
             const dark = this.current_content[1] && !this.oldFossil;
             let args: FossilArgs;
             if (renderer == 'pikchr') {
-                args = ['pikchr', ...(dark ? ['-dark'] : [])];
+                args = [
+                    'pikchr',
+                    ...(dark ? (['-dark'] as const) : ([] as const)),
+                ];
             } else {
                 args = [
                     `test-${renderer}-render`,
-                    ...(dark ? ['--dark-pikchr'] : []),
+                    ...(dark ? (['--dark-pikchr'] as const) : ([] as const)),
                     '-',
                 ];
             }

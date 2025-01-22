@@ -12,7 +12,7 @@ import {
 import { Suite, afterEach, beforeEach } from 'mocha';
 import { debounce, memoize, sequentialize, throttle } from '../../decorators';
 import { delay } from '../../util';
-import { Reason } from '../../fossilExecutable';
+import { DocumentFsPath, Reason } from '../../fossilExecutable';
 import { ResourceStatus } from '../../openedRepository';
 
 function undoSuite(this: Suite) {
@@ -41,7 +41,8 @@ function undoSuite(this: Suite) {
         );
 
         const rootUri = vscode.workspace.workspaceFolders![0].uri;
-        const undoTxtPath = Uri.joinPath(rootUri, 'undo-fuarw.txt').fsPath;
+        const undoTxtPath = Uri.joinPath(rootUri, 'undo-fuarw.txt')
+            .fsPath as DocumentFsPath;
         await fs.promises.writeFile(undoTxtPath, 'line\n');
 
         const repository = getRepository();

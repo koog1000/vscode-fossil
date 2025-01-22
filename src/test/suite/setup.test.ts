@@ -32,6 +32,11 @@ import * as cp from 'child_process';
 import { activate } from '../../main';
 import * as extensionCommands from '../../commands';
 import * as fileSystemProvider from '../../fileSystemProvider';
+import {
+    FossilPath,
+    FossilURIString,
+    RelativePath,
+} from '../../openedRepository';
 
 function ExecutableSuite(this: Suite): void {
     const resetIgnoreMissingFossilWarning = async () => {
@@ -369,11 +374,11 @@ function InitSuite(this: Suite): void {
         const cwd = os.tmpdir() as FossilCWD;
         sinon.assert.calledOnceWithExactly(initStub, cwd, [
             'init',
-            fossilUri.fsPath,
+            fossilUri.fsPath as FossilPath,
         ]);
         sinon.assert.calledOnceWithExactly(openStub, cwd, [
             'open',
-            fossilUri.fsPath,
+            fossilUri.fsPath as FossilPath,
         ]);
     }).timeout(6000);
 }
@@ -435,7 +440,7 @@ function OpenSuite(this: Suite): void {
         sinon.assert.calledWithExactly(
             execStub.firstCall,
             root.fsPath as FossilCWD,
-            ['open', location.fsPath]
+            ['open', location.fsPath as FossilPath]
         );
         sinon.assert.calledTwice(sod);
     });
@@ -451,7 +456,10 @@ function OpenSuite(this: Suite): void {
             const cwd = uri.fsPath as FossilCWD;
             const filename = Uri.joinPath(uri, 'open_and_close').fsPath;
             await fs.writeFile(filename, '');
-            const addRes = await executable.exec(cwd, ['add', filename]);
+            const addRes = await executable.exec(cwd, [
+                'add',
+                filename as RelativePath,
+            ]);
             assert.match(addRes.stdout, /ADDED/);
 
             const swm: sinon.SinonStub = this.ctx.sandbox
@@ -479,7 +487,11 @@ function OpenSuite(this: Suite): void {
             await commands.executeCommand('fossil.close');
             sinon.assert.calledOnce(closeStub);
 
-            const statusResult = await executable.exec(cwd, ['status']);
+            const statusResult = await executable.exec(cwd, [
+                'status',
+                '--differ',
+                '--merge',
+            ]);
             await assert.match(
                 statusResult.stderr,
                 /^current directory is not within an open check-?out\s*$/
@@ -537,8 +549,8 @@ function CloneSuite(this: Suite): void {
         sinon.assert.calledOnce(showInformationMessage);
         sinon.assert.calledOnceWithExactly(execStub, os.tmpdir() as FossilCWD, [
             'clone',
-            'https://testuser:testpsw@example.com/fossil',
-            '/tmp/test_path',
+            'https://testuser:testpsw@example.com/fossil' as FossilURIString,
+            '/tmp/test_path' as FossilPath,
             '--verbose',
         ]);
     });
@@ -576,8 +588,8 @@ function CloneSuite(this: Suite): void {
         sinon.assert.calledOnce(showInformationMessage);
         sinon.assert.calledOnceWithExactly(execStub, os.tmpdir() as FossilCWD, [
             'clone',
-            'https://testuser:testpsw@example.com/fossil',
-            tmpUri.fsPath,
+            'https://testuser:testpsw@example.com/fossil' as FossilURIString,
+            tmpUri.fsPath as FossilPath,
             '--verbose',
         ]);
     });
@@ -618,8 +630,8 @@ function CloneSuite(this: Suite): void {
         sinon.assert.calledOnce(showInformationMessage);
         sinon.assert.calledOnceWithExactly(execStub, os.tmpdir() as FossilCWD, [
             'clone',
-            'https://testuser:testpsw@example.com/fossil',
-            '/tmp/test_path',
+            'https://testuser:testpsw@example.com/fossil' as FossilURIString,
+            '/tmp/test_path' as FossilPath,
             '--verbose',
         ]);
     });
@@ -677,8 +689,8 @@ function CloneSuite(this: Suite): void {
         sinon.assert.calledOnce(showInformationMessage);
         sinon.assert.calledOnceWithExactly(execStub, os.tmpdir() as FossilCWD, [
             'clone',
-            'https://testuser@example.com/fossil',
-            '/tmp/test_path',
+            'https://testuser@example.com/fossil' as FossilURIString,
+            '/tmp/test_path' as FossilPath,
             '--verbose',
         ]);
     });

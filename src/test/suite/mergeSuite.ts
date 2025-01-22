@@ -12,7 +12,14 @@ import {
 } from './common';
 import * as assert from 'assert/strict';
 import * as fs from 'fs/promises';
-import { FossilBranch, OpenedRepository } from '../../openedRepository';
+import {
+    FossilBranch,
+    FossilCheckin,
+    FossilCommitMessage,
+    FossilHash,
+    OpenedRepository,
+    RelativePath,
+} from '../../openedRepository';
 import { Suite, before } from 'mocha';
 import { Reason } from '../../fossilExecutable';
 
@@ -56,9 +63,13 @@ export function MergeSuite(this: Suite): void {
             .resolves('trunk merge message');
 
         await commands.executeCommand('fossil.merge');
-        sinon.assert.calledOnceWithExactly(mergeExec, ['merge', 'trunk'], {
-            cwd: sinon.match.string,
-        });
+        sinon.assert.calledOnceWithExactly(
+            mergeExec,
+            ['merge', 'trunk' as FossilCheckin],
+            {
+                cwd: sinon.match.string,
+            }
+        );
         sinon.assert.calledOnce(sqp);
         sinon.assert.notCalled(sib);
         sinon.assert.notCalled(swm);
@@ -80,26 +91,26 @@ export function MergeSuite(this: Suite): void {
         const rootUri = workspace.workspaceFolders![0].uri;
         const fooPath = Uri.joinPath(rootUri, fooFilename).fsPath;
         await fs.writeFile(fooPath, 'foo content\n');
-        await openedRepository.exec(['add', fooFilename]);
+        await openedRepository.exec(['add', fooFilename as RelativePath]);
         await openedRepository.exec([
             'commit',
             '-m',
-            `add: ${fooFilename}`,
+            `add: ${fooFilename}` as FossilCommitMessage,
             '--no-warnings',
         ]);
         const barPath = Uri.joinPath(rootUri, fooFilename).fsPath;
         await fs.writeFile(barPath, 'bar content\n');
-        await openedRepository.exec(['add', barFilename]);
+        await openedRepository.exec(['add', barFilename as RelativePath]);
         await fs.appendFile(fooPath, 'foo content 2\n');
         await openedRepository.exec([
             'commit',
             '-m',
-            `add: ${barFilename}; mod`,
-            '--no-warnings',
+            `add: ${barFilename}; mod` as FossilCommitMessage,
             '--branch',
-            'fossil-merge',
+            'fossil-merge' as FossilBranch,
+            '--no-warnings',
         ]);
-        await openedRepository.exec(['update', 'trunk']);
+        await openedRepository.exec(['update', 'trunk' as FossilBranch]);
 
         await repository.updateStatus('Test' as Reason);
         assertGroups(repository, {});
@@ -155,7 +166,7 @@ export function MergeSuite(this: Suite): void {
         fakeFossilStatus(execStub, 'INTEGRATE 0123456789');
         await repository.updateStatus('Test' as Reason);
         const mergeStub = execStub
-            .withArgs(['merge', 'c', '--integrate'])
+            .withArgs(['merge', 'c' as FossilCheckin, '--integrate'])
             .resolves(fakeExecutionResult());
         const commitStub = execStub
             .withArgs(sinon.match.array.startsWith(['commit']))
@@ -196,7 +207,7 @@ export function MergeSuite(this: Suite): void {
         sinon.assert.calledOnceWithExactly(commitStub, [
             'commit',
             '-m',
-            'Merge c into trunk',
+            'Merge c into trunk' as FossilCommitMessage,
         ]);
     }).timeout(5000);
 
@@ -208,7 +219,7 @@ export function MergeSuite(this: Suite): void {
         fakeFossilStatus(execStub, '');
         const repository = getRepository();
         await repository.updateStatus('Test' as Reason);
-        let hash = '';
+        let hash = '' as FossilHash;
         const mergeCallStub = execStub
             .withArgs(sinon.match.array.startsWith(['merge']))
             .resolves(fakeExecutionResult());
@@ -229,7 +240,7 @@ export function MergeSuite(this: Suite): void {
                     /\$\(circle-outline\) [0-9a-f]{12} • trunk$/
                 );
                 hash = (items[0] as unknown as { commit: { hash: string } })
-                    .commit.hash;
+                    .commit.hash as FossilHash;
                 assert.ok(hash);
                 return Promise.resolve(items[0]);
             });

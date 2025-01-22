@@ -11,7 +11,12 @@ import {
 } from './common';
 import * as assert from 'assert/strict';
 import * as fs from 'fs/promises';
-import { OpenedRepository, ResourceStatus } from '../../openedRepository';
+import {
+    FossilCommitMessage,
+    OpenedRepository,
+    RelativePath,
+    ResourceStatus,
+} from '../../openedRepository';
 import { delay, eventToPromise } from '../../util';
 import { Suite, before } from 'mocha';
 import { Reason } from '../../fossilExecutable';
@@ -143,11 +148,11 @@ export function RenameSuite(this: Suite): void {
         );
         const openedRepository: OpenedRepository = (repository as any)
             .repository;
-        await openedRepository.exec(['add', oldDirname]);
+        await openedRepository.exec(['add', oldDirname as RelativePath]);
         await openedRepository.exec([
             'commit',
             '-m',
-            `add directory: ${oldDirname}`,
+            `add directory: ${oldDirname}` as FossilCommitMessage,
             '--no-warnings',
         ]);
 
