@@ -103,6 +103,7 @@ export function resourceActionsSuite(this: Suite): void {
         sinon.assert.calledOnce(statusStub);
         sinon.assert.calledOnceWithExactly(addStub, [
             'add',
+            '--',
             'a.txt' as RelativePath,
             'b.txt' as RelativePath,
         ]);
@@ -151,6 +152,7 @@ export function resourceActionsSuite(this: Suite): void {
         );
         sinon.assert.calledOnceWithMatch(forgetCallStub, [
             'forget',
+            '--',
             'a.txt',
             'b.txt',
         ]);
@@ -204,6 +206,7 @@ export function resourceActionsSuite(this: Suite): void {
             'commit',
             '-m',
             'fossil_ignore_new' as FossilCommitMessage,
+            '--',
         ]);
 
         // now append to ignore list
@@ -228,6 +231,7 @@ export function resourceActionsSuite(this: Suite): void {
             'commit',
             '-m',
             'fossil_ignore_new_2' as FossilCommitMessage,
+            '--',
         ]);
     }).timeout(8000);
 
@@ -400,6 +404,7 @@ export function resourceActionsSuite(this: Suite): void {
         await commands.executeCommand('fossil.add');
         sinon.assert.calledOnceWithExactly(addStub, [
             'add',
+            '--',
             'opened.txt' as RelativePath,
         ]);
         await fs.unlink(uri.fsPath);

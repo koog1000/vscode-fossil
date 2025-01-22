@@ -103,7 +103,7 @@ const enum Inline {
 }
 
 export type FossilArgs =
-    | ['add' | 'forget', ...RelativePath[]]
+    | ['add', '--', ...RelativePath[]]
     | ['amend', FossilCheckin, '--comment', FossilCommitMessage]
     | ['branch', 'ls', '-t', ...(['-c'] | [])]
     | [
@@ -115,7 +115,7 @@ export type FossilArgs =
           ...(['--bgcolor', FossilColor] | [])
       ]
     | ['branch', 'current']
-    | ['cat', RelativePath, ...(['-r', FossilCheckin] | [])]
+    | ['cat', ...(['-r', FossilCheckin] | []), '--', RelativePath]
     | ['cat'] // test only, command to test a failure
     | ['clean', ...DocumentFsPath[]]
     | ['clean', '--verbose'] // test only
@@ -127,9 +127,10 @@ export type FossilArgs =
           ...(['--branch', FossilBranch] | []),
           ...(['--branchcolor', FossilColor] | []),
           ...(['--private'] | []),
-          ...RelativePath[],
           '-m',
-          FossilCommitMessage
+          FossilCommitMessage,
+          '--',
+          ...RelativePath[]
       ]
     | [
           'commit',
@@ -139,6 +140,7 @@ export type FossilArgs =
           '--no-warnings'
       ] // test only
     | ['diff', '--json', DocumentFsPath]
+    | ['forget', '--', ...RelativePath[]]
     | ['git', 'export']
     | ['sync']
     | [
@@ -169,7 +171,7 @@ export type FossilArgs =
     | ['push']
     | ['remote', 'list']
     | ['rename', AnyPath, RelativePath | UserPath]
-    | ['revert', ...RelativePath[]]
+    | ['revert', '--', ...RelativePath[]]
     | ['settings', 'allow-symlinks', 'on']
     | ['sqlite', '--readonly']
     | ['stash', 'drop' | 'apply', `${StashID}`]

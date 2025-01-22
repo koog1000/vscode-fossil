@@ -458,6 +458,7 @@ function OpenSuite(this: Suite): void {
             await fs.writeFile(filename, '');
             const addRes = await executable.exec(cwd, [
                 'add',
+                '--',
                 filename as RelativePath,
             ]);
             assert.match(addRes.stdout, /ADDED/);

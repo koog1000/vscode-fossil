@@ -53,10 +53,11 @@ export const commitStagedTest = async (
     });
     sinon.assert.calledOnceWithExactly(commitStub, [
         'commit',
-        'a' as RelativePath,
-        'b' as RelativePath,
         '-m',
         'test message' as FossilCommitMessage,
+        '--',
+        'a' as RelativePath,
+        'b' as RelativePath,
     ]);
 };
 
@@ -114,7 +115,7 @@ export function CommitSuite(this: Suite): void {
             ],
         });
         const commitStub = execStub
-            .withArgs(['commit', 'fake.txt', '-m', 'non empty message'])
+            .withArgs(['commit', '-m', 'non empty message', '--', 'fake.txt'])
             .resolves(fakeExecutionResult());
 
         const swm: sinon.SinonStub = this.ctx.sandbox.stub(
@@ -171,6 +172,7 @@ export function CommitSuite(this: Suite): void {
             'commit',
             '-m',
             'test message all' as FossilCommitMessage,
+            '--',
         ]);
     });
 
@@ -213,9 +215,10 @@ export function CommitSuite(this: Suite): void {
         });
         const commitStub = execStub.withArgs([
             'commit',
-            'empty_commit.txt',
             '-m',
             '',
+            '--',
+            'empty_commit.txt',
         ]);
 
         repository.sourceControl.inputBox.value = '';
@@ -261,9 +264,10 @@ export function CommitSuite(this: Suite): void {
                 'commit',
                 '--branch',
                 'commit branch',
-                'branch.txt',
                 '-m',
                 'creating new branch',
+                '--',
+                'branch.txt',
             ])
             .resolves(fakeExecutionResult());
 
@@ -384,16 +388,18 @@ export function CommitSuite(this: Suite): void {
         );
         sinon.assert.calledOnceWithExactly(forgetStub, [
             'forget',
+            '--',
             'b' as RelativePath,
             'c' as RelativePath,
         ]);
         sinon.assert.calledOnceWithExactly(commitStub, [
             'commit',
+            '-m',
+            'remove files' as FossilCommitMessage,
+            '--',
             'a' as RelativePath,
             'b' as RelativePath,
             'c' as RelativePath,
-            '-m',
-            'remove files' as FossilCommitMessage,
         ]);
     });
 
@@ -438,9 +444,10 @@ export function CommitSuite(this: Suite): void {
             'commit',
             '--user-override',
             'testUsername' as FossilUsername,
-            'minimal.txt' as RelativePath,
             '-m',
             'custom username test' as FossilCommitMessage,
+            '--',
+            'minimal.txt' as RelativePath,
         ]);
     });
 }
