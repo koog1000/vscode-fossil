@@ -23,6 +23,7 @@ import * as cp from 'child_process';
 import { dispose, IDisposable, toDisposable } from './util';
 import * as interaction from './interaction';
 import type { FossilExecutableInfo } from './fossilFinder';
+import { throttle } from './decorators';
 
 /** usually two numbers like [2,19] */
 export type FossilVersion = Distinct<number[], 'fossil version'>;
@@ -107,13 +108,13 @@ export type FossilArgs =
     | ['amend', FossilCheckin, '--comment', FossilCommitMessage]
     | ['branch', 'ls', '-t', ...(['-c'] | [])]
     | [
-          'branch',
-          'new',
-          FossilBranch,
-          'current',
-          ...(['--private'] | []),
-          ...(['--bgcolor', FossilColor] | [])
-      ]
+        'branch',
+        'new',
+        FossilBranch,
+        'current',
+        ...(['--private'] | []),
+        ...(['--bgcolor', FossilColor] | [])
+    ]
     | ['branch', 'current']
     | ['cat', ...(['-r', FossilCheckin] | []), '--', RelativePath]
     | ['cat'] // test only, command to test a failure
@@ -122,45 +123,45 @@ export type FossilArgs =
     | ['clone', FossilURIString, FossilPath, '--verbose']
     | ['close']
     | [
-          'commit',
-          ...(['--user-override', FossilUsername] | []),
-          ...(['--branch', FossilBranch] | []),
-          ...(['--branchcolor', FossilColor] | []),
-          ...(['--private'] | []),
-          '-m',
-          FossilCommitMessage,
-          '--',
-          ...RelativePath[]
-      ]
+        'commit',
+        ...(['--user-override', FossilUsername] | []),
+        ...(['--branch', FossilBranch] | []),
+        ...(['--branchcolor', FossilColor] | []),
+        ...(['--private'] | []),
+        '-m',
+        FossilCommitMessage,
+        '--',
+        ...RelativePath[]
+    ]
     | [
-          'commit',
-          '-m',
-          FossilCommitMessage,
-          ...(['--branch', FossilBranch] | []),
-          '--no-warnings'
-      ] // test only
+        'commit',
+        '-m',
+        FossilCommitMessage,
+        ...(['--branch', FossilBranch] | []),
+        '--no-warnings'
+    ] // test only
     | ['diff', '--json', DocumentFsPath]
     | ['forget', '--', ...RelativePath[]]
     | ['git', 'export']
     | ['sync']
     | [
-          'info',
-          ...([FossilCheckin] | []),
-          ...(['--comment-format', '-wordbreak'] | [])
-      ]
+        'info',
+        ...([FossilCheckin] | []),
+        ...(['--comment-format', '-wordbreak'] | [])
+    ]
     | [
-          'init',
-          FossilPath,
-          ...(['--project-name', FossilProjectName] | []),
-          ...(['--project-desc', FossilProjectDescription] | [])
-      ]
+        'init',
+        FossilPath,
+        ...(['--project-name', FossilProjectName] | []),
+        ...(['--project-desc', FossilProjectDescription] | [])
+    ]
     | ['ls', ...DocumentFsPath[]]
     | [
-          'merge',
-          FossilCheckin,
-          ...(['--cherrypick'] | []),
-          ...(['--integrate'] | [])
-      ]
+        'merge',
+        FossilCheckin,
+        ...(['--cherrypick'] | []),
+        ...(['--integrate'] | [])
+    ]
     | ['mv', RelativePath, RelativePath, '--hard'] // test only
     | ['open', FossilPath, ...(['--force'] | [])]
     | ['patch', 'apply' | 'create', UserPath]
@@ -176,12 +177,12 @@ export type FossilArgs =
     | ['sqlite', '--readonly']
     | ['stash', 'drop' | 'apply', `${StashID}`]
     | [
-          'stash',
-          'save' | 'snapshot',
-          '-m',
-          FossilCommitMessage,
-          ...RelativePath[]
-      ]
+        'stash',
+        'save' | 'snapshot',
+        '-m',
+        FossilCommitMessage,
+        ...RelativePath[]
+    ]
     | ['stash', 'pop']
     | ['stash', 'list']
     | ['status', '--differ', '--merge']
@@ -189,31 +190,31 @@ export type FossilArgs =
     | ['tag', 'cancel', '--raw', FossilTag, FossilBranch]
     | ['tag', 'list']
     | [
-          'test-markdown-render' | 'test-wiki-render',
-          ...(['--dark-pikchr'] | []),
-          '-'
-      ]
+        'test-markdown-render' | 'test-wiki-render',
+        ...(['--dark-pikchr'] | []),
+        '-'
+    ]
     | [
-          'timeline',
-          ...(['before', FossilCheckin] | []),
-          ...(['-n', `${number}`] | []),
-          ...(['-p', RelativePath] | []),
-          ...(['--verbose'] | []),
-          '--type',
-          'ci',
-          '--format',
-          '%H+++%d+++%b+++%a+++%c'
-      ]
+        'timeline',
+        ...(['before', FossilCheckin] | []),
+        ...(['-n', `${number}`] | []),
+        ...(['-p', RelativePath] | []),
+        ...(['--verbose'] | []),
+        '--type',
+        'ci',
+        '--format',
+        '%H+++%d+++%b+++%a+++%c'
+    ]
     | ['undo' | 'redo', ...(['--dry-run'] | [])]
     | ['update', ...([FossilCheckin] | []), ...(['--dry-run'] | [])]
     | [
-          'wiki',
-          'create',
-          FossilWikiTitle,
-          '--mimetype',
-          'text/x-fossil-wiki' | 'text/x-markdown' | 'text/plain',
-          ...(['--technote', 'now'] | [])
-      ];
+        'wiki',
+        'create',
+        FossilWikiTitle,
+        '--mimetype',
+        'text/x-fossil-wiki' | 'text/x-markdown' | 'text/plain',
+        ...(['--technote', 'now'] | [])
+    ];
 
 export type RawExecResult = FossilRawResult & {
     stdout: Buffer;
@@ -230,7 +231,7 @@ export function toString(this: ExecFailure): string {
 export class FossilExecutable {
     private fossilPath!: FossilExecutablePath;
     public version!: FossilVersion;
-    constructor(public readonly outputChannel: LogOutputChannel) {}
+    constructor(public readonly outputChannel: LogOutputChannel) { }
 
     setInfo(info: FossilExecutableInfo) {
         this.fossilPath = info.path;
@@ -297,6 +298,7 @@ export class FossilExecutable {
         return;
     }
 
+    @throttle
     async rawExec(
         args: FossilArgs,
         options: FossilSpawnOptions
