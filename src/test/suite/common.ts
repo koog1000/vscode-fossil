@@ -429,3 +429,27 @@ export function statusBarCommands() {
     assert.ok(commands);
     return commands;
 }
+
+export function stubFossilConfig(sandbox: sinon.SinonSandbox) {
+    const configStub = {
+        update: sinon.stub(),
+        get: sinon.stub(),
+    };
+    configStub.get.withArgs('username').returns('');
+    configStub.get.withArgs('confirmGitExport').returns(null);
+    configStub.get.withArgs('enableRenaming').returns(true);
+    configStub.get.withArgs('path').returns('');
+    configStub.get.callsFake((...args: any[]) => {
+        throw new Error(`get: called with ${JSON.stringify(args)}`);
+    });
+    configStub.update.callsFake((...args: any[]) => {
+        throw new Error(`update: called with ${JSON.stringify(args)}`);
+    });
+
+    sandbox
+        .stub(vscode.workspace, 'getConfiguration')
+        .callThrough()
+        .withArgs('fossil')
+        .returns(configStub as any);
+    return configStub;
+}
