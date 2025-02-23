@@ -7,7 +7,6 @@ import {
     Terminal,
     Uri,
     window,
-    workspace,
 } from 'vscode';
 import * as sinon from 'sinon';
 import {
@@ -15,6 +14,7 @@ import {
     fakeExecutionResult,
     getExecStub,
     getRepository,
+    stubFossilConfig,
 } from './common';
 import * as assert from 'assert/strict';
 import { Suite } from 'mocha';
@@ -622,50 +622,33 @@ function GitExportAfterCommitSuite(this: Suite): void {
         sinon.assert.notCalled(gitExportStub);
     });
 
-    const stubConfig = (configStub: any) =>
-        this.ctx.sandbox
-            .stub(workspace, 'getConfiguration')
-            .callThrough()
-            .withArgs('fossil')
-            .returns(configStub);
-
     test('Can run `git export` automatically', async () => {
-        const configStub = { get: sinon.stub() };
-        configStub.get.withArgs('username').returns('');
+        const configStub = stubFossilConfig(this.ctx.sandbox);
         configStub.get.withArgs('confirmGitExport').returns('Automatically');
-        stubConfig(configStub);
         const { configCall, gitExportStub } = await doCommit();
         sinon.assert.calledOnce(configCall);
         sinon.assert.calledOnce(gitExportStub);
     });
 
     test('Can ignore `git export`', async () => {
-        const configStub = { get: sinon.stub() };
-        configStub.get.withArgs('username').returns('');
+        const configStub = stubFossilConfig(this.ctx.sandbox);
         configStub.get.withArgs('confirmGitExport').returns('Never');
-        stubConfig(configStub);
         const { configCall, gitExportStub } = await doCommit();
         sinon.assert.calledOnce(configCall);
         sinon.assert.notCalled(gitExportStub);
     });
 
     const testAnswer = async (answer: 'Always' | 'Never') => {
-        const configStub = {
-            update: sinon.stub(),
-            get: sinon.stub().returns(''),
-        };
-        stubConfig(configStub);
+        const configStub = stubFossilConfig(this.ctx.sandbox);
+        const confirmGitExportStub = configStub.update
+            .withArgs('confirmGitExport', answer, false)
+            .resolves();
         const sim = this.ctx.sandbox.stub(window, 'showInformationMessage');
         sim.resolves(answer as any);
         const { configCall, gitExportStub } = await doCommit();
         sinon.assert.calledOnce(configCall);
         sinon.assert.notCalled(gitExportStub);
-        sinon.assert.calledOnceWithExactly(
-            configStub.update,
-            'confirmGitExport',
-            answer,
-            false
-        );
+        sinon.assert.calledOnce(confirmGitExportStub);
     };
 
     test('Answer Never', async () => {

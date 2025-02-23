@@ -1,4 +1,4 @@
-import { window, workspace, commands } from 'vscode';
+import { window, commands } from 'vscode';
 import * as sinon from 'sinon';
 import {
     fakeExecutionResult,
@@ -12,6 +12,7 @@ import {
     getRawExecStub,
     getRepository,
     statusBarCommands,
+    stubFossilConfig,
 } from './common';
 import * as assert from 'assert/strict';
 import { Suite, after, before } from 'mocha';
@@ -198,20 +199,10 @@ export function StatusBarSuite(this: Suite): void {
     });
 
     const changeAutoSyncIntervalSeconds = (seconds: number) => {
-        const currentConfig = workspace.getConfiguration('fossil');
-        const configStub = {
-            get: sinon.stub(),
-        };
+        const configStub = stubFossilConfig(this.ctx.sandbox);
         const getIntervalStub = configStub.get
             .withArgs('autoSyncInterval')
             .returns(seconds);
-        configStub.get.callsFake((key: string) => currentConfig.get(key));
-        this.ctx.sandbox
-            .stub(workspace, 'getConfiguration')
-            .callThrough()
-            .withArgs('fossil')
-            .returns(configStub as any);
-
         const model = getModel();
         model['onDidChangeConfiguration']({
             affectsConfiguration: (key: string) =>

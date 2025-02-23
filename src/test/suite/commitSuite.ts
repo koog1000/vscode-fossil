@@ -10,6 +10,7 @@ import {
     fakeFossilStatus,
     getExecStub,
     getRepository,
+    stubFossilConfig,
 } from './common';
 import * as assert from 'assert/strict';
 import * as fs from 'fs/promises';
@@ -426,14 +427,8 @@ export function CommitSuite(this: Suite): void {
     });
 
     test('Commit with specified username', async () => {
-        const configStub = {
-            get: sinon.stub().withArgs('username').returns('testUsername'),
-        };
-        this.ctx.sandbox
-            .stub(workspace, 'getConfiguration')
-            .callThrough()
-            .withArgs('fossil')
-            .returns(configStub as any);
+        const configStub = stubFossilConfig(this.ctx.sandbox);
+        configStub.get.withArgs('username').returns('testUsername');
         const { commitStub, repository } = await singleFileCommitSetup(
             this.ctx.sandbox,
             rootUri

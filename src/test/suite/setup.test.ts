@@ -15,6 +15,7 @@ import {
     fossilOpenForce,
     getExecutable,
     getRepository,
+    stubFossilConfig,
 } from './common';
 import * as sinon from 'sinon';
 import * as assert from 'assert/strict';
@@ -179,26 +180,17 @@ function ExecutableSuite(this: Suite): void {
         );
     });
 
-    test('"Don\'t Show Again" button is working', async () => {
-        const configStub = {
-            update: sinon.stub(),
-            get: sinon.stub().withArgs('path').returns(''),
-        };
-        this.ctx.sandbox
-            .stub(workspace, 'getConfiguration')
-            .callThrough()
-            .withArgs('fossil')
-            .returns(configStub as any);
+    test('Missing fossil: "Don\'t Show Again" button is working', async () => {
+        const configStub = stubFossilConfig(this.ctx.sandbox);
+        configStub.get.withArgs('ignoreMissingFossilWarning').returns(false);
+        const ignoreMissingFossil = configStub.update
+            .withArgs('ignoreMissingFossilWarning', true, false)
+            .resolves(false);
         const noFossil = new NoFossil(this.ctx.sandbox);
         noFossil.svm.resolves("Don't Show Again");
         await noFossil.activate();
         sinon.assert.calledOnce(noFossil.svm);
-        sinon.assert.calledOnceWithExactly(
-            configStub.update,
-            'ignoreMissingFossilWarning',
-            true,
-            false
-        );
+        sinon.assert.calledOnce(ignoreMissingFossil);
     });
 
     const stubActivationActions = () => {
@@ -217,15 +209,7 @@ function ExecutableSuite(this: Suite): void {
         const svm = this.ctx.sandbox
             .stub(window, 'showWarningMessage')
             .resolves();
-        const configStub = {
-            update: sinon.stub(),
-            get: sinon.stub().withArgs('path').returns(''),
-        };
-        this.ctx.sandbox
-            .stub(workspace, 'getConfiguration')
-            .callThrough()
-            .withArgs('fossil')
-            .returns(configStub as any);
+        const configStub = stubFossilConfig(this.ctx.sandbox);
 
         return { ff, odcc, rfsp, rwvps, svm, configStub };
     };
@@ -235,6 +219,7 @@ function ExecutableSuite(this: Suite): void {
 
         const { ff, odcc, rfsp, rwvps, svm, configStub } =
             stubActivationActions();
+        configStub.get.withArgs('ignoreMissingFossilWarning').returns(false);
         const context = NoFossil.createContext();
         const model = await activate(context as unknown as ExtensionContext);
         sinon.assert.calledOnce(ff);
@@ -266,6 +251,8 @@ function ExecutableSuite(this: Suite): void {
     test("Fossil state can be changed from 'found' to 'not found'", async () => {
         const { ff, odcc, rfsp, rwvps, svm, configStub } =
             stubActivationActions();
+        configStub.get.withArgs('enableRenaming').returns(false);
+        configStub.get.withArgs('ignoreMissingFossilWarning').returns(false);
         const context = NoFossil.createContext();
         const model = await activate(context as unknown as ExtensionContext);
         assert.ok(model);
