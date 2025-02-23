@@ -1,5 +1,14 @@
 # Changelog
 
+# v0.7.2
+
+### What's New
+
+- A new configuration option has been added that allows users to specify
+  additional arguments for all `fossil` commands (`fossil.globalArgs`) and
+  specific arguments for the `fossil commit` command (`fossil.commitArgs`).
+
+
 # v0.7.1
 
 ### Bug Fix
