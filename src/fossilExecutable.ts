@@ -317,7 +317,7 @@ export class FossilExecutable {
         const once = (
             ee: typeof child.stdout | typeof child,
             name: 'close' | 'error' | 'exit',
-            fn: (...args: any[]) => void
+            fn: (arg: any) => void
         ) => {
             ee.once(name, fn);
             disposables.push(toDisposable(() => ee.removeListener(name, fn)));
@@ -326,7 +326,7 @@ export class FossilExecutable {
         const on = (
             ee: typeof child.stdout | typeof child,
             name: 'data',
-            fn: (...args: any[]) => void
+            fn: (arg: any) => void
         ) => {
             ee.on(name, fn);
             disposables.push(toDisposable(() => ee.removeListener(name, fn)));
