@@ -1048,7 +1048,7 @@
             "properties": {
                 "fossil.autoSyncInterval": {
                     "type": "number",
-                    "description": "%config.autoSyncInterval%",
+                    "markdownDescription": "%config.autoSyncInterval%",
                     "default": 180,
                     "minimum": 0
                 },
@@ -1069,7 +1069,7 @@
                 },
                 "fossil.path": {
                     "type": "string",
-                    "description": "%config.path%",
+                    "markdownDescription": "%config.path%",
                     "scope": "machine"
                 },
                 "fossil.username": {
@@ -1084,7 +1084,7 @@
                         "Ask"
                     ],
                     "default": "Ask",
-                    "description": "When repository was exported to git, ask to run `fossil export` after every commit"
+                    "markdownDescription": "When repository was exported to git, ask to run `fossil export` after every commit"
                 },
                 "fossil.globalArgs": {
                     "type": "array",
