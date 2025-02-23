@@ -20,6 +20,7 @@ import {
 } from './fossilExecutable';
 import { NewBranchOptions } from './interaction';
 import { FossilCWD } from './fossilExecutable';
+import typedConfig from './config';
 
 export type Distinct<T, DistinctName extends string> = T & {
     __TYPE__: DistinctName;
@@ -287,7 +288,7 @@ export class OpenedRepository {
     ): Promise<ExecResult> {
         // always pass a message, otherwise fossil
         // internal editor will spawn
-        return this.exec([
+        const commitArgs: FossilArgs = [
             'commit',
             ...(user.length
                 ? (['--user-override', user] as const)
@@ -309,7 +310,9 @@ export class OpenedRepository {
             message,
             '--',
             ...fileList,
-        ]);
+        ];
+        (commitArgs as string[]).splice(1, 0, ...typedConfig.commitArgs);
+        return this.exec(commitArgs);
     }
 
     async getCurrentBranch(): Promise<FossilBranch | undefined> {

@@ -23,6 +23,7 @@ import * as cp from 'child_process';
 import { dispose, IDisposable, toDisposable } from './util';
 import * as interaction from './interaction';
 import type { FossilExecutableInfo } from './fossilFinder';
+import typedConfig from './config';
 
 /** usually two numbers like [2,19] */
 export type FossilVersion = Distinct<number[], 'fossil version'>;
@@ -297,6 +298,9 @@ export class FossilExecutable {
         return;
     }
 
+    /**
+     * this method can be private, but it is public fot tests
+     */
     async rawExec(
         args: FossilArgs,
         options: FossilSpawnOptions
@@ -411,6 +415,8 @@ export class FossilExecutable {
             }, timeout);
         };
         let logTimeout = waitAndLog(500);
+        // insert global arguments after a command, so it's easier to test
+        (args as string[]).splice(1, 0, ...typedConfig.globalArgs);
         const resultRaw = await this.rawExec(args, options);
         clearTimeout(logTimeout);
 

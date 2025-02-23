@@ -8,7 +8,9 @@ import {
     cleanupFossil,
     fakeExecutionResult,
     fakeFossilStatus,
+    fakeRawExecutionResult,
     getExecStub,
+    getRawExecStub,
     getRepository,
     stubFossilConfig,
 } from './common';
@@ -444,5 +446,45 @@ export function CommitSuite(this: Suite): void {
             '--',
             'minimal.txt' as RelativePath,
         ]);
+    });
+
+    test('Commit with `commitArgs` and `globalArgs`', async () => {
+        const configStub = stubFossilConfig(this.ctx.sandbox);
+        configStub.get
+            .withArgs('commitArgs')
+            .returns(['--hash', '--ignore-clock-skew']);
+        configStub.get.withArgs('globalArgs').returns(['--user', 'alex']);
+
+        const repository = getRepository();
+        const execStub = getExecStub(this.ctx.sandbox);
+
+        const statusStub = fakeFossilStatus(execStub, 'ADDED a');
+        await repository.updateStatus('Test' as Reason);
+        sinon.assert.calledOnce(statusStub);
+        await commands.executeCommand('fossil.stageAll');
+
+        repository.sourceControl.inputBox.value = 'args test';
+        execStub.restore();
+        const rawCommit = getRawExecStub(this.ctx.sandbox)
+            .withArgs(sinon.match.array.startsWith(['commit']))
+            .resolves(fakeRawExecutionResult());
+
+        await commands.executeCommand('fossil.commitWithInput');
+
+        sinon.assert.calledOnceWithExactly(
+            rawCommit as any,
+            [
+                'commit',
+                '--user',
+                'alex',
+                '--hash',
+                '--ignore-clock-skew',
+                '-m',
+                'args test',
+                '--',
+                'a',
+            ],
+            sinon.match.object
+        );
     });
 }
