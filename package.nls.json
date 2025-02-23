@@ -42,7 +42,7 @@
     "command.merge": "Merge into working directory...",
     "command.integrate": "Integrate into working directory...",
     "command.cherrypick": "Cherry-pick into working directory...",
-    "config.path": "Path to the 'fossil' executable (only required if auto-detection fails)",
+    "config.path": "Path to the `fossil` executable (only required if auto-detection fails)",
     "config.username": "The username associated with each commit (only required if different from user that originally cloned repo).",
     "config.autoSyncInterval": "The duration, in seconds, between each background `fossil sync` operation. 0 to disable.",
     "config.autoRefresh": "Whether auto refreshing is enabled",
