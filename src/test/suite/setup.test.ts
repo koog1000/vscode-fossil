@@ -197,7 +197,7 @@ function ExecutableSuite(this: Suite): void {
         const ff = this.ctx.sandbox.stub(fossilFinder, 'findFossil').resolves();
         const odcc = this.ctx.sandbox
             .stub(workspace, 'onDidChangeConfiguration')
-            .returns({ dispose: this.ctx.sandbox.stub() });
+            .returns({ dispose: sinon.stub() });
         const rfsp = this.ctx.sandbox.stub(
             workspace,
             'registerFileSystemProvider'
