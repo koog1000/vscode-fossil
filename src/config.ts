@@ -12,6 +12,8 @@ interface ConfigScheme {
     autoRefresh: boolean;
     enableRenaming: boolean;
     confirmGitExport: 'Automatically' | 'Never' | null;
+    globalArgs: string[];
+    commitArgs: string[];
 }
 
 class Config {
@@ -74,6 +76,13 @@ class Config {
 
     get gitExport() {
         return this.get('confirmGitExport');
+    }
+
+    get globalArgs() {
+        return this.get('globalArgs');
+    }
+    get commitArgs() {
+        return this.get('commitArgs');
     }
 }
 

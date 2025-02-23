@@ -439,6 +439,8 @@ export function stubFossilConfig(sandbox: sinon.SinonSandbox) {
     configStub.get.withArgs('confirmGitExport').returns(null);
     configStub.get.withArgs('enableRenaming').returns(true);
     configStub.get.withArgs('path').returns('');
+    configStub.get.withArgs('globalArgs').returns([]);
+    configStub.get.withArgs('commitArgs').returns([]);
     configStub.get.callsFake((...args: any[]) => {
         throw new Error(`get: called with ${JSON.stringify(args)}`);
     });

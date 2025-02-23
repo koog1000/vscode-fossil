@@ -1085,6 +1085,18 @@
                     ],
                     "default": "Ask",
                     "description": "When repository was exported to git, ask to run `fossil export` after every commit"
+                },
+                "fossil.globalArgs": {
+                    "type": "array",
+                    "items": { "type": "string"},
+                    "scope": "window",
+                    "markdownDescription": "Extra arguments added to each `fossil` command (see `fossil help -o`)"
+                },
+                "fossil.commitArgs": {
+                    "type": "array",
+                    "items": { "type": "string"},
+                    "scope": "window",
+                    "markdownDescription": "Extra arguments added to `fossil commit` command (see `fossil help commit`)"
                 }
             }
         },
