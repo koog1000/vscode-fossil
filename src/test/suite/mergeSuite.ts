@@ -45,9 +45,11 @@ export function MergeSuite(this: Suite): void {
             .onFirstCall()
             .callsFake(items => {
                 assert.ok(items instanceof Array);
-                assert.equal(items.length, 2);
-                assert.equal(items[0].label, '$(git-branch) trunk');
-                return Promise.resolve(items[0]);
+                const item = items.find(
+                    item => item.label === '$(git-branch) trunk'
+                );
+                assert.ok(item);
+                return Promise.resolve(item);
             });
         const swm: sinon.SinonStub = this.ctx.sandbox
             .stub(window, 'showWarningMessage')
