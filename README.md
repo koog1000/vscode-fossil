@@ -111,12 +111,20 @@ about cloning from the extension.
 
 `fossil.username { string }`
 
-  * Specifies an explicit user to use for fossil commits.
+  * Specifies an explicit user to use for fossil commits (`--user-override`).
   * This should only be used if the user is different than the fossil default user.
+  * Username could be passed with `fossil.commitArgs` but this is just convenient shortcut.
 
 `fossil.autoSyncInterval { number }`
   * The duration, in seconds, between each background `fossil sync` operation.
   * 0 to disable.
+
+`fossil.globalArgs`
+  * Extra arguments added to each `fossil` command (see `fossil help -o`)
+
+`fossil.commitArgs`
+  * Extra arguments added to `fossil commit` command (see `fossil help commit`)
+
 
 # Troubleshooting
 
