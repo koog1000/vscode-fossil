@@ -402,23 +402,18 @@ export function assertGroups(
         );
     };
     assert.deepStrictEqual(
-        group_to_map(repository.workingGroup),
-        new Map(groups.working),
-        message
-    );
-    assert.deepStrictEqual(
-        group_to_map(repository.stagingGroup),
-        new Map(groups.staging),
-        message
-    );
-    assert.deepStrictEqual(
-        group_to_map(repository.untrackedGroup),
-        new Map(groups.untracked),
-        message
-    );
-    assert.deepStrictEqual(
-        group_to_map(repository.conflictGroup),
-        new Map(groups.conflict),
+        new Map([
+            ['working', group_to_map(repository.workingGroup)],
+            ['staging', group_to_map(repository.stagingGroup)],
+            ['untracked', group_to_map(repository.untrackedGroup)],
+            ['conflict', group_to_map(repository.conflictGroup)],
+        ]),
+        new Map([
+            ['working', new Map(groups.working)],
+            ['staging', new Map(groups.staging)],
+            ['untracked', new Map(groups.untracked)],
+            ['conflict', new Map(groups.conflict)],
+        ]),
         message
     );
 }
