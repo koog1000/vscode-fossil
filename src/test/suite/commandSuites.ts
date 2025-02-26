@@ -194,6 +194,7 @@ export function StatusSuite(this: Suite): void {
             unlink_path as RelativePath,
         ]);
         await fs.rm(unlink_path);
+        // make unlink_path a regular file
         await fs.writeFile(unlink_path, '/etc/passwd');
 
         // NOT A FILE
