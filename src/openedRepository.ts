@@ -9,7 +9,6 @@ import * as fs from 'fs/promises';
 import { appendFileSync, existsSync, writeFileSync } from 'fs';
 import { groupBy } from './util';
 import { workspace, window, Uri } from 'vscode';
-import { throttle } from './decorators';
 import {
     FossilExecutable,
     FossilSpawnOptions,
@@ -573,8 +572,9 @@ export class OpenedRepository {
         await this.exec(['stash', operation, `${stashId}`]);
     }
 
-    /** Report the change status of files in the current checkout */
-    @throttle
+    /** Report the change status of files in the current checkout
+     *  Status call is expected to be throttled by the caller
+     */
     async getStatus(reason: Reason): Promise<ExecResult> {
         return this.exec(['status', '--differ', '--merge'], reason);
     }
