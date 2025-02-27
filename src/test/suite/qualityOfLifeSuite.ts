@@ -1,4 +1,4 @@
-import { Suite, test, before } from 'mocha';
+import { Suite, after, before, test } from 'mocha';
 import { commands, window, workspace, Uri } from 'vscode';
 import * as assert from 'assert/strict';
 import * as fs from 'fs/promises';
@@ -35,6 +35,7 @@ function PraiseSuite(this: Suite) {
             Parameters<typeof window.onDidChangeTextEditorSelection>
         >;
         const sandbox = this.ctx.sandbox;
+        let path: string;
 
         before(async function () {
             this.timeout(30000); // sometimes io is unpredictable)
@@ -42,7 +43,7 @@ function PraiseSuite(this: Suite) {
                 workspace.workspaceFolders![0].uri,
                 'praise.txt'
             );
-            const path = uri.fsPath;
+            path = uri.fsPath;
             await fs.writeFile(path, [...'first', ''].join('\n'));
             const repository = getRepository();
             const openedRepository: OpenedRepository = (repository as any)
@@ -65,12 +66,9 @@ function PraiseSuite(this: Suite) {
             await ci(3);
             await fs.appendFile(path, [...'user', ''].join('\n'));
 
-            await commands.executeCommand('vscode.open', vscode.Uri.file(path));
+            await commands.executeCommand('vscode.open', Uri.file(path));
             assert.ok(window.activeTextEditor);
-            assert.equal(
-                window.activeTextEditor.document.uri.fsPath,
-                uri.fsPath
-            );
+            assert.equal(window.activeTextEditor.document.uri.fsPath, path);
 
             onDidChangeTextDocumentSpy = sandbox.spy(
                 vscode.workspace,
@@ -88,6 +86,26 @@ function PraiseSuite(this: Suite) {
                 vscode.window,
                 'onDidChangeTextEditorSelection'
             );
+        });
+
+        after(async () => {
+            if (window.activeTextEditor?.document.uri.fsPath == path) {
+                await commands.executeCommand(
+                    'workbench.action.closeActiveEditor'
+                );
+            }
+            const swm: sinon.SinonStub = this.ctx.sandbox.stub(
+                window,
+                'showWarningMessage'
+            );
+            swm.onFirstCall().resolves('&&Discard Changes');
+
+            const repository = getRepository();
+            await commands.executeCommand(
+                'fossil.revertAll',
+                repository.workingGroup
+            );
+            sinon.assert.calledOnce(swm);
         });
 
         test('First time', async () => {
