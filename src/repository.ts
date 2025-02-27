@@ -73,6 +73,7 @@ import type {
     ExecResult,
     Reason,
 } from './fossilExecutable';
+import { ThrottlingQueue, queue } from './throttlingQueue';
 const iconsRootPath = path.join(path.dirname(__dirname), 'resources', 'icons');
 
 type AvailableIcons =
@@ -341,6 +342,7 @@ export class Repository implements IDisposable, InteractionAPI {
     }
 
     private operations_size: number = 0;
+    public queue: ThrottlingQueue<any> = new ThrottlingQueue();
 
     constructor(private readonly repository: OpenedRepository) {
         const repoRootWatcher = workspace.createFileSystemWatcher(
@@ -782,14 +784,14 @@ export class Repository implements IDisposable, InteractionAPI {
         );
     }
 
-    @throttle
+    @queue('queue', 'l')
     async pull(name: FossilRemoteName): Promise<void> {
         return this.runWithProgress(UpdateChanges, async () => {
             await this.repository.pull(name);
         });
     }
 
-    @throttle
+    @queue('queue', 'h')
     async push(name?: FossilRemoteName): Promise<void> {
         return this.runWithProgress(UpdateChanges, async () => {
             await this.repository.push(name);
@@ -1058,13 +1060,13 @@ export class Repository implements IDisposable, InteractionAPI {
     }
 
     /**
-     * Why throttle:
+     * Why queue:
      * `fossil update` can execute `UPDATE` sql statement, for example
      * "UPDATE vfile SET mtime=%lld, chnged=%d WHERE id=%d"
      * which requires database locking, and running multiple fossil statuses
      * at the same time will lead to "database is locked" sqlite error.
      */
-    @throttle
+    @queue('queue', 'u')
     public async updateStatus(
         reason?: Reason
     ): Promise<ExecFailure | undefined> {
@@ -1085,6 +1087,7 @@ export class Repository implements IDisposable, InteractionAPI {
         return;
     }
 
+    @queue('queue', 'b')
     private async updateBranch() {
         const currentBranch = await this.repository.getCurrentBranch();
         if (this._currentBranch !== currentBranch) {
@@ -1132,6 +1135,7 @@ export class Repository implements IDisposable, InteractionAPI {
         this.statusBar.onChangesReady(updateResult);
     }
 
+    @queue('queue', 's')
     async periodicSync(): Promise<void> {
         const syncResult = await this.repository.exec(
             ['sync'],
@@ -1145,6 +1149,7 @@ export class Repository implements IDisposable, InteractionAPI {
         this.updateAutoSyncInterval(typedConfig.autoSyncIntervalMs);
     }
 
+    @queue('queue', 's')
     async sync(): Promise<void> {
         const syncResult = await this.runWithProgress(
             { changes: true, syncText: 'Syncing' },
