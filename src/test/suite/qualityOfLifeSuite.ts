@@ -1,4 +1,4 @@
-import { Suite, test } from 'mocha';
+import { Suite, test, before } from 'mocha';
 import { commands, window, workspace, Uri } from 'vscode';
 import * as assert from 'assert/strict';
 import * as fs from 'fs/promises';
@@ -34,8 +34,10 @@ function PraiseSuite(this: Suite) {
         let onDidChangeTextEditorSelectionSpy: sinon.SinonSpy<
             Parameters<typeof window.onDidChangeTextEditorSelection>
         >;
+        const sandbox = this.ctx.sandbox;
 
-        test('First time', async () => {
+        before(async function () {
+            this.timeout(30000); // sometimes io is unpredictable)
             const uri = Uri.joinPath(
                 workspace.workspaceFolders![0].uri,
                 'praise.txt'
@@ -70,29 +72,31 @@ function PraiseSuite(this: Suite) {
                 uri.fsPath
             );
 
-            onDidChangeTextDocumentSpy = this.ctx.sandbox.spy(
+            onDidChangeTextDocumentSpy = sandbox.spy(
                 vscode.workspace,
                 'onDidChangeTextDocument'
             );
-            onDidCloseTextDocumentSpy = this.ctx.sandbox.spy(
+            onDidCloseTextDocumentSpy = sandbox.spy(
                 vscode.workspace,
                 'onDidCloseTextDocument'
             );
-            registerHoverProviderSpy = this.ctx.sandbox.spy(
+            registerHoverProviderSpy = sandbox.spy(
                 vscode.languages,
                 'registerHoverProvider'
             );
-            onDidChangeTextEditorSelectionSpy = this.ctx.sandbox.spy(
+            onDidChangeTextEditorSelectionSpy = sandbox.spy(
                 vscode.window,
                 'onDidChangeTextEditorSelection'
             );
+        });
 
+        test('First time', async () => {
             await commands.executeCommand('fossil.praise');
             sinon.assert.calledOnce(registerHoverProviderSpy);
             sinon.assert.calledOnce(onDidChangeTextDocumentSpy);
             sinon.assert.calledOnce(onDidCloseTextDocumentSpy);
             sinon.assert.calledOnce(onDidChangeTextEditorSelectionSpy);
-        }).timeout(30000); // sometimes io is unpredictable
+        });
 
         test('Second time', async () => {
             const registerHoverProviderSpy = this.ctx.sandbox.spy(
