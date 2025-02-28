@@ -341,7 +341,6 @@ export class Repository implements IDisposable, InteractionAPI {
         return this.repository.root;
     }
 
-    private operations_size: number = 0;
     public queue: ThrottlingQueue<any> = new ThrottlingQueue();
 
     constructor(private readonly repository: OpenedRepository) {
@@ -420,7 +419,7 @@ export class Repository implements IDisposable, InteractionAPI {
             return;
         }
 
-        if (this.operations_size !== 0) {
+        if (this.operations.size !== 0) {
             return;
         }
 
@@ -464,7 +463,7 @@ export class Repository implements IDisposable, InteractionAPI {
      */
     async whenIdleAndFocused(): Promise<void> {
         while (true) {
-            if (this.operations_size !== 0) {
+            if (this.operations.size !== 0) {
                 await eventToPromise(this.onDidRunOperation);
                 continue;
             }
