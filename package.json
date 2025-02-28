@@ -1074,7 +1074,7 @@
                 },
                 "fossil.username": {
                     "type": "string",
-                    "description": "%config.username%"
+                    "markdownDescription": "%config.username%"
                 },
                 "fossil.confirmGitExport": {
                     "type": "string",
