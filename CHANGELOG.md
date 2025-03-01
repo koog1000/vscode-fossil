@@ -1,5 +1,13 @@
 # Changelog
 
+# v0.7.3
+
+### Bug Fix
+
+- More work has been done to prevent "database is locked" errors. All
+  background commands are now queued, meaning they do not run simultaneously.
+
+
 # v0.7.2
 
 ### What's New
