@@ -12,6 +12,7 @@ import * as assert from 'assert/strict';
 import { getExecutable } from './common';
 import { after, afterEach, before } from 'mocha';
 import { Old, ageFromNow } from '../../humanise';
+import { ThrottlingQueue } from '../../throttlingQueue';
 
 suite('Infrastructure', () => {
     const sandbox = sinon.createSandbox();
@@ -138,5 +139,38 @@ suite('Infrastructure', () => {
         test('Now + one year', () => {
             assert.equal(ageFromNow(days(366)), 'future (366 days)');
         });
+    });
+    test('Queue "next" logic', async () => {
+        const queue = new ThrottlingQueue();
+        const p1 = queue.enqueue(() => new Promise(c => c(1)), 'p');
+        const p2 = queue.enqueue(() => new Promise(c => c(2)), 'p');
+        const p3 = queue.enqueue(() => new Promise(c => c(3)), 'p');
+        const res = await Promise.allSettled([p1, p2, p3]);
+        assert.deepEqual(res, [
+            {
+                status: 'fulfilled',
+                value: 1,
+            },
+            {
+                status: 'fulfilled',
+                value: 2,
+            },
+            {
+                status: 'fulfilled',
+                value: 2,
+            },
+        ]);
+    });
+    test('Queue can handle exceptions', async () => {
+        const error = new Error();
+        const queue = new ThrottlingQueue();
+        const p1 = queue.enqueue(() => new Promise((c, e) => e(error)), 'p');
+        const res = await Promise.allSettled([p1]);
+        assert.deepEqual(res, [
+            {
+                status: 'rejected',
+                reason: error,
+            },
+        ]);
     });
 });
