@@ -54,6 +54,11 @@ function PullAndPushSuite(this: Suite): void {
         await noRemotes('fossil.pushTo');
     });
 
+    before(() => {
+        const repository = getRepository();
+        assert.equal((repository.queue as any)._items.length, 0);
+    });
+
     test('Pull', async () => {
         const execStub = getExecStub(this.ctx.sandbox);
         const listCall = execStub
