@@ -1,5 +1,13 @@
 # Changelog
 
+# v0.7.4
+
+### Bug Fix
+
+- One background command was still running in parallel (see 0.7.3)
+- A potential deadlock resulted in the extension ceasing to work
+
+
 # v0.7.3
 
 ### Bug Fix
