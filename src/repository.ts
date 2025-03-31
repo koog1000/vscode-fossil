@@ -341,7 +341,7 @@ export class Repository implements IDisposable, InteractionAPI {
         return this.repository.root;
     }
 
-    public queue: ThrottlingQueue<any> = new ThrottlingQueue();
+    public queue: ThrottlingQueue = new ThrottlingQueue();
 
     constructor(private readonly repository: OpenedRepository) {
         const repoRootWatcher = workspace.createFileSystemWatcher(
@@ -783,17 +783,15 @@ export class Repository implements IDisposable, InteractionAPI {
         );
     }
 
-    @queue('queue', 'l')
     async pull(name: FossilRemoteName): Promise<void> {
         return this.runWithProgress(UpdateChanges, async () => {
-            await this.repository.pull(name);
+            await this.queue.enqueue(() => this.repository.pull(name), 'p');
         });
     }
 
-    @queue('queue', 'h')
     async push(name?: FossilRemoteName): Promise<void> {
         return this.runWithProgress(UpdateChanges, async () => {
-            await this.repository.push(name);
+            await this.queue.enqueue(() => this.repository.push(name), 'P');
         });
     }
 
@@ -1033,29 +1031,31 @@ export class Repository implements IDisposable, InteractionAPI {
         sideEffects: SideEffects,
         reason: Reason = 'model state is updating' as Reason
     ): Promise<void> {
-        const sidePromises: Promise<void>[] = [];
+        // initially, this method executed all commands in parallel
+        // but that causes not so rare 'Database locked' errors, so
+        // we run commands sequentially
         if (sideEffects.status) {
-            sidePromises.push(
-                this.updateStatus(reason).then(err => {
-                    if (err) {
-                        if (err.fossilErrorCode === 'NotAFossilRepository') {
-                            this.state = RepositoryState.Disposed;
-                        } else {
-                            throw new Error(
-                                `Unexpected fossil result: ${String(err)}`
-                            );
-                        }
+            // updateStatus queued
+            await this.updateStatus(reason).then(err => {
+                if (err) {
+                    if (err.fossilErrorCode === 'NotAFossilRepository') {
+                        this.state = RepositoryState.Disposed;
+                    } else {
+                        throw new Error(
+                            `Unexpected fossil result: ${String(err)}`
+                        );
                     }
-                })
-            );
+                }
+            });
         }
         if (sideEffects.changes) {
-            sidePromises.push(this.updateChanges(reason));
+            // updateChanges queued
+            await this.updateChanges(reason);
         }
         if (sideEffects.branch) {
-            sidePromises.push(this.updateBranch());
+            // updateBranch queued
+            await this.updateBranch();
         }
-        await Promise.all(sidePromises);
     }
 
     /**
@@ -1125,6 +1125,7 @@ export class Repository implements IDisposable, InteractionAPI {
      * Reads `changes` from `fossil update --dry-run --latest`
      * and updates the status bar
      */
+    @queue('queue', 'c')
     private async updateChanges(reason: Reason): Promise<void> {
         const updateResult = await this.repository.update(
             undefined,
@@ -1135,26 +1136,29 @@ export class Repository implements IDisposable, InteractionAPI {
     }
 
     @queue('queue', 's')
-    async periodicSync(): Promise<void> {
-        const syncResult = await this.repository.exec(
-            ['sync'],
-            'periodic sync' as Reason,
-            {
-                logErrors: false,
-            }
+    private async syncSilently(): Promise<ExecResult> {
+        return this.repository.exec(['sync'], 'periodic sync' as Reason, {
+            logErrors: false,
+        });
+    }
+
+    private async syncVerbosely(): Promise<ExecResult> {
+        return this.runWithProgress(
+            { changes: true, syncText: 'Syncing' },
+            () => this.queue.enqueue(() => this.repository.exec(['sync']), 'S'),
+            res => !res.exitCode
         );
+    }
+
+    async periodicSync(): Promise<void> {
+        const syncResult = await this.syncSilently();
         await this.updateChanges('sync happened' as Reason);
         this.statusBar.onSyncReady(syncResult);
         this.updateAutoSyncInterval(typedConfig.autoSyncIntervalMs);
     }
 
-    @queue('queue', 's')
     async sync(): Promise<void> {
-        const syncResult = await this.runWithProgress(
-            { changes: true, syncText: 'Syncing' },
-            async () => this.repository.exec(['sync']),
-            res => !res.exitCode
-        );
+        const syncResult = await this.syncVerbosely();
         this.statusBar.onSyncReady(syncResult);
         this.updateAutoSyncInterval(typedConfig.autoSyncIntervalMs);
     }

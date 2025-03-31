@@ -10,14 +10,14 @@ class TPromise<T> extends Promise<T> {
 }
 
 /**
- * Run tasks one by one, allows throttling by key
+ * Run tasks sequentially, allows throttling by key
  */
-export class ThrottlingQueue<T> {
-    private readonly _items: Task<T>[] = [];
-    private readonly _keys = new Map<string, TPromise<T>>();
+export class ThrottlingQueue {
+    private readonly _items: Task<any>[] = [];
+    private readonly _keys = new Map<string, TPromise<any>>();
     private _loopRunning: boolean = false;
 
-    enqueue(action: () => Promise<T>, key: string): Promise<T> {
+    enqueue<T>(action: () => Promise<T>, key: string): Promise<T> {
         const existing = this._keys.get(key);
         if (existing) {
             if (!existing.newer) {
@@ -32,7 +32,7 @@ export class ThrottlingQueue<T> {
         return promise;
     }
 
-    private _new(action: () => Promise<T>, key: string): Promise<T> {
+    private _new<T>(action: () => Promise<T>, key: string): Promise<T> {
         return new Promise<T>((resolve, reject) => {
             this._items.push({ action, resolve, reject, key });
             this._task_loop();
@@ -48,24 +48,23 @@ export class ThrottlingQueue<T> {
     }
 
     private async _task_loop(): Promise<void> {
-        if (this._loopRunning) {
-            return;
-        }
+        if (!this._loopRunning) {
+            const item = this._items.shift();
 
-        const item = this._items.shift();
-
-        if (item) {
-            this._loopRunning = true;
-            try {
-                const payload = await item.action();
-                this._loopRunning = false;
-                item.resolve(payload);
-            } catch (reason) {
-                this._loopRunning = false;
-                item.reject(reason);
-            } finally {
-                this._delete(item.key);
-                this._task_loop();
+            if (item) {
+                this._loopRunning = true;
+                try {
+                    const payload = await item.action();
+                    // this._loopRunning = false;
+                    item.resolve(payload);
+                } catch (reason) {
+                    // this._loopRunning = false;
+                    item.reject(reason);
+                } finally {
+                    this._delete(item.key);
+                    this._loopRunning = false;
+                    this._task_loop();
+                }
             }
         }
     }
@@ -78,7 +77,7 @@ type ObjectOfType<T, U> = {
 type KeysOfType<T, U> = ObjectOfType<T, U>[keyof T];
 
 export function queue<This extends Record<string, any>>(
-    queue_name: KeysOfType<This, ThrottlingQueue<any>>,
+    queue_name: KeysOfType<This, ThrottlingQueue>,
     queueKey: string
 ) {
     return function (
