@@ -106,7 +106,7 @@ print "Oval at: ",previous.x, ",", previous.y
 
 circlerad = previous.radius
 // <--------- variable.language.pikchr
-//        ^^^^^^^^^^^^^^^^^ meta.assignment.pickchr
+//        ^^^^^^^^^^^^^^^^^ meta.assignment.pikchr
 //        ^ keyword.operator.assignment.pikchr
 //          ^^^^^^^^ constant.language.pikchr
 //                  ^ punctuation.separator.period.pikchr

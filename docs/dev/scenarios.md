@@ -58,16 +58,16 @@
     fossil add a_new_file.md
     printf 'conflict for fossil.png\n' >> www/quotes.wiki
     printf 'modification for fossil.png\n' >> BUILD.txt
-    fossil merge trunk 
+    fossil merge trunk
     ```
 * Status bar shows current branch as `trunk+`
 * Editor is split horizontally
     * Left:
-        * `pickchr.md`
+        * `pikchr.md`
         * `quotes.wiki`
         * `fossil_prompt.wiki`
     * Right:
-        * `pickchr.md` - preview with pickchr diagram visible
+        * `pikchr.md` - preview with pikchr diagram visible
 
 ### `fossil-diff.gif` (View file changes)
 
