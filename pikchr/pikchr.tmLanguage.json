@@ -27,6 +27,7 @@
     },
     "statement": {
       "patterns": [
+        {"include": "#whitespace"},
         {"include": "#statement-direction"},
         {"include": "#statement-placename"},
         {"include": "#unnamed-statement"},
@@ -45,6 +46,7 @@
           "end": "(?:(?<!\\\\)(?:\\Z|$))|(?=;)"
         },
         {
+          "comment": "look ahead for a name",
           "begin": "(?=[$_@a-zA-Z]\\w*)",
           "patterns": [
             {"include": "#macro-call"},
@@ -183,7 +185,9 @@
       "end": "(?!\\G)"
     },
     "expr": {
+      "comment": "should not contain #whitespace, because we match expr once",
       "patterns": [
+        {"include": "#comment"},
         {"include": "#number"},
         {"include": "#colorname"},
         {"include": "#place2"},
@@ -401,10 +405,7 @@
     "numproperty": {
       "begin": "\\b(diameter|ht|height|rad|radius|thickness|width|wid)\\b[ \\t\\f]*",
       "beginCaptures": {"1": {"name": "support.constant.property-value.pikchr"}},
-      "patterns": [
-        {"include": "#comment"},
-        {"include": "#expr"}
-      ],
+      "patterns": [{"include": "#expr"}],
       "applyEndPatternLast": true,
       "end": "(?:)"
     },
@@ -512,12 +513,12 @@
     "comment": {
       "patterns": [
         {
-          "begin": "\\s*/\\*",
+          "begin": "/\\*",
           "end": "\\*/",
           "name": "comment.block.pikchr"
         },
         {
-          "match": "\\s*(?://|#).*$",
+          "match": "(?://|#).*$",
           "name": "comment.line.pikchr"
         }
       ]

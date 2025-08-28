@@ -27,3 +27,14 @@ box//test
 !!  ^^^^^^^ comment.block.pikchr
     */
 !!  ^^ comment.block.pikchr
+
+[] // test
+!! <- punctuation.bracket.square.begin.pikchr
+!! <~- punctuation.bracket.square.end.pikchr
+!! ^^^^^^^ comment.line.pikchr
+
+$hello = 1 // world
+!! <------ variable.language.pikchr
+!!     ^ keyword.operator.assignment.pikchr
+!!       ^ constant.numeric.pikchr
+!!         ^^^^^^^^ comment.line.pikchr
