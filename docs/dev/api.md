@@ -44,8 +44,8 @@ _Work in progress_.
 | fossil.push | Push | •&nbsp;Main SCM menu<br>•&nbsp;Command palette | 1. Execute `fossil push`
 | fossil.pushTo | Push to... | •&nbsp;Main SCM menu<br>•&nbsp;Command palette | 1. Pick remote if > 1<br>2. Execute `fossil push URI`
 | fossil.redo | Redo | •&nbsp;Main SCM menu<br>•&nbsp;Command palette | execute `fossil redo`
-| fossil.refresh | Refresh | Source control header | 1. Execute `fossil status`<br>2. Update related information
-| fossil.render | Preview Using Fossil Renderer |
+| fossil.refresh | Refresh | •&nbsp;Source control header | 1. Execute `fossil status`<br>2. Update related information
+| fossil.render | Preview Using Fossil Renderer | •&nbsp;Main SCM menu for any document<br>•&nbsp;Navigation bar for `.{md, wiki, pikchr}` files or any document with "pikchr" language or any untitled document in a project with fossil repository opened | 1. Create `webview` panel of `fossil.renderPanel` view type.<br>2. Execute `fossil pikchr`, `fossil test-wiki-render` or `fossil test-markdown-render`
 | fossil.reopenBranch | Reopen branch... | | 1. Pick branch<br>2. execute `fossil tag cancel --raw closed $(branch-name)`
 | fossil.revert | Discard Changes |
 | fossil.revertAll | Discard All Changes | •&nbsp;SCM group header<br>•&nbsp;Command palette | 1. When called from Command palette, revert "conflict" and "changes" groups <br>2. When called from SCM group header, revert all files in that group.
