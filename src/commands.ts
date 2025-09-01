@@ -1377,8 +1377,11 @@ export class CommandCenter {
     }
 
     @command()
-    async render(uri: Uri, _info: { groupId: number }): Promise<void> {
-        return this.previewManager.openDynamicPreview(uri);
+    async render(uri?: Uri, _info?: { groupId: number }): Promise<void> {
+        uri ??= window.activeTextEditor?.document.uri;
+        if (uri) {
+            return this.previewManager.openDynamicPreview(uri);
+        }
     }
 
     @command()
