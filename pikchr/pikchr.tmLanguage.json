@@ -12,7 +12,8 @@
           "begin": "(?<=^|[;:{]|\\*/|\\G)\\s*",
           "patterns": [
             {"include": "#statement"},
-            {"include": "#continuation"}
+            {"include": "#continuation"},
+            {"include": "#syntax-error"}
           ],
           "end": "(?:(?<!\\\\)(?:\\Z|$))|(;)|(?=]|})",
           "endCaptures": {"1": {"name": "punctuation.separator.delimiter.end.pikchr"}}
@@ -41,7 +42,10 @@
             "1": {"patterns": [{"include": "#lvalue"}]},
             "2": {"name": "keyword.operator.assignment.pikchr"}
           },
-          "patterns": [{"include": "#rvalue"}],
+          "patterns": [
+            {"include": "#rvalue"},
+            {"include": "#syntax-error"}
+          ],
           "name": "meta.assignment.pikchr",
           "end": "(?:(?<!\\\\)(?:\\Z|$))|(?=;)"
         },
@@ -110,7 +114,8 @@
           "patterns": [{"include": "$self"}],
           "end": "}",
           "endCaptures": {"0": {"name": "punctuation.section.block.end.bracket.curly.pikchr"}}
-        }
+        },
+        {"include": "#syntax-error"}
       ],
       "end": "(?:(?<!\\\\)(?:\\Z|$))|(?=;)"
     },
@@ -136,7 +141,8 @@
       "beginCaptures": {"1": {"name": "keyword.control.directive.define.pikchr"}},
       "patterns": [
         {"include": "#rvalue"},
-        {"include": "#string"}
+        {"include": "#string"},
+        {"include": "#syntax-error"}
       ],
       "end": "(?:(?<!\\\\)(?:\\Z|$))|(?=;)"
     },
@@ -153,7 +159,8 @@
       "patterns": [
         {"include": "#whitespace"},
         {"include": "#attribute"},
-        {"include": "#continuation"}
+        {"include": "#continuation"},
+        {"include": "#syntax-error"}
       ]
     },
     "continuation": {
