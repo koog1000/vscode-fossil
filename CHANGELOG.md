@@ -1,5 +1,13 @@
 # Changelog
 
+# v0.7.5
+
+### Bug Fix
+
+- Better pikchr syntax highlighting
+- Preview command is shown in more cases
+
+
 # v0.7.4
 
 ### Bug Fix
