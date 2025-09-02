@@ -88,6 +88,19 @@ line dashed
 //   ^^^^^^ entity.name.tag.pikchr
 line dotted
 //   ^^^^^^ entity.name.tag.pikchr
+box :? 3 ``
+//  ^^   ^^ invalid.illegal.pikchr
+print .!
+//    ^^ invalid.illegal.pikchr
+print "t" .!
+//    ^^^ string.quoted.double.pikchr
+//        ^^ invalid.illegal.pikchr
+d = 43 !^
+//     ^^ invalid.illegal.pikchr
+define par {} !
+//            ^ invalid.illegal.pikchr
+assert(1==1),
+//          ^ invalid.illegal.pikchr
 
 "splines"
 // <--------- string.quoted.double.pikchr
