@@ -22,7 +22,7 @@ import {
 import * as fs from 'fs/promises';
 import { dispose, IDisposable } from './util';
 
-type MDorWIKI = string & { __TYPE__: 'MDorWIKI' };
+type MDorWIKIorPIKCHR = string & { __TYPE__: 'MDorWIKIorPIKCHR' };
 type RenderedHTML = string & { __TYPE__: 'RenderedHTML' };
 
 const viewType = 'fossil.renderPanel';
@@ -102,8 +102,34 @@ export class FossilPreviewManager
     }
 }
 
+function rendererFromUri(uri: Uri) {
+    return (
+        (
+            {
+                '.wiki': 'wiki',
+                '.md': 'markdown',
+                '.pikchr': 'pikchr',
+            } as const
+        )[path.extname(uri.fsPath)] ?? 'markdown'
+    );
+}
+
+function rendererFromDocument(document: TextDocument | undefined) {
+    if (!document) {
+        return 'markdown';
+    }
+    const languageId = document.languageId;
+    if (languageId == 'pikchr' || languageId == 'markdown') {
+        return languageId;
+    }
+    if (languageId.includes('html')) {
+        return 'wiki';
+    }
+    return rendererFromUri(document.uri);
+}
+
 class FossilPreview implements IDisposable {
-    private renderer: 'wiki' | 'markdown' | 'pikchr' | undefined;
+    private renderer: 'wiki' | 'markdown' | 'pikchr' = 'markdown';
     private dirname!: FossilCWD;
     private readonly _disposables: IDisposable[] = [];
     private current_content: [string, boolean] | undefined;
@@ -112,7 +138,7 @@ class FossilPreview implements IDisposable {
         resolve: (value: RenderedHTML) => void;
         reject: (reason: 'new request arrived') => void;
     }[] = [];
-    private last_content: MDorWIKI | undefined;
+    private last_content: MDorWIKIorPIKCHR | undefined;
     private readonly oldFossil: boolean;
 
     private readonly _onDisposeEmitter = this._register(
@@ -169,7 +195,21 @@ class FossilPreview implements IDisposable {
         this._register(
             workspace.onDidChangeTextDocument((event): void => {
                 if (event.document.uri.path == this.uri.path) {
-                    this.update(event.document.getText() as MDorWIKI);
+                    this.renderer = rendererFromDocument(event.document);
+                    this.update(event.document.getText() as MDorWIKIorPIKCHR);
+                }
+            })
+        );
+        this._register(
+            // Listen for language id change, so that we can select
+            // proper renderer
+            workspace.onDidOpenTextDocument((document): void => {
+                if (document.uri.path == this.uri.path) {
+                    const renderer = rendererFromDocument(document);
+                    if (renderer != this.renderer) {
+                        this.renderer = renderer;
+                        this.update();
+                    }
                 }
             })
         );
@@ -182,12 +222,13 @@ class FossilPreview implements IDisposable {
         );
         this._register(
             window.onDidChangeActiveTextEditor(editor => {
+                // Only allow previewing normal text editors which have a viewColumn
                 if (editor?.viewColumn === undefined) {
                     return;
                 }
                 if (
                     this.closed &&
-                    ['markdown', 'pikchr', 'wiki'].includes(
+                    ['markdown', 'pikchr', 'html'].includes(
                         editor.document.languageId
                     )
                 ) {
@@ -196,6 +237,9 @@ class FossilPreview implements IDisposable {
                     this.panel.title = `Preview ${path.basename(uri.fsPath)}`;
                     this.getSource().then(source => {
                         if (source !== undefined) {
+                            this.renderer = rendererFromDocument(
+                                editor.document
+                            );
                             this.update(source);
                         }
                     });
@@ -215,15 +259,15 @@ class FossilPreview implements IDisposable {
         return;
     }
 
-    private async getSource(): Promise<MDorWIKI | undefined> {
+    private async getSource(): Promise<MDorWIKIorPIKCHR | undefined> {
         const document = this.currentDocument();
         if (document) {
-            return document.getText() as MDorWIKI;
+            return document.getText() as MDorWIKIorPIKCHR;
         }
         if (this.uri.scheme == 'file') {
             return fs.readFile(this.uri.fsPath, {
                 encoding: 'utf-8',
-            }) as Promise<MDorWIKI>;
+            }) as Promise<MDorWIKIorPIKCHR>;
         }
         return;
     }
@@ -346,13 +390,9 @@ class FossilPreview implements IDisposable {
      *          All old promises get rejected.
      */
     private async render(
-        content: MDorWIKI,
+        content: MDorWIKIorPIKCHR,
         isDark: boolean
     ): Promise<RenderedHTML> {
-        const renderer = this.renderer;
-        if (!renderer) {
-            return `<h1>unknown fossil renderer</h1>` as RenderedHTML;
-        }
         const ret = new Promise<RenderedHTML>((resolve, reject) => {
             this._callbacks.push({ resolve, reject });
         });
@@ -361,7 +401,7 @@ class FossilPreview implements IDisposable {
         } else {
             this.current_content = [content, isDark];
             if (!this.next_content) {
-                this._run_current_task(renderer);
+                this._run_current_task(this.renderer);
             }
         }
         return ret;
@@ -370,7 +410,7 @@ class FossilPreview implements IDisposable {
     /**
      * render and post update message to the panel
      */
-    private async update(content?: MDorWIKI): Promise<void> {
+    private async update(content?: MDorWIKIorPIKCHR): Promise<void> {
         try {
             content ??= this.last_content;
             this.last_content = content;
@@ -397,23 +437,12 @@ class FossilPreview implements IDisposable {
     private initializeFromUri(uri: Uri): void {
         if (uri.scheme == 'file') {
             this.dirname = path.dirname(uri.fsPath) as FossilCWD;
-            this.renderer = (() => {
-                return (
-                    {
-                        '.wiki': 'wiki',
-                        '.md': 'markdown',
-                        '.pikchr': 'pikchr',
-                    } as const
-                )[path.extname(uri.fsPath)];
-            })();
+            this.renderer = rendererFromUri(uri);
         } else {
             // untitled schema - try our best
             const cwd = workspace.workspaceFolders?.[0].uri.fsPath ?? '.';
             this.dirname = cwd as FossilCWD;
-            this.renderer =
-                this.currentDocument()?.languageId === 'pikchr'
-                    ? 'pikchr'
-                    : 'markdown';
+            this.renderer = rendererFromDocument(this.currentDocument());
         }
         this.uri = uri;
         const base_url = this.panel.webview.asWebviewUri(uri);
