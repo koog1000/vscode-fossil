@@ -258,7 +258,29 @@ export async function fossilOpen(sandbox: sinon.SinonSandbox): Promise<void> {
 
     await vscode.commands.executeCommand('fossil.open');
     const repository = getRepository();
+    const rootUri = vscode.workspace.workspaceFolders![0].uri;
     sinon.assert.calledTwice(sod);
+    sinon.assert.calledWith(sod.firstCall, {
+        defaultUri: sinon.match({
+            scheme: 'file',
+            authority: '',
+            path: Uri.joinPath(rootUri, 'test_repo.fossil').fsPath,
+        }) as any,
+        openLabel: 'Repository Location',
+        filters: { 'Fossil Files': ['fossil'], 'All files': ['*'] },
+        canSelectMany: false,
+    });
+    sinon.assert.calledWith(sod.secondCall, {
+        defaultUri: sinon.match({
+            scheme: 'file',
+            authority: '',
+            path: rootUri.fsPath,
+        }) as any,
+        canSelectFiles: false,
+        canSelectFolders: true,
+        canSelectMany: false,
+        title: 'Select Fossil Root Directory',
+    });
     sinon.assert.calledOnceWithExactly(openStub, rootPath.fsPath as FossilCWD, [
         'open',
         fossilPath.fsPath as FossilPath,
