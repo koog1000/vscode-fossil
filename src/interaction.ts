@@ -82,25 +82,33 @@ export interface NewBranchOptions {
 }
 
 /**
- * @returns workspaceDir/(default_name + postfix)
+ * @returns (workspaceDir/workspaceName || homedir/repo_name) + '.fossil'
  */
-function suggestPath(default_name = 'repo_name', postfix = '.fossil'): Uri {
+function suggestRepo(): Uri {
+    const default_name = 'repo_name';
+    const postfix = '.fossil';
     const folders = workspace.workspaceFolders;
     if (folders?.length) {
-        const dir = folders[0].uri;
-        return Uri.joinPath(
-            dir,
-            (path.basename(dir.fsPath) || default_name) + postfix
-        );
+        const firstFolder = folders[0];
+        return Uri.joinPath(firstFolder.uri, firstFolder.name + postfix);
     }
     return Uri.joinPath(Uri.file(os.homedir()), default_name + postfix);
+}
+
+/** @returns (workspaceDir || homeDir)/filename */
+function suggestPath(filename: string): Uri {
+    const folders = workspace.workspaceFolders;
+    return Uri.joinPath(
+        Uri.file(folders?.length ? folders[0].uri.fsPath : os.homedir()),
+        filename
+    );
 }
 
 /** ask user for the new .fossil file location */
 export async function selectNewFossilPath(
     saveLabel: 'Clone' | 'Create'
 ): Promise<FossilPath | undefined> {
-    const defaultFossilFile = lastUsedNewFossilPath || suggestPath();
+    const defaultFossilFile = lastUsedNewFossilPath || suggestRepo();
     const uri = await window.showSaveDialog({
         defaultUri: defaultFossilFile,
         title: 'Select New Fossil File Location',
@@ -123,7 +131,7 @@ export async function selectNewFossilPath(
 export async function selectExistingFossilPath(): Promise<
     FossilPath | undefined
 > {
-    const defaultFossilFile = suggestPath();
+    const defaultFossilFile = suggestRepo();
     const uri = await window.showOpenDialog({
         defaultUri: defaultFossilFile,
         openLabel: 'Repository Location',
@@ -378,9 +386,8 @@ export async function inputWikiComment(
 }
 
 export async function inputPatchCreate(): Promise<UserPath | undefined> {
-    const defaultPatchFile = suggestPath('patch', '.fossilpatch');
     const uri = await window.showSaveDialog({
-        defaultUri: defaultPatchFile,
+        defaultUri: suggestPath('patch.fossilpatch'),
         saveLabel: localize('Create', 'Create'),
         title: localize('new binary path', 'Create binary patch'),
     });
@@ -391,7 +398,7 @@ export async function inputPatchApply(
     this: void
 ): Promise<UserPath | undefined> {
     const uris = await window.showOpenDialog({
-        defaultUri: Uri.file('patch.fossilpatch'),
+        defaultUri: suggestPath('patch.fossilpatch'),
         canSelectMany: false,
         openLabel: localize('Apply', 'Apply'),
         title: localize('apply binary patch', 'Apply binary patch'),

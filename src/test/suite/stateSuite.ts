@@ -465,7 +465,7 @@ export function StashSuite(this: Suite): void {
 export function PatchSuite(this: Suite): void {
     test('Create', async () => {
         const patchPath = Uri.file('patch.patch');
-        const showSaveDialogstub = this.ctx.sandbox
+        const showSaveDialogStub = this.ctx.sandbox
             .stub(window, 'showSaveDialog')
             .resolves(patchPath);
 
@@ -473,7 +473,14 @@ export function PatchSuite(this: Suite): void {
             .withArgs(['patch', 'create', patchPath.fsPath])
             .resolves();
         await commands.executeCommand('fossil.patchCreate');
-        sinon.assert.calledOnceWithMatch(showSaveDialogstub, {
+
+        const rootUri = workspace.workspaceFolders![0].uri;
+        sinon.assert.calledOnceWithMatch(showSaveDialogStub, {
+            defaultUri: sinon.match({
+                scheme: 'file',
+                authority: '',
+                path: Uri.joinPath(rootUri, 'patch.fossilpatch').fsPath,
+            }) as any,
             saveLabel: 'Create',
             title: 'Create binary patch',
         });
@@ -482,7 +489,7 @@ export function PatchSuite(this: Suite): void {
 
     test('Apply', async () => {
         const patchPath = Uri.file('patch.patch');
-        const showOpenDialogstub = this.ctx.sandbox
+        const showOpenDialogStub = this.ctx.sandbox
             .stub(window, 'showOpenDialog')
             .resolves([patchPath]);
 
@@ -490,7 +497,14 @@ export function PatchSuite(this: Suite): void {
             .withArgs(['patch', 'apply', patchPath.fsPath])
             .resolves();
         await commands.executeCommand('fossil.patchApply');
-        sinon.assert.calledOnceWithMatch(showOpenDialogstub, {
+
+        const rootUri = workspace.workspaceFolders![0].uri;
+        sinon.assert.calledOnceWithMatch(showOpenDialogStub, {
+            defaultUri: sinon.match({
+                scheme: 'file',
+                authority: '',
+                path: Uri.joinPath(rootUri, 'patch.fossilpatch').fsPath,
+            }) as any,
             openLabel: 'Apply',
             title: 'Apply binary patch',
         });
