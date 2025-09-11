@@ -1,3 +1,4 @@
+import * as path from 'path';
 import {
     window,
     Uri,
@@ -433,6 +434,21 @@ function OpenSuite(this: Suite): void {
     });
 
     suite('Open and close', function () {
+        test('Open when no workspace is selected', async () => {
+            this.ctx.sandbox
+                .stub(workspace, 'workspaceFolders')
+                .value(undefined);
+            const sod = this.ctx.sandbox
+                .stub(window, 'showOpenDialog')
+                .resolves(undefined);
+            await commands.executeCommand('fossil.open');
+            sinon.assert.calledOnce(sod);
+            assert.equal(
+                sod.firstCall.args[0]?.defaultUri?.fsPath,
+                path.join(os.homedir(), 'repo_name.fossil')
+            );
+        });
+
         test('Forced open', async () => {
             await fossilOpenForce(this.ctx.sandbox);
         }).timeout(7000);
