@@ -228,9 +228,7 @@ function RenderSuite(this: Suite) {
         );
         await commands.executeCommand('vscode.open', untitledDocument.uri);
         assert.equal(window.activeTextEditor, editor);
-        const cwp = this.ctx.sandbox
-            .stub(window, 'createWebviewPanel')
-            .callThrough();
+        const cwp = this.ctx.sandbox.spy(window, 'createWebviewPanel');
         await commands.executeCommand('fossil.render', untitledDocument.uri);
         sinon.assert.calledOnce(cwp);
         const panel = cwp.firstCall.returnValue;
