@@ -18,12 +18,15 @@ import {
     WebviewOptions,
     ColorThemeKind,
     TextDocument,
+    commands,
 } from 'vscode';
 import * as fs from 'fs/promises';
 import { dispose, IDisposable } from './util';
+import { inputSavePath } from './interaction';
 
 type MDorWIKIorPIKCHR = string & { __TYPE__: 'MDorWIKIorPIKCHR' };
 type RenderedHTML = string & { __TYPE__: 'RenderedHTML' };
+type IsDark = boolean & { __TYPE__: 'IsDark' };
 
 const viewType = 'fossil.renderPanel';
 
@@ -132,14 +135,17 @@ class FossilPreview implements IDisposable {
     private renderer: 'wiki' | 'markdown' | 'pikchr' = 'markdown';
     private dirname!: FossilCWD;
     private readonly _disposables: IDisposable[] = [];
-    private current_content: [string, boolean] | undefined;
-    private next_content: [string, boolean] | undefined;
+    private current_content: [MDorWIKIorPIKCHR, IsDark] | undefined;
+    private next_content: [MDorWIKIorPIKCHR, IsDark] | undefined;
     private _callbacks: {
         resolve: (value: RenderedHTML) => void;
         reject: (reason: 'new request arrived') => void;
     }[] = [];
     private last_content: MDorWIKIorPIKCHR | undefined;
+    /** fossil without dark/light mode support for pikchr */
     private readonly oldFossil: boolean;
+    /** Rendered html to allow saving */
+    private rendered_html: RenderedHTML | undefined;
 
     private readonly _onDisposeEmitter = this._register(
         new EventEmitter<void>()
@@ -180,13 +186,16 @@ class FossilPreview implements IDisposable {
         }
         this._register(
             this.panel.webview.onDidReceiveMessage(
-                (message: { status: 'loaded' }): void => {
-                    if (message.status == 'loaded') {
+                (message: { action: 'update' | 'save' }): void => {
+                    if (message.action == 'update') {
                         this.getSource().then(source => {
                             if (source !== undefined) {
                                 this.update(source);
                             }
                         });
+                    }
+                    if (message.action == 'save') {
+                        commands.executeCommand('fossil.renderSave');
                     }
                 }
             )
@@ -337,6 +346,15 @@ class FossilPreview implements IDisposable {
         }
     }
 
+    public async save() {
+        if (this.rendered_html) {
+            const saveUri = await inputSavePath(this.uri, this.renderer);
+            if (saveUri) {
+                await fs.writeFile(saveUri.fsPath, this.rendered_html);
+            }
+        }
+    }
+
     private async _run_current_task(
         renderer: 'wiki' | 'markdown' | 'pikchr'
     ): Promise<void> {
@@ -391,7 +409,7 @@ class FossilPreview implements IDisposable {
      */
     private async render(
         content: MDorWIKIorPIKCHR,
-        isDark: boolean
+        isDark: IsDark
     ): Promise<RenderedHTML> {
         const ret = new Promise<RenderedHTML>((resolve, reject) => {
             this._callbacks.push({ resolve, reject });
@@ -418,13 +436,13 @@ class FossilPreview implements IDisposable {
                 return;
             }
             const kind = window.activeColorTheme.kind;
-            const rendered_html = await this.render(
+            this.rendered_html = await this.render(
                 content,
-                kind === ColorThemeKind.Dark ||
-                    kind === ColorThemeKind.HighContrast
+                (kind === ColorThemeKind.Dark ||
+                    kind === ColorThemeKind.HighContrast) as IsDark
             );
             await this.panel.webview.postMessage({
-                html: rendered_html,
+                html: this.rendered_html,
                 uri: this.uri.toString(),
             });
         } catch (e) {

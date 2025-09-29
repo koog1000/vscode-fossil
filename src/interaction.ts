@@ -1230,6 +1230,21 @@ export async function inputWikiType(): Promise<
     return choice as 'Technote' | 'Wiki' | undefined;
 }
 
+export async function inputSavePath(
+    uri: Uri,
+    renderer: 'pikchr' | 'markdown' | 'wiki'
+): Promise<Uri | undefined> {
+    const info = path.parse(uri.fsPath);
+    const filename = `${info.name}${renderer === 'pikchr' ? '.svg' : '.html'}`;
+    const defaultUri = info.dir
+        ? Uri.file(path.join(info.dir, filename))
+        : suggestPath(filename);
+    return window.showSaveDialog({
+        defaultUri,
+        title: 'Save Preview',
+    });
+}
+
 abstract class RunnableQuickPickItem implements QuickPickItem {
     abstract get label(): string;
     abstract run(): RunnableReturnType;

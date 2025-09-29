@@ -58,6 +58,12 @@ window.addEventListener(
     }
 );
 
+window.addEventListener('keydown', e => {
+    if (e.key === 's' && (e.ctrlKey || e.metaKey)) {
+        vscode.postMessage({ action: 'save' });
+    }
+});
+
 window.addEventListener('load', () => {
-    vscode.postMessage({ status: 'loaded' });
+    vscode.postMessage({ action: 'update' });
 });

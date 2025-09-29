@@ -366,6 +366,12 @@
                 "command": "fossil.gitExport",
                 "title": "Export git",
                 "category": "Fossil"
+            },
+            {
+                "command": "fossil.renderSave",
+                "title": "Save As...",
+                "category": "Fossil",
+                "icon": "$(save-as)"
             }
         ],
         "menus": {
@@ -1019,8 +1025,22 @@
                     "when": "activeWebviewPanelId == fossil.renderPanel",
                     "group": "navigation"
                 }
+            ],
+            "webview/context": [
+                {
+                    "command": "fossil.renderSave",
+                    "when": "webviewId == fossil.renderPanel"
+                }
             ]
         },
+        "keybindings": [
+            {
+                "command": "fossil.renderSave",
+                "key": "ctrl+s",
+                "mac": "cmd+s",
+                "when": "webviewId == fossil.renderPanel"
+            }
+        ],
         "submenus": [
             {
                 "id": "fossil.merge",

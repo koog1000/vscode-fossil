@@ -103,6 +103,7 @@ type CommandKey =
     | 'refresh'
     | 'relocate'
     | 'render'
+    | 'renderSave'
     | 'reopenBranch'
     | 'revert'
     | 'revertAll'
@@ -1457,6 +1458,11 @@ export class CommandCenter {
     @command(Inline.Repository)
     async gitExport(repository: Repository): Promise<void> {
         await repository.gitExport();
+    }
+
+    @command()
+    async renderSave(): Promise<void> {
+        await this.previewManager.activePreview?.save();
     }
 
     private async diff(
