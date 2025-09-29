@@ -5,7 +5,12 @@ import * as fs from 'fs/promises';
 import * as vscode from 'vscode';
 import type { languages } from 'vscode';
 import * as sinon from 'sinon';
-import { add, getRepository } from './common';
+import {
+    add,
+    fakeRawExecutionResult,
+    getRawExecStub,
+    getRepository,
+} from './common';
 import type {
     FossilCommitMessage,
     FossilUsername,
@@ -215,19 +220,32 @@ function PraiseSuite(this: Suite) {
 
 function RenderSuite(this: Suite) {
     let panel: vscode.WebviewPanel | undefined;
-    this.afterAll(() => {
+    let theEditor: vscode.TextEditor | undefined;
+    this.beforeEach(async () => {
+        if (!panel) {
+            panel = await createAndTestPanel();
+        }
+    });
+    this.afterAll(async () => {
         assert.ok(panel);
         panel.dispose();
+        assert.ok(theEditor);
+        await vscode.window.showTextDocument(theEditor.document, {
+            preview: false,
+        });
+        await vscode.commands.executeCommand(
+            'workbench.action.closeActiveEditor'
+        );
     });
 
     const createAndTestPanel = async () => {
         const untitledDocument = await workspace.openTextDocument();
-        const editor = await window.showTextDocument(untitledDocument);
-        await editor.edit(te =>
+        theEditor = await window.showTextDocument(untitledDocument);
+        await theEditor.edit(te =>
             te.insert(new vscode.Position(0, 0), '# test\n\n1. a\n1. b')
         );
         await commands.executeCommand('vscode.open', untitledDocument.uri);
-        assert.equal(window.activeTextEditor, editor);
+        assert.equal(window.activeTextEditor, theEditor);
         const cwp = this.ctx.sandbox.spy(window, 'createWebviewPanel');
         await commands.executeCommand('fossil.render', untitledDocument.uri);
         sinon.assert.calledOnce(cwp);
@@ -254,14 +272,11 @@ function RenderSuite(this: Suite) {
         return panel;
     };
     test('Render', async () => {
-        panel = await createAndTestPanel();
+        /** WebView panel is created in beforeEach */
+        assert.ok(panel);
     }).timeout(9000);
 
     test('Create Technote', async () => {
-        /* c8 ignore next 3 */
-        if (!panel) {
-            panel = await createAndTestPanel();
-        }
         const showQuickPick = this.ctx.sandbox.stub(window, 'showQuickPick');
         showQuickPick.onFirstCall().callsFake(items => {
             assert.ok(items instanceof Array);
@@ -287,10 +302,6 @@ function RenderSuite(this: Suite) {
     });
 
     test('Create Wiki', async () => {
-        /* c8 ignore next 3 */
-        if (!panel) {
-            panel = await createAndTestPanel();
-        }
         const showQuickPick = this.ctx.sandbox.stub(window, 'showQuickPick');
         showQuickPick.onFirstCall().callsFake(items => {
             assert.ok(items instanceof Array);
@@ -312,6 +323,50 @@ function RenderSuite(this: Suite) {
             'Wiki was successfully created'
         );
     });
+
+    test('Save Canceled', async () => {
+        const showSaveDialogStub = this.ctx.sandbox
+            .stub(window, 'showSaveDialog')
+            .resolves(undefined);
+        const rootUri = vscode.workspace.workspaceFolders![0].uri;
+
+        await commands.executeCommand('fossil.renderSave');
+        sinon.assert.calledOnceWithExactly(showSaveDialogStub, {
+            defaultUri: sinon.match({
+                scheme: 'file',
+                authority: '',
+                path: Uri.joinPath(rootUri, 'Untitled-1.html').fsPath,
+            }) as any,
+            title: 'Save Preview',
+        });
+    }).timeout(9000);
+
+    test('Save', async () => {
+        const showSaveDialogStub = this.ctx.sandbox
+            .stub(window, 'showSaveDialog')
+            .callsFake(async options => options?.defaultUri);
+        const writeFileStub = this.ctx.sandbox.stub(fs, 'writeFile');
+        const rootUri = vscode.workspace.workspaceFolders![0].uri;
+        await commands.executeCommand('fossil.renderSave');
+        sinon.assert.calledOnceWithMatch(
+            writeFileStub,
+            Uri.joinPath(rootUri, 'Untitled-1.html').fsPath,
+            sinon.match.string
+        );
+        sinon.assert.calledOnce(showSaveDialogStub);
+    }).timeout(9000);
+
+    test('Change language to pikchr', async () => {
+        const wikiRenderStub = getRawExecStub(this.ctx.sandbox)
+            .withArgs(sinon.match.array.startsWith(['test-wiki-render']))
+            .resolves(fakeRawExecutionResult({ stdout: 'wiki body\n' }));
+        assert.ok(theEditor);
+        await vscode.languages.setTextDocumentLanguage(
+            theEditor.document,
+            'html'
+        );
+        sinon.assert.calledOnce(wikiRenderStub);
+    }).timeout(9000);
 }
 
 function RevertChangeSuite(this: Suite) {
