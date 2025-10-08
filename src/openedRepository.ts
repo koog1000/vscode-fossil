@@ -289,9 +289,7 @@ export class OpenedRepository {
         // internal editor will spawn
         const commitArgs: FossilArgs = [
             'commit',
-            ...(user.length
-                ? (['--user-override', user] as const)
-                : ([] as const)),
+            ...(user ? (['--user-override', user] as const) : ([] as const)),
             ...(newBranch
                 ? ([
                       ...(newBranch.branch

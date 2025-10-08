@@ -45,7 +45,7 @@ export async function findFossil(
         [hint, 1],
         ['fossil' as UnvalidatedFossilExecutablePath, 0],
     ] as const) {
-        if (path.length) {
+        if (path) {
             let stdout: string;
             try {
                 stdout = await getVersion(path);
