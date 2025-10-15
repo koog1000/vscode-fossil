@@ -27,7 +27,7 @@ import {
     RelativePath,
     ResourceStatus,
 } from '../../openedRepository';
-import { Suite, before, Func, Test } from 'mocha';
+import { Suite, Func, Test } from 'mocha';
 import { toFossilUri } from '../../uri';
 import { Reason } from '../../fossilExecutable';
 
@@ -37,6 +37,7 @@ declare module 'mocha' {
     }
     interface Context {
         sandbox: sinon.SinonSandbox;
+        workspaceUri: vscode.Uri;
     }
 }
 
@@ -91,10 +92,12 @@ export function StatusSuite(this: Suite): void {
         const openedRepository: OpenedRepository = (repository as any)
             .repository;
 
-        const rootUri = workspace.workspaceFolders![0].uri;
         const fooPath = (await add('foo-xa.txt', '', 'add: foo-xa.txt')).fsPath;
 
-        const barPath = Uri.joinPath(rootUri, 'bar-xa.txt').fsPath;
+        const barPath = Uri.joinPath(
+            this.ctx.workspaceUri,
+            'bar-xa.txt'
+        ).fsPath;
         await fs.writeFile(barPath, 'test bar\n');
         await fs.appendFile(fooPath, 'appended\n');
         await openedRepository.exec([
@@ -123,7 +126,7 @@ export function StatusSuite(this: Suite): void {
     }).timeout(10000);
 
     test.if(process.platform != 'win32', 'Meta', async () => {
-        const uri = workspace.workspaceFolders![0].uri;
+        const uri = this.ctx.workspaceUri;
 
         // enable symlinks
         const repository = getRepository();
@@ -227,9 +230,8 @@ export function StatusSuite(this: Suite): void {
         const execStub = getExecStub(this.ctx.sandbox);
         fakeFossilStatus(execStub, status);
         await repository.updateStatus('Test' as Reason);
-        const root = vscode.workspace.workspaceFolders![0].uri;
-        const uriBefore = Uri.joinPath(root, before);
-        const uriAfter = Uri.joinPath(root, after);
+        const uriBefore = Uri.joinPath(this.ctx.workspaceUri, before);
+        const uriAfter = Uri.joinPath(this.ctx.workspaceUri, after);
         assertGroups(repository, {
             working: [[uriAfter.fsPath, resourceStatus]],
         });
@@ -405,11 +407,7 @@ export function TagSuite(this: Suite): void {
 }
 
 export function CleanSuite(this: Suite): void {
-    let rootUri: Uri;
-
-    before(() => {
-        rootUri = workspace.workspaceFolders![0].uri;
-    });
+    const rootUri = this.ctx.workspaceUri;
 
     test('Clean', async () => {
         const swm: sinon.SinonStub = this.ctx.sandbox.stub(
@@ -515,10 +513,7 @@ export function FileSystemSuite(this: Suite): void {
         const cat = getRawExecStub(this.ctx.sandbox)
             .withArgs(sinon.match.array.startsWith(['cat']))
             .resolves(fakeRawExecutionResult({ stdout: 'document text\n' }));
-        const uri = Uri.joinPath(
-            vscode.workspace.workspaceFolders![0].uri,
-            'test.txt'
-        );
+        const uri = Uri.joinPath(this.ctx.workspaceUri, 'test.txt');
         const fossilUri = toFossilUri(uri);
         const document = await workspace.openTextDocument(fossilUri);
         sinon.assert.calledOnceWithExactly(
@@ -548,8 +543,7 @@ export function DiffSuite(this: Suite): void {
 
     test('Open File From Uri (existing fossil path)', async () => {
         const repository = getRepository();
-        const rootUri = workspace.workspaceFolders![0].uri;
-        const uri = Uri.joinPath(rootUri, 'a_path.txt');
+        const uri = Uri.joinPath(this.ctx.workspaceUri, 'a_path.txt');
         const execStub = getExecStub(this.ctx.sandbox);
         const statusCall = fakeFossilStatus(execStub, 'ADDED a_path.txt');
         await repository.updateStatus('Test' as Reason);

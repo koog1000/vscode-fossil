@@ -40,9 +40,10 @@ function undoSuite(this: Suite) {
             'showWarningMessage'
         );
 
-        const rootUri = vscode.workspace.workspaceFolders![0].uri;
-        const undoTxtPath = Uri.joinPath(rootUri, 'undo-fuarw.txt')
-            .fsPath as DocumentFsPath;
+        const undoTxtPath = Uri.joinPath(
+            this.ctx.workspaceUri,
+            'undo-fuarw.txt'
+        ).fsPath as DocumentFsPath;
         await fs.promises.writeFile(undoTxtPath, 'line\n');
 
         const repository = getRepository();

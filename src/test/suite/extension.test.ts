@@ -20,9 +20,12 @@ import { BranchSuite } from './branchSuite';
 import { RevertSuite } from './revertSuite';
 import { GitExportSuite } from './gitExportSuite';
 import { StatusBarSuite } from './statusBarSuite';
+import { workspace } from 'vscode';
 
 suite('Fossil.OpenedRepo', function (this: Suite) {
     this.ctx.sandbox = sinon.createSandbox();
+    this.ctx.workspaceUri = workspace.workspaceFolders![0].uri;
+
     before(async () => {
         this.timeout(5555);
         await cleanRoot();

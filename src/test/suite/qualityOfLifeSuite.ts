@@ -42,12 +42,9 @@ function PraiseSuite(this: Suite) {
         const sandbox = this.ctx.sandbox;
         let path: string;
 
-        before(async function () {
+        before(async () => {
             this.timeout(30000); // sometimes io is unpredictable)
-            const uri = Uri.joinPath(
-                workspace.workspaceFolders![0].uri,
-                'praise.txt'
-            );
+            const uri = Uri.joinPath(this.ctx.workspaceUri, 'praise.txt');
             path = uri.fsPath;
             await fs.writeFile(path, [...'first', ''].join('\n'));
             const repository = getRepository();
@@ -328,14 +325,14 @@ function RenderSuite(this: Suite) {
         const showSaveDialogStub = this.ctx.sandbox
             .stub(window, 'showSaveDialog')
             .resolves(undefined);
-        const rootUri = vscode.workspace.workspaceFolders![0].uri;
 
         await commands.executeCommand('fossil.renderSave');
         sinon.assert.calledOnceWithExactly(showSaveDialogStub, {
             defaultUri: sinon.match({
                 scheme: 'file',
                 authority: '',
-                path: Uri.joinPath(rootUri, 'Untitled-1.html').fsPath,
+                path: Uri.joinPath(this.ctx.workspaceUri, 'Untitled-1.html')
+                    .fsPath,
             }) as any,
             title: 'Save Preview',
         });
@@ -346,11 +343,10 @@ function RenderSuite(this: Suite) {
             .stub(window, 'showSaveDialog')
             .callsFake(async options => options?.defaultUri);
         const writeFileStub = this.ctx.sandbox.stub(fs, 'writeFile');
-        const rootUri = vscode.workspace.workspaceFolders![0].uri;
         await commands.executeCommand('fossil.renderSave');
         sinon.assert.calledOnceWithMatch(
             writeFileStub,
-            Uri.joinPath(rootUri, 'Untitled-1.html').fsPath,
+            Uri.joinPath(this.ctx.workspaceUri, 'Untitled-1.html').fsPath,
             sinon.match.string
         );
         sinon.assert.calledOnce(showSaveDialogStub);
@@ -371,7 +367,7 @@ function RenderSuite(this: Suite) {
 
 function RevertChangeSuite(this: Suite) {
     test('Revert single change', async () => {
-        const rootUri = workspace.workspaceFolders![0].uri;
+        const rootUri = this.ctx.workspaceUri;
         const filename = 'revert_change.txt';
         const uriToChange = Uri.joinPath(rootUri, filename);
         await commands.executeCommand('fossil.revertChange', uriToChange); // branch coverage

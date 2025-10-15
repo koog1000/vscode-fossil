@@ -139,8 +139,7 @@ export function timelineSuite(this: Suite): void {
     });
 
     test('Amend commit message', async () => {
-        const rootUri = vscode.workspace.workspaceFolders![0].uri;
-        const cwd = rootUri.fsPath as FossilCWD;
+        const cwd = this.ctx.workspaceUri.fsPath as FossilCWD;
 
         await add('amend.txt', '\n', 'message to amend');
 

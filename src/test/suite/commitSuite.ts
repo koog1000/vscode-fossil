@@ -1,5 +1,5 @@
 import * as vscode from 'vscode';
-import { Uri, window, workspace, commands } from 'vscode';
+import { Uri, window, commands } from 'vscode';
 import * as sinon from 'sinon';
 import {
     ExecStub,
@@ -16,7 +16,7 @@ import {
 } from './common';
 import * as assert from 'assert/strict';
 import * as fs from 'fs/promises';
-import { Suite, before, beforeEach } from 'mocha';
+import { Suite, beforeEach } from 'mocha';
 import { Reason } from '../../fossilExecutable';
 import {
     FossilCommitMessage,
@@ -89,11 +89,7 @@ const singleFileCommitSetup = async (
 };
 
 export function CommitSuite(this: Suite): void {
-    let rootUri: Uri;
-
-    before(() => {
-        rootUri = workspace.workspaceFolders![0].uri;
-    });
+    const rootUri = this.ctx.workspaceUri;
 
     const clearInputBox = () => {
         const repository = getRepository();

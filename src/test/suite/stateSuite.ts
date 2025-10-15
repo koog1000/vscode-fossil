@@ -1,4 +1,4 @@
-import { Uri, window, workspace, commands } from 'vscode';
+import { Uri, window, commands } from 'vscode';
 import * as sinon from 'sinon';
 import {
     assertGroups,
@@ -315,7 +315,7 @@ export function StashSuite(this: Suite): void {
      * Create a file and stash it
      */
     before(() => {
-        uri = Uri.joinPath(workspace.workspaceFolders![0].uri, 'stash.txt');
+        uri = Uri.joinPath(this.ctx.workspaceUri, 'stash.txt');
     });
 
     test('Save', async () => {
@@ -474,12 +474,12 @@ export function PatchSuite(this: Suite): void {
             .resolves();
         await commands.executeCommand('fossil.patchCreate');
 
-        const rootUri = workspace.workspaceFolders![0].uri;
         sinon.assert.calledOnceWithMatch(showSaveDialogStub, {
             defaultUri: sinon.match({
                 scheme: 'file',
                 authority: '',
-                path: Uri.joinPath(rootUri, 'patch.fossilpatch').fsPath,
+                path: Uri.joinPath(this.ctx.workspaceUri, 'patch.fossilpatch')
+                    .fsPath,
             }) as any,
             saveLabel: 'Create',
             title: 'Create binary patch',
@@ -498,12 +498,12 @@ export function PatchSuite(this: Suite): void {
             .resolves();
         await commands.executeCommand('fossil.patchApply');
 
-        const rootUri = workspace.workspaceFolders![0].uri;
         sinon.assert.calledOnceWithMatch(showOpenDialogStub, {
             defaultUri: sinon.match({
                 scheme: 'file',
                 authority: '',
-                path: Uri.joinPath(rootUri, 'patch.fossilpatch').fsPath,
+                path: Uri.joinPath(this.ctx.workspaceUri, 'patch.fossilpatch')
+                    .fsPath,
             }) as any,
             openLabel: 'Apply',
             title: 'Apply binary patch',
@@ -519,7 +519,7 @@ export function StageSuite(this: Suite): void {
 
     before(async () => {
         await cleanupFossil(getRepository());
-        const rootUri = workspace.workspaceFolders![0].uri;
+        const rootUri = this.ctx.workspaceUri;
         a_txt = Uri.joinPath(rootUri, 'a.txt').fsPath;
         b_txt = Uri.joinPath(rootUri, 'b.txt').fsPath;
         c_txt = Uri.joinPath(rootUri, 'c.txt').fsPath;
