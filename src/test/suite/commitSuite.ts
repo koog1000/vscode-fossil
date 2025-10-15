@@ -70,6 +70,7 @@ const singleFileCommitSetup = async (
 ) => {
     const repository = getRepository();
     const execStub = getExecStub(sandbox);
+    await commands.executeCommand('fossil.unstageAll');
     const statusStub = fakeFossilStatus(execStub, 'ADDED minimal.txt\n');
     await repository.updateStatus('test' as Reason);
     sinon.assert.calledOnce(statusStub);
@@ -84,10 +85,7 @@ const singleFileCommitSetup = async (
             [Uri.joinPath(rootUri, 'minimal.txt').fsPath, ResourceStatus.ADDED],
         ],
     });
-    const commitStub = execStub
-        .withArgs(sinon.match.array.startsWith(['commit']))
-        .resolves(fakeExecutionResult());
-    return { commitStub, repository };
+    return { execStub, repository };
 };
 
 export function CommitSuite(this: Suite): void {
@@ -428,13 +426,17 @@ export function CommitSuite(this: Suite): void {
         );
     });
 
-    test('Commit with specified username', async () => {
+    test('Commit with specified username (user-override)', async () => {
         const configStub = stubFossilConfig(this.ctx.sandbox);
         configStub.get.withArgs('username').returns('testUsername');
-        const { commitStub, repository } = await singleFileCommitSetup(
+        const { execStub, repository } = await singleFileCommitSetup(
             this.ctx.sandbox,
             rootUri
         );
+        const commitStub = execStub
+            .withArgs(sinon.match.array.startsWith(['commit']))
+            .resolves(fakeExecutionResult());
+
         repository.sourceControl.inputBox.value = 'custom username test';
         await commands.executeCommand('fossil.commitWithInput');
         sinon.assert.calledOnceWithExactly(commitStub, [
@@ -446,6 +448,40 @@ export function CommitSuite(this: Suite): void {
             '--',
             'minimal.txt' as RelativePath,
         ]);
+    });
+
+    test('Commit with specified defaultUsername', async () => {
+        const configStub = stubFossilConfig(this.ctx.sandbox);
+        configStub.get.withArgs('username').returns('newUsername');
+        configStub.get.withArgs('defaultUsername').returns('defaultUsername');
+        configStub.get.withArgs('globalArgs').returns(['--quiet']);
+
+        const { repository } = await singleFileCommitSetup(
+            this.ctx.sandbox,
+            rootUri
+        );
+
+        const rawCommit = getRawExecStub(this.ctx.sandbox)
+            .withArgs(sinon.match.array.contains(['commit']))
+            .resolves(fakeRawExecutionResult({ stderr: 'lol stderr' }));
+        repository.sourceControl.inputBox.value = 'custom username test2';
+        await commands.executeCommand('fossil.commitWithInput');
+        sinon.assert.calledOnceWithExactly(
+            rawCommit as any,
+            [
+                '--quiet',
+                '--user',
+                'defaultUsername' as FossilUsername,
+                'commit',
+                '--user-override',
+                'newUsername' as FossilUsername,
+                '-m',
+                'custom username test2' as FossilCommitMessage,
+                '--',
+                'minimal.txt' as RelativePath,
+            ],
+            sinon.match.object
+        );
     });
 
     test('Commit with `commitArgs` and `globalArgs`', async () => {
@@ -466,7 +502,7 @@ export function CommitSuite(this: Suite): void {
         repository.sourceControl.inputBox.value = 'args test';
         execStub.restore();
         const rawCommit = getRawExecStub(this.ctx.sandbox)
-            .withArgs(sinon.match.array.startsWith(['commit']))
+            .withArgs(sinon.match.array.contains(['commit']))
             .resolves(fakeRawExecutionResult());
 
         await commands.executeCommand('fossil.commitWithInput');
@@ -474,9 +510,9 @@ export function CommitSuite(this: Suite): void {
         sinon.assert.calledOnceWithExactly(
             rawCommit as any,
             [
-                'commit',
                 '--user',
                 'alex',
+                'commit',
                 '--hash',
                 '--ignore-clock-skew',
                 '-m',
