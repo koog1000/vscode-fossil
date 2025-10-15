@@ -66,7 +66,8 @@ export interface FossilSpawnOptions extends cp.SpawnOptionsWithoutStdio {
 interface FossilRawResult {
     readonly fossilPath: FossilExecutablePath;
     readonly exitCode: 0 | 1 | Inline.ENOENT;
-    readonly args: FossilArgs;
+    /** `fossil.globalArgs` following `FossilArgs` */
+    readonly args: FossilArgsWithOptions;
     readonly cwd: FossilCWD;
 }
 
@@ -216,6 +217,9 @@ export type FossilArgs =
           ...(['--technote', 'now'] | [])
       ];
 
+/** For what options are, see `fossil help -o` */
+export type FossilArgsWithOptions = [...string[], ...FossilArgs];
+
 export type RawExecResult = FossilRawResult & {
     stdout: Buffer;
     stderr: Buffer;
@@ -302,7 +306,7 @@ export class FossilExecutable {
      * this method can be private, but it is public fot tests
      */
     async rawExec(
-        args: FossilArgs,
+        args: FossilArgsWithOptions,
         options: FossilSpawnOptions
     ): Promise<RawExecResult> {
         options.stdio ??= 'pipe';
@@ -415,9 +419,9 @@ export class FossilExecutable {
             }, timeout);
         };
         let logTimeout = waitAndLog(500);
-        // insert global arguments after a command, so it's easier to test
-        (args as string[]).splice(1, 0, ...typedConfig.globalArgs);
-        const resultRaw = await this.rawExec(args, options);
+        const globalArgs = typedConfig.globalArgs;
+        const rawArgs = globalArgs.length ? [...globalArgs, ...args] : args;
+        const resultRaw = await this.rawExec(rawArgs, options);
         clearTimeout(logTimeout);
 
         const durationHR = process.hrtime(startTimeHR);
@@ -478,7 +482,7 @@ export class FossilExecutable {
 
             if (options.logErrors !== false && result.stderr) {
                 this.outputChannel.error(
-                    `(${args.join(', ')}): ${result.stderr}`
+                    `(${result.args.join(', ')}): ${result.stderr}`
                 );
             }
             const failure: ExecFailure = {

@@ -48,7 +48,7 @@ import typedConfig from './config';
 import { localize } from './main';
 import {
     ExecFailure,
-    FossilArgs,
+    FossilArgsWithOptions,
     FossilCWD,
     FossilProjectDescription,
     FossilProjectName,
@@ -288,7 +288,7 @@ export async function inputRepoUrl(this: void): Promise<FossilURI | undefined> {
 
 export async function inputPrompt(
     stdout: FossilStdOut,
-    args: FossilArgs
+    args: FossilArgsWithOptions
 ): Promise<string | undefined> {
     const title = 'Fossil Request';
     const panel = window.createWebviewPanel(

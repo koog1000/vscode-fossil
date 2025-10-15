@@ -125,6 +125,7 @@ export function getExecutable(): FossilExecutable {
 }
 
 export type ExecStub = SinonStubT<OpenedRepository['exec']>;
+/** Returns calling through `OpenedRepository.exec` stub */
 export function getExecStub(sandbox: sinon.SinonSandbox): ExecStub {
     const repository = getRepository();
     const openedRepository: OpenedRepository = (repository as any).repository;
@@ -133,6 +134,7 @@ export function getExecStub(sandbox: sinon.SinonSandbox): ExecStub {
 
 type RawExecFunc = FossilExecutable['rawExec'];
 type RawExecStub = SinonStubT<RawExecFunc>;
+/** Returns calling through `FossilExecutable.rawExec` stub */
 export function getRawExecStub(sandbox: sinon.SinonSandbox): RawExecStub {
     const repository = getRepository();
     const executable: FossilExecutable = (repository as any).repository
@@ -193,7 +195,7 @@ export function fakeStatusResult(status: string): ExecResult {
 
 export function fakeFossilStatus(execStub: ExecStub, status: string): ExecStub {
     return execStub
-        .withArgs(['status', '--differ', '--merge'])
+        .withArgs(sinon.match.array.contains(['status', '--differ', '--merge']))
         .resolves(fakeStatusResult(status));
 }
 
@@ -458,10 +460,14 @@ export function stubFossilConfig(sandbox: sinon.SinonSandbox) {
     configStub.get.withArgs('path').returns('');
     configStub.get.withArgs('globalArgs').returns([]);
     configStub.get.withArgs('commitArgs').returns([]);
+    configStub.get.withArgs('autoRefresh').returns(false);
+    configStub.get.withArgs('defaultUsername').returns('');
     configStub.get.callsFake((...args: any[]) => {
+        /* c8 ignore next */
         throw new Error(`get: called with ${JSON.stringify(args)}`);
     });
     configStub.update.callsFake((...args: any[]) => {
+        /* c8 ignore next */
         throw new Error(`update: called with ${JSON.stringify(args)}`);
     });
 

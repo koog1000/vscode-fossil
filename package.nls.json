@@ -44,6 +44,7 @@
     "command.cherrypick": "Cherry-pick into working directory...",
     "config.path": "Path to the `fossil` executable (only required if auto-detection fails)",
     "config.username": "The username associated with each commit (`--user-override` argument, only required if different from the user that originally cloned the repo).",
+    "config.defaultUsername": "Make the default user be USER (`--user` option)",
     "config.autoSyncInterval": "The duration, in seconds, between each background `fossil sync` operation. 0 to disable.",
     "config.autoRefresh": "Whether auto refreshing is enabled",
     "config.enableRenaming": "Show rename request after a file was renamed in UI",

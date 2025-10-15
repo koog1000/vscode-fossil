@@ -9,6 +9,7 @@ interface ConfigScheme {
     path: UnvalidatedFossilExecutablePath;
     autoSyncInterval: number;
     username: FossilUsername; // must be ignored when empty
+    defaultUsername: FossilUsername; // must be ignored when empty
     autoRefresh: boolean;
     enableRenaming: boolean;
     confirmGitExport: 'Automatically' | 'Never' | null;
@@ -79,7 +80,13 @@ class Config {
     }
 
     get globalArgs() {
-        return this.get('globalArgs');
+        const defaultUsername = this.get('defaultUsername');
+        const globalArgs = this.get('globalArgs');
+        if (defaultUsername) {
+            // Return a copy to avoid modifying `globalArgs`
+            return [...globalArgs, '--user', defaultUsername];
+        }
+        return globalArgs;
     }
     get commitArgs() {
         return this.get('commitArgs');

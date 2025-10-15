@@ -1096,6 +1096,10 @@
                     "type": "string",
                     "markdownDescription": "%config.username%"
                 },
+                "fossil.defaultUsername": {
+                    "type": "string",
+                    "markdownDescription": "%config.defaultUsername%"
+                },
                 "fossil.confirmGitExport": {
                     "type": "string",
                     "enum": [
