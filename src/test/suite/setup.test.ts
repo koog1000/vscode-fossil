@@ -455,9 +455,11 @@ function OpenSuite(this: Suite): void {
 
         test('Check unsaved', async () => {
             const executable = getExecutable();
-            const uri = workspace.workspaceFolders![0].uri;
-            const cwd = uri.fsPath as FossilCWD;
-            const filename = Uri.joinPath(uri, 'open_and_close').fsPath;
+            const cwd = this.ctx.workspaceUri.fsPath as FossilCWD;
+            const filename = Uri.joinPath(
+                this.ctx.workspaceUri,
+                'open_and_close'
+            ).fsPath;
             await fs.writeFile(filename, '');
             const addRes = await executable.exec(cwd, [
                 'add',
@@ -481,8 +483,7 @@ function OpenSuite(this: Suite): void {
 
         test('Close', async () => {
             const executable = getExecutable();
-            const uri = workspace.workspaceFolders![0].uri;
-            const cwd = uri.fsPath as FossilCWD;
+            const cwd = this.ctx.workspaceUri.fsPath as FossilCWD;
             await cleanupFossil(getRepository());
             const closeStub = this.ctx.sandbox
                 .spy(executable, 'exec')
@@ -721,6 +722,8 @@ function CloneSuite(this: Suite): void {
 
 suite('Setup', function () {
     this.ctx.sandbox = sinon.createSandbox();
+    this.ctx.workspaceUri = workspace.workspaceFolders![0].uri;
+
     afterEach(() => {
         this.ctx.sandbox.restore();
     });

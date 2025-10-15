@@ -1,4 +1,4 @@
-import { Uri, window, workspace, commands } from 'vscode';
+import { Uri, window, commands } from 'vscode';
 import * as sinon from 'sinon';
 import {
     assertGroups,
@@ -90,7 +90,7 @@ export function MergeSuite(this: Suite): void {
 
         const fooFilename = 'foo-merge.txt';
         const barFilename = 'bar-merge.txt';
-        const rootUri = workspace.workspaceFolders![0].uri;
+        const rootUri = this.ctx.workspaceUri;
         const fooPath = Uri.joinPath(rootUri, fooFilename).fsPath;
         await fs.writeFile(fooPath, 'foo content\n');
         await openedRepository.exec(['add', '--', fooFilename as RelativePath]);

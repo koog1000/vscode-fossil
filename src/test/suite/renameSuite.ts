@@ -22,13 +22,12 @@ import { Suite, before } from 'mocha';
 import { Reason } from '../../fossilExecutable';
 
 export function RenameSuite(this: Suite): void {
-    let rootUri: Uri;
+    const rootUri = this.ctx.workspaceUri;
     const config = () => workspace.getConfiguration('fossil');
 
     before(async () => {
         await config().update('enableRenaming', true);
         await cleanupFossil(getRepository());
-        rootUri = workspace.workspaceFolders![0].uri;
     });
 
     test('Rename a file', async () => {

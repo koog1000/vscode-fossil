@@ -1,4 +1,4 @@
-import { Uri, window, workspace, commands } from 'vscode';
+import { Uri, window, commands } from 'vscode';
 import * as sinon from 'sinon';
 import { add, fakeFossilStatus, getExecStub, getRepository } from './common';
 import * as assert from 'assert/strict';
@@ -41,13 +41,16 @@ export function RevertSuite(this: Suite): void {
                 return swmResources;
             }
             const repository = getRepository();
-            const rootUri = workspace.workspaceFolders![0].uri;
             const fake_status = [];
             const execStub = getExecStub(this.ctx.sandbox);
             const fileUris: Uri[] = [];
             for (const filename of 'abcdefghijklmn') {
                 // 14 files
-                const fileUri = Uri.joinPath(rootUri, 'added', filename);
+                const fileUri = Uri.joinPath(
+                    this.ctx.workspaceUri,
+                    'added',
+                    filename
+                );
                 const action = ['k', 'l', 'm', 'n'].includes(filename)
                     ? 'ADDED'
                     : 'EDITED';
