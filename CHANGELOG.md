@@ -1,5 +1,18 @@
 # Changelog
 
+# v0.7.6
+
+### What's New
+
+- "Save as" for pikchr/markdown/wiki previews
+- Add `fossil.defaultUsername` option, that appends `--user %user%`
+  to `fossil.globalArgs`.
+
+### Bug Fix
+
+- `fossil.globalArgs` are now inserted right after fossil executable and
+  not after a command. I had issues with previous approach.
+
 # v0.7.5
 
 ### Bug Fix
